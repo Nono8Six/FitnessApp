@@ -31,3 +31,9 @@ Les six captures : aucune erreur console, aucune requête en échec (hors coupur
 ## Défaut trouvé et corrigé pendant la brique
 
 `frontend/src/data/demo.ts` n’avait jamais été versionné : la règle `data/` du `.gitignore` l’ignorait, donc le `frontend` de `main` ne compilait pas après un clone. Le fichier est supprimé et la règle est limitée à `/data/` (journaux du POC).
+
+## Corrections après l’audit Windows
+
+- Plus de ligne « Connexion au serveur… » au chargement : elle s’affichait à chaque ouverture puis disparaissait en décalant la carte. Rien n’apparaît pendant une connexion rapide ; au-delà d’une seconde, un indicateur discret « Connexion » se place à côté de la date, sans décaler la page. Mesuré dans Chromium avec une réponse retardée de 2,5 s : rien à 0,5 s, indicateur à 1,4 s, disparu après réponse, carte immobile ([capture](connexion-lente-390.jpg)).
+- Une erreur HTTP affiche « Serveur du PC indisponible », sans code ; le code reste dans la console ([capture](serveur-indisponible-390.jpg)).
+- `Lancer Fitness.cmd` active l’accès réseau (`-Reseau -Ouvrir`) : la fenêtre affiche l’adresse à ouvrir sur le téléphone. Non exécuté sous Windows dans cet environnement.

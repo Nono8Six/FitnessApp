@@ -53,7 +53,7 @@ async function fetchHealth() {
   try {
     const res = await fetch('/api/health', { signal: ctrl.signal, cache: 'no-store' })
     if (!res.ok) {
-      message = `Serveur du PC : erreur ${res.status}`
+      message = 'Serveur du PC indisponible'
       throw new Error(`GET /api/health : HTTP ${res.status}`)
     }
     message = 'Réponse du serveur invalide'

@@ -36,12 +36,31 @@ function SimulationBadge() {
   )
 }
 
+/** Rien pendant une connexion rapide ; au-delà d’une seconde, un indicateur discret qui ne décale pas la page. */
+function ConnectingHint() {
+  const server = useServer()
+  const [slow, setSlow] = useState(false)
+  const loading = server.status === 'loading'
+  useEffect(() => {
+    if (!loading) {
+      setSlow(false)
+      return
+    }
+    const id = window.setTimeout(() => setSlow(true), 1000)
+    return () => window.clearTimeout(id)
+  }, [loading])
+  if (!loading || !slow) return null
+  return (
+    <span role="status" className="animate-fade flex items-center gap-1.5 text-caption text-label-3">
+      <RefreshCw size={11} strokeWidth={2.6} className="animate-spin" />
+      Connexion
+    </span>
+  )
+}
+
 function ServerBanner() {
   const server = useServer()
   const [retrying, setRetrying] = useState(false)
-  if (server.status === 'loading') {
-    return <div role="status" className="mb-6 text-subhead text-label-2">Connexion au serveur…</div>
-  }
   if (server.status !== 'down') return null
   const retry = async () => {
     setRetrying(true)
@@ -103,6 +122,7 @@ export function Page({
           <div className="flex min-h-[18px] items-center gap-2">
             {overline && <div className="text-footnote font-semibold tracking-[0.02em] text-label-2 uppercase">{overline}</div>}
             <SimulationBadge />
+            <ConnectingHint />
           </div>
           <h1 className="text-largetitle">{title}</h1>
         </div>

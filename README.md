@@ -2,7 +2,7 @@
 
 ## Application
 
-**Sur Windows : double-cliquer sur `Lancer Fitness.cmd`.** Une fenêtre démarre le serveur et le navigateur s'ouvre dès qu'il est prêt. Garder cette fenêtre ouverte ; `Ctrl+C` arrête le serveur.
+**Sur Windows : double-cliquer sur `Lancer Fitness.cmd`.** Une fenêtre démarre le serveur, affiche l'adresse « Téléphone » (même Wi-Fi) et le navigateur du PC s'ouvre dès qu'il est prêt. Garder cette fenêtre ouverte ; `Ctrl+C` arrête le serveur. Au premier lancement, autoriser Python dans le pare-feu Windows sur le réseau privé.
 
 Dans PowerShell, depuis ce dossier :
 
@@ -15,7 +15,7 @@ Dans PowerShell, depuis ce dossier :
 
 Le premier lancement nécessite Python 3.12 et Node.js LTS : le script prépare `.venv`, installe les dépendances et construit l'interface. Ensuite, il réutilise les dépendances et le build inchangés ; aucun téléchargement n'est nécessaire. Les empreintes des fichiers détectent aussi une suppression ou un changement avec un ancien horodatage. Les sources, manifests et lockfiles restent intacts.
 
-Pour ouvrir aussi l'application sur le téléphone : `.\start-app.ps1 -Reseau -Ouvrir`, puis saisir l'adresse « Téléphone » affichée dans la fenêtre (même Wi-Fi). Le pare-feu Windows doit autoriser ce serveur sur le réseau privé. Un téléphone physique reste à recevoir.
+Le double-clic équivaut à `.\start-app.ps1 -Reseau -Ouvrir`. Sans `-Reseau`, le serveur n'écoute que sur le PC. Un téléphone physique reste à recevoir.
 
 Si le port 4330 est déjà utilisé, le script affiche une erreur explicite : ouvrir l'app déjà lancée ou arrêter sa fenêtre avec `Ctrl+C`. `-Port 4331` permet de choisir un autre port. `-Reconstruire` force une nouvelle construction de l'interface.
 
