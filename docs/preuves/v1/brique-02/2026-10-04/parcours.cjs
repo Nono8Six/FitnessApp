@@ -26,7 +26,9 @@ async function audit(page, label) {
     const vw = window.innerWidth
     const overflow = document.documentElement.scrollWidth > vw
     const small = []
-    for (const el of document.querySelectorAll('a[href], button, input, [role="radio"], [role="switch"]')) {
+    // Feuille ouverte : seul son contenu est atteignable, la page derrière est couverte.
+    const scope = document.querySelector('[role="dialog"][aria-modal="true"]') || document
+    for (const el of scope.querySelectorAll('a[href], button, input, [role="radio"], [role="switch"]')) {
       const b = el.getBoundingClientRect()
       const st = getComputedStyle(el)
       if (b.width === 0 || b.height === 0 || st.visibility === 'hidden') continue
@@ -153,6 +155,75 @@ async function run(viewport, suffix, mobile) {
   expect(!(await page.getByRole('alert').count()), `${suffix} : message d’erreur effacé après rechargement`)
   await shot('reglages-unite')
 
+  // 7. Créer un profil
+  const lea = `Léa ${suffix}`
+  await page.goto(BASE + '/#/')
+  await page.locator(avatarSel).first().click()
+  await sheet.getByRole('button', { name: 'Nouveau profil' }).click()
+  const creation = page.getByRole('dialog', { name: 'Nouveau profil' })
+  await creation.waitFor()
+  await sleep(600)
+  const createBtn = creation.getByRole('button', { name: 'Créer' })
+  expect(await createBtn.isDisabled(), `${suffix} : Créer désactivé tant que le nom est vide`)
+  await audit(page, `${suffix} feuille Nouveau profil`)
+  await creation.getByRole('textbox', { name: 'Nom' }).fill('arnaud')
+  await createBtn.click()
+  await creation.getByRole('alert').waitFor()
+  expect((await creation.getByRole('alert').textContent()).includes('déjà Arnaud'), `${suffix} : nom déjà pris refusé par le serveur`)
+  await shot('nouveau-profil-refus')
+  await creation.getByRole('textbox', { name: 'Nom' }).fill(lea)
+  await shot('nouveau-profil')
+  await createBtn.click()
+  await creation.waitFor({ state: 'detached' })
+  const created = (await api('/api/profiles')).find((p) => p.name === lea)
+  expect(created && await page.locator(avatarSel + `[aria-label="Profil : ${lea}"]`).first().waitFor({ timeout: 2000 }).then(() => true, () => false)
+    && await page.evaluate(() => localStorage.getItem('fitness.profile.v1')) === created.id,
+    `${suffix} : profil « ${lea} » créé (id ${created && created.id}) et choisi sur cet appareil`)
+  expect(created && created.weekly_goal === 3 && created.speed_unit === 'kmh', `${suffix} : nouveau profil avec ses propres réglages par défaut`)
+
+  // 8. Renommer
+  await page.goto(BASE + '/#/reglages')
+  const nameInput = page.getByRole('textbox', { name: 'Nom' })
+  await nameInput.waitFor()
+  await nameInput.fill(`${lea} B.`)
+  patch = page.waitForResponse((r) => r.request().method() === 'PATCH')
+  await nameInput.press('Enter')
+  await patch
+  await page.reload()
+  await nameInput.waitFor()
+  await page.waitForFunction((v) => document.querySelector('input[aria-label="Nom"]')?.value === v, `${lea} B.`, { timeout: 3000 }).catch(() => {})
+  expect((await nameInput.inputValue()) === `${lea} B.` && (await api(`/api/profiles/${created.id}`)).name === `${lea} B.`,
+    `${suffix} : renommé « ${lea} B. », identifiant ${created.id} inchangé, conservé après rechargement`)
+  await nameInput.fill('Ophélie')
+  await nameInput.press('Enter')
+  await page.getByRole('alert').filter({ hasText: 'déjà' }).waitFor()
+  expect((await nameInput.inputValue()) === `${lea} B.`, `${suffix} : renommage en « Ophélie » refusé, nom restauré`)
+  await audit(page, `${suffix} Réglages renommage refusé`)
+  await shot('reglages-renommage-refus')
+
+  // 9. Supprimer
+  await page.reload()
+  await page.getByRole('button', { name: 'Supprimer le profil' }).click()
+  const confirmation = page.getByRole('dialog', { name: 'Supprimer le profil' })
+  await confirmation.waitFor()
+  await sleep(600)
+  await audit(page, `${suffix} confirmation de suppression`)
+  await shot('suppression-confirmation')
+  await confirmation.getByRole('button', { name: 'Supprimer' }).click()
+  await confirmation.waitFor({ state: 'detached' })
+  const after = await api('/api/profiles')
+  expect(!after.some((p) => p.id === created.id) && (await fetch(`${BASE}/api/profiles/${created.id}`)).status === 404,
+    `${suffix} : profil supprimé du serveur`)
+  expect(await page.locator(avatarSel + `[aria-label="Profil : ${after[0].name}"]`).first().waitFor({ timeout: 2000 }).then(() => true, () => false)
+    && await page.evaluate(() => localStorage.getItem('fitness.profile.v1')) === null,
+    `${suffix} : appareil repassé sur le premier profil (${after[0].name})`)
+  await page.reload()
+  await page.locator(avatarSel).first().click()
+  await sheet.waitFor()
+  expect(await sheet.getByText(lea).count() === 0, `${suffix} : profil supprimé absent de la feuille après rechargement`)
+  await sheet.getByRole('button', { name: 'Ophélie' }).click()
+  await sheet.waitFor({ state: 'detached' })
+
   // Chargement lent des profils : rien avant 1 s
   await page.route('**/api/profiles', async (route) => { await sleep(2500); await route.fallback() })
   await page.goto(BASE + '/#/')
@@ -189,12 +260,15 @@ async function run(viewport, suffix, mobile) {
   expect(await input.isDisabled() && await page.getByRole('button', { name: 'Augmenter : Séances par semaine' }).isDisabled()
     && await page.getByRole('radio', { name: 'km/h' }).isDisabled(), `${suffix} : serveur coupé → Réglages en lecture seule`)
   expect(await page.getByText(/Dossier de données/).isVisible(), `${suffix} : serveur coupé → informations conservées`)
+  expect(await page.getByRole('textbox', { name: 'Nom' }).isDisabled() && await page.getByRole('button', { name: 'Supprimer le profil' }).isDisabled(),
+    `${suffix} : serveur coupé → nom et suppression désactivés`)
   await sleep(400)
   await shot('reglages-serveur-coupe')
   await page.locator(avatarSel).first().click()
   await sheet.waitFor()
   await sleep(500)
-  expect(await sheet.getByRole('button', { name: 'Arnaud' }).count() === 0 && await sheet.getByText('Arnaud').isVisible(),
+  expect(await sheet.getByRole('button', { name: 'Arnaud' }).count() === 0 && await sheet.getByText('Arnaud').isVisible()
+    && await sheet.getByRole('button', { name: 'Nouveau profil' }).count() === 0,
     `${suffix} : serveur coupé → profils affichés sans changement possible`)
   await shot('feuille-serveur-coupe')
   await page.keyboard.press('Escape')

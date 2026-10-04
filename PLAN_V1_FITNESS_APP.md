@@ -8,7 +8,7 @@ Une seule brique en cours. La suivante démarre uniquement après validation d�
 
 - [x] **Brique 0 · Design** : direction visuelle sombre, téléphone et PC, validée le 4 octobre 2026 ([DESIGN.md](DESIGN.md)).
 - [x] **Brique 1 · Socle** : l’app s’ouvre sur le PC et le téléphone, servie par le PC, sans donnée de démonstration.
-- [ ] **Brique 2 · Profils** : base SQLite, Arnaud et Ophélie, choix du profil.
+- [ ] **Brique 2 · Profils** : base SQLite, profils créés, renommés et supprimés, choix du profil.
 - [ ] **Brique 3 · Séances manuelles** : créer, modifier, enregistrer et retrouver ses séances.
 - [ ] **Brique 4 · Connexion ChatGPT** : Sign in with ChatGPT sur le PC, compte et forfait vérifiés.
 - [ ] **Brique 5 · Coach** : conversation réelle avec ChatGPT, en streaming, enregistrée par profil.
@@ -133,6 +133,7 @@ Règles du coach :
 5. Simulation, essais matériels et entraînements sont des catégories distinctes jusqu’aux exports et au coach.
 6. Une erreur de stockage est visible et enregistrée ; aucune perte silencieuse.
 7. Sauvegarde cohérente avec l’API de sauvegarde SQLite, pas une copie du fichier ouvert ([SQLite backup](https://www.sqlite.org/backup.html)).
+8. Toute donnée propre à un profil (séances, conversations, mesures, ressentis, plannings) référence `profiles.id` avec `ON DELETE CASCADE`. Supprimer un profil, après confirmation, supprime toutes ses données ; aucune donnée ne passe d’un profil à l’autre.
 
 ## 6. Les briques
 
@@ -162,17 +163,20 @@ Audit complémentaire sur Windows le 4 octobre 2026 : lancement par double-clic,
 
 **État :** livrée le 4 octobre 2026, en attente de validation d’Arnaud ([preuves](docs/preuves/v1/brique-02/2026-10-04/INDEX.md)).
 
-**Livré :** choisir Arnaud ou Ophélie ; le choix est retenu sur chaque appareil.
+**Livré :** choisir son profil (Arnaud et Ophélie au départ) ; créer, renommer et supprimer des profils, chacun avec ses propres données ; le choix est retenu sur chaque appareil.
 
 **Travail :**
 1. SQLite, SQLAlchemy et Alembic dans `%LOCALAPPDATA%\FitnessApp\` (bases réelle et simulation séparées).
-2. Table des profils : nom, objectif hebdomadaire, préférence km/h ou min/km. Arnaud et Ophélie sont créés au premier lancement.
-3. API des profils ; sélecteur réel (feuille Profil, barre latérale), mémorisé par appareil.
-4. Écran Réglages minimal : profils, dossier de données, version.
+2. Table des profils : nom unique, objectif hebdomadaire, préférence km/h ou min/km. Arnaud et Ophélie sont créés au premier lancement, dans une base sans profil.
+3. API des profils (lire, créer, modifier, supprimer) ; sélecteur réel (feuille Profil, barre latérale), mémorisé par appareil.
+4. Écran Réglages minimal : nom, objectif et unité du profil, suppression confirmée, dossier de données, version.
+5. Complément demandé par Arnaud le 4 octobre 2026 : création, renommage et suppression. Il reste toujours au moins un profil ; l’identifiant d’un profil ne change jamais.
 
 **Fait quand :**
 - [ ] Le profil choisi survit au rechargement et au redémarrage du serveur.
 - [ ] Une migration Alembic crée la base depuis zéro ; un test le vérifie.
+- [ ] Un profil créé apparaît sur les autres appareils ; un profil supprimé disparaît avec ses données (test).
+
 
 **Pas dans cette brique :** authentification (le profil n’en est pas une), objectifs détaillés.
 
