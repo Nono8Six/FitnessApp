@@ -37,8 +37,8 @@ export function Ring({ value, size = 64, stroke = 10, color = 'var(--color-accen
 
 /* ---------- Programme profile ---------- */
 
-export function ProgrammeChart({ blocks, height = 112, compact = false, className }: {
-  blocks: Block[]; height?: number; compact?: boolean; className?: string
+export function ProgrammeChart({ blocks, className }: {
+  blocks: Block[]; className?: string
 }) {
   const [ref, w] = useWidth<HTMLDivElement>()
   const [hovered, setHovered] = useState<number | null>(null)
@@ -48,16 +48,16 @@ export function ProgrammeChart({ blocks, height = 112, compact = false, classNam
   const selected = hovered ?? pinned
   const active = selected === null ? undefined : blocks[selected]
   const total = blocks.at(-1)?.end ?? 0
-  const plotWidth = Math.max(1, w - 28)
-  const speedTop = 26, speedBottom = speedTop + height
-  const inclineTop = speedBottom + 38, inclineHeight = compact ? 32 : 48
+  const plotWidth = Math.max(1, w - 30)
+  const speedHeight = w < 360 ? 144 : 176
+  const speedTop = 34, speedBottom = speedTop + speedHeight
+  const inclineTop = speedBottom + 54, inclineHeight = w < 360 ? 128 : 144
   const inclineBottom = inclineTop + inclineHeight
-  const svgHeight = inclineBottom + 26
-  // Partir de zéro préserve les proportions ; arrondir au palier de 2 supérieur
-  // rend les séances lentes lisibles sans tronquer l'axe ni changer au survol.
-  const speedMax = Math.max(2, Math.ceil(Math.max(0, ...blocks.map(b => b.speed)) / 2) * 2)
+  const svgHeight = inclineBottom + 30
+  // Bornes complètes du tapis, stables entre les séances. La lisibilité vient
+  // de la hauteur des deux zones et des valeurs, jamais d'un axe tronqué.
   const x = (seconds: number) => seconds / (total || 1) * plotWidth
-  const speedY = (speed: number) => speedBottom - speed / speedMax * height
+  const speedY = (speed: number) => speedBottom - speed / 16 * speedHeight
   const inclineY = (incline: number) => inclineBottom - incline / 10 * inclineHeight
   const inclinePath = blocks.map((b, i) => `${i ? 'L' : 'M'}${x(b.start)},${inclineY(b.incline)}H${x(b.end)}`).join(' ')
   const gap = blocks.length > 24 ? 0.5 : 2
@@ -85,7 +85,7 @@ export function ProgrammeChart({ blocks, height = 112, compact = false, classNam
     {!blocks.length || total <= 0 ? <p className="text-footnote text-label-2">Aucun segment</p> : <>
       <div className="mb-2 flex min-h-[60px] items-center gap-1">
         <div className="min-w-0 flex-1">
-          <p className="truncate text-subhead font-semibold">{active ? `${active.index + 1} · ${active.label}` : 'Profil de la séance'}</p>
+          <p className="truncate text-subhead font-semibold">{active ? `${active.index + 1} · ${active.label}` : 'Consignes par segment'}</p>
           <p id={helpId} className="num mt-1 text-footnote text-label-2">{active
             ? `${clock(active.start)}–${clock(active.end)} · durée ${clock(active.sec)}`
             : 'Survolez ou touchez un segment'}</p>
@@ -105,26 +105,36 @@ export function ProgrammeChart({ blocks, height = 112, compact = false, classNam
           else if (event.buttons === 1) select(pointIndex(event))
         }}
         onPointerLeave={() => setHovered(null)} onPointerCancel={() => setHovered(null)}>
-        <text x={0} y={14} fill="var(--color-accent)" fontSize={13} fontWeight={600}>Vitesse</text>
-        <text x={plotWidth} y={14} textAnchor="end" fill="var(--color-accent)" fontSize={13} className="num">{active ? dec1(active.speed) : range('speed')} km/h</text>
-        <text x={0} y={inclineTop - 12} fill="var(--color-incline)" fontSize={13} fontWeight={600}>Inclinaison</text>
-        <text x={plotWidth} y={inclineTop - 12} textAnchor="end" fill="var(--color-incline)" fontSize={13} className="num">{active ? dec1(active.incline) : range('incline')} %</text>
-        {[0, speedMax / 2, speedMax].map(value => <g key={`speed-${value}`}>
-          <line x1={0} x2={plotWidth} y1={speedY(value)} y2={speedY(value)} stroke="var(--color-sep)" strokeWidth={0.5} />
-          <text x={plotWidth + 6} y={speedY(value) + 4} fill="var(--color-label-2)" fontSize={10}>{value}</text>
+        <text x={0} y={18} fill="var(--color-accent)" fontSize={13} fontWeight={600}>Vitesse</text>
+        <text x={plotWidth} y={18} textAnchor="end" fill="var(--color-accent)" fontSize={17} fontWeight={600} className="num">{active ? dec1(active.speed) : range('speed')} km/h</text>
+        <text x={0} y={inclineTop - 18} fill="var(--color-incline)" fontSize={13} fontWeight={600}>Inclinaison</text>
+        <text x={plotWidth} y={inclineTop - 18} textAnchor="end" fill="var(--color-incline)" fontSize={17} fontWeight={600} className="num">{active ? dec1(active.incline) : range('incline')} %</text>
+        {[0, 4, 8, 12, 16].map(value => <g key={`speed-${value}`}>
+          <line x1={0} x2={plotWidth} y1={speedY(value)} y2={speedY(value)} stroke="var(--color-sep)" strokeWidth={0.5} strokeDasharray={value ? '2 4' : undefined} />
+          <text x={plotWidth + 7} y={speedY(value) + 4} fill="var(--color-label-2)" fontSize={11} className="num">{value}</text>
         </g>)}
         {[0, 5, 10].map(value => <g key={`incline-${value}`}>
-          <line x1={0} x2={plotWidth} y1={inclineY(value)} y2={inclineY(value)} stroke="var(--color-sep)" strokeWidth={0.5} />
-          <text x={plotWidth + 6} y={inclineY(value) + 4} fill="var(--color-label-2)" fontSize={10}>{value}</text>
+          <line x1={0} x2={plotWidth} y1={inclineY(value)} y2={inclineY(value)} stroke="var(--color-sep)" strokeWidth={0.5} strokeDasharray={value ? '2 4' : undefined} />
+          <text x={plotWidth + 7} y={inclineY(value) + 4} fill="var(--color-label-2)" fontSize={11} className="num">{value}</text>
         </g>)}
         {active && <rect x={x(active.start)} y={speedTop} width={Math.max(1, x(active.sec))} height={inclineBottom - speedTop}
           fill="var(--color-label)" opacity={0.07} />}
-        {blocks.map(b => <rect key={b.index} x={x(b.start)} y={speedY(b.speed)}
+        {blocks.map(b => <g key={b.index}>
+          <rect x={x(b.start)} y={speedY(b.speed)}
           width={Math.max(0.5, x(b.sec) - Math.min(gap, x(b.sec) / 3))} height={speedBottom - speedY(b.speed)}
           rx={Math.min(3, x(b.sec) / 5)} fill={b.kind === 'run' || b.kind === 'steady' ? 'var(--color-accent)' : '#636366'}
-          opacity={active && active.index !== b.index ? 0.45 : 1} />)}
-        <path d={`${inclinePath}L${plotWidth},${inclineBottom}H0Z`} fill="var(--color-incline)" opacity={0.12} />
-        <path d={inclinePath} fill="none" stroke="var(--color-incline)" strokeWidth={2} strokeLinejoin="round" />
+          opacity={active && active.index !== b.index ? 0.45 : 1} />
+          {x(b.sec) >= 30 && <text x={x(b.start + b.sec / 2)} y={speedY(b.speed) + (speedBottom - speedY(b.speed) >= 24 ? 16 : -6)}
+            textAnchor="middle" fill={speedBottom - speedY(b.speed) >= 24 && (b.kind === 'run' || b.kind === 'steady') ? 'var(--color-on-accent)' : 'var(--color-label)'}
+            fontSize={11} fontWeight={600} className="num">{dec1(b.speed).replace(',0', '')}</text>}
+        </g>)}
+        <path d={`${inclinePath}L${plotWidth},${inclineBottom}H0Z`} fill="var(--color-incline)" opacity={0.24} />
+        <path d={inclinePath} fill="none" stroke="var(--color-incline)" strokeWidth={2.5} strokeLinejoin="round" />
+        {blocks.map(b => x(b.sec) >= 30 && <g key={b.index}>
+          <circle cx={x(b.start + b.sec / 2)} cy={inclineY(b.incline)} r={3} fill="var(--color-incline)" />
+          <text x={x(b.start + b.sec / 2)} y={b.incline > 8 ? inclineY(b.incline) + 18 : inclineY(b.incline) - 10}
+            textAnchor="middle" fill="var(--color-incline)" fontSize={11} fontWeight={600} className="num">{dec1(b.incline).replace(',0', '')} %</text>
+        </g>)}
         {active && <>
           <line x1={x(active.start)} x2={x(active.start)} y1={speedTop} y2={inclineBottom} stroke="var(--color-label-2)" strokeDasharray="3 3" />
           <line x1={x(active.end)} x2={x(active.end)} y1={speedTop} y2={inclineBottom} stroke="var(--color-label-2)" strokeDasharray="3 3" />
