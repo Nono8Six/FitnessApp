@@ -7,7 +7,7 @@
 Une seule brique en cours. La suivante démarre uniquement après validation d’Arnaud.
 
 - [x] **Brique 0 · Design** : direction visuelle sombre, téléphone et PC, validée le 4 octobre 2026 ([DESIGN.md](DESIGN.md)).
-- [ ] **Brique 1 · Socle** : l’app s’ouvre sur le PC et le téléphone, servie par le PC, sans donnée de démonstration.
+- [x] **Brique 1 · Socle** : l’app s’ouvre sur le PC et le téléphone, servie par le PC, sans donnée de démonstration.
 - [ ] **Brique 2 · Profils** : base SQLite, Arnaud et Ophélie, choix du profil.
 - [ ] **Brique 3 · Séances manuelles** : créer, modifier, enregistrer et retrouver ses séances.
 - [ ] **Brique 4 · Connexion ChatGPT** : Sign in with ChatGPT sur le PC, compte et forfait vérifiés.
@@ -138,9 +138,9 @@ Règles du coach :
 
 ### Brique 1 · Socle
 
-**État :** livrée le 4 octobre 2026, en attente de validation d’Arnaud ([preuves](docs/preuves/v1/brique-01/2026-10-04/INDEX.md)).
+**État :** validée le 4 octobre 2026 par Arnaud ([preuves](docs/preuves/v1/brique-01/2026-10-04/INDEX.md)).
 
-Audit complémentaire sur Windows le 4 octobre 2026 : lancement par double-clic, relance sans reconstruction, accès par l’IP réseau et états de panne vérifiés ; corrections et mesures dans [l’audit Windows](docs/preuves/v1/brique-01/2026-10-04/AUDIT_WINDOWS.md). L’essai sur téléphone physique et la validation d’Arnaud restent attendus ; aucune brique suivante n’est engagée.
+Audit complémentaire sur Windows le 4 octobre 2026 : lancement par double-clic, relance sans reconstruction, accès par l’IP réseau et états de panne vérifiés ; corrections et mesures dans [l’audit Windows](docs/preuves/v1/brique-01/2026-10-04/AUDIT_WINDOWS.md). L’essai sur téléphone physique n’a pas de preuve versionnée.
 
 **Livré :** l’app s’ouvre sur le PC et le téléphone, servie par le PC, avec le vrai design et aucune donnée inventée.
 
@@ -152,9 +152,9 @@ Audit complémentaire sur Windows le 4 octobre 2026 : lancement par double-clic,
 5. Proxy de développement Vite vers FastAPI.
 
 **Fait quand :**
-- [ ] `start-app.ps1` ouvre l’app sur le PC ; `-Reseau` l’ouvre sur le téléphone via l’IP Wi-Fi.
-- [ ] Aucune valeur de démonstration n’apparaît dans l’interface.
-- [ ] Le POC démarre toujours sur son port, sans modification.
+- [x] `start-app.ps1` ouvre l’app sur le PC ; `-Reseau` l’ouvre sur le téléphone via l’IP Wi-Fi.
+- [x] Aucune valeur de démonstration n’apparaît dans l’interface.
+- [x] Le POC démarre toujours sur son port, sans modification.
 
 **Pas dans cette brique :** base de données, profils, tapis.
 
