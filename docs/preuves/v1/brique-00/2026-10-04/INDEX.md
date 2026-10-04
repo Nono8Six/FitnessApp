@@ -1,4 +1,4 @@
-# Étape 01 · Captures de référence (sombre)
+# Brique 0 · Design : captures de référence
 
 4 octobre 2026. Chrome headless (Chromium 1194), build de production de `frontend/`. Téléphone : 390 × 844 CSS px, ×2. PC : 1440 × 900, ×1. « complet » signifie une page entière avec défilement : les éléments fixes (onglets) y apparaissent à leur position dans la fenêtre.
 - [aujourdhui-1440](aujourdhui-1440.jpg)

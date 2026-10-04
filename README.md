@@ -89,4 +89,4 @@ Les outils de réception réelle et leurs résultats sont décrits dans [docs/RE
 - `poc/static/` : console responsive sans framework ni ressource externe.
 - `tests/test_critical.py` : vérifications des règles critiques.
 
-Les profils, l'historique SQLite, Garmin, la génération par ChatGPT et une PWA installable sont les étapes suivantes, après réception du contrôle matériel. Ils ne sont pas implémentés dans ce POC.
+L'application V1 (profils, séances, coach ChatGPT, historique) se construit brique par brique selon le [plan](PLAN_V1_FITNESS_APP.md), avec le [design](DESIGN.md) de `frontend/`. Ce POC reste la console de diagnostic.

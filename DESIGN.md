@@ -1,10 +1,10 @@
 # Fitness · Référence de conception V1
 
-4 octobre 2026. **Refonte de l’Étape 01 : mode sombre, téléphone et PC.** Elle remplace la direction précédente (fond bleu nuit, cartes à bordure, textes explicatifs). Validation visuelle d’Arnaud en attente.
+4 octobre 2026. **Direction validée par Arnaud (brique 0 du [plan](PLAN_V1_FITNESS_APP.md)).** Mode sombre, téléphone et PC. Chaque brique construit ses écrans avec ces règles.
 
-- Maquettes interactives : [`frontend/`](frontend/README.md) (Vite, React, TypeScript, Tailwind)
-- Captures datées : [docs/preuves/v1/etape-01/2026-10-04-sombre](docs/preuves/v1/etape-01/2026-10-04-sombre/INDEX.md)
-- Parcours et états : [docs/design/ETAPE_01_PARCOURS_UI_UX.md](docs/design/ETAPE_01_PARCOURS_UI_UX.md)
+- Composants et écrans : [`frontend/`](frontend/README.md) (Vite, React, TypeScript, Tailwind)
+- Captures de référence : [docs/preuves/v1/brique-00/2026-10-04](docs/preuves/v1/brique-00/2026-10-04/INDEX.md)
+- Parcours et états : [docs/design/PARCOURS_ET_ETATS.md](docs/design/PARCOURS_ET_ETATS.md)
 
 ## 1. Principes
 
@@ -58,7 +58,7 @@ Famille : `-apple-system, BlinkMacSystemFont, "SF Pro Text", "Inter Variable", s
 |---|---|---|---|
 | Large title | 34 / 41, −0,025 em | 700 | Titre d’écran |
 | Title 1 | 28 / 34 | 700 | Nom de la prochaine séance |
-| Title 2 | 22 / 28 | 700 | — |
+| Title 2 | 22 / 28 | 700 | Réservé |
 | Title 3 | 20 / 25 | 600 | Titres de section, bloc en cours |
 | Headline | 17 / 22 | 600 | Boutons, titres de carte |
 | Body | 17 / 22 | 400 | Lignes de liste, texte du coach |
@@ -101,7 +101,7 @@ Formats : virgule décimale, espace insécable avant `:` `?` `%` et à l’inté
 
 ## 7. Graphiques
 
-SVG maison pour les maquettes. ECharts reste prévu par le plan pour la production, avec ce même langage visuel.
+Composants SVG maison. ECharts n’est envisagé qu’à la brique 14 si le volume l’exige, avec ce même langage visuel.
 
 - Axe Y à droite, grille horizontale de 0,5 px, repères temporels en pointillé ; au plus 4 repères sur téléphone et 6 sur PC.
 - Mesure : trait continu de 2 à 2,5 px, aire en dégradé accent de 28 % à 0. Cible : escalier blanc pointillé. Pente : escalier violet dans une bande séparée, avec sa propre échelle, sous la vitesse.
@@ -131,11 +131,9 @@ Textes conservés, car chacun porte un fait ou une action :
 
 « Commencer », « Avant de démarrer », « Clé de sécurité en place », « Bande libre », « Démarrer », « Pause », « Reprendre », « Arrêter », « Arrêt demandé », « Arrêt confirmé », « Aucune mesure depuis N s », « Dernière mesure X km/h, il y a N s », « Tapis déconnecté. État de la bande inconnu : utilisez le STOP physique. », « Résultat de la dernière commande inconnu. Utilisez le STOP physique, puis reconnectez. », « Coach hors ligne. Séances et historique restent disponibles. »
 
-Textes supprimés de la version précédente : sous-titres marketing (« Une séance pour gagner en régularité »), « Maquette · données fictives », « mesure distincte de la cible », « Commandes simulées · le STOP physique reste accessible », les identifiants G01–G10 dans l’interface, les signatures de barre latérale, les rappels « facultatif » et toute phrase qui répète une valeur déjà affichée.
+Interdits : sous-titres marketing, mentions « démonstration » ou « fictif », identifiants techniques (G01…) dans l’interface, signatures, rappels « facultatif », phrases qui répètent une valeur déjà affichée.
 
-## 10. Limites de cette référence
+## 10. Limites
 
 - Mode sombre uniquement. Les jetons sont regroupés pour qu’un thème clair puisse être ajouté sans toucher aux composants.
-- Données synthétiques ([frontend/src/data/demo.ts](frontend/src/data/demo.ts)). Rien ne se connecte au tapis, au POC ni à un service IA.
-- « Voir le bilan » en fin de séance ouvre le bilan de référence du 30 septembre, pas la séance simulée.
-- Pas encore vérifié sur iPhone physique, Safari iOS, Android ni pendant un effort réel.
+- Pas encore vérifié sur iPhone physique, Safari iOS, Android ni pendant un effort réel : chaque brique le fait pour ses écrans.

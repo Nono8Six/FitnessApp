@@ -1,6 +1,6 @@
 # Fitness · interface
 
-Maquettes interactives de l’Étape 01, mode sombre, téléphone et PC. Vite, React 19, TypeScript, Tailwind 4. Le design est décrit dans [DESIGN.md](../DESIGN.md).
+Interface de l’application, mode sombre, téléphone et PC. Vite, React 19, TypeScript, Tailwind 4. Le design est décrit dans [DESIGN.md](../DESIGN.md), l’ordre de construction dans le [plan](../PLAN_V1_FITNESS_APP.md).
 
 ```powershell
 cd frontend
@@ -19,9 +19,9 @@ Polices et icônes sont embarquées : aucun accès Internet n’est nécessaire 
 - `src/lib/live.ts` : simulation de séance (aucune connexion au tapis)
 - `src/data/demo.ts` : programmes et historique synthétiques
 
-## Scénarios de revue
+## Scénarios de revue (retirés à la brique 1)
 
-Ajouter `?scenario=` devant le `#` :
+Tant que les écrans utilisent `src/data/demo.ts`, ajouter `?scenario=` devant le `#` :
 
 | URL | État |
 |---|---|
