@@ -21,13 +21,19 @@ class BackendTests(unittest.TestCase):
         (self.dist / "assets" / "index-abc.js").write_text("console.log(1)", encoding="utf-8")
         (self.dist / "icon.svg").write_text("<svg/>", encoding="utf-8")
         (self.dist / ".fitness-source.sha256").write_text("empreinte locale", encoding="utf-8")
+        self.apps = []
 
     def tearDown(self):
+        # Les connexions SQLite sont fermées avant la suppression (Windows refuse un fichier ouvert).
+        for app in self.apps:
+            app.state.database.close()
         self.tmp.cleanup()
 
     def client(self, **kwargs):
         options = {"data_root": self.data_root, "dist": self.dist, **kwargs}
-        return TestClient(create_app(**options), base_url="http://127.0.0.1:4330")
+        app = create_app(**options)
+        self.apps.append(app)
+        return TestClient(app, base_url="http://127.0.0.1:4330")
 
     def test_health_reports_version_mode_and_data_dir(self):
         body = self.client().get("/api/health").json()
@@ -36,6 +42,7 @@ class BackendTests(unittest.TestCase):
         self.assertEqual(Path(body["data_dir"]), self.data_root / "reel")
         self.assertTrue(body["interface"])
         self.assertFalse(body["network"]["enabled"])
+        self.assertEqual(body["schema"], "0001")
 
     def test_simulation_data_is_separate(self):
         body = self.client(simulation=True).get("/api/health").json()

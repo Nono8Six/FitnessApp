@@ -51,7 +51,7 @@ git log --oneline --left-right HEAD...origin/main
 ```bash
 # Racine du dépôt
 .venv/bin/python -m unittest discover -s tests -v
-.venv/bin/python -m compileall -q poc
+.venv/bin/python -m compileall -q backend poc
 node --check poc/static/app.js
 
 # Depuis frontend/

@@ -63,14 +63,14 @@ $requirementsHash = (Get-FileHash -LiteralPath $requirements -Algorithm SHA256).
 $requirementsStamp = Join-Path $PSScriptRoot '.venv\fitness-requirements.sha256'
 $requirementsChanged = -not (Test-Path -LiteralPath $requirementsStamp)
 if (-not $requirementsChanged) { $requirementsChanged = (Get-Content -LiteralPath $requirementsStamp -Raw).Trim() -ne $requirementsHash }
-& $appPython -c "import importlib.util, sys; sys.exit(0 if all(importlib.util.find_spec(name) for name in ('fastapi', 'uvicorn', 'bleak', 'httpx2')) else 1)"
+& $appPython -c "import importlib.util, sys; sys.exit(0 if all(importlib.util.find_spec(name) for name in ('fastapi', 'uvicorn', 'bleak', 'httpx2', 'sqlalchemy', 'alembic')) else 1)"
 if ($LASTEXITCODE -ne 0 -or $requirementsChanged) {
     Write-Host 'Preparation des dependances Python...'
     & $appPython -m pip install --disable-pip-version-check -r $requirements
     if ($LASTEXITCODE -ne 0) { throw 'Installation des dependances Python impossible.' }
     Set-Content -LiteralPath $requirementsStamp -Value $requirementsHash -Encoding ASCII
 }
-& $appPython -c 'import fastapi, uvicorn, bleak, httpx2'
+& $appPython -c 'import fastapi, uvicorn, bleak, httpx2, sqlalchemy, alembic'
 if ($LASTEXITCODE -ne 0) {
     throw 'Les dependances Python ne peuvent pas etre chargees. Voir l erreur ci-dessus.'
 }

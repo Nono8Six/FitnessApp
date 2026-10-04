@@ -2,6 +2,12 @@ import os
 import sys
 from pathlib import Path
 
+REPOSITORY = Path(__file__).resolve().parent.parent
+
+
+class StartupError(RuntimeError):
+    """Le serveur ne peut pas démarrer : le message est affiché tel quel à l'utilisateur."""
+
 
 def data_root() -> Path:
     """Dossier des données utilisateur, hors du dépôt et du build."""
@@ -16,5 +22,8 @@ def data_root() -> Path:
 def data_dir(*, simulation: bool, root: Path | None = None) -> Path:
     """Les données réelles et simulées ne partagent jamais le même dossier."""
     path = (root or data_root()) / ("simulation" if simulation else "reel")
+    resolved = path.resolve()
+    if resolved == REPOSITORY or REPOSITORY in resolved.parents:
+        raise StartupError(f"Le dossier de données {path} est dans le dépôt : choisir un dossier extérieur.")
     path.mkdir(parents=True, exist_ok=True)
     return path

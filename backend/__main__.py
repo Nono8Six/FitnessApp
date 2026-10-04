@@ -1,5 +1,6 @@
 import argparse
 import logging
+import sys
 import threading
 import time
 import webbrowser
@@ -7,6 +8,7 @@ import webbrowser
 import uvicorn
 
 from .app import create_app
+from .config import StartupError
 
 PORT = 4330
 
@@ -37,10 +39,15 @@ def main():
     if not 1 <= args.port <= 65535:
         parser.error("Le port doit être compris entre 1 et 65535.")
     network = args.host not in ("127.0.0.1", "localhost", "::1")
-    app = create_app(simulation=args.simulation, network_enabled=network)
+    try:
+        app = create_app(simulation=args.simulation, network_enabled=network)
+    except StartupError as exc:
+        print(f"\nFitness : démarrage impossible.\n{exc}\n", file=sys.stderr, flush=True)
+        sys.exit(1)
 
     print(f"\nFitness · {'SIMULATION' if args.simulation else 'données réelles'}")
     print(f"Données : {app.state.data_dir}")
+    print(f"Base : {app.state.database.path.name}, schéma {app.state.database.schema}")
     print(f"PC : http://127.0.0.1:{args.port}")
     if network:
         for address in app.state.phone_addresses:
