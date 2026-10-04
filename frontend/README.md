@@ -22,6 +22,8 @@ Polices et icônes sont embarquées : aucun accès Internet n’est nécessaire 
 - `src/styles/index.css` : jetons (couleurs, typographie, rayons, mouvement)
 - `src/components/` : coque (navigation, en-tête repliable, bandeaux d’état), composants iOS, graphiques SVG
 - `src/features/` : un dossier ou fichier par écran construit
+- `src/lib/api.ts` : client commun du serveur (délai de 4 s, phrase d’erreur lisible, forme de la réponse vérifiée)
 - `src/lib/server.ts` : état du serveur du PC (`/api/health`), vérifié toutes les 10 s et au retour sur l’onglet
+- `src/lib/profiles.ts` : profils du serveur et profil de l’appareil (`localStorage`, clé `fitness.profile.v1`)
 
 Aucune donnée de démonstration : un écran n’existe que lorsque sa brique le relie au serveur. Les écrans de référence du design (brique 0) restent consultables dans l’historique Git, commit `b9afbc0`, dossier `frontend/src/features/`, et dans [les captures](../docs/preuves/v1/brique-00/2026-10-04/INDEX.md).

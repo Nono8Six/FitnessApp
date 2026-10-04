@@ -19,7 +19,7 @@ Le double-clic équivaut à `.\start-app.ps1 -Reseau -Ouvrir`. Sans `-Reseau`, l
 
 Si le port 4330 est déjà utilisé, le script affiche une erreur explicite : ouvrir l'app déjà lancée ou arrêter sa fenêtre avec `Ctrl+C`. `-Port 4331` permet de choisir un autre port. `-Reconstruire` force une nouvelle construction de l'interface.
 
-Les données vivent dans `%LOCALAPPDATA%\FitnessApp\reel` (ou `\simulation`). Le POC reste sur son port et son lanceur distincts. L'application se construit brique par brique selon le [plan](PLAN_V1_FITNESS_APP.md), avec le [design](DESIGN.md).
+Les données vivent dans `%LOCALAPPDATA%\FitnessApp\reel` (ou `\simulation`), dans une base SQLite `fitness.db` par mode. Au démarrage, le serveur met la base à jour (migrations Alembic de `backend/storage/`) avant d'accepter les requêtes ; si la mise à jour échoue, il ne démarre pas et affiche le chemin de la base et la cause. Arnaud et Ophélie sont créés au premier lancement (objectif 3 séances par semaine, km/h), puis modifiables dans Réglages. Chaque appareil retient son profil dans le navigateur ; ce n'est pas une authentification. Le POC reste sur son port et son lanceur distincts. L'application se construit brique par brique selon le [plan](PLAN_V1_FITNESS_APP.md), avec le [design](DESIGN.md).
 
 # RUN500 LAB — POC de connectivité et de commandes
 
@@ -37,7 +37,7 @@ Dans PowerShell, depuis ce dossier :
 .\start-poc.ps1
 ```
 
-Ouvrir <http://127.0.0.1:4317>. Python 3.12 a été utilisé pour la vérification. Le script prépare un environnement `.venv` dans ce dossier si nécessaire et installe les trois dépendances de `requirements.txt` depuis PyPI. Aucun compte ni service Cloud n'est nécessaire.
+Ouvrir <http://127.0.0.1:4317>. Python 3.12 a été utilisé pour la vérification. Le script prépare un environnement `.venv` dans ce dossier si nécessaire et installe les dépendances de `requirements.txt` depuis PyPI. Aucun compte ni service Cloud n'est nécessaire.
 
 Pour le téléphone sur le même Wi-Fi :
 
@@ -96,7 +96,7 @@ Le dossier `docs/preuves/` contient les captures de la console prises dans Chrom
 
 ```powershell
 .\.venv\Scripts\python.exe -m unittest discover -s tests -v
-.\.venv\Scripts\python.exe -m compileall -q poc
+.\.venv\Scripts\python.exe -m compileall -q backend poc
 node --check poc/static/app.js
 ```
 

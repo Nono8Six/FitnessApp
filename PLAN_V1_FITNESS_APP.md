@@ -160,6 +160,8 @@ Audit complémentaire sur Windows le 4 octobre 2026 : lancement par double-clic,
 
 ### Brique 2 · Profils
 
+**État :** livrée le 4 octobre 2026, en attente de validation d’Arnaud ([preuves](docs/preuves/v1/brique-02/2026-10-04/INDEX.md)).
+
 **Livré :** choisir Arnaud ou Ophélie ; le choix est retenu sur chaque appareil.
 
 **Travail :**
