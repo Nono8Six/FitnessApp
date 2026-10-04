@@ -1,9 +1,10 @@
-import { ChevronLeft, RefreshCw, WifiOff } from 'lucide-react'
+import { Check, ChevronLeft, ChevronsUpDown, RefreshCw, Settings as SettingsIcon, WifiOff } from 'lucide-react'
 import { useEffect, useState, type ReactNode } from 'react'
+import { chooseProfile, loadProfiles, useCurrentProfile, useProfiles, type Profile } from '../lib/profiles'
 import { checkServer, useServer } from '../lib/server'
-import { href, type Route } from '../lib/router'
+import { href, navigate, type Route } from '../lib/router'
 import { TodayIcon } from './Icons'
-import { cx } from './ui'
+import { Avatar, cx, Group, Row, Sheet, Tile } from './ui'
 
 /** Destinations réellement construites. Chaque brique ajoute la sienne. */
 const TABS = [
@@ -12,6 +13,70 @@ const TABS = [
 
 /** iOS n’affiche pas de barre d’onglets pour une seule destination. */
 const HAS_TAB_BAR = TABS.length > 1
+
+const initial = (p: Profile) => p.name.charAt(0).toLocaleUpperCase('fr-FR')
+
+/* ---------- Profile switcher ---------- */
+
+let openProfiles: (() => void) | null = null
+export const showProfiles = () => openProfiles?.()
+
+/** Choix du profil de cet appareil. Serveur injoignable : liste en lecture seule. */
+function ProfileSheet() {
+  const [open, setOpen] = useState(false)
+  const server = useServer()
+  const profiles = useProfiles()
+  const current = useCurrentProfile()
+  const list = profiles.status === 'loading' ? undefined : profiles.profiles
+  const readOnly = server.status !== 'ok'
+  useEffect(() => {
+    openProfiles = () => setOpen(true)
+    return () => void (openProfiles = null)
+  }, [])
+  const close = () => setOpen(false)
+  return (
+    <Sheet open={open} onClose={close} title="Profil"
+      trailing={<button type="button" onClick={close} className="pressable -mr-2 h-11 min-w-11 px-2 text-headline text-accent">OK</button>}>
+      {list && (
+        <Group>
+          {list.map((p) => (
+            <Row
+              key={p.id}
+              onClick={readOnly ? undefined : () => { chooseProfile(p.id); close() }}
+              chevron={false}
+              leading={<Avatar initial={initial(p)} size={32} />}
+              title={p.name}
+              trailing={p.id === current?.id ? <Check size={20} strokeWidth={2.6} className="text-accent" aria-label="Profil actuel" /> : null}
+            />
+          ))}
+        </Group>
+      )}
+      <Group className="mt-6">
+        <Row
+          onClick={() => { close(); navigate(href.settings) }}
+          leading={<Tile color="#8e8e93"><SettingsIcon size={19} strokeWidth={2.2} /></Tile>}
+          title="Réglages"
+        />
+      </Group>
+    </Sheet>
+  )
+}
+
+/** Avatar du profil courant ; rien tant que les profils ne sont pas lus. */
+function ProfileButton({ size = 34 }: { size?: number }) {
+  const current = useCurrentProfile()
+  if (!current) return null
+  return <Avatar initial={initial(current)} size={size} onClick={showProfiles} label={`Profil : ${current.name}`} />
+}
+
+/** Relit les profils quand le serveur redevient joignable (un autre appareil a pu les modifier). */
+function ProfilesSync() {
+  const status = useServer().status
+  useEffect(() => {
+    if (status === 'ok') void loadProfiles()
+  }, [status])
+  return null
+}
 
 /* ---------- Page header with collapsing large title ---------- */
 
@@ -39,8 +104,9 @@ function SimulationBadge() {
 /** Rien pendant une connexion rapide ; au-delà d’une seconde, un indicateur discret qui ne décale pas la page. */
 function ConnectingHint() {
   const server = useServer()
+  const profiles = useProfiles()
   const [slow, setSlow] = useState(false)
-  const loading = server.status === 'loading'
+  const loading = server.status === 'loading' || (server.status === 'ok' && profiles.status === 'loading')
   useEffect(() => {
     if (!loading) {
       setSlow(false)
@@ -60,17 +126,22 @@ function ConnectingHint() {
 
 function ServerBanner() {
   const server = useServer()
+  const profiles = useProfiles()
   const [retrying, setRetrying] = useState(false)
-  if (server.status !== 'down') return null
+  const message = server.status === 'down' ? server.message
+    : server.status === 'ok' && profiles.status === 'error' ? profiles.message
+    : undefined
+  if (!message) return null
   const retry = async () => {
     setRetrying(true)
     await checkServer()
+    if (profiles.status === 'error') await loadProfiles()
     setRetrying(false)
   }
   return (
     <div role="alert" className="animate-fade mb-6 flex items-center gap-3 rounded-[14px] bg-red/15 py-2.5 pr-2 pl-4 text-red">
       <WifiOff size={18} className="shrink-0" />
-      <span className="flex-1 text-subhead font-medium">{server.message}</span>
+      <span className="flex-1 text-subhead font-medium">{message}</span>
       <button onClick={retry} disabled={retrying} aria-label="Réessayer"
         className="pressable grid size-11 shrink-0 place-items-center rounded-full bg-red/15">
         <RefreshCw size={17} strokeWidth={2.4} className={cx(retrying && 'animate-spin')} />
@@ -105,7 +176,7 @@ export function Page({
         <div className={cx('mx-auto grid h-11 grid-cols-[1fr_auto_1fr] items-center px-4 desk:px-10', width)}>
           <div className="justify-self-start">
             {back && (
-              <a href={back.href} className="pressable -ml-2 flex items-center text-body text-accent">
+              <a href={back.href} className="pressable -ml-2 flex h-11 items-center pr-2 text-body text-accent">
                 <ChevronLeft size={28} strokeWidth={2.2} className="-mr-0.5" />
                 {back.label}
               </a>
@@ -114,17 +185,23 @@ export function Page({
           <div className={cx('text-headline transition-opacity duration-200', scrolled ? 'opacity-100' : 'opacity-0')} aria-hidden>
             {title}
           </div>
-          <div className="flex items-center gap-4 justify-self-end">{trailing}</div>
+          <div className="flex items-center gap-4 justify-self-end">
+            {trailing}
+            {scrolled && <span className="desk:hidden"><ProfileButton size={30} /></span>}
+          </div>
         </div>
       </header>
       <div className={cx('mx-auto px-4 desk:px-10 desk:pb-16', HAS_TAB_BAR ? 'pb-36' : 'pb-[calc(48px+env(safe-area-inset-bottom))]', width)}>
-        <div className="pt-1 pb-4">
-          <div className="flex min-h-[18px] items-center gap-2">
-            {overline && <div className="text-footnote font-semibold tracking-[0.02em] text-label-2 uppercase">{overline}</div>}
-            <SimulationBadge />
-            <ConnectingHint />
+        <div className="flex items-end justify-between gap-4 pt-1 pb-4">
+          <div className="min-w-0">
+            <div className="flex min-h-[18px] items-center gap-2">
+              {overline && <div className="text-footnote font-semibold tracking-[0.02em] text-label-2 uppercase">{overline}</div>}
+              <SimulationBadge />
+              <ConnectingHint />
+            </div>
+            <h1 className="text-largetitle">{title}</h1>
           </div>
-          <h1 className="text-largetitle">{title}</h1>
+          <span className="mb-1 desk:hidden"><ProfileButton /></span>
         </div>
         <ServerBanner />
         {children}
@@ -155,6 +232,19 @@ function TabBar({ route }: { route: Route }) {
   )
 }
 
+function SidebarProfile() {
+  const current = useCurrentProfile()
+  if (!current) return null
+  return (
+    <button type="button" onClick={showProfiles} aria-label={`Profil : ${current.name}`}
+      className="mt-auto flex h-12 items-center gap-2.5 rounded-[10px] px-2 text-left hover:bg-fill-4">
+      <Avatar initial={initial(current)} size={30} />
+      <span className="min-w-0 flex-1 truncate text-subhead font-medium">{current.name}</span>
+      <ChevronsUpDown size={16} className="text-label-3" />
+    </button>
+  )
+}
+
 function Sidebar({ route }: { route: Route }) {
   return (
     <aside className="fixed inset-y-0 left-0 z-40 hidden w-[248px] flex-col bg-[#0c0c0d] px-3 py-5 shadow-[inset_-0.5px_0_0_var(--color-sep)] desk:flex">
@@ -164,7 +254,7 @@ function Sidebar({ route }: { route: Route }) {
           const active = (match as readonly string[]).includes(route.name)
           return (
             <a key={key} href={to} aria-current={active ? 'page' : undefined}
-              className={cx('flex h-9 items-center gap-2.5 rounded-[8px] px-2.5 text-subhead font-medium transition-colors',
+              className={cx('flex h-11 items-center gap-2.5 rounded-[8px] px-2.5 text-subhead font-medium transition-colors',
                 active ? 'bg-fill-3 text-label' : 'text-label-2 hover:bg-fill-4 hover:text-label')}>
               <Icon size={19} className={active ? 'text-accent' : ''} />
               {label}
@@ -172,6 +262,7 @@ function Sidebar({ route }: { route: Route }) {
           )
         })}
       </nav>
+      <SidebarProfile />
     </aside>
   )
 }
@@ -182,6 +273,8 @@ export function Shell({ route, children }: { route: Route; children: ReactNode }
       <Sidebar route={route} />
       <main className="desk:pl-[248px]">{children}</main>
       <TabBar route={route} />
+      <ProfileSheet />
+      <ProfilesSync />
     </>
   )
 }

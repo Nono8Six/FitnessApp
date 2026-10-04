@@ -1,14 +1,16 @@
 import { useEffect, useState } from 'react'
 
 /** Les routes apparaissent avec la brique qui construit leur écran. */
-export type Route = { name: 'today' }
+export type Route = { name: 'today' } | { name: 'settings' }
 
-export function parse(_hash: string): Route {
+export function parse(hash: string): Route {
+  if (hash === href.settings) return { name: 'settings' }
   return { name: 'today' }
 }
 
 export const href = {
   today: '#/',
+  settings: '#/reglages',
 }
 
 export function navigate(to: string) {

@@ -1,10 +1,13 @@
 import { useSyncExternalStore } from 'react'
+import { api, errorMessage, isRecord } from './api'
 
 export interface Health {
   app: string
   version: string
   mode: 'reel' | 'simulation'
   data_dir: string
+  /** Révision Alembic de la base. */
+  schema: string
   started_at: string
   interface: boolean
   network: { enabled: boolean; addresses: string[] }
@@ -16,16 +19,11 @@ export type ServerState =
   | { status: 'down'; health?: Health; message: string }
 
 const POLL_MS = 10_000
-const TIMEOUT_MS = 4_000
 
 let state: ServerState = { status: 'loading' }
 const listeners = new Set<() => void>()
 let timer: number | undefined
 let pending: Promise<void> | undefined
-
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === 'object' && value !== null
-}
 
 function isHealth(value: unknown): value is Health {
   return isRecord(value)
@@ -33,6 +31,7 @@ function isHealth(value: unknown): value is Health {
     && typeof value.version === 'string' && value.version.length > 0
     && (value.mode === 'reel' || value.mode === 'simulation')
     && typeof value.data_dir === 'string' && value.data_dir.length > 0
+    && typeof value.schema === 'string' && value.schema.length > 0
     && typeof value.started_at === 'string' && Number.isFinite(Date.parse(value.started_at))
     && typeof value.interface === 'boolean'
     && isRecord(value.network)
@@ -47,26 +46,14 @@ function set(next: ServerState) {
 }
 
 async function fetchHealth() {
-  const ctrl = new AbortController()
-  const abort = window.setTimeout(() => ctrl.abort(), TIMEOUT_MS)
-  let message = 'Serveur du PC injoignable'
   try {
-    const res = await fetch('/api/health', { signal: ctrl.signal, cache: 'no-store' })
-    if (!res.ok) {
-      message = 'Serveur du PC indisponible'
-      throw new Error(`GET /api/health : HTTP ${res.status}`)
-    }
-    message = 'Réponse du serveur invalide'
-    const health: unknown = await res.json()
-    if (!isHealth(health)) throw new Error('GET /api/health : format inattendu')
-    set({ status: 'ok', health })
+    set({ status: 'ok', health: await api('/api/health', { validate: isHealth }) })
   } catch (error) {
+    const message = errorMessage(error)
     if (state.status !== 'down' || state.message !== message) {
       console.warn('Fitness : vérification du serveur impossible', error)
     }
     set({ status: 'down', health: state.status === 'loading' ? undefined : state.health, message })
-  } finally {
-    window.clearTimeout(abort)
   }
 }
 
