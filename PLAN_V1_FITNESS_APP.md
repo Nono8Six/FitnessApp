@@ -30,7 +30,7 @@ Une seule brique en cours. La suivante démarre uniquement après validation d�
 1. **Une brique = une fonction réelle.** À la fin, Arnaud peut l’utiliser lui-même dans l’app. Si ce n’est pas utilisable, ce n’est pas terminé.
 2. **Pas de maquette.** L’interface de `frontend/` est la base visuelle définitive. La brique 1 retire toutes les données de démonstration. La navigation n’affiche que les écrans réellement construits ; chaque brique ajoute le sien.
 3. **Petit et complet plutôt que large et partiel.** Une brique ne commence pas le travail de la suivante.
-4. **Une branche et une PR par brique**, avec ce qui a changé, comment le vérifier et les réserves.
+4. **Commits directs sur `main`**, avec ce qui a changé, comment le vérifier et les réserves ([AGENTS.md](AGENTS.md)).
 5. **Validation humaine.** Arnaud essaie la brique, puis la case est cochée. Sans validation, on corrige, on n’enchaîne pas.
 6. **Vérifications à chaque brique** : typecheck, build, tests des règles touchées, parcours réel dans Chrome (390 × 844 et 1440 × 900), absence d’erreur console. Captures de l’app réelle dans `docs/preuves/v1/brique-NN/AAAA-MM-JJ/`.
 7. **Le POC reste intact** et utilisable pour le diagnostic tant que la brique 10 n’est pas validée.
@@ -41,7 +41,7 @@ Une seule brique en cours. La suivante démarre uniquement après validation d�
 
 - **Livré** : ce que l’utilisateur peut faire à la fin, en une phrase.
 - **Travail** : la liste courte des tâches.
-- **Fait quand** : critères vérifiables, cochés dans la PR.
+- **Fait quand** : critères vérifiables, cochés dans le plan après validation.
 - **Pas dans cette brique** : ce qui est explicitement reporté.
 
 ## 2. Point de départ
