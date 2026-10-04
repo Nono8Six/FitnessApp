@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useId, useLayoutEffect, useMemo, useRef, useState, type KeyboardEvent, type PointerEvent } from 'react'
-import type { Block, Sample } from '../data/demo'
+import type { Block, Sample } from '../lib/types'
 import { clock } from '../lib/format'
 
 export function useWidth<T extends HTMLElement>() {

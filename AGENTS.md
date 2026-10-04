@@ -66,10 +66,11 @@ npm run build
 ## Cloud et matériel
 
 - Les dépendances peuvent être conservées par le snapshot. Les processus doivent être relancés dans chaque nouvelle machine. Publier un environnement ne synchronise pas automatiquement Git avec GitHub.
+- Application cloud : depuis la racine, `.venv/bin/python -m backend --port 4330` (ajouter `--simulation` pour les données simulées). Un seul processus. Sur Windows : `.\start-app.ps1`.
 - POC cloud : depuis la racine, `.venv/bin/python -m poc.server --simulate --host 127.0.0.1 --port 4318`. Un seul processus, sans `--reload` ni workers multiples.
-- Frontend cloud : depuis `frontend/`, `npm run dev -- --host 127.0.0.1 --port 5173 --strictPort`. Vérifier les réponses HTTP et les ressources chargées ; inspecter un serveur existant avant d'en lancer un autre.
+- Frontend cloud : depuis `frontend/`, `npm run dev -- --host 127.0.0.1 --port 5173 --strictPort` ; `/api` est relayé vers le serveur de l'application sur 4330. Vérifier les réponses HTTP et les ressources chargées ; inspecter un serveur existant avant d'en lancer un autre.
 - Les URL de boucle locale servent aux vérifications internes ; l'interface d'onboarding ne fournit pas de prévisualisation utilisateur pour ces URL.
-- Le frontend actuel et le POC sont séparés tant que la brique de socle n'est pas réalisée. Ne pas annoncer une intégration complète ou des fonctions réelles si l'écran utilise encore des données de démonstration.
+- L'interface est servie par `backend/` ; le POC reste séparé jusqu'à la brique 7. Aucune donnée de démonstration dans l'interface : un écran n'apparaît que lorsque sa brique le relie au serveur.
 - Préserver le POC pour le diagnostic conformément au plan. Aucun mouvement réel sans présence confirmée. Pas de reprise ou de répétition automatique de commande incertaine.
 - Les essais Bluetooth réels nécessitent le PC Windows proche du RUN500. Ne pas lancer `scripts/run_reception.py` pendant la configuration cloud. Les mesures simulées ne prouvent pas le fonctionnement du tapis.
 - Ne jamais publier de secrets, jetons, fichiers de credentials ou journaux privés dans le dépôt, un commit ou le chat.

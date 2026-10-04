@@ -28,7 +28,7 @@ Une seule brique en cours. La suivante démarre uniquement après validation d�
 ## 1. Méthode
 
 1. **Une brique = une fonction réelle.** À la fin, Arnaud peut l’utiliser lui-même dans l’app. Si ce n’est pas utilisable, ce n’est pas terminé.
-2. **Pas de maquette.** L’interface de `frontend/` est la base visuelle définitive. La brique 1 retire toutes les données de démonstration. La navigation n’affiche que les écrans réellement construits ; chaque brique ajoute le sien.
+2. **Pas de maquette.** L’interface de `frontend/` est la base visuelle définitive. La brique 1 retire toutes les données de démonstration. La navigation n’affiche que les écrans réellement construits ; chaque brique ajoute le sien en repartant de son écran de référence (commit `b9afbc0`, `frontend/src/features/`, et [captures](docs/preuves/v1/brique-00/2026-10-04/INDEX.md)).
 3. **Petit et complet plutôt que large et partiel.** Une brique ne commence pas le travail de la suivante.
 4. **Commits directs sur `main`**, avec ce qui a changé, comment le vérifier et les réserves ([AGENTS.md](AGENTS.md)).
 5. **Validation humaine.** Arnaud essaie la brique, puis la case est cochée. Sans validation, on corrige, on n’enchaîne pas.
@@ -137,6 +137,8 @@ Règles du coach :
 ## 6. Les briques
 
 ### Brique 1 · Socle
+
+**État :** livrée le 4 octobre 2026, en attente de validation d’Arnaud ([preuves](docs/preuves/v1/brique-01/2026-10-04/INDEX.md)).
 
 **Livré :** l’app s’ouvre sur le PC et le téléphone, servie par le PC, avec le vrai design et aucune donnée inventée.
 

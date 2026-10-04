@@ -1,3 +1,17 @@
+# Fitness
+
+## Application
+
+Dans PowerShell, depuis ce dossier :
+
+```powershell
+.\start-app.ps1              # PC : http://127.0.0.1:4330
+.\start-app.ps1 -Reseau      # affiche aussi l'adresse pour le téléphone (même Wi-Fi)
+.\start-app.ps1 -Simulation  # données séparées, signalées « Simulation » dans l'app
+```
+
+Le script prépare `.venv`, construit l'interface si une source a changé (Node.js LTS requis), puis démarre le serveur. Les données vivent dans `%LOCALAPPDATA%\FitnessApp\reel` (ou `\simulation`). L'application se construit brique par brique selon le [plan](PLAN_V1_FITNESS_APP.md), avec le [design](DESIGN.md).
+
 # RUN500 LAB — POC de connectivité et de commandes
 
 Console locale Windows pour vérifier le Domyos RUN500 avant de construire l'application d'entraînement. Le PC gère le Bluetooth ; le téléphone affiche la même console par le réseau local.
