@@ -1,148 +1,141 @@
 # Fitness · Référence de conception V1
 
-4 octobre 2026. **Maquettes livrées, validation visuelle d’Arnaud en attente.** Référence proposée pour l’Étape 01 uniquement. La case du plan reste ouverte.
+4 octobre 2026. **Refonte de l’Étape 01 : mode sombre, téléphone et PC.** Elle remplace la direction précédente (fond bleu nuit, cartes à bordure, textes explicatifs). Validation visuelle d’Arnaud en attente.
 
-- [Maquettes locales](docs/design/etape-01/index.html)
-- [Parcours, états et contrat des graphiques](docs/design/ETAPE_01_PARCOURS_UI_UX.md)
-- [Captures et vérifications Chrome](docs/preuves/v1/etape-01/2026-10-04/INDEX.md)
-- [Contrastes mesurés](docs/preuves/v1/etape-01/2026-10-04/CONTRASTES.md)
+- Maquettes interactives : [`frontend/`](frontend/README.md) (Vite, React, TypeScript, Tailwind)
+- Captures datées : [docs/preuves/v1/etape-01/2026-10-04-sombre](docs/preuves/v1/etape-01/2026-10-04-sombre/INDEX.md)
+- Parcours et états : [docs/design/ETAPE_01_PARCOURS_UI_UX.md](docs/design/ETAPE_01_PARCOURS_UI_UX.md)
 
-## 1. Intention et références
+## 1. Principes
 
-Arnaud et Ophélie préparent une séance à la maison, en lumière naturelle ou le soir ; pendant l’effort, le téléphone est posé à proximité et le regard doit retrouver une mesure et les commandes immédiatement. Les deux thèmes servent ces deux scènes, sur tous les écrans.
+1. **Le chiffre d’abord.** Chaque écran a une valeur dominante. Les libellés sont courts : un nom, une unité.
+2. **Aucun texte décoratif.** Pas d’accroche, de phrase de motivation, de mention « démonstration » ni de légende qui répète ce que montre l’écran. Un texte n’apparaît que s’il porte un fait (mesure, état, limite, source) ou une action.
+3. **Les états remplacent les avertissements permanents.** Le STOP physique n’est mentionné que lorsque le canal est perdu ou incertain. L’absence de cardio s’affiche dans les données du bilan, pas sur chaque écran.
+4. **Idiomes iOS natifs.** Grands titres repliables, listes groupées en retrait, feuilles modales, contrôle segmenté, interrupteurs, barre d’onglets translucide, activité en direct réduite au-dessus des onglets.
+5. **Deux formats seulement.** Téléphone, de 360 à 899 px, et PC à partir de 900 px. Aucune mise en page tablette dédiée : entre 600 et 899 px, la colonne téléphone est centrée et limitée à 680 px.
 
-La direction repose sur la typographie système, des alignements nets, une prochaine séance dominante, des chiffres utiles pendant l’effort et des graphiques progressifs. Les surfaces ne regroupent que des tâches cohérentes : programme, exploration des courbes, proposition du coach, aperçu d’édition. Les indicateurs secondaires, événements et historique utilisent des lignes et des séparateurs.
+Références observées : app Exercice d’Apple (minuteur jaune, boutons ronds Pause/Fin), Apple Fitness (anneaux, cartes noires, accent sportif), Apple Santé (en-tête du graphique remplacé par la valeur touchée), Forme pour la densité sombre. Ce sont des inspirations : aucune ressource Apple n’est redistribuée.
 
-Références officielles consultées le 4 octobre 2026 :
+## 2. Couleurs (sombre)
 
-| Référence | Observation | Décision propre à Fitness |
+Fond noir pur. La profondeur vient des surfaces grises superposées, sans bordure ni ombre de carte.
+
+| Jeton | Valeur | Usage |
 |---|---|---|
-| [Apple Fitness+](https://www.apple.com/fr/apple-fitness-plus/), visuels de mesures en direct et de résumé | Mesures très hiérarchisées, énergie des accents sportifs, progression personnelle | Une mesure dominante dans Direct ; une action de préparation ; aucune donnée cardio fictive pour reproduire un écran Apple |
-| [App Santé](https://support.apple.com/fr-fr/104997), résumé et points clés | Synthèse d’abord, accès à l’historique et au détail ensuite ; profil dans l’en-tête | Bilan en trois indicateurs puis courbes, événements, ressenti et exploration repliable |
-| [HIG Charts](https://developer.apple.com/design/human-interface-guidelines/charts) | Données dominantes, axes sobres, description de la question, cible tactile élargie, patterns en plus des couleurs | Mesurée continue, cible discontinue, pente sur un axe séparé dans le détail, curseur lié et résumé textuel |
-| [HIG Accessibility](https://developer.apple.com/design/human-interface-guidelines/accessibility) et [Dark Mode](https://developer.apple.com/design/human-interface-guidelines/dark-mode) | Références officielles pour les exigences d’accessibilité et d’apparence | Thèmes complets, état explicite, texte agrandissable, mouvements réduits. Nos mesures de contraste et dimensions sont consignées séparément |
+| `bg` | `#000000` | Fond de page, Direct |
+| `surface` | `#1C1C1E` | Cartes, listes groupées, feuilles |
+| `surface-2` | `#2C2C2E` | Listes dans une feuille, état pressé |
+| `surface-3` | `#3A3A3C` | Blocs à venir |
+| `fill-3` | `rgb(118 118 128 / .24)` | Boutons gris, champ de recherche, segmenté, stepper |
+| `label` | `#FFFFFF` | Texte principal, valeurs |
+| `label-2` | `rgb(235 235 245 / .60)` | Libellés, unités, sous-titres |
+| `label-3` | `rgb(235 235 245 / .30)` | Désactivé, valeur inconnue, placeholder |
+| `sep` | `rgb(84 84 88 / .65)` | Séparateurs 0,5 px |
 
-Les règles chiffrées ci-dessous sont des décisions du projet ; elles ne sont pas attribuées à Apple. Aucune police ou ressource propriétaire Apple n’est redistribuée. Les visuels officiels servent l’observation, pas les assets de l’application.
+Couleurs de rôle, une seule signification chacune :
 
-## 2. Thèmes et palette
+| Rôle | Valeur | Où |
+|---|---|---|
+| Accent / vitesse | `#B4F000` | Action principale, vitesse mesurée, blocs de course, anneau, onglet actif. Texte noir dessus. |
+| Durée | `#FFD60A` | Durée active (Direct, bilan), bouton Pause, marqueur de pause |
+| Pente | `#BF5AF2` | Valeur et courbe de pente |
+| Arrêt / erreur | `#FF453A` | Bouton Arrêter, canal perdu, commande inconnue, erreurs de saisie |
+| Alerte | `#FF9F0A` | Mesures anciennes, arrêt demandé, coupure de mesure dans les courbes |
+| Confirmé | `#30D158` | Connecté, interrupteurs, Reprendre, arrêt confirmé |
+| Comparaison | `#64D2FF` | Seconde séance dans le bilan |
+| Cible | blanc 55–60 %, tirets 4/4 | Consigne dans toutes les courbes |
+| Cardio (futur) | `#FF375F` | Réservé, inactif tant qu’aucune source valide n’existe |
 
-Clair / Sombre / Système dans l’en-tête de chaque écran. Système suit `prefers-color-scheme`, y compris si le système change pendant la consultation. Focus est un choix explicite, indépendant du thème. Il n’impose pas le sombre.
+Les blocs faciles (échauffement, récupération, retour au calme) sont gris `#636366`. Les blocs durs (course, allure continue) utilisent l’accent. La couleur n’est jamais le seul signal : chaque état a un libellé ou une forme (tirets, marqueur, bande).
 
-La maquette conserve les choix uniquement en mémoire. À l’implémentation : mémoriser `light | dark | system` par navigateur/appareil dans une préférence locale versionnée, avec repli sur Système ; garder la préférence de vitesse/allure par profil. Une fenêtre Focus n’altère pas la préférence persistante. Aucun stockage n’est créé à cette étape.
+## 3. Typographie
 
-| Rôle CSS | Clair | Sombre | Usage |
+Famille : `-apple-system, BlinkMacSystemFont, "SF Pro Text", "Inter Variable", system-ui`. Sur iPhone et Mac, SF Pro ; sur PC Windows, Inter variable embarquée localement (`@fontsource-variable/inter`), sans CDN. Les chiffres utilisent `ui-rounded` (SF Pro Rounded) quand il existe, toujours en chiffres tabulaires.
+
+Échelle iOS (px, interligne, approche) :
+
+| Style | Taille | Graisse | Usage |
 |---|---|---|---|
-| `bg` | `oklch(97.3% .003 260)` | `oklch(19.5% .016 260)` | Fond de page |
-| `surface` | `oklch(99.5% .002 260)` | `oklch(25% .022 260)` | Navigation, tâche, champs |
-| `layer` | `#e9edf3` | `#252e3b` | Regroupement, sélecteur, lecture ponctuelle |
-| `text` | `#18212e` | `#edf2f8` | Texte principal |
-| `muted` | `#536174` | `#a4b2c5` | Texte secondaire et unités |
-| `line` | `#d4dce6` | `#354253` | Séparateur non essentiel |
-| `control` | `#8090a3` | `#778ba4` | Contour essentiel de contrôle |
-| `accent`, `focus` | `#0b65c9` | `#83baff` | Action principale, sélection et focus |
-| `on-accent` | `#fdfdfe` | `#112137` | Texte sur l’action principale |
-| `tint` | `#e8f1fe` | `#203954` | Sélection, contexte et plage explorée |
-| `speed` | `#0967c8` | `#83baff` | Vitesse/allure mesurée |
-| `target` | `#526176` | `#b5c1d2` | Consigne en trait discontinu |
-| `incline` | `#7853b5` | `#be9afa` | Pente, repère de répétition |
-| `sport` | `#267341` | `#82d6a0` | Volume réalisé et objectif |
-| `error` | `#b52e3b` | `#ff9ca9` | Erreur et Arrêter |
-| `error-bg` | `#fff0f1` | `#442630` | Fond d’erreur |
-| `warning` | `#805800` | `#f0c56b` | État incertain ou ancien |
-| `warning-bg` | `#fff5d9` | `#3e321e` | Fond d’alerte |
-| `disabled` | `#e1e6ed` | `#2a3340` | Contrôle indisponible |
-| `disabled-text` | `#697687` | `#a0aec0` | Libellé indisponible |
-| `grid` | `#dce3ec` | `#374353` | Grille secondaire des graphiques |
+| Large title | 34 / 41, −0,025 em | 700 | Titre d’écran |
+| Title 1 | 28 / 34 | 700 | Nom de la prochaine séance |
+| Title 2 | 22 / 28 | 700 | — |
+| Title 3 | 20 / 25 | 600 | Titres de section, bloc en cours |
+| Headline | 17 / 22 | 600 | Boutons, titres de carte |
+| Body | 17 / 22 | 400 | Lignes de liste, texte du coach |
+| Subhead | 15 / 20 | 400 | Méta-données |
+| Footnote | 13 / 18 | 400 | Libellés de mesure, légendes |
+| Caption 2 | 11 / 13 | 500 | Axes de graphique |
 
-Arrêter utilise un texte clair sur rouge en clair ; en sombre, texte `#29141a` sur corail clair. Le cardio futur utilisera un rôle corail distinct du contrôle, uniquement avec une source valide, un symbole cœur et un libellé. Aucun rôle cardio n’est activé dans les maquettes.
+Chiffres du Direct (téléphone / PC) : vitesse 104 / 168 px, graisse 700, approche −0,045 em. Durée 40 / 56 px, en jaune. Mesures secondaires 30 / 36 px. Unités en capitales, 14–30 px, `label-2`.
 
-Contrastes : 4,5:1 pour le texte courant, 3:1 pour les grandes valeurs et éléments essentiels. Les 52 paires sémantiques du [rapport](docs/preuves/v1/etape-01/2026-10-04/CONTRASTES.md) passent ces seuils. Les séparateurs non essentiels sont volontairement discrets ; les contours des champs utilisent `control`. Cette mesure ne constitue pas une certification complète WCAG.
+Formats : virgule décimale, espace insécable avant `:` `?` `%` et à l’intérieur de « », durées `17:24`, allure `7′36″ /km`. Une valeur inconnue s’écrit `--` en `label-3`, jamais `0`.
 
-## 3. Typographie et chiffres
+## 4. Grille et formes
 
-Famille : `-apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif`. Sur le PC Windows, Segoe UI ; sur les appareils Apple, police système native. Aucun téléchargement de police.
+- Marges : 16 px sur téléphone, 40 px sur PC. Contenu limité à 1180 px sur PC.
+- Espacement par pas de 4 px. Entre sections : 28 à 36 px ; à l’intérieur d’une carte : 16 à 20 px.
+- Rayons : carte 22 px, liste groupée 12 px, bouton 14 px (52 px de haut), bouton moyen 12 px (44 px), segmenté 9 px, feuille 14 px.
+- Séparateurs de liste : 0,5 px en retrait, commençant après l’icône.
+- Cibles tactiles : au moins 44 × 44 px. Pause et Arrêter : cercles de 68 px.
 
-| Rôle | PC | Téléphone | Poids et règle |
-|---|---:|---:|---|
-| Texte courant | 16 px | 16 px ; prose compacte 15 px | 400, interligne 1,5 |
-| Bouton | 16 px | 16 px | 650, interligne 1,35 |
-| Légende / unité | 13–15 px | 12–14 px | 400–600, jamais seule pour porter un état critique |
-| Titre de page | 36 px | 32 px | 720, interligne 1,15, approche −1 à −1,3 px |
-| Titre de section | 23 px | 23 px | 680, interligne 1,25 |
-| Titre de programme | 34 px | 30 px | 680, interligne 1,16 |
-| Mesure Direct | 104 px ; 120 à ≥1600 | 76 px ; 64 en paysage | 650, chiffres tabulaires, unité 17–24 px |
-| Mesures secondaires Direct | 34 px | 28 px ; 24 en paysage | 650, chiffres tabulaires |
-| Valeurs du bilan | 38 px | 29 px | 650 |
+## 5. Navigation
 
-Les valeurs ne changent pas de largeur à chaque actualisation. Virgule française, espace avant l’unité ; durées `17:24`, vitesse `7,9 km/h`, pente `1,0 %`, allure `7′36″ /km`. Une mesure indisponible est `—` accompagnée de « actuelle inconnue » ; la dernière valeur n’est conservée qu’avec son âge. Distance affichée par pas compatibles avec la source (10 m observés dans le POC), sans prétendre à une calibration.
+| | Téléphone | PC |
+|---|---|---|
+| Principale | Barre d’onglets translucide : Aujourd’hui, Séances, Historique, Coach | Barre latérale de 248 px : les mêmes onglets plus Direct |
+| Profil | Avatar à droite du grand titre, puis feuille de choix | Bas de la barre latérale |
+| Séance en cours | Capsule « activité en direct » au-dessus des onglets : bloc, durée, vitesse, Pause | Carte compacte dans la barre latérale ; point vert animé sur Direct |
+| Direct | Plein écran, sans onglets ; chevron pour réduire | Plein écran ; mesures à gauche, bloc et courbes à droite, commandes sous les mesures |
+| En-tête | Grand titre qui se replie en barre floutée au défilement | Identique, sans avatar |
 
-Une seule grande mesure dans Direct. Le reste soutient sa lecture. Pas de score physiologique, de calories décoratives, de faux cardio ou de records sans méthode.
+## 6. Composants
 
-## 4. Grille, dimensions et responsive
-
-Espacements : 4 / 8 / 12 / 16 / 20 / 24 / 32 / 40 / 48 / 56 px. Base 4 px, densité ajustée à la tâche. La dimension 20 px sert notamment les marges téléphone.
-
-| Zone | PC | Téléphone portrait | Direct paysage |
-|---|---|---|---|
-| Navigation | Colonne 216 px ; 176 entre 761–1190 | Barre inférieure, 4 destinations, min. 74 px et safe area | Aucune navigation inférieure pendant l’effort |
-| En-tête | 84 px ; 64 dans Direct | 72 px ; 64 dans Direct | 52 px, profil et thème visibles |
-| Contenu | Maximum 1320 px, marge 48 ; 28 sur PC compact | Marge 20 px, une colonne | Marges 24 px, deux colonnes |
-| Aujourd’hui | Programme dominant et semaine à droite | Programme, objectif, historique en séquence | Disposition portrait générale hors Direct |
-| Détail | Courbes 65 %, ressenti/analyse 35 % | Bilan puis courbes, événements, ressenti et analyse | Défilement normal |
-| Coach | Conversation 60 %, proposition 40 % | Conversation et proposition en séquence | Défilement normal |
-| Éditeur | Blocs et aperçu latéral, aperçu sticky | Groupes de champs à toucher, aperçu ensuite | Défilement normal |
-| Direct | Mesure et bloc côte à côte, mesures secondaires puis courbe | Mesure, bloc, indicateurs, courbe, commandes fixes | Mesure/bloc à gauche ; indicateurs/progression/courbe à droite |
-
-Rupture principale : 760 px. Direct paysage : largeur 650–960 px et hauteur ≤500 px. À 1024 × 768, garder la navigation compacte. À 1920 × 1080, limiter la largeur de lecture ; ne pas étirer toutes les lignes.
-
-Arrondis : 20 px programme PC, 18 téléphone ; 16 px tâches analytiques ; 11 px boutons ; 9 px champs ; 6–8 px sélecteurs et repères. Bordure 1 px, aucune ombre de panneau ; très légère ombre du segment sélectionné seulement. Aucun dégradé ou flou décoratif.
-
-Les contenus longs reviennent à la ligne ; aucun titre de séance ne se réduit à une ellipse pendant l’effort. La page défile verticalement. Ne pas masquer une erreur par `overflow:hidden`. Les graphiques adaptent leur viewBox à leur largeur réelle : les libellés gardent 12 px et ne deviennent pas minuscules sur mobile.
-
-## 5. Navigation et profils
-
-PC : Aujourd’hui, Séances, Direct, Historique, Coach. Dans ces maquettes, Séances ouvre l’éditeur et Historique ouvre le détail de référence. La bibliothèque, la liste d’historique et les réglages complets restent décrits dans les parcours, hors des cinq écrans demandés.
-
-Téléphone : Aujourd’hui, Séances, Historique, Coach. Accès au Direct via la préparation ; Focus reste volontaire. Profil et apparence restent en haut. Dans la V1, le profil ouvrira également les réglages. Le sélecteur de profil n’est pas une authentification.
-
-Profil courant affiché en toutes lettres, même sur téléphone. La séance en cours affiche son profil d’origine dans son en-tête ; ce profil reste inchangé si l’on sélectionne l’autre profil de consultation. Le détail conserve l’attribution de la séance. Le contexte du coach est renouvelé lors d’un changement de profil, avec les sources du seul profil choisi.
-
-## 6. Composants et commandes
-
-- Bouton standard min. 44 px de hauteur, nom visible et accessible. Icônes vectorielles de 22 px, trait cohérent de 1,8 px. Icônes décoratives masquées aux lecteurs d’écran.
-- Pause et Arrêter : min. 58 px en portrait/PC, 56 px en paysage ; largeur min. 44 px, cibles très larges. Ordre stable : Pause à gauche, Arrêter à droite. Fixées en bas du Direct, y compris en état déconnecté ou commande inconnue. L’espace de contenu réserve leur hauteur.
-- Un arrêt demandé ne s’affiche pas comme un arrêt confirmé. Arrêter est immédiat, sans boîte de confirmation préalable ; la reprise demande une confirmation de présence et des conditions réelles à recevoir ultérieurement.
-- Champs min. 46 px, libellé permanent, unité dessous. Bordure essentielle contrastée ; erreur locale avec texte, contour et attribut `aria-invalid`. Enregistrement désactivé quand les blocs sont invalides.
-- Sélecteur segmenté : min. 44 px, état sélectionné par fond, texte et `aria-pressed`.
-- Accordéon : en-tête min. 44 px, signe +/− et contrôle natif. Les informations critiques restent visibles sans ouverture.
-- État vide : une phrase concrète et une action utile. Chargement : emplacement stable et libellé ; aucune animation nécessaire.
-- Alerte : symbole, titre/phrase compréhensible, état explicite. Rouge pour erreur, ambre pour inconnu/ancien, texte pour toutes les distinctions.
-- Désactivé : style atténué et attribut natif `disabled`, avec cause visible à proximité. Focus : anneau 3 px, décalage 3 px. Navigation clavier et champs natifs.
+- **Boutons.** Principal : accent plein avec texte noir. Gris : `fill-3`. Désactivé : `fill-3` avec texte `label-3`, jamais un accent atténué. Effet de pression : échelle 0,97.
+- **Liste groupée.** Lignes de 44 px minimum ; icône carrée de 32 px teintée à 18 % ; valeur à droite en `label-2` ; chevron `label-3`.
+- **Feuille.** Remonte du bas avec poignée sur téléphone, centrée à 480 px sur PC. Annuler à gauche, action à droite ou bouton principal en bas. Échap ferme.
+- **Segmenté.** Piste `fill-3`, curseur `#636366` qui glisse (300 ms).
+- **Interrupteur.** 51 × 31 px, vert quand actif.
+- **Stepper.** Valeur saisissable au clavier, avec ses boutons − / + de 44 px. Les erreurs s’affichent en rouge sous la ligne. Enregistrer est désactivé tant qu’une valeur est hors limites.
+- **Anneau.** Trait de 11 px, piste à 22 %, extrémités arrondies.
+- **Bandeau d’état.** Fond de la couleur de rôle à 15 %, icône et une phrase.
 
 ## 7. Graphiques
 
-Voir le contrat G01–G10 dans les [parcours](docs/design/ETAPE_01_PARCOURS_UI_UX.md). La maquette utilise du SVG local pour figer le langage visuel ; elle ne crée pas une seconde bibliothèque analytique de production. ECharts reste la proposition du plan pour l’étape future dédiée.
+SVG maison pour les maquettes. ECharts reste prévu par le plan pour la production, avec ce même langage visuel.
 
-Traits : mesure 2,7 px continue ; cible 1,8 px, tirets 6/5 ; pente 2 px ; curseur 1 px pointillé. Repères d’interruption : bande neutre avec contour discontinu, trou réel dans les séries mesurées ; cible conservée comme consigne. Aucun lissage et aucune courbe à travers les données absentes. La pause est un événement de durée affichée, même sur un axe de temps actif.
+- Axe Y à droite, grille horizontale de 0,5 px, repères temporels en pointillé ; au plus 4 repères sur téléphone et 6 sur PC.
+- Mesure : trait continu de 2 à 2,5 px, aire en dégradé accent de 28 % à 0. Cible : escalier blanc pointillé. Pente : escalier violet dans une bande séparée, avec sa propre échelle, sous la vitesse.
+- Données absentes : trou réel dans la courbe et bande orange à 20 %. Aucune interpolation.
+- Pause : ligne jaune pointillée avec un repère en haut.
+- Lecture : toucher ou survoler pour placer un curseur commun à la vitesse et à la pente ; l’en-tête affiche alors temps, valeur, cible et comparaison, comme dans Apple Santé. Les flèches du clavier déplacent le curseur, Échap le retire.
+- Direct : fenêtre de 1 min, 5 min ou toute la séance ; point de mesure pulsé en bout de courbe.
+- Profil de programme : barres dont la largeur représente la durée et la hauteur la vitesse. Dans le Direct, la partie réalisée est colorée et le reste en gris foncé.
 
-Axes de vitesse 0 / 5 / 10 km/h dans le scénario de référence. Pente sur axe 0 / 1 %, unités propres ; les plages de production s’adapteront aux données sans déformer une comparaison. Volume et distributions partent de zéro. Allure min/km orientée de façon explicite, labels minutes/secondes. Maximum quatre repères temporels sur une vue mobile compacte.
+## 8. Mouvement
 
-Dans Direct, la pente compacte constitue une bande inférieure du graphique et n’utilise pas l’échelle km/h ; le détail fournit la lecture exacte sur l’axe %. Dans la V1, les courbes du Direct seront dans des bandes liées avec unités explicites dès qu’elles deviennent explorables.
+Courbe `cubic-bezier(.32, .72, 0, 1)`.
 
-Curseur commun à la vitesse et à la pente. Sur téléphone : toucher une période et lire le panneau textuel sous le graphique ; aucune infobulle flottante sous le doigt. Slider natif utilisable au clavier et au toucher. Zoom et plage se partagent entre les séries ; réinitialisation visible. Résumé : durée couverte, distance compatible, moyenne, pente, qualité et événements.
+| Élément | Durée |
+|---|---|
+| Entrée d’écran (fondu + 8 px) | 420 ms |
+| Feuille | 460 ms |
+| Segmenté, interrupteur | 300 ms |
+| Anneau | 700 ms |
+| Pression | 160 ms |
 
-G04 : comparaison par séries identifiées et motifs de trait distincts ; n’aligner sur distance que si elle est disponible et cohérente. Les équivalents textuels indiquent valeurs, sources, couverture et exclusions. Une source absente ne produit ni zéro ni segment artificiel.
+Le compte à rebours 3-2-1 a un effet « pop ». Pause et Arrêter agissent immédiatement, sans animation préalable. Avec `prefers-reduced-motion`, toutes les animations sont ramenées à 1 ms.
 
-## 8. Mouvement et textes
+## 9. Règles de texte
 
-Transitions de fond/couleur 160 ms, sans transition de géométrie. Le focus clavier, Pause et Arrêter sont traités immédiatement. Le changement d’écran ne lance aucune séquence décorative. Respect de `prefers-reduced-motion: reduce` : suppression des transitions et animations, sans perte d’information.
+Textes conservés, car chacun porte un fait ou une action :
 
-Textes à réutiliser : « Préparer la séance », « Commencer », « Pause », « Arrêter », « Arrêt demandé, effet à vérifier », « Mesures anciennes », « Résultat de commande inconnu », « Cardio indisponible », « Enregistrer le brouillon », « Comment c’était ? ». Les maquettes ajoutent « démonstration » pour éviter toute confusion ; les écrans de la V1 utiliseront la provenance réelle.
+« Commencer », « Avant de démarrer », « Clé de sécurité en place », « Bande libre », « Démarrer », « Pause », « Reprendre », « Arrêter », « Arrêt demandé », « Arrêt confirmé », « Aucune mesure depuis N s », « Dernière mesure X km/h, il y a N s », « Tapis déconnecté. État de la bande inconnu : utilisez le STOP physique. », « Résultat de la dernière commande inconnu. Utilisez le STOP physique, puis reconnectez. », « Coach hors ligne. Séances et historique restent disponibles. »
 
-Le coach explique à partir des faits disponibles, cite ses sources et propose des blocs modifiables. Il n’exécute jamais le démarrage. L’utilisateur peut ignorer le ressenti ; ni questionnaire long obligatoire, ni culpabilisation pour un objectif non atteint.
+Textes supprimés de la version précédente : sous-titres marketing (« Une séance pour gagner en régularité »), « Maquette · données fictives », « mesure distincte de la cible », « Commandes simulées · le STOP physique reste accessible », les identifiants G01–G10 dans l’interface, les signatures de barre latérale, les rappels « facultatif » et toute phrase qui répète une valeur déjà affichée.
 
-## 9. Frontière de cette référence
+## 10. Limites de cette référence
 
-Cette livraison contient des fichiers statiques et un serveur HTTP de consultation sur `127.0.0.1:4321`. Pas de React, de nouvelle API, d’OAuth, de SQLite ou d’intégration du contrôleur. Les valeurs 5–8 km/h et le programme de 30 min illustrent la V1 future : ils ne modifient pas les limites actuelles du POC et ne constituent aucune réception matérielle.
-
-La direction sera figée après réception visuelle humaine. Tests sur appareils physiques, Safari/iPhone, Android, regard à distance pendant l’effort et réception matérielle restent ouverts. Ne pas entreprendre l’Étape 02 ou 03 sur la seule base de cette référence.
+- Mode sombre uniquement. Les jetons sont regroupés pour qu’un thème clair puisse être ajouté sans toucher aux composants.
+- Données synthétiques ([frontend/src/data/demo.ts](frontend/src/data/demo.ts)). Rien ne se connecte au tapis, au POC ni à un service IA.
+- « Voir le bilan » en fin de séance ouvre le bilan de référence du 30 septembre, pas la séance simulée.
+- Pas encore vérifié sur iPhone physique, Safari iOS, Android ni pendant un effort réel.

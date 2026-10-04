@@ -449,8 +449,8 @@ Clôture : aucune fonction inconnue n'est utilisée comme prérequis acquis ; le
 
 ### Étape 01 : concevoir les parcours et figer le design
 
-**Suivi au 4 octobre 2026 : maquettes livrées, validation visuelle en attente.**
-Références : [DESIGN.md](DESIGN.md), [parcours et états](docs/design/ETAPE_01_PARCOURS_UI_UX.md), [maquettes](docs/design/etape-01/index.html), [captures et vérifications](docs/preuves/v1/etape-01/2026-10-04/INDEX.md).
+**Suivi au 4 octobre 2026 : refonte sombre livrée (téléphone et PC), validation visuelle en attente.** La première direction a été remplacée.
+Références : [DESIGN.md](DESIGN.md), [parcours et états](docs/design/ETAPE_01_PARCOURS_UI_UX.md), [maquettes interactives](frontend/README.md), [captures](docs/preuves/v1/etape-01/2026-10-04-sombre/INDEX.md).
 La case Étape 01 reste non cochée jusqu’à réception humaine de la direction visuelle. Aucune Étape 02 ou 03 engagée.
 
 **But :** rendre la direction Apple concrète avant la construction des écrans.
