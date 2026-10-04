@@ -1,3 +1,5 @@
+import base64
+import hashlib
 from datetime import datetime, timezone
 from pathlib import Path
 from urllib.parse import urlparse
@@ -6,6 +8,7 @@ from fastapi import FastAPI, Request
 from fastapi.responses import FileResponse, HTMLResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from starlette.middleware.trustedhost import TrustedHostMiddleware
+from starlette.middleware.gzip import GZipMiddleware
 
 from poc.server import local_addresses, phone_addresses
 
@@ -18,12 +21,16 @@ DIST = ROOT / "frontend" / "dist"
 CSP = ("default-src 'self'; script-src 'self'; style-src 'self'; connect-src 'self'; img-src 'self' data:; "
        "font-src 'self'; frame-ancestors 'none'; base-uri 'none'; form-action 'self'")
 
+MISSING_BUILD_STYLE = """body{margin:0;min-height:100vh;display:grid;place-items:center;background:#000;color:#fff;
+font:17px -apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;text-align:center}
+.title{font-weight:600}.hint{color:rgba(235,235,245,.6)}"""
+MISSING_BUILD_CSP = CSP.replace("style-src 'self'", "style-src 'self' 'sha256-" +
+                               base64.b64encode(hashlib.sha256(MISSING_BUILD_STYLE.encode()).digest()).decode() + "'")
 MISSING_BUILD = """<!doctype html><html lang="fr"><meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1"><title>Fitness</title>
-<body style="margin:0;min-height:100vh;display:grid;place-items:center;background:#000;color:#fff;
-font:17px -apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;text-align:center">
-<div><p style="font-weight:600">Interface non construite</p>
-<p style="color:rgba(235,235,245,.6)">Relancer <code>start-app.ps1</code> sur le PC.</p></div></body></html>"""
+<style>""" + MISSING_BUILD_STYLE + """</style><body>
+<div><p class="title">Interface non construite</p>
+<p class="hint">Relancer <code>start-app.ps1</code> sur le PC.</p></div></body></html>"""
 
 
 def create_app(*, simulation: bool = False, data_root: Path | None = None, dist: Path = DIST,
@@ -36,21 +43,24 @@ def create_app(*, simulation: bool = False, data_root: Path | None = None, dist:
     app.state.data_dir = data
     app.state.phone_addresses = addresses
     app.add_middleware(TrustedHostMiddleware, allowed_hosts=["localhost", "127.0.0.1", "[::1]", *local_addresses()])
+    app.add_middleware(GZipMiddleware, minimum_size=1000)
 
     @app.middleware("http")
     async def protect(request: Request, call_next):
+        response = None
         if request.url.path.startswith("/api/"):
             origin = request.headers.get("origin")
             if origin and urlparse(origin).netloc != request.headers.get("host"):
-                return JSONResponse({"detail": "Origine non autorisée"}, status_code=403)
-        response = await call_next(request)
+                response = JSONResponse({"detail": "Origine non autorisée"}, status_code=403)
+        if response is None:
+            response = await call_next(request)
         if request.url.path.startswith("/assets/") and response.status_code == 200:
             response.headers["Cache-Control"] = "public, max-age=31536000, immutable"
         else:
             response.headers["Cache-Control"] = "no-store"
         response.headers["X-Content-Type-Options"] = "nosniff"
         response.headers["Referrer-Policy"] = "no-referrer"
-        response.headers["Content-Security-Policy"] = CSP
+        response.headers.setdefault("Content-Security-Policy", CSP)
         return response
 
     @app.get("/api/health")
@@ -73,14 +83,17 @@ def create_app(*, simulation: bool = False, data_root: Path | None = None, dist:
     async def index():
         page = dist / "index.html"
         if not page.is_file():
-            return HTMLResponse(MISSING_BUILD, status_code=503)
+            return HTMLResponse(MISSING_BUILD, status_code=503, headers={"Content-Security-Policy": MISSING_BUILD_CSP})
         return FileResponse(page)
 
     if (dist / "assets").is_dir():
         app.mount("/assets", StaticFiles(directory=dist / "assets"), name="assets")
 
     # Fichiers publics à la racine du build (icône), servis par nom exact uniquement.
-    public = {p.name: p for p in dist.iterdir() if p.is_file() and p.name != "index.html"} if dist.is_dir() else {}
+    public = {
+        p.name: p for p in dist.iterdir()
+        if p.is_file() and p.name != "index.html" and not p.name.startswith(".")
+    } if dist.is_dir() else {}
 
     @app.api_route("/{name}", methods=["GET", "HEAD"], include_in_schema=False)
     async def root_file(name: str):

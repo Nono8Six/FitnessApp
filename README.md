@@ -2,15 +2,24 @@
 
 ## Application
 
+**Sur Windows : double-cliquer sur `Lancer Fitness.cmd`.** Une fenêtre démarre le serveur et le navigateur s'ouvre dès qu'il est prêt. Garder cette fenêtre ouverte ; `Ctrl+C` arrête le serveur.
+
 Dans PowerShell, depuis ce dossier :
 
 ```powershell
 .\start-app.ps1              # PC : http://127.0.0.1:4330
 .\start-app.ps1 -Reseau      # affiche aussi l'adresse pour le téléphone (même Wi-Fi)
 .\start-app.ps1 -Simulation  # données séparées, signalées « Simulation » dans l'app
+.\start-app.ps1 -Ouvrir      # ouvre aussi le navigateur automatiquement
 ```
 
-Le script prépare `.venv`, construit l'interface si une source a changé (Node.js LTS requis), puis démarre le serveur. Les données vivent dans `%LOCALAPPDATA%\FitnessApp\reel` (ou `\simulation`). L'application se construit brique par brique selon le [plan](PLAN_V1_FITNESS_APP.md), avec le [design](DESIGN.md).
+Le premier lancement nécessite Python 3.12 et Node.js LTS : le script prépare `.venv`, installe les dépendances et construit l'interface. Ensuite, il réutilise les dépendances et le build inchangés ; aucun téléchargement n'est nécessaire. Les empreintes des fichiers détectent aussi une suppression ou un changement avec un ancien horodatage. Les sources, manifests et lockfiles restent intacts.
+
+Pour ouvrir aussi l'application sur le téléphone : `.\start-app.ps1 -Reseau -Ouvrir`, puis saisir l'adresse « Téléphone » affichée dans la fenêtre (même Wi-Fi). Le pare-feu Windows doit autoriser ce serveur sur le réseau privé. Un téléphone physique reste à recevoir.
+
+Si le port 4330 est déjà utilisé, le script affiche une erreur explicite : ouvrir l'app déjà lancée ou arrêter sa fenêtre avec `Ctrl+C`. `-Port 4331` permet de choisir un autre port. `-Reconstruire` force une nouvelle construction de l'interface.
+
+Les données vivent dans `%LOCALAPPDATA%\FitnessApp\reel` (ou `\simulation`). Le POC reste sur son port et son lanceur distincts. L'application se construit brique par brique selon le [plan](PLAN_V1_FITNESS_APP.md), avec le [design](DESIGN.md).
 
 # RUN500 LAB — POC de connectivité et de commandes
 

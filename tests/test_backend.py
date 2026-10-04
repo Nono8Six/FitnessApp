@@ -20,6 +20,7 @@ class BackendTests(unittest.TestCase):
         (self.dist / "index.html").write_text("<!doctype html><title>Fitness</title>", encoding="utf-8")
         (self.dist / "assets" / "index-abc.js").write_text("console.log(1)", encoding="utf-8")
         (self.dist / "icon.svg").write_text("<svg/>", encoding="utf-8")
+        (self.dist / ".fitness-source.sha256").write_text("empreinte locale", encoding="utf-8")
 
     def tearDown(self):
         self.tmp.cleanup()
@@ -57,7 +58,7 @@ class BackendTests(unittest.TestCase):
 
     def test_only_build_files_are_served(self):
         client = self.client()
-        for path in ("/assets/../index.html", "/assets/absent.js", "/requirements.txt", "/..%2Fbackend%2Fapp.py"):
+        for path in ("/assets/../index.html", "/assets/absent.js", "/requirements.txt", "/..%2Fbackend%2Fapp.py", "/.fitness-source.sha256"):
             with self.subTest(path=path):
                 self.assertIn(client.get(path).status_code, (404,))
 
@@ -66,6 +67,7 @@ class BackendTests(unittest.TestCase):
         response = self.client().get("/")
         self.assertEqual(response.status_code, 503)
         self.assertIn("Interface non construite", response.text)
+        self.assertIn("style-src 'self' 'sha256-", response.headers["content-security-policy"])
         self.assertFalse(self.client().get("/api/health").json()["interface"])
 
     def test_unknown_api_route_is_json_404(self):
@@ -75,7 +77,9 @@ class BackendTests(unittest.TestCase):
 
     def test_foreign_origin_and_host_are_rejected(self):
         client = self.client()
-        self.assertEqual(client.get("/api/health", headers={"origin": "http://exemple.com"}).status_code, 403)
+        refused = client.get("/api/health", headers={"origin": "http://exemple.com"})
+        self.assertEqual(refused.status_code, 403)
+        self.assertEqual(refused.headers["cache-control"], "no-store")
         self.assertEqual(client.get("/api/health", headers={"origin": "http://127.0.0.1:4330"}).status_code, 200)
         self.assertEqual(client.get("/api/health", headers={"host": "exemple.com"}).status_code, 400)
 

@@ -1,6 +1,8 @@
 # Brique 1 · Socle : preuves
 
-4 octobre 2026. Environnement de vérification : conteneur Linux, Python 3.11, Node 22, Chromium 1194 headless, PowerShell 7.4. **Non vérifié ici :** Windows réel, `start-app.ps1` exécuté par Windows PowerShell 5.1, téléphone physique sur le Wi-Fi. Ces trois points sont à recevoir par Arnaud.
+4 octobre 2026. Livraison initiale vérifiée dans un conteneur Linux, Python 3.11, Node 22, Chromium 1194 headless, PowerShell 7.4. À ce moment, Windows réel, Windows PowerShell 5.1 et le téléphone physique sur le Wi-Fi n’avaient pas été vérifiés.
+
+Un [audit complémentaire sur Windows](AUDIT_WINDOWS.md) a depuis vérifié le lanceur, le double-clic, les relances et Chrome sur ce PC. Le téléphone physique sur le Wi-Fi et la validation d’Arnaud restent attendus.
 
 ## Captures (serveur réel, build de production)
 

@@ -1,4 +1,8 @@
 import argparse
+import logging
+import threading
+import time
+import webbrowser
 
 import uvicorn
 
@@ -7,12 +11,31 @@ from .app import create_app
 PORT = 4330
 
 
+def open_when_ready(server: uvicorn.Server, url: str) -> None:
+    """Le navigateur n'est ouvert qu'après l'écoute effective du serveur."""
+    for _ in range(200):
+        if server.should_exit:
+            return
+        if server.started:
+            try:
+                if webbrowser.open(url):
+                    return
+            except OSError as exc:
+                logging.warning("Ouverture du navigateur impossible : %s", exc)
+            break
+        time.sleep(0.05)
+    logging.warning("Ouvrir l'application dans le navigateur : %s", url)
+
+
 def main():
     parser = argparse.ArgumentParser(description="Fitness : application locale")
     parser.add_argument("--host", default="127.0.0.1")
     parser.add_argument("--port", type=int, default=PORT)
     parser.add_argument("--simulation", action="store_true", help="Données séparées des vraies séances")
+    parser.add_argument("--open-browser", action="store_true", help="Ouvrir l'application sur le PC")
     args = parser.parse_args()
+    if not 1 <= args.port <= 65535:
+        parser.error("Le port doit être compris entre 1 et 65535.")
     network = args.host not in ("127.0.0.1", "localhost", "::1")
     app = create_app(simulation=args.simulation, network_enabled=network)
 
@@ -26,7 +49,10 @@ def main():
             print("Adresse Wi-Fi du PC non déterminée : vérifier l'adresse IPv4 dans Windows.")
     print("Arrêt : Ctrl+C.\n", flush=True)
     # Un seul processus : il possédera le Bluetooth du tapis (brique 7).
-    uvicorn.run(app, host=args.host, port=args.port, workers=1, log_level="warning")
+    server = uvicorn.Server(uvicorn.Config(app, host=args.host, port=args.port, workers=1, log_level="warning"))
+    if args.open_browser:
+        threading.Thread(target=open_when_ready, args=(server, f"http://127.0.0.1:{args.port}"), daemon=True).start()
+    server.run()
 
 
 if __name__ == "__main__":

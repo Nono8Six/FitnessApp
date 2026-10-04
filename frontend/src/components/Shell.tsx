@@ -28,7 +28,7 @@ function useScrolled(threshold: number) {
 
 function SimulationBadge() {
   const server = useServer()
-  if (server.status !== 'ok' || server.health.mode !== 'simulation') return null
+  if (server.status === 'loading' || server.health?.mode !== 'simulation') return null
   return (
     <span className="rounded-full bg-orange/15 px-2 py-px text-caption font-semibold text-orange" role="status">
       Simulation
@@ -39,6 +39,9 @@ function SimulationBadge() {
 function ServerBanner() {
   const server = useServer()
   const [retrying, setRetrying] = useState(false)
+  if (server.status === 'loading') {
+    return <div role="status" className="mb-6 text-subhead text-label-2">Connexion au serveur…</div>
+  }
   if (server.status !== 'down') return null
   const retry = async () => {
     setRetrying(true)
@@ -48,9 +51,9 @@ function ServerBanner() {
   return (
     <div role="alert" className="animate-fade mb-6 flex items-center gap-3 rounded-[14px] bg-red/15 py-2.5 pr-2 pl-4 text-red">
       <WifiOff size={18} className="shrink-0" />
-      <span className="flex-1 text-subhead font-medium">Serveur du PC injoignable</span>
+      <span className="flex-1 text-subhead font-medium">{server.message}</span>
       <button onClick={retry} disabled={retrying} aria-label="Réessayer"
-        className="pressable grid size-9 shrink-0 place-items-center rounded-full bg-red/15">
+        className="pressable grid size-11 shrink-0 place-items-center rounded-full bg-red/15">
         <RefreshCw size={17} strokeWidth={2.4} className={cx(retrying && 'animate-spin')} />
       </button>
     </div>

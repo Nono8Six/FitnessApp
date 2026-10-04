@@ -140,6 +140,8 @@ Règles du coach :
 
 **État :** livrée le 4 octobre 2026, en attente de validation d’Arnaud ([preuves](docs/preuves/v1/brique-01/2026-10-04/INDEX.md)).
 
+Audit complémentaire sur Windows le 4 octobre 2026 : lancement par double-clic, relance sans reconstruction, accès par l’IP réseau et états de panne vérifiés ; corrections et mesures dans [l’audit Windows](docs/preuves/v1/brique-01/2026-10-04/AUDIT_WINDOWS.md). L’essai sur téléphone physique et la validation d’Arnaud restent attendus ; aucune brique suivante n’est engagée.
+
 **Livré :** l’app s’ouvre sur le PC et le téléphone, servie par le PC, avec le vrai design et aucune donnée inventée.
 
 **Travail :**
