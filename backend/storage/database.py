@@ -30,8 +30,16 @@ class Database:
 
     @contextmanager
     def transaction(self) -> Iterator[Session]:
-        """Une transaction : validée à la sortie, annulée sur exception."""
+        """Une transaction de lecture : validée à la sortie, annulée sur exception."""
         with self._sessions() as session, session.begin():
+            yield session
+
+    @contextmanager
+    def write(self) -> Iterator[Session]:
+        """Une transaction d'écriture : le verrou est pris dès le début (BEGIN IMMEDIATE),
+        donc ce qui est lu pour vérifier une règle ne peut pas changer avant l'écriture."""
+        with self._sessions() as session, session.begin():
+            session.connection(execution_options={"immediate": True})
             yield session
 
     def close(self) -> None:
@@ -57,7 +65,7 @@ def create_db_engine(path: Path) -> Engine:
 
     @event.listens_for(engine, "begin")
     def begin(connection):
-        connection.exec_driver_sql("BEGIN")
+        connection.exec_driver_sql("BEGIN IMMEDIATE" if connection.get_execution_options().get("immediate") else "BEGIN")
 
     return engine
 

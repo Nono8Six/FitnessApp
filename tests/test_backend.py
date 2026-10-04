@@ -42,7 +42,7 @@ class BackendTests(unittest.TestCase):
         self.assertEqual(Path(body["data_dir"]), self.data_root / "reel")
         self.assertTrue(body["interface"])
         self.assertFalse(body["network"]["enabled"])
-        self.assertEqual(body["schema"], "0001")
+        self.assertEqual(body["schema"], "0002")
 
     def test_simulation_data_is_separate(self):
         body = self.client(simulation=True).get("/api/health").json()

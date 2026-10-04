@@ -62,7 +62,7 @@ def create_app(*, simulation: bool = False, data_root: Path | None = None, dist:
     # Migrations puis profils par défaut, avant d'accepter la moindre requête.
     database = open_database(data)
     try:
-        with database.transaction() as session:
+        with database.write() as session:
             ensure_default_profiles(session)
     except Exception as exc:
         database.close()

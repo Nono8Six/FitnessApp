@@ -1,6 +1,6 @@
 """Modèles SQLAlchemy. Toute évolution passe par une migration dans versions/."""
 
-from sqlalchemy import CheckConstraint, MetaData, String
+from sqlalchemy import CheckConstraint, Index, MetaData, String, text
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 
 # Noms de contraintes stables : les migrations SQLite par recopie de table (batch) en dépendent.
@@ -18,10 +18,14 @@ class Base(DeclarativeBase):
 
 
 class Profile(Base):
+    """Toute donnée propre à un profil y fait référence par une clé étrangère
+    `profile_id → profiles.id` avec ON DELETE CASCADE : supprimer le profil supprime ses données."""
+
     __tablename__ = "profiles"
     __table_args__ = (
         CheckConstraint("weekly_goal BETWEEN 1 AND 14", name="weekly_goal"),
         CheckConstraint("speed_unit IN ('kmh', 'pace')", name="speed_unit"),
+        Index("uq_profiles_name", text("name COLLATE NOCASE"), unique=True),
     )
 
     id: Mapped[str] = mapped_column(String(32), primary_key=True)

@@ -10,11 +10,13 @@ from fastapi.testclient import TestClient
 
 from backend.app import create_app
 from backend.config import StartupError, data_dir
+from alembic import command
+
 from backend.storage import DATABASE_FILE, StorageError, open_database
-from backend.storage.database import MIGRATIONS
+from backend.storage.database import MIGRATIONS, alembic_config, create_db_engine
 
 URL = "http://127.0.0.1:4330"
-HEAD = "0001"
+HEAD = "0002"
 
 
 class ProfileTests(unittest.TestCase):
@@ -115,7 +117,7 @@ class ProfileTests(unittest.TestCase):
         shutil.copytree(MIGRATIONS, broken, ignore=shutil.ignore_patterns("__pycache__", "*.py[co]"))
         (broken / "versions" / "0002_cassee.py").write_text(
             "from alembic import op\nimport sqlalchemy as sa\n"
-            "revision = '0002'\ndown_revision = '0001'\n"
+            f"revision = '9000'\ndown_revision = '{HEAD}'\n"
             "def upgrade():\n"
             "    op.create_table('essai', sa.Column('id', sa.Integer, primary_key=True))\n"
             "    op.execute('UPDATE profiles SET weekly_goal = 9')\n"
@@ -182,7 +184,10 @@ class ProfileTests(unittest.TestCase):
             "unité inconnue": {"speed_unit": "mph"},
             "unité en majuscules": {"speed_unit": "KMH"},
             "champ inconnu": {"weekly_goal": 4, "theme": "clair"},
-            "nom non modifiable": {"name": "Arnaud F."},
+            "nom vide": {"name": "   "},
+            "nom trop long": {"name": "x" * 41},
+            "nom avec contrôle": {"name": "Arn\naud"},
+            "nom non textuel": {"name": 3},
             "identifiant non modifiable": {"id": "autre"},
             "vide": {},
             "liste": [{"weekly_goal": 4}],
@@ -195,6 +200,113 @@ class ProfileTests(unittest.TestCase):
         invalid_json = client.patch("/api/profiles/arnaud", content=b"{weekly_goal: 4", headers={"content-type": "application/json"})
         self.assertEqual(invalid_json.status_code, 422)
         self.assertEqual(client.get("/api/profiles/arnaud").json(), before)
+
+    # ---------- Créer, renommer, supprimer ----------
+
+    def create(self, client, **body):
+        return client.post("/api/profiles", json=body)
+
+    def test_create_profile_with_defaults_or_values(self):
+        client = self.start()
+        created = self.create(client, name="  Léa  ")
+        self.assertEqual(created.status_code, 201)
+        body = created.json()
+        self.assertEqual((body["id"], body["name"], body["weekly_goal"], body["speed_unit"]), ("lea", "Léa", 3, "kmh"))
+        other = self.create(client, name="Tom", weekly_goal=5, speed_unit="pace").json()
+        self.assertEqual((other["id"], other["weekly_goal"], other["speed_unit"]), ("tom", 5, "pace"))
+        self.assertEqual([p["id"] for p in client.get("/api/profiles").json()], ["arnaud", "ophelie", "lea", "tom"])
+        client = self.restart()
+        self.assertEqual(client.get("/api/profiles/lea").json(), body)
+
+    def test_profile_ids_are_unique_and_stable(self):
+        client = self.start()
+        self.assertEqual(self.create(client, name="Léa").json()["id"], "lea")
+        self.assertEqual(self.create(client, name="Lea").json()["id"], "lea-2")
+        self.assertEqual(self.create(client, name="🏃").json()["id"], "profil")
+        renamed = client.patch("/api/profiles/lea", json={"name": "Léa B."})
+        self.assertEqual(renamed.status_code, 200)
+        self.assertEqual((renamed.json()["id"], renamed.json()["name"]), ("lea", "Léa B."))
+
+    def test_names_are_unique_ignoring_case(self):
+        client = self.start()
+        for name in ("Arnaud", "ARNAUD", " ophélie ", "OPHÉLIE"):
+            with self.subTest(name=name):
+                response = self.create(client, name=name)
+                self.assertEqual(response.status_code, 409)
+                self.assertIn("déjà", response.json()["detail"])
+        self.assertEqual(client.patch("/api/profiles/ophelie", json={"name": "arnaud"}).status_code, 409)
+        self.assertEqual(client.patch("/api/profiles/arnaud", json={"name": "ARNAUD"}).json()["name"], "ARNAUD")
+        self.assertEqual(len(client.get("/api/profiles").json()), 2)
+
+    def test_create_rejects_invalid_bodies(self):
+        client = self.start()
+        for label, body in {
+            "sans nom": {}, "nom vide": {"name": ""}, "espaces": {"name": "  "}, "41 caractères": {"name": "x" * 41},
+            "tabulation": {"name": "a\tb"}, "nombre": {"name": 7}, "objectif 0": {"name": "Zoé", "weekly_goal": 0},
+            "unité inconnue": {"name": "Zoé", "speed_unit": "mph"}, "identifiant imposé": {"name": "Zoé", "id": "zoe"},
+            "horodatage": {"name": "Zoé", "created_at": "2020-01-01"},
+        }.items():
+            with self.subTest(label):
+                response = client.post("/api/profiles", json=body)
+                self.assertEqual(response.status_code, 422)
+                self.assertIsInstance(response.json()["detail"], str)
+        self.assertEqual(client.post("/api/profiles", json={"name": "x" * 40}).status_code, 201)
+        self.assertEqual(client.post("/api/profiles", content='{"name": "Zoé"}'.encode(), headers={"content-type": "text/plain"}).status_code, 415)
+
+    def test_delete_profile(self):
+        client = self.start()
+        self.create(client, name="Léa")
+        deleted = client.request("DELETE", "/api/profiles/arnaud", headers={"content-type": "application/json"})
+        self.assertEqual(deleted.status_code, 200)
+        self.assertEqual([p["id"] for p in deleted.json()], ["ophelie", "lea"])
+        self.assertEqual(client.get("/api/profiles/arnaud").status_code, 404)
+        self.assertEqual(client.request("DELETE", "/api/profiles/arnaud", headers={"content-type": "application/json"}).status_code, 404)
+        # Le nom libéré peut resservir ; l'identifiant aussi, puisque les données de l'ancien profil ont disparu avec lui.
+        self.assertEqual(self.create(client, name="Arnaud").json()["id"], "arnaud")
+
+    def test_deleted_default_profile_is_not_recreated(self):
+        client = self.start()
+        client.request("DELETE", "/api/profiles/ophelie", headers={"content-type": "application/json"})
+        client = self.restart()
+        self.assertEqual([p["id"] for p in client.get("/api/profiles").json()], ["arnaud"])
+
+    def test_last_profile_cannot_be_deleted(self):
+        client = self.start()
+        json_header = {"content-type": "application/json"}
+        self.assertEqual(client.request("DELETE", "/api/profiles/ophelie", headers=json_header).status_code, 200)
+        refused = client.request("DELETE", "/api/profiles/arnaud", headers=json_header)
+        self.assertEqual(refused.status_code, 409)
+        self.assertEqual(refused.json()["detail"], "Il faut garder au moins un profil")
+        self.assertEqual(len(client.get("/api/profiles").json()), 1)
+
+    def test_deleting_a_profile_deletes_its_data(self):
+        """Règle des briques suivantes : une donnée de profil disparaît avec lui (clé étrangère en cascade)."""
+        self.start()
+        engine = self.apps[0].state.database.engine
+        # Table d'essai créée puis annulée avec la transaction : le schéma réel reste intact.
+        with engine.connect() as conn, conn.begin() as transaction:
+            conn.exec_driver_sql("CREATE TABLE essai (id INTEGER PRIMARY KEY, "
+                                 "profile_id TEXT NOT NULL REFERENCES profiles(id) ON DELETE CASCADE)")
+            conn.exec_driver_sql("INSERT INTO essai (profile_id) VALUES ('arnaud'), ('ophelie')")
+            conn.exec_driver_sql("DELETE FROM profiles WHERE id = 'arnaud'")
+            self.assertEqual(conn.exec_driver_sql("SELECT profile_id FROM essai").fetchall(), [("ophelie",)])
+            transaction.rollback()
+
+    def test_upgrade_from_first_schema_keeps_profiles(self):
+        """Une base livrée avec la révision 0001 passe à la suivante sans perdre ses profils."""
+        path = self.root / "reel"
+        path.mkdir(parents=True)
+        engine = create_db_engine(path / DATABASE_FILE)
+        config = alembic_config()
+        with engine.begin() as conn:
+            config.attributes["connection"] = conn
+            command.upgrade(config, "0001")
+            conn.exec_driver_sql("INSERT INTO profiles VALUES ('arnaud', 'Arnaud', 6, 'pace', 't', 't'), "
+                                 "('ophelie', 'Ophélie', 3, 'kmh', 't', 't')")
+        engine.dispose()
+        client = self.start()
+        self.assertEqual(client.get("/api/health").json()["schema"], HEAD)
+        self.assertEqual([(p["id"], p["weekly_goal"]) for p in client.get("/api/profiles").json()], [("arnaud", 6), ("ophelie", 3)])
 
     def test_patch_unknown_profile_is_404(self):
         client = self.start()
