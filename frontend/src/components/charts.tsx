@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useId, useLayoutEffect, useMemo, useRef, useState, type KeyboardEvent, type PointerEvent } from 'react'
 import type { Block, Sample } from '../lib/types'
-import { clock } from '../lib/format'
+import { clock, dec1 } from '../lib/format'
+import { ChevronLeft, ChevronRight, X } from 'lucide-react'
 
 export function useWidth<T extends HTMLElement>() {
   const ref = useRef<T>(null)
@@ -36,40 +37,111 @@ export function Ring({ value, size = 64, stroke = 10, color = 'var(--color-accen
 
 /* ---------- Programme profile ---------- */
 
-export function ProgrammeChart({ blocks, height = 72, progress, maxSpeed, className }: {
-  blocks: Block[]; height?: number; progress?: number; maxSpeed?: number; className?: string
+export function ProgrammeChart({ blocks, height = 80, compact = false, className }: {
+  blocks: Block[]; height?: number; compact?: boolean; className?: string
 }) {
   const [ref, w] = useWidth<HTMLDivElement>()
-  const total = blocks.at(-1)?.end ?? 1
-  const top = maxSpeed ?? Math.max(...blocks.map((b) => b.speed))
-  const floor = Math.max(0, Math.min(...blocks.map((b) => b.speed)) - 2)
-  const gap = blocks.length > 24 ? 1 : 2
-  const clipId = useId()
-  return (
-    <div ref={ref} className={className} style={{ height }}>
-      {w > 0 && (
-        <svg width={w} height={height} role="img" aria-label={`Profil du programme, ${blocks.length} blocs`}>
-          <defs>
-            <clipPath id={clipId}><rect x={0} y={0} width={progress === undefined ? w : (progress / total) * w} height={height} /></clipPath>
-          </defs>
-          {[false, true].map((done) => (
-            <g key={String(done)} clipPath={done ? `url(#${clipId})` : undefined}>
-              {blocks.map((b) => {
-                const x = (b.start / total) * w
-                const bw = Math.max(1, (b.sec / total) * w - gap)
-                const h = 10 + ((b.speed - floor) / (top - floor || 1)) * (height - 10)
-                const hard = b.kind === 'run' || b.kind === 'steady'
-                const fill = progress === undefined || done
-                  ? (hard ? 'var(--color-accent)' : '#636366')
-                  : hard ? '#3a3a3c' : '#2c2c2e'
-                return <rect key={b.index} x={x} y={height - h} width={bw} height={h} rx={Math.min(4, bw / 2)} fill={fill} />
-              })}
-            </g>
-          ))}
-        </svg>
-      )}
-    </div>
-  )
+  const [hovered, setHovered] = useState<number | null>(null)
+  const [pinned, setPinned] = useState<number | null>(null)
+  const helpId = useId()
+  useEffect(() => { setHovered(null); setPinned(null) }, [blocks])
+  const selected = hovered ?? pinned
+  const active = selected === null ? undefined : blocks[selected]
+  const total = blocks.at(-1)?.end ?? 0
+  const plotWidth = Math.max(1, w - 28)
+  const speedTop = 26, speedBottom = speedTop + height
+  const inclineTop = speedBottom + 38, inclineHeight = compact ? 32 : 48
+  const inclineBottom = inclineTop + inclineHeight
+  const svgHeight = inclineBottom + 26
+  // Échelles séparées et fixes : la hauteur reste comparable entre les séances.
+  const x = (seconds: number) => seconds / (total || 1) * plotWidth
+  const speedY = (speed: number) => speedBottom - speed / 16 * height
+  const inclineY = (incline: number) => inclineBottom - incline / 10 * inclineHeight
+  const inclinePath = blocks.map((b, i) => `${i ? 'L' : 'M'}${x(b.start)},${inclineY(b.incline)}H${x(b.end)}`).join(' ')
+  const gap = blocks.length > 24 ? 0.5 : 2
+  const clear = () => { setHovered(null); setPinned(null) }
+  const select = (index: number) => { setHovered(null); setPinned(Math.max(0, Math.min(blocks.length - 1, index))) }
+  const pointIndex = (event: PointerEvent<SVGSVGElement>) => {
+    const bounds = event.currentTarget.getBoundingClientRect()
+    const seconds = Math.max(0, Math.min(total, (event.clientX - bounds.left) * w / bounds.width / plotWidth * total))
+    return Math.max(0, blocks.findIndex((b, i) => seconds < b.end || i === blocks.length - 1))
+  }
+  const onKey = (event: KeyboardEvent<SVGSVGElement>) => {
+    if (event.key === 'Escape') clear()
+    else if (event.key === 'ArrowRight' || event.key === 'ArrowUp') select((selected ?? -1) + 1)
+    else if (event.key === 'ArrowLeft' || event.key === 'ArrowDown') select((selected ?? blocks.length) - 1)
+    else if (event.key === 'Home') select(0)
+    else if (event.key === 'End') select(blocks.length - 1)
+    else return
+    event.preventDefault()
+  }
+  const range = (field: 'speed' | 'incline') => {
+    const low = Math.min(...blocks.map(b => b[field])), high = Math.max(...blocks.map(b => b[field]))
+    return low === high ? dec1(low) : `${dec1(low)}–${dec1(high)}`
+  }
+  return <div ref={ref} className={className}>
+    {!blocks.length || total <= 0 ? <p className="text-footnote text-label-2">Aucun segment</p> : <>
+      <div className="mb-2 flex min-h-[60px] items-center gap-1">
+        <div className="min-w-0 flex-1">
+          <p className="truncate text-subhead font-semibold">{active ? `${active.index + 1} · ${active.label}` : 'Profil de la séance'}</p>
+          <p id={helpId} className="num mt-1 text-footnote text-label-2">{active
+            ? `${clock(active.start)}–${clock(active.end)} · durée ${clock(active.sec)}`
+            : 'Survolez ou touchez un segment'}</p>
+        </div>
+        {active && <button type="button" aria-label="Effacer la sélection du segment" onClick={clear}
+          className="pressable grid size-11 shrink-0 place-items-center rounded-full text-label-2"><X size={17} /></button>}
+      </div>
+      {w > 0 && <svg width={w} height={svgHeight} role="slider" tabIndex={0}
+        aria-label="Explorer les segments de la séance" aria-describedby={helpId}
+        aria-valuemin={1} aria-valuemax={blocks.length} aria-valuenow={(selected ?? 0) + 1}
+        aria-valuetext={active ? `Segment ${active.index + 1}, ${active.label}, de ${clock(active.start)} à ${clock(active.end)}, durée ${clock(active.sec)}, vitesse ${dec1(active.speed)} km/h, inclinaison ${dec1(active.incline)} %` : `${blocks.length} segments. Utilisez les flèches pour les explorer.`}
+        className="touch-pan-y rounded-[4px] outline-none focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-accent"
+        onKeyDown={onKey} onBlur={() => setHovered(null)}
+        onPointerDown={event => { select(pointIndex(event)); if (event.pointerType !== 'mouse') event.currentTarget.setPointerCapture(event.pointerId) }}
+        onPointerMove={event => {
+          if (event.pointerType === 'mouse') setHovered(pointIndex(event))
+          else if (event.buttons === 1) select(pointIndex(event))
+        }}
+        onPointerLeave={() => setHovered(null)} onPointerCancel={() => setHovered(null)}>
+        <text x={0} y={14} fill="var(--color-accent)" fontSize={13} fontWeight={600}>Vitesse</text>
+        <text x={plotWidth} y={14} textAnchor="end" fill="var(--color-accent)" fontSize={13} className="num">{active ? dec1(active.speed) : range('speed')} km/h</text>
+        <text x={0} y={inclineTop - 12} fill="var(--color-incline)" fontSize={13} fontWeight={600}>Inclinaison</text>
+        <text x={plotWidth} y={inclineTop - 12} textAnchor="end" fill="var(--color-incline)" fontSize={13} className="num">{active ? dec1(active.incline) : range('incline')} %</text>
+        {[0, 8, 16].map(value => <g key={`speed-${value}`}>
+          <line x1={0} x2={plotWidth} y1={speedY(value)} y2={speedY(value)} stroke="var(--color-sep)" strokeWidth={0.5} />
+          <text x={plotWidth + 6} y={speedY(value) + 4} fill="var(--color-label-2)" fontSize={10}>{value}</text>
+        </g>)}
+        {[0, 5, 10].map(value => <g key={`incline-${value}`}>
+          <line x1={0} x2={plotWidth} y1={inclineY(value)} y2={inclineY(value)} stroke="var(--color-sep)" strokeWidth={0.5} />
+          <text x={plotWidth + 6} y={inclineY(value) + 4} fill="var(--color-label-2)" fontSize={10}>{value}</text>
+        </g>)}
+        {active && <rect x={x(active.start)} y={speedTop} width={Math.max(1, x(active.sec))} height={inclineBottom - speedTop}
+          fill="var(--color-label)" opacity={0.07} />}
+        {blocks.map(b => <rect key={b.index} x={x(b.start)} y={speedY(b.speed)}
+          width={Math.max(0.5, x(b.sec) - Math.min(gap, x(b.sec) / 3))} height={speedBottom - speedY(b.speed)}
+          rx={Math.min(3, x(b.sec) / 5)} fill={b.kind === 'run' || b.kind === 'steady' ? 'var(--color-accent)' : '#636366'}
+          opacity={active && active.index !== b.index ? 0.45 : 1} />)}
+        <path d={`${inclinePath}L${plotWidth},${inclineBottom}H0Z`} fill="var(--color-incline)" opacity={0.12} />
+        <path d={inclinePath} fill="none" stroke="var(--color-incline)" strokeWidth={2} strokeLinejoin="round" />
+        {active && <>
+          <line x1={x(active.start)} x2={x(active.start)} y1={speedTop} y2={inclineBottom} stroke="var(--color-label-2)" strokeDasharray="3 3" />
+          <line x1={x(active.end)} x2={x(active.end)} y1={speedTop} y2={inclineBottom} stroke="var(--color-label-2)" strokeDasharray="3 3" />
+          <path d={`M${x(active.start)},${inclineY(active.incline)}H${x(active.end)}`} stroke="var(--color-incline)" strokeWidth={4} />
+        </>}
+        {[0, total / 2, total].map((seconds, i) => <text key={i} x={x(seconds)} y={svgHeight - 4}
+          textAnchor={i === 0 ? 'start' : i === 2 ? 'end' : 'middle'} fontSize={11} fill="var(--color-label-2)" className="num">{clock(seconds)}</text>)}
+      </svg>}
+      <div className="mt-1 flex items-center justify-between gap-2 text-footnote text-label-2">
+        <span className="num">{active ? `Segment ${active.index + 1} sur ${blocks.length}` : `${blocks.length} segments`}</span>
+        <div className="flex">
+          <button type="button" aria-label="Segment précédent" disabled={selected === 0} onClick={() => select((selected ?? blocks.length) - 1)}
+            className="pressable grid size-11 place-items-center rounded-[8px] hover:bg-fill-3 disabled:text-label-3"><ChevronLeft size={20} /></button>
+          <button type="button" aria-label="Segment suivant" disabled={selected === blocks.length - 1} onClick={() => select((selected ?? -1) + 1)}
+            className="pressable grid size-11 place-items-center rounded-[8px] hover:bg-fill-3 disabled:text-label-3"><ChevronRight size={20} /></button>
+        </div>
+      </div>
+    </>}
+  </div>
 }
 
 /* ---------- Week bars ---------- */

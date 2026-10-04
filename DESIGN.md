@@ -110,6 +110,7 @@ Composants SVG maison. ECharts n’est envisagé qu’à la brique 14 si le volu
 - Lecture : toucher ou survoler pour placer un curseur commun à la vitesse et à la pente ; l’en-tête affiche alors temps, valeur, cible et comparaison, comme dans Apple Santé. Les flèches du clavier déplacent le curseur, Échap le retire.
 - Direct : fenêtre de 1 min, 5 min ou toute la séance ; point de mesure pulsé en bout de courbe.
 - Profil de programme : barres dont la largeur représente la durée et la hauteur la vitesse. Dans le Direct, la partie réalisée est colorée et le reste en gris foncé.
+- Séances préparées : vitesse en barres (échelle 0–16 km/h), inclinaison en escalier violet séparé (0–10 %), même axe temporel. Le segment survolé ou touché est repéré sur les deux zones ; son type, sa durée et ses consignes remplacent les valeurs globales dans l’en-tête du graphique. La sélection tactile reste visible après le toucher. Précédent/suivant permet de lire les segments étroits ; le graphique de la bibliothèque ne déclenche pas l’ouverture de la séance.
 
 ## 8. Mouvement
 

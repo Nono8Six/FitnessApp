@@ -11,8 +11,7 @@ export function WorkoutSummary({ data }: { data: Preview }) {
         <div key={label}><dt className="text-caption text-label-2">{label}</dt><dd className="num mt-1 text-[22px] leading-7 font-semibold">{value}</dd></div>
       ))}
     </dl>
-    <ProgrammeChart blocks={data.blocks} height={64} className="mt-5" />
-    <p className="num mt-3 text-footnote text-label-2">{dec1(s.minSpeed)}–{dec1(s.maxSpeed)} km/h</p>
+    <ProgrammeChart blocks={data.blocks} className="mt-5" />
   </>
 }
 
