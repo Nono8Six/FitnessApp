@@ -2,7 +2,7 @@
 
 ## Référence commune
 
-- `main` sur GitHub (`Nono8Six/FitnessApp`) contient la version commune validée après fusion des PR. Une branche de tâche contient du travail proposé, pas encore partagé comme référence.
+- `main` sur GitHub (`Nono8Six/FitnessApp`) est la référence commune. **Consigne explicite d'Arnaud : travailler sur `main` et toujours pousser les changements demandés directement sur `main`, sans branche dédiée ni PR, sauf demande explicite contraire.** Un push ne remplace pas la validation humaine d'une brique.
 - Un snapshot cloud, un chat, une branche locale nommée `work` ou le réglage initial `ref: main` ne prouvent pas que le checkout est à jour.
 - Le plan courant est `PLAN_V1_FITNESS_APP.md`. Lire aussi `DESIGN.md` et les instructions des composants concernés. Présenter l'avancement d'après ces fichiers et les livrables vérifiés, sans inventer de validation humaine.
 
@@ -23,20 +23,20 @@ git log --oneline --left-right HEAD...origin/main
 - Annoncer la branche active, le commit et tout retard ou divergence avant de présenter le plan ou l'état du projet comme actuel. Les compteurs indiquent d'abord les commits propres à `HEAD`, puis ceux propres à `origin/main`.
 - Si le fetch échoue, distinguer le dernier état connu de l'état distant actuel, dont la fraîcheur n'est pas vérifiée. Ne pas affirmer que le checkout est à jour.
 - Si le checkout est propre et sur `main`, le mettre à jour avec `git merge --ff-only origin/main`.
-- Pour une nouvelle tâche, partir de la dernière version de `origin/main` sur une branche dédiée. Un checkout propre peut être remis sur `main` avec `git switch main`, puis `git merge --ff-only origin/main`. Si `main` n'existe pas, utiliser `git switch --track -c main origin/main`.
-- Si l'on poursuit une PR ou une branche existante, conserver cette branche. Comparer sa base à `origin/main`, signaler les écarts et intégrer les changements nécessaires sans effacer les commits de la tâche. Ne pas ramener automatiquement une PR sur `main`.
+- Pour une nouvelle tâche, utiliser `main` à jour. Un checkout propre peut être remis sur `main` avec `git switch main`, puis `git merge --ff-only origin/main`. Si `main` n'existe pas, utiliser `git switch --track -c main origin/main`.
+- Si le cloud restaure une autre branche, comparer ses commits à `origin/main` et préserver tout travail local avant de revenir sur `main`. Intégrer les commits nécessaires sans perdre ceux des autres. Ne pas poursuivre automatiquement le travail sur une branche dédiée.
 - En présence de modifications locales, de fichiers non suivis ou de commits propres à une autre tâche, les préserver et identifier leur propriétaire avant de changer de branche ou d'intégrer des changements qui les touchent. Continuer les travaux indépendants quand c'est possible.
 - Ne pas utiliser `reset --hard`, `clean`, un stash automatique, un force-push ou une suppression de branche pour faire disparaître un écart. Ne pas modifier les fichiers d'un autre contributeur sans comprendre leur rôle.
 - Le cloud fournit déjà un environnement isolé : utiliser le checkout existant. Ne créer un Git worktree que sur demande explicite.
 
-## Branches, PR et avancement
+## Publication sur main et avancement
 
-- Une branche et une PR par brique ou changement cohérent. Ne pas pousser directement sur `main`.
-- Une PR décrit le résultat concret, les vérifications exécutées, les limites et les critères à recevoir par Arnaud.
-- Ne pas fusionner une PR sans autorisation explicite. La protection de `main` et les contrôles obligatoires sont des réglages GitHub ; ce fichier ne les active pas.
-- Relire `PLAN_V1_FITNESS_APP.md` avant chaque brique. Une seule brique en cours ; la suivante attend la validation d'Arnaud. Ne cocher une brique qu'après cette validation, puis enregistrer le suivi dans la PR correspondante.
+- Faire des commits cohérents sur `main`, puis `git push origin main` après les vérifications pertinentes. Cette publication est autorisée par la consigne permanente d'Arnaud ; ne pas redemander une confirmation à chaque push.
+- Avant de pousser, refaire un fetch. Si un autre contributeur a avancé `main`, intégrer ses changements sans écraser ses commits, résoudre les conflits éventuels et relancer les contrôles concernés. Ne jamais forcer le push.
+- Vérifier après le push que le commit local est disponible sur `origin/main` ; si le distant a avancé entre-temps, vérifier que le commit publié est son ancêtre. Rapporter le commit, le résultat concret, les contrôles exécutés et les limites. Si une protection GitHub bloque le push, signaler le blocage sans contourner la protection ni déclarer la publication réussie.
+- Relire `PLAN_V1_FITNESS_APP.md` avant chaque brique. Une seule brique en cours ; la suivante attend la validation d'Arnaud. Ne cocher une brique qu'après cette validation, puis pousser le suivi sur `main`.
 - Les preuves et décisions durables vivent dans le dépôt, avec la fonction concernée. Les chats et brouillons cloud ne remplacent pas le suivi versionné.
-- Avant de livrer, refaire un fetch, contrôler la différence avec `origin/main`, relire le diff et annoncer ce qui est local, poussé, en PR ou fusionné. Ne jamais présenter un fichier local comme déjà disponible aux autres.
+- Avant de livrer, contrôler la différence avec `origin/main`, relire le diff et annoncer ce qui est local ou publié sur `main`. Ne jamais présenter un fichier local comme déjà disponible aux autres.
 
 ## Installation et vérifications
 
