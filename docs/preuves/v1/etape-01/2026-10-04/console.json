@@ -1,0 +1,11 @@
+{
+  "all": [
+    {
+      "level": "error",
+      "message": "Session fetch failed: HTTP 401",
+      "timestamp": "2026-10-04T12:11:47.461Z",
+      "url": "chrome-extension://fmkadmapgofadopljbjfkapdkoienihi/build/installHook.js"
+    }
+  ],
+  "app": []
+}

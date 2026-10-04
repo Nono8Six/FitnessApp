@@ -1,0 +1,27 @@
+[
+  {
+    "status": 400,
+    "detail": "\r\n{\r\n  \"detail\": \"Confirmer la pr\\u00E9sence aupr\\u00E8s du tapis\"\r\n}",
+    "test": "sans_presence"
+  },
+  {
+    "status": 409,
+    "detail": "\r\n{\r\n  \"detail\": \"Un autre \\u00E9cran poss\\u00E8de le contr\\u00F4le\"\r\n}",
+    "test": "controle_autre_ecran"
+  },
+  {
+    "status": 409,
+    "detail": "\r\n{\r\n  \"detail\": \"Activer le contr\\u00F4le depuis cet \\u00E9cran, \\u00E0 proximit\\u00E9 du tapis\"\r\n}",
+    "test": "vitesse_autre_ecran"
+  },
+  {
+    "status": 422,
+    "detail": "\r\n{\r\n  \"detail\": [\r\n    {\r\n      \"type\": \"float_type\",\r\n      \"loc\": [\r\n        \"body\",\r\n        \"value\"\r\n      ],\r\n      \"msg\": \"Input should be a valid number\",\r\n      \"input\": true\r\n    }\r\n  ]\r\n}",
+    "test": "valeur_invalide"
+  },
+  {
+    "status": 422,
+    "detail": "\r\n{\r\n  \"detail\": [\r\n    {\r\n      \"type\": \"extra_forbidden\",\r\n      \"loc\": [\r\n        \"body\",\r\n        \"extra\"\r\n      ],\r\n      \"msg\": \"Extra inputs are not permitted\",\r\n      \"input\": 1\r\n    }\r\n  ]\r\n}",
+    "test": "champs_inconnus"
+  }
+]

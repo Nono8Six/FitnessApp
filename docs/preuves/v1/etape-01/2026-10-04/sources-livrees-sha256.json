@@ -1,0 +1,42 @@
+[
+  {
+    "path": "C:\\GitHub\\Fitness App\\DESIGN.md",
+    "sha256": "0e2662f68782cd48b20cf9be15037223352ec391d7317401dac455d39a1d89be"
+  },
+  {
+    "path": "C:\\GitHub\\Fitness App\\PLAN_V1_FITNESS_APP.md",
+    "sha256": "5874dcd836880050cf6a01eda21acbeff0705499b09f9291bd31792a1d596bc7"
+  },
+  {
+    "path": "C:\\GitHub\\Fitness App\\docs\\design\\ETAPE_01_PARCOURS_UI_UX.md",
+    "sha256": "ae0ca41b8ea958c8c9c2c8cd7b4b35b4ba5e83483492d9462248b3bb53a98cc9"
+  },
+  {
+    "path": "C:\\GitHub\\Fitness App\\docs\\design\\etape-01\\app.js",
+    "sha256": "ae3f61ad48126ae7ff51b1dfa942e27c5d87af6bf33b9efa8fd0da932eca8b09"
+  },
+  {
+    "path": "C:\\GitHub\\Fitness App\\docs\\design\\etape-01\\demo-data.js",
+    "sha256": "0c17d45bdc177fd7c4187f93faed630d6f4c9a5114f97c1f7114437f981a18d2"
+  },
+  {
+    "path": "C:\\GitHub\\Fitness App\\docs\\design\\etape-01\\index.html",
+    "sha256": "af2cebb41ff639706e36d05ecf7824730defac89fc5f55c7f2c58ea645f29cf8"
+  },
+  {
+    "path": "C:\\GitHub\\Fitness App\\docs\\design\\etape-01\\ouvrir-maquettes.ps1",
+    "sha256": "474aaba13c7caf8af7f52e218d6ac4debee4a513903c00e940c4a0ffb2a43825"
+  },
+  {
+    "path": "C:\\GitHub\\Fitness App\\docs\\design\\etape-01\\README.md",
+    "sha256": "00995da32a60ef7bb4cf22028cf385fabea73993a3a5b151bd65eeccb1381021"
+  },
+  {
+    "path": "C:\\GitHub\\Fitness App\\docs\\design\\etape-01\\styles.css",
+    "sha256": "05e1f015887df0dedf03fbd5d0a542392bafbbb982587227b58d20d60e6a1774"
+  },
+  {
+    "path": "C:\\GitHub\\Fitness App\\docs\\design\\etape-01\\verifier-contrastes.py",
+    "sha256": "ea4aa65c746ec6051b70360639f92295d81228a2991a6fb3823aca2f66fe9d3c"
+  }
+]

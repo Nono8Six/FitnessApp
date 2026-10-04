@@ -1,0 +1,54 @@
+[
+  {
+    "path": "C:\\GitHub\\Fitness App\\poc\\__init__.py",
+    "sha256": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855"
+  },
+  {
+    "path": "C:\\GitHub\\Fitness App\\poc\\controller.py",
+    "sha256": "9138F52B25DE3A5201FA3520A6048E3C49A3FE11DD0088283474D5AF5FC46F81"
+  },
+  {
+    "path": "C:\\GitHub\\Fitness App\\poc\\ftms.py",
+    "sha256": "071AE1116FDD234ED5305EF403E6BB02BDF51232958D5109410B07D54785A98A"
+  },
+  {
+    "path": "C:\\GitHub\\Fitness App\\poc\\server.py",
+    "sha256": "E8917061E218022B782A749AA247DE37A284B6520BA9D1DD418DFE72D7625876"
+  },
+  {
+    "path": "C:\\GitHub\\Fitness App\\poc\\static\\app.js",
+    "sha256": "EE1682139E5925AAE96429DA0232843B4955B74C450E6BFC1A304C5F64044F28"
+  },
+  {
+    "path": "C:\\GitHub\\Fitness App\\poc\\static\\index.html",
+    "sha256": "E80EFA83527F8916430A8CE7FE94FD72439F90B9637C134B927FE0655FD286FF"
+  },
+  {
+    "path": "C:\\GitHub\\Fitness App\\poc\\static\\style.css",
+    "sha256": "ECB6DF6384ED2CA00E1BD0366194B428C86458C6FA0A9D45D66EBE4E6921D7DA"
+  },
+  {
+    "path": "C:\\GitHub\\Fitness App\\tests\\test_critical.py",
+    "sha256": "A12EBC94BB47C0B5174769EFDC1D832B376BFB73196081DBA17DB87DC5352504"
+  },
+  {
+    "path": "C:\\GitHub\\Fitness App\\scripts\\observe_reception.py",
+    "sha256": "16440A209FD2900A8FDDA586D41EDB8096F103E5D804D33E097AA6A22BD3874E"
+  },
+  {
+    "path": "C:\\GitHub\\Fitness App\\scripts\\run_reception.py",
+    "sha256": "894FAED3EEC996A3E35C06B580BA78A4073ECCF508BB52112EF863EF2C4A6A5F"
+  },
+  {
+    "path": "C:\\GitHub\\Fitness App\\README.md",
+    "sha256": "DB63EC87B85F762A4DAF40411B1E927CB1F4D19DD3357684D6A1A9B8386E95B2"
+  },
+  {
+    "path": "C:\\GitHub\\Fitness App\\requirements.txt",
+    "sha256": "26DF5EC2A98B8F576C587400BE20077A839EC5149EADC81D355CC86ADED9F18B"
+  },
+  {
+    "path": "C:\\GitHub\\Fitness App\\start-poc.ps1",
+    "sha256": "9FCDBE3B2F543B18DE58129488EFBAAA19D3D820E0BB77D3A4A0ECDE6C847DD2"
+  }
+]

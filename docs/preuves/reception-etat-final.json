@@ -1,0 +1,685 @@
+{
+  "utc": "2026-10-04T10:43:18.720133+00:00",
+  "state": {
+    "mode": "ble",
+    "phase": "connected",
+    "device_name": "Domyos-TC-1921",
+    "devices": [
+      {
+        "name": "Domyos-TC-1921",
+        "address": "F6:E5:08:5C:4B:36",
+        "rssi": -70,
+        "ftms_advertised": true,
+        "candidate": true
+      },
+      {
+        "name": "Appareil sans nom",
+        "address": "1C:E8:9E:44:63:C3",
+        "rssi": -50,
+        "ftms_advertised": false,
+        "candidate": false
+      },
+      {
+        "name": "Appareil sans nom",
+        "address": "0A:FC:50:DB:79:70",
+        "rssi": -58,
+        "ftms_advertised": false,
+        "candidate": false
+      },
+      {
+        "name": "Appareil sans nom",
+        "address": "52:FE:60:E6:81:3F",
+        "rssi": -60,
+        "ftms_advertised": false,
+        "candidate": false
+      },
+      {
+        "name": "Appareil sans nom",
+        "address": "B8:A0:B8:BD:A5:62",
+        "rssi": -69,
+        "ftms_advertised": false,
+        "candidate": false
+      },
+      {
+        "name": "S3ff504e1dacf6b3dC",
+        "address": "B4:60:77:B4:25:44",
+        "rssi": -92,
+        "ftms_advertised": false,
+        "candidate": false
+      },
+      {
+        "name": "Appareil sans nom",
+        "address": "6C:C0:96:0F:BB:C5",
+        "rssi": -94,
+        "ftms_advertised": false,
+        "candidate": false
+      }
+    ],
+    "capabilities": {
+      "control_point": true,
+      "treadmill_data": true,
+      "machine_bits": "0x0000160d",
+      "target_bits": "0x00000003",
+      "speed_target": true,
+      "incline_target": true,
+      "incline_data": true,
+      "distance_data": true,
+      "heart_rate_data": true,
+      "speed_range": {
+        "min": 1.0,
+        "max": 16.0,
+        "step": 0.1
+      },
+      "incline_range": {
+        "min": 0.0,
+        "max": 10.0,
+        "step": 0.5
+      }
+    },
+    "services": [
+      {
+        "uuid": "00001800-0000-1000-8000-00805f9b34fb",
+        "characteristics": [
+          {
+            "uuid": "00002a00-0000-1000-8000-00805f9b34fb",
+            "properties": [
+              "write",
+              "read"
+            ]
+          },
+          {
+            "uuid": "00002a01-0000-1000-8000-00805f9b34fb",
+            "properties": [
+              "read"
+            ]
+          },
+          {
+            "uuid": "00002a04-0000-1000-8000-00805f9b34fb",
+            "properties": [
+              "read"
+            ]
+          },
+          {
+            "uuid": "00002aa6-0000-1000-8000-00805f9b34fb",
+            "properties": [
+              "read"
+            ]
+          }
+        ]
+      },
+      {
+        "uuid": "00001801-0000-1000-8000-00805f9b34fb",
+        "characteristics": []
+      },
+      {
+        "uuid": "0000180a-0000-1000-8000-00805f9b34fb",
+        "characteristics": [
+          {
+            "uuid": "00002a29-0000-1000-8000-00805f9b34fb",
+            "properties": [
+              "read"
+            ]
+          },
+          {
+            "uuid": "00002a24-0000-1000-8000-00805f9b34fb",
+            "properties": [
+              "read"
+            ]
+          },
+          {
+            "uuid": "00002a25-0000-1000-8000-00805f9b34fb",
+            "properties": [
+              "read"
+            ]
+          },
+          {
+            "uuid": "00002a27-0000-1000-8000-00805f9b34fb",
+            "properties": [
+              "read"
+            ]
+          },
+          {
+            "uuid": "00002a26-0000-1000-8000-00805f9b34fb",
+            "properties": [
+              "read"
+            ]
+          },
+          {
+            "uuid": "00002a28-0000-1000-8000-00805f9b34fb",
+            "properties": [
+              "read"
+            ]
+          }
+        ]
+      },
+      {
+        "uuid": "0000181c-0000-1000-8000-00805f9b34fb",
+        "characteristics": [
+          {
+            "uuid": "00002a80-0000-1000-8000-00805f9b34fb",
+            "properties": [
+              "write",
+              "read"
+            ]
+          },
+          {
+            "uuid": "00002a8c-0000-1000-8000-00805f9b34fb",
+            "properties": [
+              "write",
+              "read"
+            ]
+          },
+          {
+            "uuid": "00002a98-0000-1000-8000-00805f9b34fb",
+            "properties": [
+              "write",
+              "read"
+            ]
+          },
+          {
+            "uuid": "00002a8e-0000-1000-8000-00805f9b34fb",
+            "properties": [
+              "write",
+              "read"
+            ]
+          },
+          {
+            "uuid": "00002a99-0000-1000-8000-00805f9b34fb",
+            "properties": [
+              "write",
+              "read"
+            ]
+          },
+          {
+            "uuid": "00002a9a-0000-1000-8000-00805f9b34fb",
+            "properties": [
+              "read"
+            ]
+          },
+          {
+            "uuid": "00002a9f-0000-1000-8000-00805f9b34fb",
+            "properties": [
+              "write",
+              "indicate"
+            ]
+          }
+        ]
+      },
+      {
+        "uuid": "e2840001-b992-e303-e0a9-ff0e24dccb35",
+        "characteristics": [
+          {
+            "uuid": "e2840002-b992-e303-e0a9-ff0e24dccb35",
+            "properties": [
+              "notify",
+              "write-without-response",
+              "write",
+              "read"
+            ]
+          }
+        ]
+      },
+      {
+        "uuid": "00001826-0000-1000-8000-00805f9b34fb",
+        "characteristics": [
+          {
+            "uuid": "00002acc-0000-1000-8000-00805f9b34fb",
+            "properties": [
+              "read"
+            ]
+          },
+          {
+            "uuid": "00002acd-0000-1000-8000-00805f9b34fb",
+            "properties": [
+              "notify"
+            ]
+          },
+          {
+            "uuid": "00002ad4-0000-1000-8000-00805f9b34fb",
+            "properties": [
+              "read"
+            ]
+          },
+          {
+            "uuid": "00002ad5-0000-1000-8000-00805f9b34fb",
+            "properties": [
+              "read"
+            ]
+          },
+          {
+            "uuid": "00002ada-0000-1000-8000-00805f9b34fb",
+            "properties": [
+              "notify"
+            ]
+          },
+          {
+            "uuid": "00002ad3-0000-1000-8000-00805f9b34fb",
+            "properties": [
+              "notify",
+              "read"
+            ]
+          },
+          {
+            "uuid": "00002ad9-0000-1000-8000-00805f9b34fb",
+            "properties": [
+              "write-without-response",
+              "write",
+              "indicate"
+            ]
+          }
+        ]
+      },
+      {
+        "uuid": "9ea840b0-1262-4136-95f0-35c8e2e6a11c",
+        "characteristics": [
+          {
+            "uuid": "9ea840b1-1262-4136-95f0-35c8e2e6a11c",
+            "properties": [
+              "notify",
+              "read"
+            ]
+          },
+          {
+            "uuid": "9ea840b2-1262-4136-95f0-35c8e2e6a11c",
+            "properties": [
+              "write-without-response",
+              "indicate"
+            ]
+          },
+          {
+            "uuid": "9ea840b3-1262-4136-95f0-35c8e2e6a11c",
+            "properties": [
+              "write-without-response",
+              "read"
+            ]
+          },
+          {
+            "uuid": "9ea840b4-1262-4136-95f0-35c8e2e6a11c",
+            "properties": [
+              "write-without-response"
+            ]
+          },
+          {
+            "uuid": "9ea840b5-1262-4136-95f0-35c8e2e6a11c",
+            "properties": [
+              "notify"
+            ]
+          }
+        ]
+      },
+      {
+        "uuid": "ad050afa-5b7b-11ed-9b6a-0242ac120002",
+        "characteristics": [
+          {
+            "uuid": "ad05159a-5b7b-11ed-9b6a-0242ac120002",
+            "properties": [
+              "notify",
+              "write",
+              "read"
+            ]
+          }
+        ]
+      }
+    ],
+    "telemetry": {
+      "flags": "0x058c",
+      "speed_kmh": 0.0,
+      "distance_m": 0,
+      "incline_pct": 0.0,
+      "ramp_angle_deg": 0.0,
+      "energy_kcal": 0,
+      "energy_per_hour_kcal": 0,
+      "energy_per_minute_kcal": 0,
+      "heart_rate_bpm": 0,
+      "elapsed_s": 0
+    },
+    "ages": {
+      "flags": 0.1,
+      "speed_kmh": 0.1,
+      "distance_m": 0.1,
+      "incline_pct": 0.1,
+      "ramp_angle_deg": 0.1,
+      "energy_kcal": 0.1,
+      "energy_per_hour_kcal": 0.1,
+      "energy_per_minute_kcal": 0.1,
+      "heart_rate_bpm": 0.1,
+      "elapsed_s": 0.1
+    },
+    "armed": false,
+    "owned_by_me": false,
+    "control_acquired": true,
+    "desynchronized": false,
+    "command_pending": false,
+    "targets": {
+      "speed_kmh": 1.0,
+      "incline_pct": 0.0
+    },
+    "restart_ready": true,
+    "restart_delay_s": 0,
+    "workout": {
+      "phase": "interrupted",
+      "blocks": [
+        {
+          "duration_s": 10,
+          "speed_kmh": 2.0,
+          "incline_pct": 0.0
+        },
+        {
+          "duration_s": 10,
+          "speed_kmh": 2.5,
+          "incline_pct": 1.0
+        },
+        {
+          "duration_s": 10,
+          "speed_kmh": 2.0,
+          "incline_pct": 0.0
+        }
+      ],
+      "total_s": 30,
+      "block": 1,
+      "remaining_s": 10,
+      "reason": "Arrêt demandé"
+    },
+    "events": [
+      {
+        "time": "2026-10-04T10:39:07.992064+00:00",
+        "level": "response",
+        "message": "Réponse FTMS",
+        "mode": "ble",
+        "raw": "800201"
+      },
+      {
+        "time": "2026-10-04T10:39:07.992064+00:00",
+        "level": "accepted",
+        "message": "Commande acceptée — effet physique à vérifier",
+        "mode": "ble",
+        "action": "speed",
+        "value": 1.0
+      },
+      {
+        "time": "2026-10-04T10:39:07.992064+00:00",
+        "level": "command",
+        "message": "Demande de commande FTMS",
+        "mode": "ble",
+        "action": "start",
+        "value": null,
+        "raw": "07"
+      },
+      {
+        "time": "2026-10-04T10:39:08.233662+00:00",
+        "level": "response",
+        "message": "Réponse FTMS",
+        "mode": "ble",
+        "raw": "800701"
+      },
+      {
+        "time": "2026-10-04T10:39:08.233662+00:00",
+        "level": "accepted",
+        "message": "Commande acceptée — effet physique à vérifier",
+        "mode": "ble",
+        "action": "start",
+        "value": null
+      },
+      {
+        "time": "2026-10-04T10:39:08.413515+00:00",
+        "level": "status",
+        "message": "État FTMS reçu",
+        "mode": "ble",
+        "raw": "04"
+      },
+      {
+        "time": "2026-10-04T10:39:30.473079+00:00",
+        "level": "command",
+        "message": "Demande de commande FTMS",
+        "mode": "ble",
+        "action": "stop",
+        "value": null,
+        "raw": "0801"
+      },
+      {
+        "time": "2026-10-04T10:39:30.614657+00:00",
+        "level": "response",
+        "message": "Réponse FTMS",
+        "mode": "ble",
+        "raw": "800801"
+      },
+      {
+        "time": "2026-10-04T10:39:30.615676+00:00",
+        "level": "accepted",
+        "message": "Commande acceptée — effet physique à vérifier",
+        "mode": "ble",
+        "action": "stop",
+        "value": null
+      },
+      {
+        "time": "2026-10-04T10:39:30.615676+00:00",
+        "level": "info",
+        "message": "Arrêt demandé : commande acceptée, vérifier l'arrêt de la bande",
+        "mode": "ble"
+      },
+      {
+        "time": "2026-10-04T10:39:30.733628+00:00",
+        "level": "status",
+        "message": "État FTMS reçu",
+        "mode": "ble",
+        "raw": "050000"
+      },
+      {
+        "time": "2026-10-04T10:39:30.734623+00:00",
+        "level": "status",
+        "message": "État FTMS reçu",
+        "mode": "ble",
+        "raw": "0202"
+      },
+      {
+        "time": "2026-10-04T10:39:30.734623+00:00",
+        "level": "warning",
+        "message": "Arrêt, pause ou réinitialisation demandé sur le tapis : contrôle désarmé",
+        "mode": "ble"
+      },
+      {
+        "time": "2026-10-04T10:39:31.633422+00:00",
+        "level": "status",
+        "message": "État FTMS reçu",
+        "mode": "ble",
+        "raw": "0201"
+      },
+      {
+        "time": "2026-10-04T10:39:31.634597+00:00",
+        "level": "warning",
+        "message": "Arrêt, pause ou réinitialisation demandé sur le tapis : contrôle désarmé",
+        "mode": "ble"
+      },
+      {
+        "time": "2026-10-04T10:39:37.099423+00:00",
+        "level": "command",
+        "message": "Demande de commande FTMS",
+        "mode": "ble",
+        "action": "request_control",
+        "value": null,
+        "raw": "00"
+      },
+      {
+        "time": "2026-10-04T10:39:37.334862+00:00",
+        "level": "response",
+        "message": "Réponse FTMS",
+        "mode": "ble",
+        "raw": "800001"
+      },
+      {
+        "time": "2026-10-04T10:39:37.334862+00:00",
+        "level": "accepted",
+        "message": "Commande acceptée — effet physique à vérifier",
+        "mode": "ble",
+        "action": "request_control",
+        "value": null
+      },
+      {
+        "time": "2026-10-04T10:39:37.334862+00:00",
+        "level": "info",
+        "message": "Contrôle activé pour cet écran, pendant 10 minutes maximum",
+        "mode": "ble"
+      },
+      {
+        "time": "2026-10-04T10:39:41.676069+00:00",
+        "level": "command",
+        "message": "Demande de commande FTMS",
+        "mode": "ble",
+        "action": "speed",
+        "value": 2.0,
+        "raw": "02c800"
+      },
+      {
+        "time": "2026-10-04T10:39:41.834466+00:00",
+        "level": "response",
+        "message": "Réponse FTMS",
+        "mode": "ble",
+        "raw": "800201"
+      },
+      {
+        "time": "2026-10-04T10:39:41.835472+00:00",
+        "level": "accepted",
+        "message": "Commande acceptée — effet physique à vérifier",
+        "mode": "ble",
+        "action": "speed",
+        "value": 2.0
+      },
+      {
+        "time": "2026-10-04T10:39:45.624040+00:00",
+        "level": "command",
+        "message": "Demande de commande FTMS",
+        "mode": "ble",
+        "action": "speed",
+        "value": 1.0,
+        "raw": "026400"
+      },
+      {
+        "time": "2026-10-04T10:39:45.795603+00:00",
+        "level": "response",
+        "message": "Réponse FTMS",
+        "mode": "ble",
+        "raw": "800201"
+      },
+      {
+        "time": "2026-10-04T10:39:45.796140+00:00",
+        "level": "accepted",
+        "message": "Commande acceptée — effet physique à vérifier",
+        "mode": "ble",
+        "action": "speed",
+        "value": 1.0
+      },
+      {
+        "time": "2026-10-04T10:39:45.796552+00:00",
+        "level": "command",
+        "message": "Demande de commande FTMS",
+        "mode": "ble",
+        "action": "start",
+        "value": null,
+        "raw": "07"
+      },
+      {
+        "time": "2026-10-04T10:39:46.094804+00:00",
+        "level": "response",
+        "message": "Réponse FTMS",
+        "mode": "ble",
+        "raw": "800701"
+      },
+      {
+        "time": "2026-10-04T10:39:46.094804+00:00",
+        "level": "accepted",
+        "message": "Commande acceptée — effet physique à vérifier",
+        "mode": "ble",
+        "action": "start",
+        "value": null
+      },
+      {
+        "time": "2026-10-04T10:39:46.214010+00:00",
+        "level": "status",
+        "message": "État FTMS reçu",
+        "mode": "ble",
+        "raw": "04"
+      },
+      {
+        "time": "2026-10-04T10:40:13.894400+00:00",
+        "level": "command",
+        "message": "Demande de commande FTMS",
+        "mode": "ble",
+        "action": "stop",
+        "value": null,
+        "raw": "0801"
+      },
+      {
+        "time": "2026-10-04T10:40:13.995399+00:00",
+        "level": "response",
+        "message": "Réponse FTMS",
+        "mode": "ble",
+        "raw": "800801"
+      },
+      {
+        "time": "2026-10-04T10:40:13.995399+00:00",
+        "level": "accepted",
+        "message": "Commande acceptée — effet physique à vérifier",
+        "mode": "ble",
+        "action": "stop",
+        "value": null
+      },
+      {
+        "time": "2026-10-04T10:40:13.996401+00:00",
+        "level": "info",
+        "message": "Arrêt demandé : commande acceptée, vérifier l'arrêt de la bande",
+        "mode": "ble"
+      },
+      {
+        "time": "2026-10-04T10:40:14.113760+00:00",
+        "level": "status",
+        "message": "État FTMS reçu",
+        "mode": "ble",
+        "raw": "050000"
+      },
+      {
+        "time": "2026-10-04T10:40:14.235251+00:00",
+        "level": "status",
+        "message": "État FTMS reçu",
+        "mode": "ble",
+        "raw": "0202"
+      },
+      {
+        "time": "2026-10-04T10:40:14.235251+00:00",
+        "level": "warning",
+        "message": "Arrêt, pause ou réinitialisation demandé sur le tapis : contrôle désarmé",
+        "mode": "ble"
+      },
+      {
+        "time": "2026-10-04T10:40:15.014780+00:00",
+        "level": "status",
+        "message": "État FTMS reçu",
+        "mode": "ble",
+        "raw": "0201"
+      },
+      {
+        "time": "2026-10-04T10:40:15.014780+00:00",
+        "level": "warning",
+        "message": "Arrêt, pause ou réinitialisation demandé sur le tapis : contrôle désarmé",
+        "mode": "ble"
+      },
+      {
+        "time": "2026-10-04T10:42:15.436392+00:00",
+        "level": "status",
+        "message": "État FTMS reçu",
+        "mode": "ble",
+        "raw": "0201"
+      },
+      {
+        "time": "2026-10-04T10:42:15.437239+00:00",
+        "level": "warning",
+        "message": "Arrêt, pause ou réinitialisation demandé sur le tapis : contrôle désarmé",
+        "mode": "ble"
+      }
+    ],
+    "limits": {
+      "speed_kmh": 4.0,
+      "incline_pct": 3.0
+    },
+    "audit_error": null
+  }
+}

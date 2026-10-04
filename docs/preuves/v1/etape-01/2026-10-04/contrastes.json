@@ -1,0 +1,527 @@
+{
+  "method": "Luminance relative WCAG 2, sRGB linéarisé ; OKLCH converti en sRGB linéaire",
+  "input": "palettes-rendues.json, relevé getComputedStyle dans Chrome",
+  "pairs": [
+    {
+      "theme": "light",
+      "foreground": "text",
+      "background": "bg",
+      "foreground_color": "#18212e",
+      "background_color": "oklch(97.3% .003 260)",
+      "ratio": 14.99,
+      "minimum": 4.5,
+      "pass_": true
+    },
+    {
+      "theme": "light",
+      "foreground": "text",
+      "background": "surface",
+      "foreground_color": "#18212e",
+      "background_color": "oklch(99.5% .002 260)",
+      "ratio": 15.976,
+      "minimum": 4.5,
+      "pass_": true
+    },
+    {
+      "theme": "light",
+      "foreground": "text",
+      "background": "layer",
+      "foreground_color": "#18212e",
+      "background_color": "#e9edf3",
+      "ratio": 13.792,
+      "minimum": 4.5,
+      "pass_": true
+    },
+    {
+      "theme": "light",
+      "foreground": "text",
+      "background": "tint",
+      "foreground_color": "#18212e",
+      "background_color": "#e8f1fe",
+      "ratio": 14.234,
+      "minimum": 4.5,
+      "pass_": true
+    },
+    {
+      "theme": "light",
+      "foreground": "muted",
+      "background": "bg",
+      "foreground_color": "#536174",
+      "background_color": "oklch(97.3% .003 260)",
+      "ratio": 5.834,
+      "minimum": 4.5,
+      "pass_": true
+    },
+    {
+      "theme": "light",
+      "foreground": "muted",
+      "background": "surface",
+      "foreground_color": "#536174",
+      "background_color": "oklch(99.5% .002 260)",
+      "ratio": 6.217,
+      "minimum": 4.5,
+      "pass_": true
+    },
+    {
+      "theme": "light",
+      "foreground": "muted",
+      "background": "layer",
+      "foreground_color": "#536174",
+      "background_color": "#e9edf3",
+      "ratio": 5.367,
+      "minimum": 4.5,
+      "pass_": true
+    },
+    {
+      "theme": "light",
+      "foreground": "muted",
+      "background": "tint",
+      "foreground_color": "#536174",
+      "background_color": "#e8f1fe",
+      "ratio": 5.539,
+      "minimum": 4.5,
+      "pass_": true
+    },
+    {
+      "theme": "light",
+      "foreground": "on-accent",
+      "background": "accent",
+      "foreground_color": "#fdfdfe",
+      "background_color": "#0b65c9",
+      "ratio": 5.554,
+      "minimum": 4.5,
+      "pass_": true
+    },
+    {
+      "theme": "light",
+      "foreground": "surface",
+      "background": "error",
+      "foreground_color": "oklch(99.5% .002 260)",
+      "background_color": "#b52e3b",
+      "ratio": 6.056,
+      "minimum": 4.5,
+      "pass_": true
+    },
+    {
+      "theme": "light",
+      "foreground": "error",
+      "background": "error-bg",
+      "foreground_color": "#b52e3b",
+      "background_color": "#fff0f1",
+      "ratio": 5.554,
+      "minimum": 4.5,
+      "pass_": true
+    },
+    {
+      "theme": "light",
+      "foreground": "warning",
+      "background": "warning-bg",
+      "foreground_color": "#805800",
+      "background_color": "#fff5d9",
+      "ratio": 5.829,
+      "minimum": 4.5,
+      "pass_": true
+    },
+    {
+      "theme": "light",
+      "foreground": "accent",
+      "background": "surface",
+      "foreground_color": "#0b65c9",
+      "background_color": "oklch(99.5% .002 260)",
+      "ratio": 5.567,
+      "minimum": 4.5,
+      "pass_": true
+    },
+    {
+      "theme": "light",
+      "foreground": "accent",
+      "background": "tint",
+      "foreground_color": "#0b65c9",
+      "background_color": "#e8f1fe",
+      "ratio": 4.959,
+      "minimum": 4.5,
+      "pass_": true
+    },
+    {
+      "theme": "light",
+      "foreground": "speed",
+      "background": "bg",
+      "foreground_color": "#0967c8",
+      "background_color": "oklch(97.3% .003 260)",
+      "ratio": 5.131,
+      "minimum": 3,
+      "pass_": true
+    },
+    {
+      "theme": "light",
+      "foreground": "speed",
+      "background": "surface",
+      "foreground_color": "#0967c8",
+      "background_color": "oklch(99.5% .002 260)",
+      "ratio": 5.469,
+      "minimum": 3,
+      "pass_": true
+    },
+    {
+      "theme": "light",
+      "foreground": "target",
+      "background": "bg",
+      "foreground_color": "#526176",
+      "background_color": "oklch(97.3% .003 260)",
+      "ratio": 5.833,
+      "minimum": 3,
+      "pass_": true
+    },
+    {
+      "theme": "light",
+      "foreground": "target",
+      "background": "surface",
+      "foreground_color": "#526176",
+      "background_color": "oklch(99.5% .002 260)",
+      "ratio": 6.217,
+      "minimum": 3,
+      "pass_": true
+    },
+    {
+      "theme": "light",
+      "foreground": "incline",
+      "background": "bg",
+      "foreground_color": "#7853b5",
+      "background_color": "oklch(97.3% .003 260)",
+      "ratio": 5.246,
+      "minimum": 3,
+      "pass_": true
+    },
+    {
+      "theme": "light",
+      "foreground": "incline",
+      "background": "surface",
+      "foreground_color": "#7853b5",
+      "background_color": "oklch(99.5% .002 260)",
+      "ratio": 5.591,
+      "minimum": 3,
+      "pass_": true
+    },
+    {
+      "theme": "light",
+      "foreground": "sport",
+      "background": "bg",
+      "foreground_color": "#267341",
+      "background_color": "oklch(97.3% .003 260)",
+      "ratio": 5.379,
+      "minimum": 3,
+      "pass_": true
+    },
+    {
+      "theme": "light",
+      "foreground": "sport",
+      "background": "surface",
+      "foreground_color": "#267341",
+      "background_color": "oklch(99.5% .002 260)",
+      "ratio": 5.733,
+      "minimum": 3,
+      "pass_": true
+    },
+    {
+      "theme": "light",
+      "foreground": "control",
+      "background": "bg",
+      "foreground_color": "#8090a3",
+      "background_color": "oklch(97.3% .003 260)",
+      "ratio": 3.018,
+      "minimum": 3,
+      "pass_": true
+    },
+    {
+      "theme": "light",
+      "foreground": "control",
+      "background": "surface",
+      "foreground_color": "#8090a3",
+      "background_color": "oklch(99.5% .002 260)",
+      "ratio": 3.217,
+      "minimum": 3,
+      "pass_": true
+    },
+    {
+      "theme": "light",
+      "foreground": "focus",
+      "background": "bg",
+      "foreground_color": "#0b65c9",
+      "background_color": "oklch(97.3% .003 260)",
+      "ratio": 5.223,
+      "minimum": 3,
+      "pass_": true
+    },
+    {
+      "theme": "light",
+      "foreground": "focus",
+      "background": "surface",
+      "foreground_color": "#0b65c9",
+      "background_color": "oklch(99.5% .002 260)",
+      "ratio": 5.567,
+      "minimum": 3,
+      "pass_": true
+    },
+    {
+      "theme": "dark",
+      "foreground": "text",
+      "background": "bg",
+      "foreground_color": "#edf2f8",
+      "background_color": "oklch(19.5% .016 260)",
+      "ratio": 16.248,
+      "minimum": 4.5,
+      "pass_": true
+    },
+    {
+      "theme": "dark",
+      "foreground": "text",
+      "background": "surface",
+      "foreground_color": "#edf2f8",
+      "background_color": "oklch(25% .022 260)",
+      "ratio": 14.216,
+      "minimum": 4.5,
+      "pass_": true
+    },
+    {
+      "theme": "dark",
+      "foreground": "text",
+      "background": "layer",
+      "foreground_color": "#edf2f8",
+      "background_color": "#252e3b",
+      "ratio": 12.173,
+      "minimum": 4.5,
+      "pass_": true
+    },
+    {
+      "theme": "dark",
+      "foreground": "text",
+      "background": "tint",
+      "foreground_color": "#edf2f8",
+      "background_color": "#203954",
+      "ratio": 10.513,
+      "minimum": 4.5,
+      "pass_": true
+    },
+    {
+      "theme": "dark",
+      "foreground": "muted",
+      "background": "bg",
+      "foreground_color": "#a4b2c5",
+      "background_color": "oklch(19.5% .016 260)",
+      "ratio": 8.493,
+      "minimum": 4.5,
+      "pass_": true
+    },
+    {
+      "theme": "dark",
+      "foreground": "muted",
+      "background": "surface",
+      "foreground_color": "#a4b2c5",
+      "background_color": "oklch(25% .022 260)",
+      "ratio": 7.431,
+      "minimum": 4.5,
+      "pass_": true
+    },
+    {
+      "theme": "dark",
+      "foreground": "muted",
+      "background": "layer",
+      "foreground_color": "#a4b2c5",
+      "background_color": "#252e3b",
+      "ratio": 6.364,
+      "minimum": 4.5,
+      "pass_": true
+    },
+    {
+      "theme": "dark",
+      "foreground": "muted",
+      "background": "tint",
+      "foreground_color": "#a4b2c5",
+      "background_color": "#203954",
+      "ratio": 5.496,
+      "minimum": 4.5,
+      "pass_": true
+    },
+    {
+      "theme": "dark",
+      "foreground": "on-accent",
+      "background": "accent",
+      "foreground_color": "#112137",
+      "background_color": "#83baff",
+      "ratio": 8.046,
+      "minimum": 4.5,
+      "pass_": true
+    },
+    {
+      "theme": "dark",
+      "foreground": "surface",
+      "background": "error",
+      "foreground_color": "#29141a",
+      "background_color": "#ff9ca9",
+      "ratio": 8.749,
+      "minimum": 4.5,
+      "pass_": true
+    },
+    {
+      "theme": "dark",
+      "foreground": "error",
+      "background": "error-bg",
+      "foreground_color": "#ff9ca9",
+      "background_color": "#442630",
+      "ratio": 6.757,
+      "minimum": 4.5,
+      "pass_": true
+    },
+    {
+      "theme": "dark",
+      "foreground": "warning",
+      "background": "warning-bg",
+      "foreground_color": "#f0c56b",
+      "background_color": "#3e321e",
+      "ratio": 7.682,
+      "minimum": 4.5,
+      "pass_": true
+    },
+    {
+      "theme": "dark",
+      "foreground": "accent",
+      "background": "surface",
+      "foreground_color": "#83baff",
+      "background_color": "oklch(25% .022 260)",
+      "ratio": 7.949,
+      "minimum": 4.5,
+      "pass_": true
+    },
+    {
+      "theme": "dark",
+      "foreground": "accent",
+      "background": "tint",
+      "foreground_color": "#83baff",
+      "background_color": "#203954",
+      "ratio": 5.879,
+      "minimum": 4.5,
+      "pass_": true
+    },
+    {
+      "theme": "dark",
+      "foreground": "speed",
+      "background": "bg",
+      "foreground_color": "#83baff",
+      "background_color": "oklch(19.5% .016 260)",
+      "ratio": 9.085,
+      "minimum": 3,
+      "pass_": true
+    },
+    {
+      "theme": "dark",
+      "foreground": "speed",
+      "background": "surface",
+      "foreground_color": "#83baff",
+      "background_color": "oklch(25% .022 260)",
+      "ratio": 7.949,
+      "minimum": 3,
+      "pass_": true
+    },
+    {
+      "theme": "dark",
+      "foreground": "target",
+      "background": "bg",
+      "foreground_color": "#b5c1d2",
+      "background_color": "oklch(19.5% .016 260)",
+      "ratio": 10.035,
+      "minimum": 3,
+      "pass_": true
+    },
+    {
+      "theme": "dark",
+      "foreground": "target",
+      "background": "surface",
+      "foreground_color": "#b5c1d2",
+      "background_color": "oklch(25% .022 260)",
+      "ratio": 8.78,
+      "minimum": 3,
+      "pass_": true
+    },
+    {
+      "theme": "dark",
+      "foreground": "incline",
+      "background": "bg",
+      "foreground_color": "#be9afa",
+      "background_color": "oklch(19.5% .016 260)",
+      "ratio": 8.005,
+      "minimum": 3,
+      "pass_": true
+    },
+    {
+      "theme": "dark",
+      "foreground": "incline",
+      "background": "surface",
+      "foreground_color": "#be9afa",
+      "background_color": "oklch(25% .022 260)",
+      "ratio": 7.004,
+      "minimum": 3,
+      "pass_": true
+    },
+    {
+      "theme": "dark",
+      "foreground": "sport",
+      "background": "bg",
+      "foreground_color": "#82d6a0",
+      "background_color": "oklch(19.5% .016 260)",
+      "ratio": 10.516,
+      "minimum": 3,
+      "pass_": true
+    },
+    {
+      "theme": "dark",
+      "foreground": "sport",
+      "background": "surface",
+      "foreground_color": "#82d6a0",
+      "background_color": "oklch(25% .022 260)",
+      "ratio": 9.201,
+      "minimum": 3,
+      "pass_": true
+    },
+    {
+      "theme": "dark",
+      "foreground": "control",
+      "background": "bg",
+      "foreground_color": "#778ba4",
+      "background_color": "oklch(19.5% .016 260)",
+      "ratio": 5.237,
+      "minimum": 3,
+      "pass_": true
+    },
+    {
+      "theme": "dark",
+      "foreground": "control",
+      "background": "surface",
+      "foreground_color": "#778ba4",
+      "background_color": "oklch(25% .022 260)",
+      "ratio": 4.582,
+      "minimum": 3,
+      "pass_": true
+    },
+    {
+      "theme": "dark",
+      "foreground": "focus",
+      "background": "bg",
+      "foreground_color": "#83baff",
+      "background_color": "oklch(19.5% .016 260)",
+      "ratio": 9.085,
+      "minimum": 3,
+      "pass_": true
+    },
+    {
+      "theme": "dark",
+      "foreground": "focus",
+      "background": "surface",
+      "foreground_color": "#83baff",
+      "background_color": "oklch(25% .022 260)",
+      "ratio": 7.949,
+      "minimum": 3,
+      "pass_": true
+    }
+  ],
+  "all_pass": true
+}

@@ -1,0 +1,530 @@
+[
+  {
+    "screen": "today",
+    "theme": "light",
+    "filename": "today-light-390x844.jpg",
+    "fullFile": "today-light-390-page-complete.jpg",
+    "captureAPI": "Chrome MCP screenshot avec clip égal au viewport",
+    "clientWidth": 375,
+    "controls": [],
+    "height": 844,
+    "horizontalOverflow": false,
+    "scrollWidth": 375,
+    "scrollY": 0,
+    "title": "Aujourd’hui",
+    "width": 390
+  },
+  {
+    "screen": "direct",
+    "theme": "light",
+    "filename": "direct-light-390x844.jpg",
+    "fullFile": null,
+    "captureAPI": "Chrome MCP screenshot avec clip égal au viewport",
+    "chart": {
+      "bottom": 723.03125,
+      "height": 112,
+      "left": 20,
+      "right": 355,
+      "top": 611.03125,
+      "width": 335,
+      "x": 20,
+      "y": 611.03125
+    },
+    "clientWidth": 375,
+    "commandPanel": {
+      "bottom": 844,
+      "height": 87,
+      "left": 0,
+      "right": 375,
+      "top": 757,
+      "width": 375,
+      "x": 0,
+      "y": 757
+    },
+    "controls": [
+      {
+        "rect": {
+          "bottom": 830,
+          "height": 58,
+          "left": 20,
+          "right": 181.5,
+          "top": 772,
+          "width": 161.5,
+          "x": 20,
+          "y": 772
+        },
+        "text": "Pause"
+      },
+      {
+        "rect": {
+          "bottom": 830,
+          "height": 58,
+          "left": 193.5,
+          "right": 355,
+          "top": 772,
+          "width": 161.5,
+          "x": 193.5,
+          "y": 772
+        },
+        "text": "Arrêter"
+      }
+    ],
+    "height": 844,
+    "horizontalOverflow": false,
+    "note": {
+      "bottom": 756,
+      "height": 30,
+      "left": 0,
+      "right": 375,
+      "top": 726,
+      "width": 375,
+      "x": 0,
+      "y": 726
+    },
+    "scrollWidth": 375,
+    "scrollY": 0,
+    "title": "Trouver son rythme",
+    "width": 390
+  },
+  {
+    "screen": "detail",
+    "theme": "light",
+    "filename": "detail-light-390x844.jpg",
+    "fullFile": "detail-light-390-page-complete.jpg",
+    "captureAPI": "Chrome MCP screenshot avec clip égal au viewport",
+    "clientWidth": 375,
+    "controls": [],
+    "height": 844,
+    "horizontalOverflow": false,
+    "scrollWidth": 375,
+    "scrollY": 0,
+    "title": "Votre séance",
+    "width": 390
+  },
+  {
+    "screen": "coach",
+    "theme": "light",
+    "filename": "coach-light-390x844.jpg",
+    "fullFile": "coach-light-390-page-complete.jpg",
+    "captureAPI": "Chrome MCP screenshot avec clip égal au viewport",
+    "clientWidth": 375,
+    "controls": [],
+    "height": 844,
+    "horizontalOverflow": false,
+    "scrollWidth": 375,
+    "scrollY": 0,
+    "title": "Votre coach",
+    "width": 390
+  },
+  {
+    "screen": "editor",
+    "theme": "light",
+    "filename": "editor-light-390x844.jpg",
+    "fullFile": "editor-light-390-page-complete.jpg",
+    "captureAPI": "Chrome MCP screenshot avec clip égal au viewport",
+    "clientWidth": 375,
+    "controls": [],
+    "height": 844,
+    "horizontalOverflow": false,
+    "scrollWidth": 375,
+    "scrollY": 0,
+    "title": "Composer une séance",
+    "width": 390
+  },
+  {
+    "screen": "today",
+    "theme": "dark",
+    "filename": "today-dark-390x844.jpg",
+    "fullFile": "today-dark-390-page-complete.jpg",
+    "captureAPI": "Chrome MCP screenshot avec clip égal au viewport",
+    "clientWidth": 375,
+    "controls": [],
+    "height": 844,
+    "horizontalOverflow": false,
+    "scrollWidth": 375,
+    "scrollY": 0,
+    "title": "Aujourd’hui",
+    "width": 390
+  },
+  {
+    "screen": "direct",
+    "theme": "dark",
+    "filename": "direct-dark-390x844.jpg",
+    "fullFile": null,
+    "captureAPI": "Chrome MCP screenshot avec clip égal au viewport",
+    "chart": {
+      "bottom": 723.03125,
+      "height": 112,
+      "left": 20,
+      "right": 355,
+      "top": 611.03125,
+      "width": 335,
+      "x": 20,
+      "y": 611.03125
+    },
+    "clientWidth": 375,
+    "commandPanel": {
+      "bottom": 844,
+      "height": 87,
+      "left": 0,
+      "right": 375,
+      "top": 757,
+      "width": 375,
+      "x": 0,
+      "y": 757
+    },
+    "controls": [
+      {
+        "rect": {
+          "bottom": 830,
+          "height": 58,
+          "left": 20,
+          "right": 181.5,
+          "top": 772,
+          "width": 161.5,
+          "x": 20,
+          "y": 772
+        },
+        "text": "Pause"
+      },
+      {
+        "rect": {
+          "bottom": 830,
+          "height": 58,
+          "left": 193.5,
+          "right": 355,
+          "top": 772,
+          "width": 161.5,
+          "x": 193.5,
+          "y": 772
+        },
+        "text": "Arrêter"
+      }
+    ],
+    "height": 844,
+    "horizontalOverflow": false,
+    "note": {
+      "bottom": 756,
+      "height": 30,
+      "left": 0,
+      "right": 375,
+      "top": 726,
+      "width": 375,
+      "x": 0,
+      "y": 726
+    },
+    "scrollWidth": 375,
+    "scrollY": 0,
+    "title": "Trouver son rythme",
+    "width": 390
+  },
+  {
+    "screen": "detail",
+    "theme": "dark",
+    "filename": "detail-dark-390x844.jpg",
+    "fullFile": "detail-dark-390-page-complete.jpg",
+    "captureAPI": "Chrome MCP screenshot avec clip égal au viewport",
+    "clientWidth": 375,
+    "controls": [],
+    "height": 844,
+    "horizontalOverflow": false,
+    "scrollWidth": 375,
+    "scrollY": 0,
+    "title": "Votre séance",
+    "width": 390
+  },
+  {
+    "screen": "coach",
+    "theme": "dark",
+    "filename": "coach-dark-390x844.jpg",
+    "fullFile": "coach-dark-390-page-complete.jpg",
+    "captureAPI": "Chrome MCP screenshot avec clip égal au viewport",
+    "clientWidth": 375,
+    "controls": [],
+    "height": 844,
+    "horizontalOverflow": false,
+    "scrollWidth": 375,
+    "scrollY": 0,
+    "title": "Votre coach",
+    "width": 390
+  },
+  {
+    "screen": "editor",
+    "theme": "dark",
+    "filename": "editor-dark-390x844.jpg",
+    "fullFile": "editor-dark-390-page-complete.jpg",
+    "captureAPI": "Chrome MCP screenshot avec clip égal au viewport",
+    "clientWidth": 375,
+    "controls": [],
+    "height": 844,
+    "horizontalOverflow": false,
+    "scrollWidth": 375,
+    "scrollY": 0,
+    "title": "Composer une séance",
+    "width": 390
+  },
+  {
+    "screen": "today",
+    "theme": "light",
+    "filename": "today-light-1440x900.jpg",
+    "fullFile": null,
+    "captureAPI": "Chrome MCP screenshot avec clip égal au viewport",
+    "clientWidth": 1425,
+    "controls": [],
+    "height": 900,
+    "horizontalOverflow": false,
+    "scrollWidth": 1425,
+    "scrollY": 0,
+    "title": "Aujourd’hui",
+    "width": 1440
+  },
+  {
+    "screen": "direct",
+    "theme": "light",
+    "filename": "direct-light-1440x900.jpg",
+    "fullFile": null,
+    "captureAPI": "Chrome MCP screenshot avec clip égal au viewport",
+    "chart": {
+      "bottom": 810.671875,
+      "height": 145,
+      "left": 264,
+      "right": 1377,
+      "top": 665.671875,
+      "width": 1113,
+      "x": 264,
+      "y": 665.671875
+    },
+    "clientWidth": 1425,
+    "commandPanel": {
+      "bottom": 900,
+      "height": 91,
+      "left": 216,
+      "right": 1425,
+      "top": 809,
+      "width": 1209,
+      "x": 216,
+      "y": 809
+    },
+    "controls": [
+      {
+        "rect": {
+          "bottom": 884,
+          "height": 58,
+          "left": 614.5,
+          "right": 814.5,
+          "top": 826,
+          "width": 200,
+          "x": 614.5,
+          "y": 826
+        },
+        "text": "Pause"
+      },
+      {
+        "rect": {
+          "bottom": 884,
+          "height": 58,
+          "left": 826.5,
+          "right": 1026.5,
+          "top": 826,
+          "width": 200,
+          "x": 826.5,
+          "y": 826
+        },
+        "text": "Arrêter"
+      }
+    ],
+    "height": 900,
+    "horizontalOverflow": false,
+    "note": {
+      "bottom": 935.671875,
+      "height": 19.5,
+      "left": 264,
+      "right": 1377,
+      "top": 916.171875,
+      "width": 1113,
+      "x": 264,
+      "y": 916.171875
+    },
+    "scrollWidth": 1425,
+    "scrollY": 0,
+    "title": "Trouver son rythme",
+    "width": 1440
+  },
+  {
+    "screen": "detail",
+    "theme": "light",
+    "filename": "detail-light-1440x900.jpg",
+    "fullFile": null,
+    "captureAPI": "Chrome MCP screenshot avec clip égal au viewport",
+    "clientWidth": 1425,
+    "controls": [],
+    "height": 900,
+    "horizontalOverflow": false,
+    "scrollWidth": 1425,
+    "scrollY": 0,
+    "title": "Votre séance",
+    "width": 1440
+  },
+  {
+    "screen": "coach",
+    "theme": "light",
+    "filename": "coach-light-1440x900.jpg",
+    "fullFile": null,
+    "captureAPI": "Chrome MCP screenshot avec clip égal au viewport",
+    "clientWidth": 1425,
+    "controls": [],
+    "height": 900,
+    "horizontalOverflow": false,
+    "scrollWidth": 1425,
+    "scrollY": 0,
+    "title": "Votre coach",
+    "width": 1440
+  },
+  {
+    "screen": "editor",
+    "theme": "light",
+    "filename": "editor-light-1440x900.jpg",
+    "fullFile": null,
+    "captureAPI": "Chrome MCP screenshot avec clip égal au viewport",
+    "clientWidth": 1425,
+    "controls": [],
+    "height": 900,
+    "horizontalOverflow": false,
+    "scrollWidth": 1425,
+    "scrollY": 0,
+    "title": "Composer une séance",
+    "width": 1440
+  },
+  {
+    "screen": "today",
+    "theme": "dark",
+    "filename": "today-dark-1440x900.jpg",
+    "fullFile": null,
+    "captureAPI": "Chrome MCP screenshot avec clip égal au viewport",
+    "clientWidth": 1425,
+    "controls": [],
+    "height": 900,
+    "horizontalOverflow": false,
+    "scrollWidth": 1425,
+    "scrollY": 0,
+    "title": "Aujourd’hui",
+    "width": 1440
+  },
+  {
+    "screen": "direct",
+    "theme": "dark",
+    "filename": "direct-dark-1440x900.jpg",
+    "fullFile": null,
+    "captureAPI": "Chrome MCP screenshot avec clip égal au viewport",
+    "chart": {
+      "bottom": 810.671875,
+      "height": 145,
+      "left": 264,
+      "right": 1377,
+      "top": 665.671875,
+      "width": 1113,
+      "x": 264,
+      "y": 665.671875
+    },
+    "clientWidth": 1425,
+    "commandPanel": {
+      "bottom": 900,
+      "height": 91,
+      "left": 216,
+      "right": 1425,
+      "top": 809,
+      "width": 1209,
+      "x": 216,
+      "y": 809
+    },
+    "controls": [
+      {
+        "rect": {
+          "bottom": 884,
+          "height": 58,
+          "left": 614.5,
+          "right": 814.5,
+          "top": 826,
+          "width": 200,
+          "x": 614.5,
+          "y": 826
+        },
+        "text": "Pause"
+      },
+      {
+        "rect": {
+          "bottom": 884,
+          "height": 58,
+          "left": 826.5,
+          "right": 1026.5,
+          "top": 826,
+          "width": 200,
+          "x": 826.5,
+          "y": 826
+        },
+        "text": "Arrêter"
+      }
+    ],
+    "height": 900,
+    "horizontalOverflow": false,
+    "note": {
+      "bottom": 935.671875,
+      "height": 19.5,
+      "left": 264,
+      "right": 1377,
+      "top": 916.171875,
+      "width": 1113,
+      "x": 264,
+      "y": 916.171875
+    },
+    "scrollWidth": 1425,
+    "scrollY": 0,
+    "title": "Trouver son rythme",
+    "width": 1440
+  },
+  {
+    "screen": "detail",
+    "theme": "dark",
+    "filename": "detail-dark-1440x900.jpg",
+    "fullFile": null,
+    "captureAPI": "Chrome MCP screenshot avec clip égal au viewport",
+    "clientWidth": 1425,
+    "controls": [],
+    "height": 900,
+    "horizontalOverflow": false,
+    "scrollWidth": 1425,
+    "scrollY": 0,
+    "title": "Votre séance",
+    "width": 1440
+  },
+  {
+    "screen": "coach",
+    "theme": "dark",
+    "filename": "coach-dark-1440x900.jpg",
+    "fullFile": null,
+    "captureAPI": "Chrome MCP screenshot avec clip égal au viewport",
+    "clientWidth": 1425,
+    "controls": [],
+    "height": 900,
+    "horizontalOverflow": false,
+    "scrollWidth": 1425,
+    "scrollY": 0,
+    "title": "Votre coach",
+    "width": 1440
+  },
+  {
+    "screen": "editor",
+    "theme": "dark",
+    "filename": "editor-dark-1440x900.jpg",
+    "fullFile": null,
+    "captureAPI": "Chrome MCP screenshot avec clip égal au viewport",
+    "clientWidth": 1425,
+    "controls": [],
+    "height": 900,
+    "horizontalOverflow": false,
+    "scrollWidth": 1425,
+    "scrollY": 0,
+    "title": "Composer une séance",
+    "width": 1440
+  }
+]

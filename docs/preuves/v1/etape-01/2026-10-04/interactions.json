@@ -1,0 +1,123 @@
+[
+  {
+    "case": "démarrage exige présence",
+    "pass": true
+  },
+  {
+    "case": "profil de séance figé",
+    "pass": true,
+    "active": true
+  },
+  {
+    "case": "Focus volontaire, thème conservé",
+    "pass": true,
+    "theme": "light"
+  },
+  {
+    "case": "reprise exige présence",
+    "pass": true
+  },
+  {
+    "case": "arrêt sans fausse confirmation",
+    "pass": true
+  },
+  {
+    "case": "bilan profil origine",
+    "pass": true
+  },
+  {
+    "case": "ressenti enregistré en présentation",
+    "pass": true
+  },
+  {
+    "case": "zoom lié et résumé",
+    "pass": true,
+    "linkedAxes": [
+      {
+        "cursorX": "314.4666666666667",
+        "plot": "detail",
+        "times": [
+          "10:00",
+          "11:40",
+          "13:20",
+          "15:00"
+        ]
+      },
+      {
+        "cursorX": "314.4666666666667",
+        "plot": "incline",
+        "times": [
+          "10:00",
+          "11:40",
+          "13:20",
+          "15:00"
+        ]
+      }
+    ]
+  },
+  {
+    "case": "curseur clavier, absence visible",
+    "readout": "12:00 actives\nMesurée : absente\nCible : 8,0 km/h\nPente : absente"
+  },
+  {
+    "case": "comparaison identifiée",
+    "pass": true,
+    "summary": "G04 · même séance, alignement par durée active. 30 sept. : 3,28 km, ressenti 5/10 ; 28 sept. : 3,25 km, 6/10. Différence descriptive, sans conclusion causale."
+  },
+  {
+    "case": "graphiques avancés rendus après ouverture",
+    "plots": [
+      {
+        "plot": "volume",
+        "viewBox": "0 0 541 180",
+        "width": 540.5
+      },
+      {
+        "plot": "effort",
+        "viewBox": "0 0 541 180",
+        "width": 540.5
+      },
+      {
+        "plot": "scatter",
+        "viewBox": "0 0 541 180",
+        "width": 540.5
+      }
+    ]
+  },
+  {
+    "case": "contexte coach consultable",
+    "pass": true
+  },
+  {
+    "case": "source ouvre la bonne séance",
+    "pass": true,
+    "header": "Arnaud · lundi 28 septembre · Données fictives"
+  },
+  {
+    "case": "coach enregistre sans démarrer",
+    "pass": true
+  },
+  {
+    "case": "proposition modifiable",
+    "pass": true
+  },
+  {
+    "case": "focus clavier visible",
+    "pass": true,
+    "details": {
+      "outline": "rgb(11, 101, 201) solid 3px",
+      "tag": "A",
+      "text": "Aller au contenu",
+      "top": 8
+    }
+  },
+  {
+    "case": "Système suit le sombre",
+    "pass": true
+  },
+  {
+    "case": "Système suit le clair et mouvement réduit",
+    "pass": true,
+    "transition": "0s"
+  }
+]

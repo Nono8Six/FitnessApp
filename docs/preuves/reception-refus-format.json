@@ -1,0 +1,14 @@
+[
+  {
+    "status": 422,
+    "test": "duree_excessive"
+  },
+  {
+    "status": 422,
+    "test": "json_invalide"
+  },
+  {
+    "status": 413,
+    "test": "requete_trop_grande"
+  }
+]

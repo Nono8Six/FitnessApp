@@ -1,0 +1,738 @@
+[
+  {
+    "file": "coach-coach-offline-dark-390x844.jpg",
+    "width": 390,
+    "height": 844,
+    "expectedWidth": 390,
+    "expectedHeight": 844,
+    "matches": true
+  },
+  {
+    "file": "coach-coach-offline-light-390x844.jpg",
+    "width": 390,
+    "height": 844,
+    "expectedWidth": 390,
+    "expectedHeight": 844,
+    "matches": true
+  },
+  {
+    "file": "coach-dark-1024x768.jpg",
+    "width": 1024,
+    "height": 768,
+    "expectedWidth": 1024,
+    "expectedHeight": 768,
+    "matches": true
+  },
+  {
+    "file": "coach-dark-1440x900.jpg",
+    "width": 1440,
+    "height": 900,
+    "expectedWidth": 1440,
+    "expectedHeight": 900,
+    "matches": true
+  },
+  {
+    "file": "coach-dark-1920x1080.jpg",
+    "width": 1920,
+    "height": 1080,
+    "expectedWidth": 1920,
+    "expectedHeight": 1080,
+    "matches": true
+  },
+  {
+    "file": "coach-dark-390-page-complete.jpg",
+    "width": 390,
+    "height": 1830,
+    "expectedWidth": null,
+    "expectedHeight": null,
+    "matches": null
+  },
+  {
+    "file": "coach-dark-390x844.jpg",
+    "width": 390,
+    "height": 844,
+    "expectedWidth": 390,
+    "expectedHeight": 844,
+    "matches": true
+  },
+  {
+    "file": "coach-dark-430x932.jpg",
+    "width": 430,
+    "height": 932,
+    "expectedWidth": 430,
+    "expectedHeight": 932,
+    "matches": true
+  },
+  {
+    "file": "coach-light-1024x768.jpg",
+    "width": 1024,
+    "height": 768,
+    "expectedWidth": 1024,
+    "expectedHeight": 768,
+    "matches": true
+  },
+  {
+    "file": "coach-light-1440x900.jpg",
+    "width": 1440,
+    "height": 900,
+    "expectedWidth": 1440,
+    "expectedHeight": 900,
+    "matches": true
+  },
+  {
+    "file": "coach-light-1920x1080.jpg",
+    "width": 1920,
+    "height": 1080,
+    "expectedWidth": 1920,
+    "expectedHeight": 1080,
+    "matches": true
+  },
+  {
+    "file": "coach-light-390-page-complete.jpg",
+    "width": 390,
+    "height": 1830,
+    "expectedWidth": null,
+    "expectedHeight": null,
+    "matches": null
+  },
+  {
+    "file": "coach-light-390x844.jpg",
+    "width": 390,
+    "height": 844,
+    "expectedWidth": 390,
+    "expectedHeight": 844,
+    "matches": true
+  },
+  {
+    "file": "coach-light-430x932.jpg",
+    "width": 430,
+    "height": 932,
+    "expectedWidth": 430,
+    "expectedHeight": 932,
+    "matches": true
+  },
+  {
+    "file": "coach-sources-dark-page-complete.jpg",
+    "width": 1425,
+    "height": 1288,
+    "expectedWidth": null,
+    "expectedHeight": null,
+    "matches": null
+  },
+  {
+    "file": "coach-sources-light-page-complete.jpg",
+    "width": 1425,
+    "height": 1288,
+    "expectedWidth": null,
+    "expectedHeight": null,
+    "matches": null
+  },
+  {
+    "file": "coach-texte200-long-390x844.jpg",
+    "width": 390,
+    "height": 844,
+    "expectedWidth": 390,
+    "expectedHeight": 844,
+    "matches": true
+  },
+  {
+    "file": "detail-dark-1024x768.jpg",
+    "width": 1024,
+    "height": 768,
+    "expectedWidth": 1024,
+    "expectedHeight": 768,
+    "matches": true
+  },
+  {
+    "file": "detail-dark-1440x900.jpg",
+    "width": 1440,
+    "height": 900,
+    "expectedWidth": 1440,
+    "expectedHeight": 900,
+    "matches": true
+  },
+  {
+    "file": "detail-dark-1920x1080.jpg",
+    "width": 1920,
+    "height": 1080,
+    "expectedWidth": 1920,
+    "expectedHeight": 1080,
+    "matches": true
+  },
+  {
+    "file": "detail-dark-390-page-complete.jpg",
+    "width": 390,
+    "height": 2553,
+    "expectedWidth": null,
+    "expectedHeight": null,
+    "matches": null
+  },
+  {
+    "file": "detail-dark-390x844.jpg",
+    "width": 390,
+    "height": 844,
+    "expectedWidth": 390,
+    "expectedHeight": 844,
+    "matches": true
+  },
+  {
+    "file": "detail-dark-430x932.jpg",
+    "width": 430,
+    "height": 932,
+    "expectedWidth": 430,
+    "expectedHeight": 932,
+    "matches": true
+  },
+  {
+    "file": "detail-graphiques-avances-dark-page-complete.jpg",
+    "width": 1425,
+    "height": 2760,
+    "expectedWidth": null,
+    "expectedHeight": null,
+    "matches": null
+  },
+  {
+    "file": "detail-graphiques-avances-light-page-complete.jpg",
+    "width": 1425,
+    "height": 2760,
+    "expectedWidth": null,
+    "expectedHeight": null,
+    "matches": null
+  },
+  {
+    "file": "detail-light-1024x768.jpg",
+    "width": 1024,
+    "height": 768,
+    "expectedWidth": 1024,
+    "expectedHeight": 768,
+    "matches": true
+  },
+  {
+    "file": "detail-light-1440x900.jpg",
+    "width": 1440,
+    "height": 900,
+    "expectedWidth": 1440,
+    "expectedHeight": 900,
+    "matches": true
+  },
+  {
+    "file": "detail-light-1920x1080.jpg",
+    "width": 1920,
+    "height": 1080,
+    "expectedWidth": 1920,
+    "expectedHeight": 1080,
+    "matches": true
+  },
+  {
+    "file": "detail-light-390-page-complete.jpg",
+    "width": 390,
+    "height": 2553,
+    "expectedWidth": null,
+    "expectedHeight": null,
+    "matches": null
+  },
+  {
+    "file": "detail-light-390x844.jpg",
+    "width": 390,
+    "height": 844,
+    "expectedWidth": 390,
+    "expectedHeight": 844,
+    "matches": true
+  },
+  {
+    "file": "detail-light-430x932.jpg",
+    "width": 430,
+    "height": 932,
+    "expectedWidth": 430,
+    "expectedHeight": 932,
+    "matches": true
+  },
+  {
+    "file": "detail-selection-comparaison-dark-page-complete.jpg",
+    "width": 1425,
+    "height": 1685,
+    "expectedWidth": null,
+    "expectedHeight": null,
+    "matches": null
+  },
+  {
+    "file": "detail-selection-comparaison-light-page-complete.jpg",
+    "width": 1425,
+    "height": 1685,
+    "expectedWidth": null,
+    "expectedHeight": null,
+    "matches": null
+  },
+  {
+    "file": "detail-texte200-long-390x844.jpg",
+    "width": 390,
+    "height": 844,
+    "expectedWidth": 390,
+    "expectedHeight": 844,
+    "matches": true
+  },
+  {
+    "file": "direct-dark-1024x768.jpg",
+    "width": 1024,
+    "height": 768,
+    "expectedWidth": 1024,
+    "expectedHeight": 768,
+    "matches": true
+  },
+  {
+    "file": "direct-dark-1440x900.jpg",
+    "width": 1440,
+    "height": 900,
+    "expectedWidth": 1440,
+    "expectedHeight": 900,
+    "matches": true
+  },
+  {
+    "file": "direct-dark-1920x1080.jpg",
+    "width": 1920,
+    "height": 1080,
+    "expectedWidth": 1920,
+    "expectedHeight": 1080,
+    "matches": true
+  },
+  {
+    "file": "direct-dark-390x844.jpg",
+    "width": 390,
+    "height": 844,
+    "expectedWidth": 390,
+    "expectedHeight": 844,
+    "matches": true
+  },
+  {
+    "file": "direct-dark-430x932.jpg",
+    "width": 430,
+    "height": 932,
+    "expectedWidth": 430,
+    "expectedHeight": 932,
+    "matches": true
+  },
+  {
+    "file": "direct-dark-844x390.jpg",
+    "width": 844,
+    "height": 390,
+    "expectedWidth": 844,
+    "expectedHeight": 390,
+    "matches": true
+  },
+  {
+    "file": "direct-deconnecte-dark-844x390.jpg",
+    "width": 844,
+    "height": 390,
+    "expectedWidth": 844,
+    "expectedHeight": 390,
+    "matches": true
+  },
+  {
+    "file": "direct-deconnecte-light-844x390.jpg",
+    "width": 844,
+    "height": 390,
+    "expectedWidth": 844,
+    "expectedHeight": 390,
+    "matches": true
+  },
+  {
+    "file": "direct-disconnected-dark-390x844.jpg",
+    "width": 390,
+    "height": 844,
+    "expectedWidth": 390,
+    "expectedHeight": 844,
+    "matches": true
+  },
+  {
+    "file": "direct-disconnected-light-390x844.jpg",
+    "width": 390,
+    "height": 844,
+    "expectedWidth": 390,
+    "expectedHeight": 844,
+    "matches": true
+  },
+  {
+    "file": "direct-light-1024x768.jpg",
+    "width": 1024,
+    "height": 768,
+    "expectedWidth": 1024,
+    "expectedHeight": 768,
+    "matches": true
+  },
+  {
+    "file": "direct-light-1440x900.jpg",
+    "width": 1440,
+    "height": 900,
+    "expectedWidth": 1440,
+    "expectedHeight": 900,
+    "matches": true
+  },
+  {
+    "file": "direct-light-1920x1080.jpg",
+    "width": 1920,
+    "height": 1080,
+    "expectedWidth": 1920,
+    "expectedHeight": 1080,
+    "matches": true
+  },
+  {
+    "file": "direct-light-390x844.jpg",
+    "width": 390,
+    "height": 844,
+    "expectedWidth": 390,
+    "expectedHeight": 844,
+    "matches": true
+  },
+  {
+    "file": "direct-light-430x932.jpg",
+    "width": 430,
+    "height": 932,
+    "expectedWidth": 430,
+    "expectedHeight": 932,
+    "matches": true
+  },
+  {
+    "file": "direct-light-844x390.jpg",
+    "width": 844,
+    "height": 390,
+    "expectedWidth": 844,
+    "expectedHeight": 390,
+    "matches": true
+  },
+  {
+    "file": "direct-paused-dark-390x844.jpg",
+    "width": 390,
+    "height": 844,
+    "expectedWidth": 390,
+    "expectedHeight": 844,
+    "matches": true
+  },
+  {
+    "file": "direct-paused-light-390x844.jpg",
+    "width": 390,
+    "height": 844,
+    "expectedWidth": 390,
+    "expectedHeight": 844,
+    "matches": true
+  },
+  {
+    "file": "direct-stale-dark-390x844.jpg",
+    "width": 390,
+    "height": 844,
+    "expectedWidth": 390,
+    "expectedHeight": 844,
+    "matches": true
+  },
+  {
+    "file": "direct-stale-light-390x844.jpg",
+    "width": 390,
+    "height": 844,
+    "expectedWidth": 390,
+    "expectedHeight": 844,
+    "matches": true
+  },
+  {
+    "file": "direct-texte200-long-390x844.jpg",
+    "width": 390,
+    "height": 844,
+    "expectedWidth": 390,
+    "expectedHeight": 844,
+    "matches": true
+  },
+  {
+    "file": "editor-dark-1024x768.jpg",
+    "width": 1024,
+    "height": 768,
+    "expectedWidth": 1024,
+    "expectedHeight": 768,
+    "matches": true
+  },
+  {
+    "file": "editor-dark-1440x900.jpg",
+    "width": 1440,
+    "height": 900,
+    "expectedWidth": 1440,
+    "expectedHeight": 900,
+    "matches": true
+  },
+  {
+    "file": "editor-dark-1920x1080.jpg",
+    "width": 1920,
+    "height": 1080,
+    "expectedWidth": 1920,
+    "expectedHeight": 1080,
+    "matches": true
+  },
+  {
+    "file": "editor-dark-390-page-complete.jpg",
+    "width": 390,
+    "height": 1773,
+    "expectedWidth": null,
+    "expectedHeight": null,
+    "matches": null
+  },
+  {
+    "file": "editor-dark-390x844.jpg",
+    "width": 390,
+    "height": 844,
+    "expectedWidth": 390,
+    "expectedHeight": 844,
+    "matches": true
+  },
+  {
+    "file": "editor-dark-430x932.jpg",
+    "width": 430,
+    "height": 932,
+    "expectedWidth": 430,
+    "expectedHeight": 932,
+    "matches": true
+  },
+  {
+    "file": "editor-invalid-dark-1440x900.jpg",
+    "width": 1440,
+    "height": 900,
+    "expectedWidth": 1440,
+    "expectedHeight": 900,
+    "matches": true
+  },
+  {
+    "file": "editor-invalid-dark-390x844.jpg",
+    "width": 390,
+    "height": 844,
+    "expectedWidth": 390,
+    "expectedHeight": 844,
+    "matches": true
+  },
+  {
+    "file": "editor-invalid-light-1440x900.jpg",
+    "width": 1440,
+    "height": 900,
+    "expectedWidth": 1440,
+    "expectedHeight": 900,
+    "matches": true
+  },
+  {
+    "file": "editor-invalid-light-390x844.jpg",
+    "width": 390,
+    "height": 844,
+    "expectedWidth": 390,
+    "expectedHeight": 844,
+    "matches": true
+  },
+  {
+    "file": "editor-light-1024x768.jpg",
+    "width": 1024,
+    "height": 768,
+    "expectedWidth": 1024,
+    "expectedHeight": 768,
+    "matches": true
+  },
+  {
+    "file": "editor-light-1440x900.jpg",
+    "width": 1440,
+    "height": 900,
+    "expectedWidth": 1440,
+    "expectedHeight": 900,
+    "matches": true
+  },
+  {
+    "file": "editor-light-1920x1080.jpg",
+    "width": 1920,
+    "height": 1080,
+    "expectedWidth": 1920,
+    "expectedHeight": 1080,
+    "matches": true
+  },
+  {
+    "file": "editor-light-390-page-complete.jpg",
+    "width": 390,
+    "height": 1773,
+    "expectedWidth": null,
+    "expectedHeight": null,
+    "matches": null
+  },
+  {
+    "file": "editor-light-390x844.jpg",
+    "width": 390,
+    "height": 844,
+    "expectedWidth": 390,
+    "expectedHeight": 844,
+    "matches": true
+  },
+  {
+    "file": "editor-light-430x932.jpg",
+    "width": 430,
+    "height": 932,
+    "expectedWidth": 430,
+    "expectedHeight": 932,
+    "matches": true
+  },
+  {
+    "file": "editor-texte200-long-390x844.jpg",
+    "width": 390,
+    "height": 844,
+    "expectedWidth": 390,
+    "expectedHeight": 844,
+    "matches": true
+  },
+  {
+    "file": "focus-clavier-1440x900.jpg",
+    "width": 1440,
+    "height": 900,
+    "expectedWidth": 1440,
+    "expectedHeight": 900,
+    "matches": true
+  },
+  {
+    "file": "reference-apple-fitness.jpg",
+    "width": 1440,
+    "height": 900,
+    "expectedWidth": null,
+    "expectedHeight": null,
+    "matches": null
+  },
+  {
+    "file": "reference-apple-sante.jpg",
+    "width": 1440,
+    "height": 900,
+    "expectedWidth": null,
+    "expectedHeight": null,
+    "matches": null
+  },
+  {
+    "file": "today-dark-1024x768.jpg",
+    "width": 1024,
+    "height": 768,
+    "expectedWidth": 1024,
+    "expectedHeight": 768,
+    "matches": true
+  },
+  {
+    "file": "today-dark-1440x900.jpg",
+    "width": 1440,
+    "height": 900,
+    "expectedWidth": 1440,
+    "expectedHeight": 900,
+    "matches": true
+  },
+  {
+    "file": "today-dark-1920x1080.jpg",
+    "width": 1920,
+    "height": 1080,
+    "expectedWidth": 1920,
+    "expectedHeight": 1080,
+    "matches": true
+  },
+  {
+    "file": "today-dark-390-page-complete.jpg",
+    "width": 390,
+    "height": 1478,
+    "expectedWidth": null,
+    "expectedHeight": null,
+    "matches": null
+  },
+  {
+    "file": "today-dark-390x844.jpg",
+    "width": 390,
+    "height": 844,
+    "expectedWidth": 390,
+    "expectedHeight": 844,
+    "matches": true
+  },
+  {
+    "file": "today-dark-430x932.jpg",
+    "width": 430,
+    "height": 932,
+    "expectedWidth": 430,
+    "expectedHeight": 932,
+    "matches": true
+  },
+  {
+    "file": "today-empty-dark-390x844.jpg",
+    "width": 390,
+    "height": 844,
+    "expectedWidth": 390,
+    "expectedHeight": 844,
+    "matches": true
+  },
+  {
+    "file": "today-empty-light-390x844.jpg",
+    "width": 390,
+    "height": 844,
+    "expectedWidth": 390,
+    "expectedHeight": 844,
+    "matches": true
+  },
+  {
+    "file": "today-error-dark-390x844.jpg",
+    "width": 390,
+    "height": 844,
+    "expectedWidth": 390,
+    "expectedHeight": 844,
+    "matches": true
+  },
+  {
+    "file": "today-error-light-390x844.jpg",
+    "width": 390,
+    "height": 844,
+    "expectedWidth": 390,
+    "expectedHeight": 844,
+    "matches": true
+  },
+  {
+    "file": "today-light-1024x768.jpg",
+    "width": 1024,
+    "height": 768,
+    "expectedWidth": 1024,
+    "expectedHeight": 768,
+    "matches": true
+  },
+  {
+    "file": "today-light-1440x900.jpg",
+    "width": 1440,
+    "height": 900,
+    "expectedWidth": 1440,
+    "expectedHeight": 900,
+    "matches": true
+  },
+  {
+    "file": "today-light-1920x1080.jpg",
+    "width": 1920,
+    "height": 1080,
+    "expectedWidth": 1920,
+    "expectedHeight": 1080,
+    "matches": true
+  },
+  {
+    "file": "today-light-390-page-complete.jpg",
+    "width": 390,
+    "height": 1478,
+    "expectedWidth": null,
+    "expectedHeight": null,
+    "matches": null
+  },
+  {
+    "file": "today-light-390x844.jpg",
+    "width": 390,
+    "height": 844,
+    "expectedWidth": 390,
+    "expectedHeight": 844,
+    "matches": true
+  },
+  {
+    "file": "today-light-430x932.jpg",
+    "width": 430,
+    "height": 932,
+    "expectedWidth": 430,
+    "expectedHeight": 932,
+    "matches": true
+  },
+  {
+    "file": "today-texte200-long-390x844.jpg",
+    "width": 390,
+    "height": 844,
+    "expectedWidth": 390,
+    "expectedHeight": 844,
+    "matches": true
+  }
+]

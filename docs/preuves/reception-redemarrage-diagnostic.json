@@ -1,0 +1,5943 @@
+{
+  "mode": "ble",
+  "actions": [
+    {
+      "utc": "2026-10-04T10:27:27.125219+00:00",
+      "path": "arm",
+      "body": {
+        "present_at_machine": true
+      },
+      "status": 200,
+      "response": {
+        "ok": true
+      },
+      "http_ms": 219.0
+    },
+    {
+      "utc": "2026-10-04T10:27:27.725361+00:00",
+      "path": "command",
+      "body": {
+        "action": "start"
+      },
+      "status": 200,
+      "response": {
+        "ok": true,
+        "message": "Traitement terminé : consulter le journal et la télémétrie"
+      },
+      "http_ms": 594.0
+    },
+    {
+      "utc": "2026-10-04T10:27:30.303518+00:00",
+      "path": "command",
+      "body": {
+        "action": "stop"
+      },
+      "status": 200,
+      "response": {
+        "ok": true,
+        "message": "Traitement terminé : consulter le journal et la télémétrie"
+      },
+      "http_ms": 125.0
+    },
+    {
+      "utc": "2026-10-04T10:27:36.727048+00:00",
+      "path": "arm",
+      "body": {
+        "present_at_machine": true
+      },
+      "status": 200,
+      "response": {
+        "ok": true
+      },
+      "http_ms": 141.0
+    },
+    {
+      "utc": "2026-10-04T10:27:37.085331+00:00",
+      "path": "command",
+      "body": {
+        "action": "start"
+      },
+      "status": 200,
+      "response": {
+        "ok": true,
+        "message": "Traitement terminé : consulter le journal et la télémétrie"
+      },
+      "http_ms": 359.0
+    },
+    {
+      "utc": "2026-10-04T10:27:39.905327+00:00",
+      "path": "command",
+      "body": {
+        "action": "pause"
+      },
+      "status": 200,
+      "response": {
+        "ok": true,
+        "message": "Traitement terminé : consulter le journal et la télémétrie"
+      },
+      "http_ms": 187.0
+    },
+    {
+      "utc": "2026-10-04T10:27:46.503435+00:00",
+      "path": "arm",
+      "body": {
+        "present_at_machine": true
+      },
+      "status": 200,
+      "response": {
+        "ok": true
+      },
+      "http_ms": 172.0
+    },
+    {
+      "utc": "2026-10-04T10:27:46.926354+00:00",
+      "path": "command",
+      "body": {
+        "action": "start"
+      },
+      "status": 200,
+      "response": {
+        "ok": true,
+        "message": "Traitement terminé : consulter le journal et la télémétrie"
+      },
+      "http_ms": 422.0
+    },
+    {
+      "utc": "2026-10-04T10:27:49.205332+00:00",
+      "path": "command",
+      "body": {
+        "action": "stop"
+      },
+      "status": 200,
+      "response": {
+        "ok": true,
+        "message": "Traitement terminé : consulter le journal et la télémétrie"
+      },
+      "http_ms": 188.0
+    }
+  ],
+  "checks": [
+    {
+      "name": "Démarrage après arrêt ancien",
+      "success": true,
+      "elapsed_s": 2.45,
+      "samples": [
+        {
+          "elapsed_s": 0.02,
+          "phase": "connected",
+          "telemetry": {
+            "flags": "0x058c",
+            "speed_kmh": 0.0,
+            "distance_m": 0,
+            "incline_pct": 0.0,
+            "ramp_angle_deg": 0.0,
+            "energy_kcal": 0,
+            "energy_per_hour_kcal": 0,
+            "energy_per_minute_kcal": 0,
+            "heart_rate_bpm": 0,
+            "elapsed_s": 0
+          },
+          "ages": {
+            "flags": 0.1,
+            "speed_kmh": 0.1,
+            "distance_m": 0.1,
+            "incline_pct": 0.1,
+            "ramp_angle_deg": 0.1,
+            "energy_kcal": 0.1,
+            "energy_per_hour_kcal": 0.1,
+            "energy_per_minute_kcal": 0.1,
+            "heart_rate_bpm": 0.1,
+            "elapsed_s": 0.1
+          },
+          "armed": true,
+          "desynchronized": false,
+          "workout": {
+            "phase": "interrupted",
+            "blocks": [
+              {
+                "duration_s": 10,
+                "speed_kmh": 2.0,
+                "incline_pct": 0.0
+              },
+              {
+                "duration_s": 10,
+                "speed_kmh": 2.5,
+                "incline_pct": 1.0
+              },
+              {
+                "duration_s": 10,
+                "speed_kmh": 2.0,
+                "incline_pct": 0.0
+              }
+            ],
+            "total_s": 30,
+            "block": 3,
+            "remaining_s": 0,
+            "reason": "Arrêt demandé"
+          }
+        },
+        {
+          "elapsed_s": 0.28,
+          "phase": "connected",
+          "telemetry": {
+            "flags": "0x058c",
+            "speed_kmh": 1.0,
+            "distance_m": 0,
+            "incline_pct": 0.0,
+            "ramp_angle_deg": 0.0,
+            "energy_kcal": 0,
+            "energy_per_hour_kcal": 0,
+            "energy_per_minute_kcal": 0,
+            "heart_rate_bpm": 0,
+            "elapsed_s": 0
+          },
+          "ages": {
+            "flags": 0.2,
+            "speed_kmh": 0.2,
+            "distance_m": 0.2,
+            "incline_pct": 0.2,
+            "ramp_angle_deg": 0.2,
+            "energy_kcal": 0.2,
+            "energy_per_hour_kcal": 0.2,
+            "energy_per_minute_kcal": 0.2,
+            "heart_rate_bpm": 0.2,
+            "elapsed_s": 0.2
+          },
+          "armed": true,
+          "desynchronized": false,
+          "workout": {
+            "phase": "interrupted",
+            "blocks": [
+              {
+                "duration_s": 10,
+                "speed_kmh": 2.0,
+                "incline_pct": 0.0
+              },
+              {
+                "duration_s": 10,
+                "speed_kmh": 2.5,
+                "incline_pct": 1.0
+              },
+              {
+                "duration_s": 10,
+                "speed_kmh": 2.0,
+                "incline_pct": 0.0
+              }
+            ],
+            "total_s": 30,
+            "block": 3,
+            "remaining_s": 0,
+            "reason": "Arrêt demandé"
+          }
+        },
+        {
+          "elapsed_s": 0.55,
+          "phase": "connected",
+          "telemetry": {
+            "flags": "0x058c",
+            "speed_kmh": 1.0,
+            "distance_m": 0,
+            "incline_pct": 0.0,
+            "ramp_angle_deg": 0.0,
+            "energy_kcal": 0,
+            "energy_per_hour_kcal": 0,
+            "energy_per_minute_kcal": 0,
+            "heart_rate_bpm": 0,
+            "elapsed_s": 0
+          },
+          "ages": {
+            "flags": 0.1,
+            "speed_kmh": 0.1,
+            "distance_m": 0.1,
+            "incline_pct": 0.1,
+            "ramp_angle_deg": 0.1,
+            "energy_kcal": 0.1,
+            "energy_per_hour_kcal": 0.1,
+            "energy_per_minute_kcal": 0.1,
+            "heart_rate_bpm": 0.1,
+            "elapsed_s": 0.1
+          },
+          "armed": true,
+          "desynchronized": false,
+          "workout": {
+            "phase": "interrupted",
+            "blocks": [
+              {
+                "duration_s": 10,
+                "speed_kmh": 2.0,
+                "incline_pct": 0.0
+              },
+              {
+                "duration_s": 10,
+                "speed_kmh": 2.5,
+                "incline_pct": 1.0
+              },
+              {
+                "duration_s": 10,
+                "speed_kmh": 2.0,
+                "incline_pct": 0.0
+              }
+            ],
+            "total_s": 30,
+            "block": 3,
+            "remaining_s": 0,
+            "reason": "Arrêt demandé"
+          }
+        },
+        {
+          "elapsed_s": 0.83,
+          "phase": "connected",
+          "telemetry": {
+            "flags": "0x058c",
+            "speed_kmh": 1.0,
+            "distance_m": 0,
+            "incline_pct": 0.0,
+            "ramp_angle_deg": 0.0,
+            "energy_kcal": 0,
+            "energy_per_hour_kcal": 0,
+            "energy_per_minute_kcal": 0,
+            "heart_rate_bpm": 0,
+            "elapsed_s": 0
+          },
+          "ages": {
+            "flags": 0.2,
+            "speed_kmh": 0.2,
+            "distance_m": 0.2,
+            "incline_pct": 0.2,
+            "ramp_angle_deg": 0.2,
+            "energy_kcal": 0.2,
+            "energy_per_hour_kcal": 0.2,
+            "energy_per_minute_kcal": 0.2,
+            "heart_rate_bpm": 0.2,
+            "elapsed_s": 0.2
+          },
+          "armed": true,
+          "desynchronized": false,
+          "workout": {
+            "phase": "interrupted",
+            "blocks": [
+              {
+                "duration_s": 10,
+                "speed_kmh": 2.0,
+                "incline_pct": 0.0
+              },
+              {
+                "duration_s": 10,
+                "speed_kmh": 2.5,
+                "incline_pct": 1.0
+              },
+              {
+                "duration_s": 10,
+                "speed_kmh": 2.0,
+                "incline_pct": 0.0
+              }
+            ],
+            "total_s": 30,
+            "block": 3,
+            "remaining_s": 0,
+            "reason": "Arrêt demandé"
+          }
+        },
+        {
+          "elapsed_s": 1.09,
+          "phase": "connected",
+          "telemetry": {
+            "flags": "0x058c",
+            "speed_kmh": 1.0,
+            "distance_m": 0,
+            "incline_pct": 0.0,
+            "ramp_angle_deg": 0.0,
+            "energy_kcal": 0,
+            "energy_per_hour_kcal": 166,
+            "energy_per_minute_kcal": 2,
+            "heart_rate_bpm": 0,
+            "elapsed_s": 1
+          },
+          "ages": {
+            "flags": 0.0,
+            "speed_kmh": 0.0,
+            "distance_m": 0.0,
+            "incline_pct": 0.0,
+            "ramp_angle_deg": 0.0,
+            "energy_kcal": 0.0,
+            "energy_per_hour_kcal": 0.0,
+            "energy_per_minute_kcal": 0.0,
+            "heart_rate_bpm": 0.0,
+            "elapsed_s": 0.0
+          },
+          "armed": true,
+          "desynchronized": false,
+          "workout": {
+            "phase": "interrupted",
+            "blocks": [
+              {
+                "duration_s": 10,
+                "speed_kmh": 2.0,
+                "incline_pct": 0.0
+              },
+              {
+                "duration_s": 10,
+                "speed_kmh": 2.5,
+                "incline_pct": 1.0
+              },
+              {
+                "duration_s": 10,
+                "speed_kmh": 2.0,
+                "incline_pct": 0.0
+              }
+            ],
+            "total_s": 30,
+            "block": 3,
+            "remaining_s": 0,
+            "reason": "Arrêt demandé"
+          }
+        },
+        {
+          "elapsed_s": 1.36,
+          "phase": "connected",
+          "telemetry": {
+            "flags": "0x058c",
+            "speed_kmh": 1.0,
+            "distance_m": 0,
+            "incline_pct": 0.0,
+            "ramp_angle_deg": 0.0,
+            "energy_kcal": 0,
+            "energy_per_hour_kcal": 166,
+            "energy_per_minute_kcal": 2,
+            "heart_rate_bpm": 0,
+            "elapsed_s": 1
+          },
+          "ages": {
+            "flags": 0.1,
+            "speed_kmh": 0.1,
+            "distance_m": 0.1,
+            "incline_pct": 0.1,
+            "ramp_angle_deg": 0.1,
+            "energy_kcal": 0.1,
+            "energy_per_hour_kcal": 0.1,
+            "energy_per_minute_kcal": 0.1,
+            "heart_rate_bpm": 0.1,
+            "elapsed_s": 0.1
+          },
+          "armed": true,
+          "desynchronized": false,
+          "workout": {
+            "phase": "interrupted",
+            "blocks": [
+              {
+                "duration_s": 10,
+                "speed_kmh": 2.0,
+                "incline_pct": 0.0
+              },
+              {
+                "duration_s": 10,
+                "speed_kmh": 2.5,
+                "incline_pct": 1.0
+              },
+              {
+                "duration_s": 10,
+                "speed_kmh": 2.0,
+                "incline_pct": 0.0
+              }
+            ],
+            "total_s": 30,
+            "block": 3,
+            "remaining_s": 0,
+            "reason": "Arrêt demandé"
+          }
+        },
+        {
+          "elapsed_s": 1.64,
+          "phase": "connected",
+          "telemetry": {
+            "flags": "0x058c",
+            "speed_kmh": 1.0,
+            "distance_m": 0,
+            "incline_pct": 0.0,
+            "ramp_angle_deg": 0.0,
+            "energy_kcal": 0,
+            "energy_per_hour_kcal": 166,
+            "energy_per_minute_kcal": 2,
+            "heart_rate_bpm": 0,
+            "elapsed_s": 1
+          },
+          "ages": {
+            "flags": 0.1,
+            "speed_kmh": 0.1,
+            "distance_m": 0.1,
+            "incline_pct": 0.1,
+            "ramp_angle_deg": 0.1,
+            "energy_kcal": 0.1,
+            "energy_per_hour_kcal": 0.1,
+            "energy_per_minute_kcal": 0.1,
+            "heart_rate_bpm": 0.1,
+            "elapsed_s": 0.1
+          },
+          "armed": true,
+          "desynchronized": false,
+          "workout": {
+            "phase": "interrupted",
+            "blocks": [
+              {
+                "duration_s": 10,
+                "speed_kmh": 2.0,
+                "incline_pct": 0.0
+              },
+              {
+                "duration_s": 10,
+                "speed_kmh": 2.5,
+                "incline_pct": 1.0
+              },
+              {
+                "duration_s": 10,
+                "speed_kmh": 2.0,
+                "incline_pct": 0.0
+              }
+            ],
+            "total_s": 30,
+            "block": 3,
+            "remaining_s": 0,
+            "reason": "Arrêt demandé"
+          }
+        },
+        {
+          "elapsed_s": 1.89,
+          "phase": "connected",
+          "telemetry": {
+            "flags": "0x058c",
+            "speed_kmh": 1.0,
+            "distance_m": 0,
+            "incline_pct": 0.0,
+            "ramp_angle_deg": 0.0,
+            "energy_kcal": 0,
+            "energy_per_hour_kcal": 166,
+            "energy_per_minute_kcal": 2,
+            "heart_rate_bpm": 0,
+            "elapsed_s": 1
+          },
+          "ages": {
+            "flags": 0.0,
+            "speed_kmh": 0.0,
+            "distance_m": 0.0,
+            "incline_pct": 0.0,
+            "ramp_angle_deg": 0.0,
+            "energy_kcal": 0.0,
+            "energy_per_hour_kcal": 0.0,
+            "energy_per_minute_kcal": 0.0,
+            "heart_rate_bpm": 0.0,
+            "elapsed_s": 0.0
+          },
+          "armed": true,
+          "desynchronized": false,
+          "workout": {
+            "phase": "interrupted",
+            "blocks": [
+              {
+                "duration_s": 10,
+                "speed_kmh": 2.0,
+                "incline_pct": 0.0
+              },
+              {
+                "duration_s": 10,
+                "speed_kmh": 2.5,
+                "incline_pct": 1.0
+              },
+              {
+                "duration_s": 10,
+                "speed_kmh": 2.0,
+                "incline_pct": 0.0
+              }
+            ],
+            "total_s": 30,
+            "block": 3,
+            "remaining_s": 0,
+            "reason": "Arrêt demandé"
+          }
+        },
+        {
+          "elapsed_s": 2.17,
+          "phase": "connected",
+          "telemetry": {
+            "flags": "0x058c",
+            "speed_kmh": 1.0,
+            "distance_m": 0,
+            "incline_pct": 0.0,
+            "ramp_angle_deg": 0.0,
+            "energy_kcal": 0,
+            "energy_per_hour_kcal": 166,
+            "energy_per_minute_kcal": 2,
+            "heart_rate_bpm": 0,
+            "elapsed_s": 2
+          },
+          "ages": {
+            "flags": 0.1,
+            "speed_kmh": 0.1,
+            "distance_m": 0.1,
+            "incline_pct": 0.1,
+            "ramp_angle_deg": 0.1,
+            "energy_kcal": 0.1,
+            "energy_per_hour_kcal": 0.1,
+            "energy_per_minute_kcal": 0.1,
+            "heart_rate_bpm": 0.1,
+            "elapsed_s": 0.1
+          },
+          "armed": true,
+          "desynchronized": false,
+          "workout": {
+            "phase": "interrupted",
+            "blocks": [
+              {
+                "duration_s": 10,
+                "speed_kmh": 2.0,
+                "incline_pct": 0.0
+              },
+              {
+                "duration_s": 10,
+                "speed_kmh": 2.5,
+                "incline_pct": 1.0
+              },
+              {
+                "duration_s": 10,
+                "speed_kmh": 2.0,
+                "incline_pct": 0.0
+              }
+            ],
+            "total_s": 30,
+            "block": 3,
+            "remaining_s": 0,
+            "reason": "Arrêt demandé"
+          }
+        },
+        {
+          "elapsed_s": 2.45,
+          "phase": "connected",
+          "telemetry": {
+            "flags": "0x058c",
+            "speed_kmh": 1.0,
+            "distance_m": 0,
+            "incline_pct": 0.0,
+            "ramp_angle_deg": 0.0,
+            "energy_kcal": 0,
+            "energy_per_hour_kcal": 166,
+            "energy_per_minute_kcal": 2,
+            "heart_rate_bpm": 0,
+            "elapsed_s": 2
+          },
+          "ages": {
+            "flags": 0.2,
+            "speed_kmh": 0.2,
+            "distance_m": 0.2,
+            "incline_pct": 0.2,
+            "ramp_angle_deg": 0.2,
+            "energy_kcal": 0.2,
+            "energy_per_hour_kcal": 0.2,
+            "energy_per_minute_kcal": 0.2,
+            "heart_rate_bpm": 0.2,
+            "elapsed_s": 0.2
+          },
+          "armed": true,
+          "desynchronized": false,
+          "workout": {
+            "phase": "interrupted",
+            "blocks": [
+              {
+                "duration_s": 10,
+                "speed_kmh": 2.0,
+                "incline_pct": 0.0
+              },
+              {
+                "duration_s": 10,
+                "speed_kmh": 2.5,
+                "incline_pct": 1.0
+              },
+              {
+                "duration_s": 10,
+                "speed_kmh": 2.0,
+                "incline_pct": 0.0
+              }
+            ],
+            "total_s": 30,
+            "block": 3,
+            "remaining_s": 0,
+            "reason": "Arrêt demandé"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Arrêt stabilisé six secondes",
+      "success": true,
+      "elapsed_s": 6.28,
+      "samples": [
+        {
+          "elapsed_s": 0.02,
+          "phase": "connected",
+          "telemetry": {
+            "flags": "0x058c",
+            "speed_kmh": 1.0,
+            "distance_m": 0,
+            "incline_pct": 0.0,
+            "ramp_angle_deg": 0.0,
+            "energy_kcal": 0,
+            "energy_per_hour_kcal": 166,
+            "energy_per_minute_kcal": 2,
+            "heart_rate_bpm": 0,
+            "elapsed_s": 2
+          },
+          "ages": {
+            "flags": 0.1,
+            "speed_kmh": 0.1,
+            "distance_m": 0.1,
+            "incline_pct": 0.1,
+            "ramp_angle_deg": 0.1,
+            "energy_kcal": 0.1,
+            "energy_per_hour_kcal": 0.1,
+            "energy_per_minute_kcal": 0.1,
+            "heart_rate_bpm": 0.1,
+            "elapsed_s": 0.1
+          },
+          "armed": false,
+          "desynchronized": false,
+          "workout": {
+            "phase": "interrupted",
+            "blocks": [
+              {
+                "duration_s": 10,
+                "speed_kmh": 2.0,
+                "incline_pct": 0.0
+              },
+              {
+                "duration_s": 10,
+                "speed_kmh": 2.5,
+                "incline_pct": 1.0
+              },
+              {
+                "duration_s": 10,
+                "speed_kmh": 2.0,
+                "incline_pct": 0.0
+              }
+            ],
+            "total_s": 30,
+            "block": 3,
+            "remaining_s": 0,
+            "reason": "Arrêt demandé"
+          }
+        },
+        {
+          "elapsed_s": 0.28,
+          "phase": "connected",
+          "telemetry": {
+            "flags": "0x058c",
+            "speed_kmh": 0.0,
+            "distance_m": 0,
+            "incline_pct": 0.0,
+            "ramp_angle_deg": 0.0,
+            "energy_kcal": 0,
+            "energy_per_hour_kcal": 0,
+            "energy_per_minute_kcal": 0,
+            "heart_rate_bpm": 0,
+            "elapsed_s": 2
+          },
+          "ages": {
+            "flags": 0.1,
+            "speed_kmh": 0.1,
+            "distance_m": 0.1,
+            "incline_pct": 0.1,
+            "ramp_angle_deg": 0.1,
+            "energy_kcal": 0.1,
+            "energy_per_hour_kcal": 0.1,
+            "energy_per_minute_kcal": 0.1,
+            "heart_rate_bpm": 0.1,
+            "elapsed_s": 0.1
+          },
+          "armed": false,
+          "desynchronized": false,
+          "workout": {
+            "phase": "interrupted",
+            "blocks": [
+              {
+                "duration_s": 10,
+                "speed_kmh": 2.0,
+                "incline_pct": 0.0
+              },
+              {
+                "duration_s": 10,
+                "speed_kmh": 2.5,
+                "incline_pct": 1.0
+              },
+              {
+                "duration_s": 10,
+                "speed_kmh": 2.0,
+                "incline_pct": 0.0
+              }
+            ],
+            "total_s": 30,
+            "block": 3,
+            "remaining_s": 0,
+            "reason": "Arrêt demandé"
+          }
+        },
+        {
+          "elapsed_s": 0.55,
+          "phase": "connected",
+          "telemetry": {
+            "flags": "0x058c",
+            "speed_kmh": 0.0,
+            "distance_m": 0,
+            "incline_pct": 0.0,
+            "ramp_angle_deg": 0.0,
+            "energy_kcal": 0,
+            "energy_per_hour_kcal": 166,
+            "energy_per_minute_kcal": 0,
+            "heart_rate_bpm": 0,
+            "elapsed_s": 2
+          },
+          "ages": {
+            "flags": 0.1,
+            "speed_kmh": 0.1,
+            "distance_m": 0.1,
+            "incline_pct": 0.1,
+            "ramp_angle_deg": 0.1,
+            "energy_kcal": 0.1,
+            "energy_per_hour_kcal": 0.1,
+            "energy_per_minute_kcal": 0.1,
+            "heart_rate_bpm": 0.1,
+            "elapsed_s": 0.1
+          },
+          "armed": false,
+          "desynchronized": false,
+          "workout": {
+            "phase": "interrupted",
+            "blocks": [
+              {
+                "duration_s": 10,
+                "speed_kmh": 2.0,
+                "incline_pct": 0.0
+              },
+              {
+                "duration_s": 10,
+                "speed_kmh": 2.5,
+                "incline_pct": 1.0
+              },
+              {
+                "duration_s": 10,
+                "speed_kmh": 2.0,
+                "incline_pct": 0.0
+              }
+            ],
+            "total_s": 30,
+            "block": 3,
+            "remaining_s": 0,
+            "reason": "Arrêt demandé"
+          }
+        },
+        {
+          "elapsed_s": 0.8,
+          "phase": "connected",
+          "telemetry": {
+            "flags": "0x058c",
+            "speed_kmh": 0.0,
+            "distance_m": 0,
+            "incline_pct": 0.0,
+            "ramp_angle_deg": 0.0,
+            "energy_kcal": 0,
+            "energy_per_hour_kcal": 166,
+            "energy_per_minute_kcal": 0,
+            "heart_rate_bpm": 0,
+            "elapsed_s": 2
+          },
+          "ages": {
+            "flags": 0.1,
+            "speed_kmh": 0.1,
+            "distance_m": 0.1,
+            "incline_pct": 0.1,
+            "ramp_angle_deg": 0.1,
+            "energy_kcal": 0.1,
+            "energy_per_hour_kcal": 0.1,
+            "energy_per_minute_kcal": 0.1,
+            "heart_rate_bpm": 0.1,
+            "elapsed_s": 0.1
+          },
+          "armed": false,
+          "desynchronized": false,
+          "workout": {
+            "phase": "interrupted",
+            "blocks": [
+              {
+                "duration_s": 10,
+                "speed_kmh": 2.0,
+                "incline_pct": 0.0
+              },
+              {
+                "duration_s": 10,
+                "speed_kmh": 2.5,
+                "incline_pct": 1.0
+              },
+              {
+                "duration_s": 10,
+                "speed_kmh": 2.0,
+                "incline_pct": 0.0
+              }
+            ],
+            "total_s": 30,
+            "block": 3,
+            "remaining_s": 0,
+            "reason": "Arrêt demandé"
+          }
+        },
+        {
+          "elapsed_s": 1.05,
+          "phase": "connected",
+          "telemetry": {
+            "flags": "0x058c",
+            "speed_kmh": 0.0,
+            "distance_m": 0,
+            "incline_pct": 0.0,
+            "ramp_angle_deg": 0.0,
+            "energy_kcal": 0,
+            "energy_per_hour_kcal": 166,
+            "energy_per_minute_kcal": 0,
+            "heart_rate_bpm": 0,
+            "elapsed_s": 2
+          },
+          "ages": {
+            "flags": 0.1,
+            "speed_kmh": 0.1,
+            "distance_m": 0.1,
+            "incline_pct": 0.1,
+            "ramp_angle_deg": 0.1,
+            "energy_kcal": 0.1,
+            "energy_per_hour_kcal": 0.1,
+            "energy_per_minute_kcal": 0.1,
+            "heart_rate_bpm": 0.1,
+            "elapsed_s": 0.1
+          },
+          "armed": false,
+          "desynchronized": false,
+          "workout": {
+            "phase": "interrupted",
+            "blocks": [
+              {
+                "duration_s": 10,
+                "speed_kmh": 2.0,
+                "incline_pct": 0.0
+              },
+              {
+                "duration_s": 10,
+                "speed_kmh": 2.5,
+                "incline_pct": 1.0
+              },
+              {
+                "duration_s": 10,
+                "speed_kmh": 2.0,
+                "incline_pct": 0.0
+              }
+            ],
+            "total_s": 30,
+            "block": 3,
+            "remaining_s": 0,
+            "reason": "Arrêt demandé"
+          }
+        },
+        {
+          "elapsed_s": 1.31,
+          "phase": "connected",
+          "telemetry": {
+            "flags": "0x058c",
+            "speed_kmh": 0.0,
+            "distance_m": 0,
+            "incline_pct": 0.0,
+            "ramp_angle_deg": 0.0,
+            "energy_kcal": 0,
+            "energy_per_hour_kcal": 166,
+            "energy_per_minute_kcal": 0,
+            "heart_rate_bpm": 0,
+            "elapsed_s": 2
+          },
+          "ages": {
+            "flags": 0.2,
+            "speed_kmh": 0.2,
+            "distance_m": 0.2,
+            "incline_pct": 0.2,
+            "ramp_angle_deg": 0.2,
+            "energy_kcal": 0.2,
+            "energy_per_hour_kcal": 0.2,
+            "energy_per_minute_kcal": 0.2,
+            "heart_rate_bpm": 0.2,
+            "elapsed_s": 0.2
+          },
+          "armed": false,
+          "desynchronized": false,
+          "workout": {
+            "phase": "interrupted",
+            "blocks": [
+              {
+                "duration_s": 10,
+                "speed_kmh": 2.0,
+                "incline_pct": 0.0
+              },
+              {
+                "duration_s": 10,
+                "speed_kmh": 2.5,
+                "incline_pct": 1.0
+              },
+              {
+                "duration_s": 10,
+                "speed_kmh": 2.0,
+                "incline_pct": 0.0
+              }
+            ],
+            "total_s": 30,
+            "block": 3,
+            "remaining_s": 0,
+            "reason": "Arrêt demandé"
+          }
+        },
+        {
+          "elapsed_s": 1.56,
+          "phase": "connected",
+          "telemetry": {
+            "flags": "0x058c",
+            "speed_kmh": 0.0,
+            "distance_m": 0,
+            "incline_pct": 0.0,
+            "ramp_angle_deg": 0.0,
+            "energy_kcal": 0,
+            "energy_per_hour_kcal": 166,
+            "energy_per_minute_kcal": 0,
+            "heart_rate_bpm": 0,
+            "elapsed_s": 2
+          },
+          "ages": {
+            "flags": 0.1,
+            "speed_kmh": 0.1,
+            "distance_m": 0.1,
+            "incline_pct": 0.1,
+            "ramp_angle_deg": 0.1,
+            "energy_kcal": 0.1,
+            "energy_per_hour_kcal": 0.1,
+            "energy_per_minute_kcal": 0.1,
+            "heart_rate_bpm": 0.1,
+            "elapsed_s": 0.1
+          },
+          "armed": false,
+          "desynchronized": false,
+          "workout": {
+            "phase": "interrupted",
+            "blocks": [
+              {
+                "duration_s": 10,
+                "speed_kmh": 2.0,
+                "incline_pct": 0.0
+              },
+              {
+                "duration_s": 10,
+                "speed_kmh": 2.5,
+                "incline_pct": 1.0
+              },
+              {
+                "duration_s": 10,
+                "speed_kmh": 2.0,
+                "incline_pct": 0.0
+              }
+            ],
+            "total_s": 30,
+            "block": 3,
+            "remaining_s": 0,
+            "reason": "Arrêt demandé"
+          }
+        },
+        {
+          "elapsed_s": 1.84,
+          "phase": "connected",
+          "telemetry": {
+            "flags": "0x058c",
+            "speed_kmh": 0.0,
+            "distance_m": 0,
+            "incline_pct": 0.0,
+            "ramp_angle_deg": 0.0,
+            "energy_kcal": 0,
+            "energy_per_hour_kcal": 166,
+            "energy_per_minute_kcal": 0,
+            "heart_rate_bpm": 0,
+            "elapsed_s": 2
+          },
+          "ages": {
+            "flags": 0.2,
+            "speed_kmh": 0.2,
+            "distance_m": 0.2,
+            "incline_pct": 0.2,
+            "ramp_angle_deg": 0.2,
+            "energy_kcal": 0.2,
+            "energy_per_hour_kcal": 0.2,
+            "energy_per_minute_kcal": 0.2,
+            "heart_rate_bpm": 0.2,
+            "elapsed_s": 0.2
+          },
+          "armed": false,
+          "desynchronized": false,
+          "workout": {
+            "phase": "interrupted",
+            "blocks": [
+              {
+                "duration_s": 10,
+                "speed_kmh": 2.0,
+                "incline_pct": 0.0
+              },
+              {
+                "duration_s": 10,
+                "speed_kmh": 2.5,
+                "incline_pct": 1.0
+              },
+              {
+                "duration_s": 10,
+                "speed_kmh": 2.0,
+                "incline_pct": 0.0
+              }
+            ],
+            "total_s": 30,
+            "block": 3,
+            "remaining_s": 0,
+            "reason": "Arrêt demandé"
+          }
+        },
+        {
+          "elapsed_s": 2.11,
+          "phase": "connected",
+          "telemetry": {
+            "flags": "0x058c",
+            "speed_kmh": 0.0,
+            "distance_m": 0,
+            "incline_pct": 0.0,
+            "ramp_angle_deg": 0.0,
+            "energy_kcal": 0,
+            "energy_per_hour_kcal": 166,
+            "energy_per_minute_kcal": 0,
+            "heart_rate_bpm": 0,
+            "elapsed_s": 2
+          },
+          "ages": {
+            "flags": 0.0,
+            "speed_kmh": 0.0,
+            "distance_m": 0.0,
+            "incline_pct": 0.0,
+            "ramp_angle_deg": 0.0,
+            "energy_kcal": 0.0,
+            "energy_per_hour_kcal": 0.0,
+            "energy_per_minute_kcal": 0.0,
+            "heart_rate_bpm": 0.0,
+            "elapsed_s": 0.0
+          },
+          "armed": false,
+          "desynchronized": false,
+          "workout": {
+            "phase": "interrupted",
+            "blocks": [
+              {
+                "duration_s": 10,
+                "speed_kmh": 2.0,
+                "incline_pct": 0.0
+              },
+              {
+                "duration_s": 10,
+                "speed_kmh": 2.5,
+                "incline_pct": 1.0
+              },
+              {
+                "duration_s": 10,
+                "speed_kmh": 2.0,
+                "incline_pct": 0.0
+              }
+            ],
+            "total_s": 30,
+            "block": 3,
+            "remaining_s": 0,
+            "reason": "Arrêt demandé"
+          }
+        },
+        {
+          "elapsed_s": 2.38,
+          "phase": "connected",
+          "telemetry": {
+            "flags": "0x058c",
+            "speed_kmh": 0.0,
+            "distance_m": 0,
+            "incline_pct": 0.0,
+            "ramp_angle_deg": 0.0,
+            "energy_kcal": 0,
+            "energy_per_hour_kcal": 166,
+            "energy_per_minute_kcal": 0,
+            "heart_rate_bpm": 0,
+            "elapsed_s": 2
+          },
+          "ages": {
+            "flags": 0.1,
+            "speed_kmh": 0.1,
+            "distance_m": 0.1,
+            "incline_pct": 0.1,
+            "ramp_angle_deg": 0.1,
+            "energy_kcal": 0.1,
+            "energy_per_hour_kcal": 0.1,
+            "energy_per_minute_kcal": 0.1,
+            "heart_rate_bpm": 0.1,
+            "elapsed_s": 0.1
+          },
+          "armed": false,
+          "desynchronized": false,
+          "workout": {
+            "phase": "interrupted",
+            "blocks": [
+              {
+                "duration_s": 10,
+                "speed_kmh": 2.0,
+                "incline_pct": 0.0
+              },
+              {
+                "duration_s": 10,
+                "speed_kmh": 2.5,
+                "incline_pct": 1.0
+              },
+              {
+                "duration_s": 10,
+                "speed_kmh": 2.0,
+                "incline_pct": 0.0
+              }
+            ],
+            "total_s": 30,
+            "block": 3,
+            "remaining_s": 0,
+            "reason": "Arrêt demandé"
+          }
+        },
+        {
+          "elapsed_s": 2.66,
+          "phase": "connected",
+          "telemetry": {
+            "flags": "0x058c",
+            "speed_kmh": 0.0,
+            "distance_m": 0,
+            "incline_pct": 0.0,
+            "ramp_angle_deg": 0.0,
+            "energy_kcal": 0,
+            "energy_per_hour_kcal": 166,
+            "energy_per_minute_kcal": 0,
+            "heart_rate_bpm": 0,
+            "elapsed_s": 2
+          },
+          "ages": {
+            "flags": 0.1,
+            "speed_kmh": 0.1,
+            "distance_m": 0.1,
+            "incline_pct": 0.1,
+            "ramp_angle_deg": 0.1,
+            "energy_kcal": 0.1,
+            "energy_per_hour_kcal": 0.1,
+            "energy_per_minute_kcal": 0.1,
+            "heart_rate_bpm": 0.1,
+            "elapsed_s": 0.1
+          },
+          "armed": false,
+          "desynchronized": false,
+          "workout": {
+            "phase": "interrupted",
+            "blocks": [
+              {
+                "duration_s": 10,
+                "speed_kmh": 2.0,
+                "incline_pct": 0.0
+              },
+              {
+                "duration_s": 10,
+                "speed_kmh": 2.5,
+                "incline_pct": 1.0
+              },
+              {
+                "duration_s": 10,
+                "speed_kmh": 2.0,
+                "incline_pct": 0.0
+              }
+            ],
+            "total_s": 30,
+            "block": 3,
+            "remaining_s": 0,
+            "reason": "Arrêt demandé"
+          }
+        },
+        {
+          "elapsed_s": 2.92,
+          "phase": "connected",
+          "telemetry": {
+            "flags": "0x058c",
+            "speed_kmh": 0.0,
+            "distance_m": 0,
+            "incline_pct": 0.0,
+            "ramp_angle_deg": 0.0,
+            "energy_kcal": 0,
+            "energy_per_hour_kcal": 166,
+            "energy_per_minute_kcal": 0,
+            "heart_rate_bpm": 0,
+            "elapsed_s": 2
+          },
+          "ages": {
+            "flags": 0.0,
+            "speed_kmh": 0.0,
+            "distance_m": 0.0,
+            "incline_pct": 0.0,
+            "ramp_angle_deg": 0.0,
+            "energy_kcal": 0.0,
+            "energy_per_hour_kcal": 0.0,
+            "energy_per_minute_kcal": 0.0,
+            "heart_rate_bpm": 0.0,
+            "elapsed_s": 0.0
+          },
+          "armed": false,
+          "desynchronized": false,
+          "workout": {
+            "phase": "interrupted",
+            "blocks": [
+              {
+                "duration_s": 10,
+                "speed_kmh": 2.0,
+                "incline_pct": 0.0
+              },
+              {
+                "duration_s": 10,
+                "speed_kmh": 2.5,
+                "incline_pct": 1.0
+              },
+              {
+                "duration_s": 10,
+                "speed_kmh": 2.0,
+                "incline_pct": 0.0
+              }
+            ],
+            "total_s": 30,
+            "block": 3,
+            "remaining_s": 0,
+            "reason": "Arrêt demandé"
+          }
+        },
+        {
+          "elapsed_s": 3.19,
+          "phase": "connected",
+          "telemetry": {
+            "flags": "0x058c",
+            "speed_kmh": 0.0,
+            "distance_m": 0,
+            "incline_pct": 0.0,
+            "ramp_angle_deg": 0.0,
+            "energy_kcal": 0,
+            "energy_per_hour_kcal": 166,
+            "energy_per_minute_kcal": 0,
+            "heart_rate_bpm": 0,
+            "elapsed_s": 2
+          },
+          "ages": {
+            "flags": 0.1,
+            "speed_kmh": 0.1,
+            "distance_m": 0.1,
+            "incline_pct": 0.1,
+            "ramp_angle_deg": 0.1,
+            "energy_kcal": 0.1,
+            "energy_per_hour_kcal": 0.1,
+            "energy_per_minute_kcal": 0.1,
+            "heart_rate_bpm": 0.1,
+            "elapsed_s": 0.1
+          },
+          "armed": false,
+          "desynchronized": false,
+          "workout": {
+            "phase": "interrupted",
+            "blocks": [
+              {
+                "duration_s": 10,
+                "speed_kmh": 2.0,
+                "incline_pct": 0.0
+              },
+              {
+                "duration_s": 10,
+                "speed_kmh": 2.5,
+                "incline_pct": 1.0
+              },
+              {
+                "duration_s": 10,
+                "speed_kmh": 2.0,
+                "incline_pct": 0.0
+              }
+            ],
+            "total_s": 30,
+            "block": 3,
+            "remaining_s": 0,
+            "reason": "Arrêt demandé"
+          }
+        },
+        {
+          "elapsed_s": 3.45,
+          "phase": "connected",
+          "telemetry": {
+            "flags": "0x058c",
+            "speed_kmh": 0.0,
+            "distance_m": 0,
+            "incline_pct": 0.0,
+            "ramp_angle_deg": 0.0,
+            "energy_kcal": 0,
+            "energy_per_hour_kcal": 166,
+            "energy_per_minute_kcal": 0,
+            "heart_rate_bpm": 0,
+            "elapsed_s": 2
+          },
+          "ages": {
+            "flags": 0.0,
+            "speed_kmh": 0.0,
+            "distance_m": 0.0,
+            "incline_pct": 0.0,
+            "ramp_angle_deg": 0.0,
+            "energy_kcal": 0.0,
+            "energy_per_hour_kcal": 0.0,
+            "energy_per_minute_kcal": 0.0,
+            "heart_rate_bpm": 0.0,
+            "elapsed_s": 0.0
+          },
+          "armed": false,
+          "desynchronized": false,
+          "workout": {
+            "phase": "interrupted",
+            "blocks": [
+              {
+                "duration_s": 10,
+                "speed_kmh": 2.0,
+                "incline_pct": 0.0
+              },
+              {
+                "duration_s": 10,
+                "speed_kmh": 2.5,
+                "incline_pct": 1.0
+              },
+              {
+                "duration_s": 10,
+                "speed_kmh": 2.0,
+                "incline_pct": 0.0
+              }
+            ],
+            "total_s": 30,
+            "block": 3,
+            "remaining_s": 0,
+            "reason": "Arrêt demandé"
+          }
+        },
+        {
+          "elapsed_s": 3.7,
+          "phase": "connected",
+          "telemetry": {
+            "flags": "0x058c",
+            "speed_kmh": 0.0,
+            "distance_m": 0,
+            "incline_pct": 0.0,
+            "ramp_angle_deg": 0.0,
+            "energy_kcal": 0,
+            "energy_per_hour_kcal": 166,
+            "energy_per_minute_kcal": 0,
+            "heart_rate_bpm": 0,
+            "elapsed_s": 2
+          },
+          "ages": {
+            "flags": 0.3,
+            "speed_kmh": 0.3,
+            "distance_m": 0.3,
+            "incline_pct": 0.3,
+            "ramp_angle_deg": 0.3,
+            "energy_kcal": 0.3,
+            "energy_per_hour_kcal": 0.3,
+            "energy_per_minute_kcal": 0.3,
+            "heart_rate_bpm": 0.3,
+            "elapsed_s": 0.3
+          },
+          "armed": false,
+          "desynchronized": false,
+          "workout": {
+            "phase": "interrupted",
+            "blocks": [
+              {
+                "duration_s": 10,
+                "speed_kmh": 2.0,
+                "incline_pct": 0.0
+              },
+              {
+                "duration_s": 10,
+                "speed_kmh": 2.5,
+                "incline_pct": 1.0
+              },
+              {
+                "duration_s": 10,
+                "speed_kmh": 2.0,
+                "incline_pct": 0.0
+              }
+            ],
+            "total_s": 30,
+            "block": 3,
+            "remaining_s": 0,
+            "reason": "Arrêt demandé"
+          }
+        },
+        {
+          "elapsed_s": 3.95,
+          "phase": "connected",
+          "telemetry": {
+            "flags": "0x058c",
+            "speed_kmh": 0.0,
+            "distance_m": 0,
+            "incline_pct": 0.0,
+            "ramp_angle_deg": 0.0,
+            "energy_kcal": 0,
+            "energy_per_hour_kcal": 166,
+            "energy_per_minute_kcal": 0,
+            "heart_rate_bpm": 0,
+            "elapsed_s": 2
+          },
+          "ages": {
+            "flags": 0.0,
+            "speed_kmh": 0.0,
+            "distance_m": 0.0,
+            "incline_pct": 0.0,
+            "ramp_angle_deg": 0.0,
+            "energy_kcal": 0.0,
+            "energy_per_hour_kcal": 0.0,
+            "energy_per_minute_kcal": 0.0,
+            "heart_rate_bpm": 0.0,
+            "elapsed_s": 0.0
+          },
+          "armed": false,
+          "desynchronized": false,
+          "workout": {
+            "phase": "interrupted",
+            "blocks": [
+              {
+                "duration_s": 10,
+                "speed_kmh": 2.0,
+                "incline_pct": 0.0
+              },
+              {
+                "duration_s": 10,
+                "speed_kmh": 2.5,
+                "incline_pct": 1.0
+              },
+              {
+                "duration_s": 10,
+                "speed_kmh": 2.0,
+                "incline_pct": 0.0
+              }
+            ],
+            "total_s": 30,
+            "block": 3,
+            "remaining_s": 0,
+            "reason": "Arrêt demandé"
+          }
+        },
+        {
+          "elapsed_s": 4.2,
+          "phase": "connected",
+          "telemetry": {
+            "flags": "0x058c",
+            "speed_kmh": 0.0,
+            "distance_m": 0,
+            "incline_pct": 0.0,
+            "ramp_angle_deg": 0.0,
+            "energy_kcal": 0,
+            "energy_per_hour_kcal": 166,
+            "energy_per_minute_kcal": 0,
+            "heart_rate_bpm": 0,
+            "elapsed_s": 2
+          },
+          "ages": {
+            "flags": 0.2,
+            "speed_kmh": 0.2,
+            "distance_m": 0.2,
+            "incline_pct": 0.2,
+            "ramp_angle_deg": 0.2,
+            "energy_kcal": 0.2,
+            "energy_per_hour_kcal": 0.2,
+            "energy_per_minute_kcal": 0.2,
+            "heart_rate_bpm": 0.2,
+            "elapsed_s": 0.2
+          },
+          "armed": false,
+          "desynchronized": false,
+          "workout": {
+            "phase": "interrupted",
+            "blocks": [
+              {
+                "duration_s": 10,
+                "speed_kmh": 2.0,
+                "incline_pct": 0.0
+              },
+              {
+                "duration_s": 10,
+                "speed_kmh": 2.5,
+                "incline_pct": 1.0
+              },
+              {
+                "duration_s": 10,
+                "speed_kmh": 2.0,
+                "incline_pct": 0.0
+              }
+            ],
+            "total_s": 30,
+            "block": 3,
+            "remaining_s": 0,
+            "reason": "Arrêt demandé"
+          }
+        },
+        {
+          "elapsed_s": 4.48,
+          "phase": "connected",
+          "telemetry": {
+            "flags": "0x058c",
+            "speed_kmh": 0.0,
+            "distance_m": 0,
+            "incline_pct": 0.0,
+            "ramp_angle_deg": 0.0,
+            "energy_kcal": 0,
+            "energy_per_hour_kcal": 166,
+            "energy_per_minute_kcal": 0,
+            "heart_rate_bpm": 0,
+            "elapsed_s": 2
+          },
+          "ages": {
+            "flags": 0.1,
+            "speed_kmh": 0.1,
+            "distance_m": 0.1,
+            "incline_pct": 0.1,
+            "ramp_angle_deg": 0.1,
+            "energy_kcal": 0.1,
+            "energy_per_hour_kcal": 0.1,
+            "energy_per_minute_kcal": 0.1,
+            "heart_rate_bpm": 0.1,
+            "elapsed_s": 0.1
+          },
+          "armed": false,
+          "desynchronized": false,
+          "workout": {
+            "phase": "interrupted",
+            "blocks": [
+              {
+                "duration_s": 10,
+                "speed_kmh": 2.0,
+                "incline_pct": 0.0
+              },
+              {
+                "duration_s": 10,
+                "speed_kmh": 2.5,
+                "incline_pct": 1.0
+              },
+              {
+                "duration_s": 10,
+                "speed_kmh": 2.0,
+                "incline_pct": 0.0
+              }
+            ],
+            "total_s": 30,
+            "block": 3,
+            "remaining_s": 0,
+            "reason": "Arrêt demandé"
+          }
+        },
+        {
+          "elapsed_s": 4.75,
+          "phase": "connected",
+          "telemetry": {
+            "flags": "0x058c",
+            "speed_kmh": 0.0,
+            "distance_m": 0,
+            "incline_pct": 0.0,
+            "ramp_angle_deg": 0.0,
+            "energy_kcal": 0,
+            "energy_per_hour_kcal": 166,
+            "energy_per_minute_kcal": 0,
+            "heart_rate_bpm": 0,
+            "elapsed_s": 2
+          },
+          "ages": {
+            "flags": 0.1,
+            "speed_kmh": 0.1,
+            "distance_m": 0.1,
+            "incline_pct": 0.1,
+            "ramp_angle_deg": 0.1,
+            "energy_kcal": 0.1,
+            "energy_per_hour_kcal": 0.1,
+            "energy_per_minute_kcal": 0.1,
+            "heart_rate_bpm": 0.1,
+            "elapsed_s": 0.1
+          },
+          "armed": false,
+          "desynchronized": false,
+          "workout": {
+            "phase": "interrupted",
+            "blocks": [
+              {
+                "duration_s": 10,
+                "speed_kmh": 2.0,
+                "incline_pct": 0.0
+              },
+              {
+                "duration_s": 10,
+                "speed_kmh": 2.5,
+                "incline_pct": 1.0
+              },
+              {
+                "duration_s": 10,
+                "speed_kmh": 2.0,
+                "incline_pct": 0.0
+              }
+            ],
+            "total_s": 30,
+            "block": 3,
+            "remaining_s": 0,
+            "reason": "Arrêt demandé"
+          }
+        },
+        {
+          "elapsed_s": 5.0,
+          "phase": "connected",
+          "telemetry": {
+            "flags": "0x058c",
+            "speed_kmh": 0.0,
+            "distance_m": 0,
+            "incline_pct": 0.0,
+            "ramp_angle_deg": 0.0,
+            "energy_kcal": 0,
+            "energy_per_hour_kcal": 166,
+            "energy_per_minute_kcal": 0,
+            "heart_rate_bpm": 0,
+            "elapsed_s": 2
+          },
+          "ages": {
+            "flags": 0.1,
+            "speed_kmh": 0.1,
+            "distance_m": 0.1,
+            "incline_pct": 0.1,
+            "ramp_angle_deg": 0.1,
+            "energy_kcal": 0.1,
+            "energy_per_hour_kcal": 0.1,
+            "energy_per_minute_kcal": 0.1,
+            "heart_rate_bpm": 0.1,
+            "elapsed_s": 0.1
+          },
+          "armed": false,
+          "desynchronized": false,
+          "workout": {
+            "phase": "interrupted",
+            "blocks": [
+              {
+                "duration_s": 10,
+                "speed_kmh": 2.0,
+                "incline_pct": 0.0
+              },
+              {
+                "duration_s": 10,
+                "speed_kmh": 2.5,
+                "incline_pct": 1.0
+              },
+              {
+                "duration_s": 10,
+                "speed_kmh": 2.0,
+                "incline_pct": 0.0
+              }
+            ],
+            "total_s": 30,
+            "block": 3,
+            "remaining_s": 0,
+            "reason": "Arrêt demandé"
+          }
+        },
+        {
+          "elapsed_s": 5.27,
+          "phase": "connected",
+          "telemetry": {
+            "flags": "0x058c",
+            "speed_kmh": 0.0,
+            "distance_m": 0,
+            "incline_pct": 0.0,
+            "ramp_angle_deg": 0.0,
+            "energy_kcal": 0,
+            "energy_per_hour_kcal": 166,
+            "energy_per_minute_kcal": 0,
+            "heart_rate_bpm": 0,
+            "elapsed_s": 2
+          },
+          "ages": {
+            "flags": 0.0,
+            "speed_kmh": 0.0,
+            "distance_m": 0.0,
+            "incline_pct": 0.0,
+            "ramp_angle_deg": 0.0,
+            "energy_kcal": 0.0,
+            "energy_per_hour_kcal": 0.0,
+            "energy_per_minute_kcal": 0.0,
+            "heart_rate_bpm": 0.0,
+            "elapsed_s": 0.0
+          },
+          "armed": false,
+          "desynchronized": false,
+          "workout": {
+            "phase": "interrupted",
+            "blocks": [
+              {
+                "duration_s": 10,
+                "speed_kmh": 2.0,
+                "incline_pct": 0.0
+              },
+              {
+                "duration_s": 10,
+                "speed_kmh": 2.5,
+                "incline_pct": 1.0
+              },
+              {
+                "duration_s": 10,
+                "speed_kmh": 2.0,
+                "incline_pct": 0.0
+              }
+            ],
+            "total_s": 30,
+            "block": 3,
+            "remaining_s": 0,
+            "reason": "Arrêt demandé"
+          }
+        },
+        {
+          "elapsed_s": 5.52,
+          "phase": "connected",
+          "telemetry": {
+            "flags": "0x058c",
+            "speed_kmh": 0.0,
+            "distance_m": 0,
+            "incline_pct": 0.0,
+            "ramp_angle_deg": 0.0,
+            "energy_kcal": 0,
+            "energy_per_hour_kcal": 166,
+            "energy_per_minute_kcal": 0,
+            "heart_rate_bpm": 0,
+            "elapsed_s": 2
+          },
+          "ages": {
+            "flags": 0.3,
+            "speed_kmh": 0.3,
+            "distance_m": 0.3,
+            "incline_pct": 0.3,
+            "ramp_angle_deg": 0.3,
+            "energy_kcal": 0.3,
+            "energy_per_hour_kcal": 0.3,
+            "energy_per_minute_kcal": 0.3,
+            "heart_rate_bpm": 0.3,
+            "elapsed_s": 0.3
+          },
+          "armed": false,
+          "desynchronized": false,
+          "workout": {
+            "phase": "interrupted",
+            "blocks": [
+              {
+                "duration_s": 10,
+                "speed_kmh": 2.0,
+                "incline_pct": 0.0
+              },
+              {
+                "duration_s": 10,
+                "speed_kmh": 2.5,
+                "incline_pct": 1.0
+              },
+              {
+                "duration_s": 10,
+                "speed_kmh": 2.0,
+                "incline_pct": 0.0
+              }
+            ],
+            "total_s": 30,
+            "block": 3,
+            "remaining_s": 0,
+            "reason": "Arrêt demandé"
+          }
+        },
+        {
+          "elapsed_s": 5.78,
+          "phase": "connected",
+          "telemetry": {
+            "flags": "0x058c",
+            "speed_kmh": 0.0,
+            "distance_m": 0,
+            "incline_pct": 0.0,
+            "ramp_angle_deg": 0.0,
+            "energy_kcal": 0,
+            "energy_per_hour_kcal": 166,
+            "energy_per_minute_kcal": 0,
+            "heart_rate_bpm": 0,
+            "elapsed_s": 2
+          },
+          "ages": {
+            "flags": 0.1,
+            "speed_kmh": 0.1,
+            "distance_m": 0.1,
+            "incline_pct": 0.1,
+            "ramp_angle_deg": 0.1,
+            "energy_kcal": 0.1,
+            "energy_per_hour_kcal": 0.1,
+            "energy_per_minute_kcal": 0.1,
+            "heart_rate_bpm": 0.1,
+            "elapsed_s": 0.1
+          },
+          "armed": false,
+          "desynchronized": false,
+          "workout": {
+            "phase": "interrupted",
+            "blocks": [
+              {
+                "duration_s": 10,
+                "speed_kmh": 2.0,
+                "incline_pct": 0.0
+              },
+              {
+                "duration_s": 10,
+                "speed_kmh": 2.5,
+                "incline_pct": 1.0
+              },
+              {
+                "duration_s": 10,
+                "speed_kmh": 2.0,
+                "incline_pct": 0.0
+              }
+            ],
+            "total_s": 30,
+            "block": 3,
+            "remaining_s": 0,
+            "reason": "Arrêt demandé"
+          }
+        },
+        {
+          "elapsed_s": 6.03,
+          "phase": "connected",
+          "telemetry": {
+            "flags": "0x058c",
+            "speed_kmh": 0.0,
+            "distance_m": 0,
+            "incline_pct": 0.0,
+            "ramp_angle_deg": 0.0,
+            "energy_kcal": 0,
+            "energy_per_hour_kcal": 166,
+            "energy_per_minute_kcal": 0,
+            "heart_rate_bpm": 0,
+            "elapsed_s": 2
+          },
+          "ages": {
+            "flags": 0.2,
+            "speed_kmh": 0.2,
+            "distance_m": 0.2,
+            "incline_pct": 0.2,
+            "ramp_angle_deg": 0.2,
+            "energy_kcal": 0.2,
+            "energy_per_hour_kcal": 0.2,
+            "energy_per_minute_kcal": 0.2,
+            "heart_rate_bpm": 0.2,
+            "elapsed_s": 0.2
+          },
+          "armed": false,
+          "desynchronized": false,
+          "workout": {
+            "phase": "interrupted",
+            "blocks": [
+              {
+                "duration_s": 10,
+                "speed_kmh": 2.0,
+                "incline_pct": 0.0
+              },
+              {
+                "duration_s": 10,
+                "speed_kmh": 2.5,
+                "incline_pct": 1.0
+              },
+              {
+                "duration_s": 10,
+                "speed_kmh": 2.0,
+                "incline_pct": 0.0
+              }
+            ],
+            "total_s": 30,
+            "block": 3,
+            "remaining_s": 0,
+            "reason": "Arrêt demandé"
+          }
+        },
+        {
+          "elapsed_s": 6.28,
+          "phase": "connected",
+          "telemetry": {
+            "flags": "0x058c",
+            "speed_kmh": 0.0,
+            "distance_m": 0,
+            "incline_pct": 0.0,
+            "ramp_angle_deg": 0.0,
+            "energy_kcal": 0,
+            "energy_per_hour_kcal": 166,
+            "energy_per_minute_kcal": 0,
+            "heart_rate_bpm": 0,
+            "elapsed_s": 2
+          },
+          "ages": {
+            "flags": 0.2,
+            "speed_kmh": 0.2,
+            "distance_m": 0.2,
+            "incline_pct": 0.2,
+            "ramp_angle_deg": 0.2,
+            "energy_kcal": 0.2,
+            "energy_per_hour_kcal": 0.2,
+            "energy_per_minute_kcal": 0.2,
+            "heart_rate_bpm": 0.2,
+            "elapsed_s": 0.2
+          },
+          "armed": false,
+          "desynchronized": false,
+          "workout": {
+            "phase": "interrupted",
+            "blocks": [
+              {
+                "duration_s": 10,
+                "speed_kmh": 2.0,
+                "incline_pct": 0.0
+              },
+              {
+                "duration_s": 10,
+                "speed_kmh": 2.5,
+                "incline_pct": 1.0
+              },
+              {
+                "duration_s": 10,
+                "speed_kmh": 2.0,
+                "incline_pct": 0.0
+              }
+            ],
+            "total_s": 30,
+            "block": 3,
+            "remaining_s": 0,
+            "reason": "Arrêt demandé"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Redémarrage après arrêt stabilisé",
+      "success": true,
+      "elapsed_s": 2.64,
+      "samples": [
+        {
+          "elapsed_s": 0.0,
+          "phase": "connected",
+          "telemetry": {
+            "flags": "0x058c",
+            "speed_kmh": 0.0,
+            "distance_m": 0,
+            "incline_pct": 0.0,
+            "ramp_angle_deg": 0.0,
+            "energy_kcal": 0,
+            "energy_per_hour_kcal": 166,
+            "energy_per_minute_kcal": 0,
+            "heart_rate_bpm": 0,
+            "elapsed_s": 2
+          },
+          "ages": {
+            "flags": 0.1,
+            "speed_kmh": 0.1,
+            "distance_m": 0.1,
+            "incline_pct": 0.1,
+            "ramp_angle_deg": 0.1,
+            "energy_kcal": 0.1,
+            "energy_per_hour_kcal": 0.1,
+            "energy_per_minute_kcal": 0.1,
+            "heart_rate_bpm": 0.1,
+            "elapsed_s": 0.1
+          },
+          "armed": true,
+          "desynchronized": false,
+          "workout": {
+            "phase": "interrupted",
+            "blocks": [
+              {
+                "duration_s": 10,
+                "speed_kmh": 2.0,
+                "incline_pct": 0.0
+              },
+              {
+                "duration_s": 10,
+                "speed_kmh": 2.5,
+                "incline_pct": 1.0
+              },
+              {
+                "duration_s": 10,
+                "speed_kmh": 2.0,
+                "incline_pct": 0.0
+              }
+            ],
+            "total_s": 30,
+            "block": 3,
+            "remaining_s": 0,
+            "reason": "Arrêt demandé"
+          }
+        },
+        {
+          "elapsed_s": 0.25,
+          "phase": "connected",
+          "telemetry": {
+            "flags": "0x058c",
+            "speed_kmh": 0.0,
+            "distance_m": 0,
+            "incline_pct": 0.0,
+            "ramp_angle_deg": 0.0,
+            "energy_kcal": 0,
+            "energy_per_hour_kcal": 166,
+            "energy_per_minute_kcal": 0,
+            "heart_rate_bpm": 0,
+            "elapsed_s": 2
+          },
+          "ages": {
+            "flags": 0.1,
+            "speed_kmh": 0.1,
+            "distance_m": 0.1,
+            "incline_pct": 0.1,
+            "ramp_angle_deg": 0.1,
+            "energy_kcal": 0.1,
+            "energy_per_hour_kcal": 0.1,
+            "energy_per_minute_kcal": 0.1,
+            "heart_rate_bpm": 0.1,
+            "elapsed_s": 0.1
+          },
+          "armed": true,
+          "desynchronized": false,
+          "workout": {
+            "phase": "interrupted",
+            "blocks": [
+              {
+                "duration_s": 10,
+                "speed_kmh": 2.0,
+                "incline_pct": 0.0
+              },
+              {
+                "duration_s": 10,
+                "speed_kmh": 2.5,
+                "incline_pct": 1.0
+              },
+              {
+                "duration_s": 10,
+                "speed_kmh": 2.0,
+                "incline_pct": 0.0
+              }
+            ],
+            "total_s": 30,
+            "block": 3,
+            "remaining_s": 0,
+            "reason": "Arrêt demandé"
+          }
+        },
+        {
+          "elapsed_s": 0.52,
+          "phase": "connected",
+          "telemetry": {
+            "flags": "0x058c",
+            "speed_kmh": 1.0,
+            "distance_m": 0,
+            "incline_pct": 0.0,
+            "ramp_angle_deg": 0.0,
+            "energy_kcal": 0,
+            "energy_per_hour_kcal": 0,
+            "energy_per_minute_kcal": 0,
+            "heart_rate_bpm": 0,
+            "elapsed_s": 0
+          },
+          "ages": {
+            "flags": 0.2,
+            "speed_kmh": 0.2,
+            "distance_m": 0.2,
+            "incline_pct": 0.2,
+            "ramp_angle_deg": 0.2,
+            "energy_kcal": 0.2,
+            "energy_per_hour_kcal": 0.2,
+            "energy_per_minute_kcal": 0.2,
+            "heart_rate_bpm": 0.2,
+            "elapsed_s": 0.2
+          },
+          "armed": true,
+          "desynchronized": false,
+          "workout": {
+            "phase": "interrupted",
+            "blocks": [
+              {
+                "duration_s": 10,
+                "speed_kmh": 2.0,
+                "incline_pct": 0.0
+              },
+              {
+                "duration_s": 10,
+                "speed_kmh": 2.5,
+                "incline_pct": 1.0
+              },
+              {
+                "duration_s": 10,
+                "speed_kmh": 2.0,
+                "incline_pct": 0.0
+              }
+            ],
+            "total_s": 30,
+            "block": 3,
+            "remaining_s": 0,
+            "reason": "Arrêt demandé"
+          }
+        },
+        {
+          "elapsed_s": 0.78,
+          "phase": "connected",
+          "telemetry": {
+            "flags": "0x058c",
+            "speed_kmh": 1.0,
+            "distance_m": 0,
+            "incline_pct": 0.0,
+            "ramp_angle_deg": 0.0,
+            "energy_kcal": 0,
+            "energy_per_hour_kcal": 0,
+            "energy_per_minute_kcal": 0,
+            "heart_rate_bpm": 0,
+            "elapsed_s": 0
+          },
+          "ages": {
+            "flags": 0.1,
+            "speed_kmh": 0.1,
+            "distance_m": 0.1,
+            "incline_pct": 0.1,
+            "ramp_angle_deg": 0.1,
+            "energy_kcal": 0.1,
+            "energy_per_hour_kcal": 0.1,
+            "energy_per_minute_kcal": 0.1,
+            "heart_rate_bpm": 0.1,
+            "elapsed_s": 0.1
+          },
+          "armed": true,
+          "desynchronized": false,
+          "workout": {
+            "phase": "interrupted",
+            "blocks": [
+              {
+                "duration_s": 10,
+                "speed_kmh": 2.0,
+                "incline_pct": 0.0
+              },
+              {
+                "duration_s": 10,
+                "speed_kmh": 2.5,
+                "incline_pct": 1.0
+              },
+              {
+                "duration_s": 10,
+                "speed_kmh": 2.0,
+                "incline_pct": 0.0
+              }
+            ],
+            "total_s": 30,
+            "block": 3,
+            "remaining_s": 0,
+            "reason": "Arrêt demandé"
+          }
+        },
+        {
+          "elapsed_s": 1.05,
+          "phase": "connected",
+          "telemetry": {
+            "flags": "0x058c",
+            "speed_kmh": 1.0,
+            "distance_m": 0,
+            "incline_pct": 0.0,
+            "ramp_angle_deg": 0.0,
+            "energy_kcal": 0,
+            "energy_per_hour_kcal": 0,
+            "energy_per_minute_kcal": 0,
+            "heart_rate_bpm": 0,
+            "elapsed_s": 0
+          },
+          "ages": {
+            "flags": 0.2,
+            "speed_kmh": 0.2,
+            "distance_m": 0.2,
+            "incline_pct": 0.2,
+            "ramp_angle_deg": 0.2,
+            "energy_kcal": 0.2,
+            "energy_per_hour_kcal": 0.2,
+            "energy_per_minute_kcal": 0.2,
+            "heart_rate_bpm": 0.2,
+            "elapsed_s": 0.2
+          },
+          "armed": true,
+          "desynchronized": false,
+          "workout": {
+            "phase": "interrupted",
+            "blocks": [
+              {
+                "duration_s": 10,
+                "speed_kmh": 2.0,
+                "incline_pct": 0.0
+              },
+              {
+                "duration_s": 10,
+                "speed_kmh": 2.5,
+                "incline_pct": 1.0
+              },
+              {
+                "duration_s": 10,
+                "speed_kmh": 2.0,
+                "incline_pct": 0.0
+              }
+            ],
+            "total_s": 30,
+            "block": 3,
+            "remaining_s": 0,
+            "reason": "Arrêt demandé"
+          }
+        },
+        {
+          "elapsed_s": 1.31,
+          "phase": "connected",
+          "telemetry": {
+            "flags": "0x058c",
+            "speed_kmh": 1.0,
+            "distance_m": 0,
+            "incline_pct": 0.0,
+            "ramp_angle_deg": 0.0,
+            "energy_kcal": 0,
+            "energy_per_hour_kcal": 0,
+            "energy_per_minute_kcal": 0,
+            "heart_rate_bpm": 0,
+            "elapsed_s": 0
+          },
+          "ages": {
+            "flags": 0.2,
+            "speed_kmh": 0.2,
+            "distance_m": 0.2,
+            "incline_pct": 0.2,
+            "ramp_angle_deg": 0.2,
+            "energy_kcal": 0.2,
+            "energy_per_hour_kcal": 0.2,
+            "energy_per_minute_kcal": 0.2,
+            "heart_rate_bpm": 0.2,
+            "elapsed_s": 0.2
+          },
+          "armed": true,
+          "desynchronized": false,
+          "workout": {
+            "phase": "interrupted",
+            "blocks": [
+              {
+                "duration_s": 10,
+                "speed_kmh": 2.0,
+                "incline_pct": 0.0
+              },
+              {
+                "duration_s": 10,
+                "speed_kmh": 2.5,
+                "incline_pct": 1.0
+              },
+              {
+                "duration_s": 10,
+                "speed_kmh": 2.0,
+                "incline_pct": 0.0
+              }
+            ],
+            "total_s": 30,
+            "block": 3,
+            "remaining_s": 0,
+            "reason": "Arrêt demandé"
+          }
+        },
+        {
+          "elapsed_s": 1.58,
+          "phase": "connected",
+          "telemetry": {
+            "flags": "0x058c",
+            "speed_kmh": 1.0,
+            "distance_m": 0,
+            "incline_pct": 0.0,
+            "ramp_angle_deg": 0.0,
+            "energy_kcal": 0,
+            "energy_per_hour_kcal": 166,
+            "energy_per_minute_kcal": 2,
+            "heart_rate_bpm": 0,
+            "elapsed_s": 1
+          },
+          "ages": {
+            "flags": 0.1,
+            "speed_kmh": 0.1,
+            "distance_m": 0.1,
+            "incline_pct": 0.1,
+            "ramp_angle_deg": 0.1,
+            "energy_kcal": 0.1,
+            "energy_per_hour_kcal": 0.1,
+            "energy_per_minute_kcal": 0.1,
+            "heart_rate_bpm": 0.1,
+            "elapsed_s": 0.1
+          },
+          "armed": true,
+          "desynchronized": false,
+          "workout": {
+            "phase": "interrupted",
+            "blocks": [
+              {
+                "duration_s": 10,
+                "speed_kmh": 2.0,
+                "incline_pct": 0.0
+              },
+              {
+                "duration_s": 10,
+                "speed_kmh": 2.5,
+                "incline_pct": 1.0
+              },
+              {
+                "duration_s": 10,
+                "speed_kmh": 2.0,
+                "incline_pct": 0.0
+              }
+            ],
+            "total_s": 30,
+            "block": 3,
+            "remaining_s": 0,
+            "reason": "Arrêt demandé"
+          }
+        },
+        {
+          "elapsed_s": 1.84,
+          "phase": "connected",
+          "telemetry": {
+            "flags": "0x058c",
+            "speed_kmh": 1.0,
+            "distance_m": 0,
+            "incline_pct": 0.0,
+            "ramp_angle_deg": 0.0,
+            "energy_kcal": 0,
+            "energy_per_hour_kcal": 166,
+            "energy_per_minute_kcal": 2,
+            "heart_rate_bpm": 0,
+            "elapsed_s": 1
+          },
+          "ages": {
+            "flags": 0.1,
+            "speed_kmh": 0.1,
+            "distance_m": 0.1,
+            "incline_pct": 0.1,
+            "ramp_angle_deg": 0.1,
+            "energy_kcal": 0.1,
+            "energy_per_hour_kcal": 0.1,
+            "energy_per_minute_kcal": 0.1,
+            "heart_rate_bpm": 0.1,
+            "elapsed_s": 0.1
+          },
+          "armed": true,
+          "desynchronized": false,
+          "workout": {
+            "phase": "interrupted",
+            "blocks": [
+              {
+                "duration_s": 10,
+                "speed_kmh": 2.0,
+                "incline_pct": 0.0
+              },
+              {
+                "duration_s": 10,
+                "speed_kmh": 2.5,
+                "incline_pct": 1.0
+              },
+              {
+                "duration_s": 10,
+                "speed_kmh": 2.0,
+                "incline_pct": 0.0
+              }
+            ],
+            "total_s": 30,
+            "block": 3,
+            "remaining_s": 0,
+            "reason": "Arrêt demandé"
+          }
+        },
+        {
+          "elapsed_s": 2.09,
+          "phase": "connected",
+          "telemetry": {
+            "flags": "0x058c",
+            "speed_kmh": 1.0,
+            "distance_m": 0,
+            "incline_pct": 0.0,
+            "ramp_angle_deg": 0.0,
+            "energy_kcal": 0,
+            "energy_per_hour_kcal": 166,
+            "energy_per_minute_kcal": 2,
+            "heart_rate_bpm": 0,
+            "elapsed_s": 1
+          },
+          "ages": {
+            "flags": 0.0,
+            "speed_kmh": 0.0,
+            "distance_m": 0.0,
+            "incline_pct": 0.0,
+            "ramp_angle_deg": 0.0,
+            "energy_kcal": 0.0,
+            "energy_per_hour_kcal": 0.0,
+            "energy_per_minute_kcal": 0.0,
+            "heart_rate_bpm": 0.0,
+            "elapsed_s": 0.0
+          },
+          "armed": true,
+          "desynchronized": false,
+          "workout": {
+            "phase": "interrupted",
+            "blocks": [
+              {
+                "duration_s": 10,
+                "speed_kmh": 2.0,
+                "incline_pct": 0.0
+              },
+              {
+                "duration_s": 10,
+                "speed_kmh": 2.5,
+                "incline_pct": 1.0
+              },
+              {
+                "duration_s": 10,
+                "speed_kmh": 2.0,
+                "incline_pct": 0.0
+              }
+            ],
+            "total_s": 30,
+            "block": 3,
+            "remaining_s": 0,
+            "reason": "Arrêt demandé"
+          }
+        },
+        {
+          "elapsed_s": 2.36,
+          "phase": "connected",
+          "telemetry": {
+            "flags": "0x058c",
+            "speed_kmh": 1.0,
+            "distance_m": 0,
+            "incline_pct": 0.0,
+            "ramp_angle_deg": 0.0,
+            "energy_kcal": 0,
+            "energy_per_hour_kcal": 166,
+            "energy_per_minute_kcal": 2,
+            "heart_rate_bpm": 0,
+            "elapsed_s": 2
+          },
+          "ages": {
+            "flags": 0.0,
+            "speed_kmh": 0.0,
+            "distance_m": 0.0,
+            "incline_pct": 0.0,
+            "ramp_angle_deg": 0.0,
+            "energy_kcal": 0.0,
+            "energy_per_hour_kcal": 0.0,
+            "energy_per_minute_kcal": 0.0,
+            "heart_rate_bpm": 0.0,
+            "elapsed_s": 0.0
+          },
+          "armed": true,
+          "desynchronized": false,
+          "workout": {
+            "phase": "interrupted",
+            "blocks": [
+              {
+                "duration_s": 10,
+                "speed_kmh": 2.0,
+                "incline_pct": 0.0
+              },
+              {
+                "duration_s": 10,
+                "speed_kmh": 2.5,
+                "incline_pct": 1.0
+              },
+              {
+                "duration_s": 10,
+                "speed_kmh": 2.0,
+                "incline_pct": 0.0
+              }
+            ],
+            "total_s": 30,
+            "block": 3,
+            "remaining_s": 0,
+            "reason": "Arrêt demandé"
+          }
+        },
+        {
+          "elapsed_s": 2.64,
+          "phase": "connected",
+          "telemetry": {
+            "flags": "0x058c",
+            "speed_kmh": 1.0,
+            "distance_m": 0,
+            "incline_pct": 0.0,
+            "ramp_angle_deg": 0.0,
+            "energy_kcal": 0,
+            "energy_per_hour_kcal": 166,
+            "energy_per_minute_kcal": 2,
+            "heart_rate_bpm": 0,
+            "elapsed_s": 2
+          },
+          "ages": {
+            "flags": 0.1,
+            "speed_kmh": 0.1,
+            "distance_m": 0.1,
+            "incline_pct": 0.1,
+            "ramp_angle_deg": 0.1,
+            "energy_kcal": 0.1,
+            "energy_per_hour_kcal": 0.1,
+            "energy_per_minute_kcal": 0.1,
+            "heart_rate_bpm": 0.1,
+            "elapsed_s": 0.1
+          },
+          "armed": true,
+          "desynchronized": false,
+          "workout": {
+            "phase": "interrupted",
+            "blocks": [
+              {
+                "duration_s": 10,
+                "speed_kmh": 2.0,
+                "incline_pct": 0.0
+              },
+              {
+                "duration_s": 10,
+                "speed_kmh": 2.5,
+                "incline_pct": 1.0
+              },
+              {
+                "duration_s": 10,
+                "speed_kmh": 2.0,
+                "incline_pct": 0.0
+              }
+            ],
+            "total_s": 30,
+            "block": 3,
+            "remaining_s": 0,
+            "reason": "Arrêt demandé"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Pause stabilisée six secondes",
+      "success": true,
+      "elapsed_s": 6.42,
+      "samples": [
+        {
+          "elapsed_s": 0.0,
+          "phase": "connected",
+          "telemetry": {
+            "flags": "0x058c",
+            "speed_kmh": 1.0,
+            "distance_m": 0,
+            "incline_pct": 0.0,
+            "ramp_angle_deg": 0.0,
+            "energy_kcal": 0,
+            "energy_per_hour_kcal": 166,
+            "energy_per_minute_kcal": 2,
+            "heart_rate_bpm": 0,
+            "elapsed_s": 2
+          },
+          "ages": {
+            "flags": 0.2,
+            "speed_kmh": 0.2,
+            "distance_m": 0.2,
+            "incline_pct": 0.2,
+            "ramp_angle_deg": 0.2,
+            "energy_kcal": 0.2,
+            "energy_per_hour_kcal": 0.2,
+            "energy_per_minute_kcal": 0.2,
+            "heart_rate_bpm": 0.2,
+            "elapsed_s": 0.2
+          },
+          "armed": false,
+          "desynchronized": false,
+          "workout": {
+            "phase": "interrupted",
+            "blocks": [
+              {
+                "duration_s": 10,
+                "speed_kmh": 2.0,
+                "incline_pct": 0.0
+              },
+              {
+                "duration_s": 10,
+                "speed_kmh": 2.5,
+                "incline_pct": 1.0
+              },
+              {
+                "duration_s": 10,
+                "speed_kmh": 2.0,
+                "incline_pct": 0.0
+              }
+            ],
+            "total_s": 30,
+            "block": 3,
+            "remaining_s": 0,
+            "reason": "Pause demandée"
+          }
+        },
+        {
+          "elapsed_s": 0.27,
+          "phase": "connected",
+          "telemetry": {
+            "flags": "0x058c",
+            "speed_kmh": 0.0,
+            "distance_m": 0,
+            "incline_pct": 0.0,
+            "ramp_angle_deg": 0.0,
+            "energy_kcal": 0,
+            "energy_per_hour_kcal": 0,
+            "energy_per_minute_kcal": 0,
+            "heart_rate_bpm": 0,
+            "elapsed_s": 2
+          },
+          "ages": {
+            "flags": 0.2,
+            "speed_kmh": 0.2,
+            "distance_m": 0.2,
+            "incline_pct": 0.2,
+            "ramp_angle_deg": 0.2,
+            "energy_kcal": 0.2,
+            "energy_per_hour_kcal": 0.2,
+            "energy_per_minute_kcal": 0.2,
+            "heart_rate_bpm": 0.2,
+            "elapsed_s": 0.2
+          },
+          "armed": false,
+          "desynchronized": false,
+          "workout": {
+            "phase": "interrupted",
+            "blocks": [
+              {
+                "duration_s": 10,
+                "speed_kmh": 2.0,
+                "incline_pct": 0.0
+              },
+              {
+                "duration_s": 10,
+                "speed_kmh": 2.5,
+                "incline_pct": 1.0
+              },
+              {
+                "duration_s": 10,
+                "speed_kmh": 2.0,
+                "incline_pct": 0.0
+              }
+            ],
+            "total_s": 30,
+            "block": 3,
+            "remaining_s": 0,
+            "reason": "Pause demandée"
+          }
+        },
+        {
+          "elapsed_s": 0.52,
+          "phase": "connected",
+          "telemetry": {
+            "flags": "0x058c",
+            "speed_kmh": 0.0,
+            "distance_m": 0,
+            "incline_pct": 0.0,
+            "ramp_angle_deg": 0.0,
+            "energy_kcal": 0,
+            "energy_per_hour_kcal": 166,
+            "energy_per_minute_kcal": 0,
+            "heart_rate_bpm": 0,
+            "elapsed_s": 2
+          },
+          "ages": {
+            "flags": 0.1,
+            "speed_kmh": 0.1,
+            "distance_m": 0.1,
+            "incline_pct": 0.1,
+            "ramp_angle_deg": 0.1,
+            "energy_kcal": 0.1,
+            "energy_per_hour_kcal": 0.1,
+            "energy_per_minute_kcal": 0.1,
+            "heart_rate_bpm": 0.1,
+            "elapsed_s": 0.1
+          },
+          "armed": false,
+          "desynchronized": false,
+          "workout": {
+            "phase": "interrupted",
+            "blocks": [
+              {
+                "duration_s": 10,
+                "speed_kmh": 2.0,
+                "incline_pct": 0.0
+              },
+              {
+                "duration_s": 10,
+                "speed_kmh": 2.5,
+                "incline_pct": 1.0
+              },
+              {
+                "duration_s": 10,
+                "speed_kmh": 2.0,
+                "incline_pct": 0.0
+              }
+            ],
+            "total_s": 30,
+            "block": 3,
+            "remaining_s": 0,
+            "reason": "Pause demandée"
+          }
+        },
+        {
+          "elapsed_s": 0.78,
+          "phase": "connected",
+          "telemetry": {
+            "flags": "0x058c",
+            "speed_kmh": 0.0,
+            "distance_m": 0,
+            "incline_pct": 0.0,
+            "ramp_angle_deg": 0.0,
+            "energy_kcal": 0,
+            "energy_per_hour_kcal": 166,
+            "energy_per_minute_kcal": 0,
+            "heart_rate_bpm": 0,
+            "elapsed_s": 2
+          },
+          "ages": {
+            "flags": 0.1,
+            "speed_kmh": 0.1,
+            "distance_m": 0.1,
+            "incline_pct": 0.1,
+            "ramp_angle_deg": 0.1,
+            "energy_kcal": 0.1,
+            "energy_per_hour_kcal": 0.1,
+            "energy_per_minute_kcal": 0.1,
+            "heart_rate_bpm": 0.1,
+            "elapsed_s": 0.1
+          },
+          "armed": false,
+          "desynchronized": false,
+          "workout": {
+            "phase": "interrupted",
+            "blocks": [
+              {
+                "duration_s": 10,
+                "speed_kmh": 2.0,
+                "incline_pct": 0.0
+              },
+              {
+                "duration_s": 10,
+                "speed_kmh": 2.5,
+                "incline_pct": 1.0
+              },
+              {
+                "duration_s": 10,
+                "speed_kmh": 2.0,
+                "incline_pct": 0.0
+              }
+            ],
+            "total_s": 30,
+            "block": 3,
+            "remaining_s": 0,
+            "reason": "Pause demandée"
+          }
+        },
+        {
+          "elapsed_s": 1.03,
+          "phase": "connected",
+          "telemetry": {
+            "flags": "0x058c",
+            "speed_kmh": 0.0,
+            "distance_m": 0,
+            "incline_pct": 0.0,
+            "ramp_angle_deg": 0.0,
+            "energy_kcal": 0,
+            "energy_per_hour_kcal": 166,
+            "energy_per_minute_kcal": 0,
+            "heart_rate_bpm": 0,
+            "elapsed_s": 2
+          },
+          "ages": {
+            "flags": 0.0,
+            "speed_kmh": 0.0,
+            "distance_m": 0.0,
+            "incline_pct": 0.0,
+            "ramp_angle_deg": 0.0,
+            "energy_kcal": 0.0,
+            "energy_per_hour_kcal": 0.0,
+            "energy_per_minute_kcal": 0.0,
+            "heart_rate_bpm": 0.0,
+            "elapsed_s": 0.0
+          },
+          "armed": false,
+          "desynchronized": false,
+          "workout": {
+            "phase": "interrupted",
+            "blocks": [
+              {
+                "duration_s": 10,
+                "speed_kmh": 2.0,
+                "incline_pct": 0.0
+              },
+              {
+                "duration_s": 10,
+                "speed_kmh": 2.5,
+                "incline_pct": 1.0
+              },
+              {
+                "duration_s": 10,
+                "speed_kmh": 2.0,
+                "incline_pct": 0.0
+              }
+            ],
+            "total_s": 30,
+            "block": 3,
+            "remaining_s": 0,
+            "reason": "Pause demandée"
+          }
+        },
+        {
+          "elapsed_s": 1.3,
+          "phase": "connected",
+          "telemetry": {
+            "flags": "0x058c",
+            "speed_kmh": 0.0,
+            "distance_m": 0,
+            "incline_pct": 0.0,
+            "ramp_angle_deg": 0.0,
+            "energy_kcal": 0,
+            "energy_per_hour_kcal": 166,
+            "energy_per_minute_kcal": 0,
+            "heart_rate_bpm": 0,
+            "elapsed_s": 2
+          },
+          "ages": {
+            "flags": 0.3,
+            "speed_kmh": 0.3,
+            "distance_m": 0.3,
+            "incline_pct": 0.3,
+            "ramp_angle_deg": 0.3,
+            "energy_kcal": 0.3,
+            "energy_per_hour_kcal": 0.3,
+            "energy_per_minute_kcal": 0.3,
+            "heart_rate_bpm": 0.3,
+            "elapsed_s": 0.3
+          },
+          "armed": false,
+          "desynchronized": false,
+          "workout": {
+            "phase": "interrupted",
+            "blocks": [
+              {
+                "duration_s": 10,
+                "speed_kmh": 2.0,
+                "incline_pct": 0.0
+              },
+              {
+                "duration_s": 10,
+                "speed_kmh": 2.5,
+                "incline_pct": 1.0
+              },
+              {
+                "duration_s": 10,
+                "speed_kmh": 2.0,
+                "incline_pct": 0.0
+              }
+            ],
+            "total_s": 30,
+            "block": 3,
+            "remaining_s": 0,
+            "reason": "Pause demandée"
+          }
+        },
+        {
+          "elapsed_s": 1.55,
+          "phase": "connected",
+          "telemetry": {
+            "flags": "0x058c",
+            "speed_kmh": 0.0,
+            "distance_m": 0,
+            "incline_pct": 0.0,
+            "ramp_angle_deg": 0.0,
+            "energy_kcal": 0,
+            "energy_per_hour_kcal": 166,
+            "energy_per_minute_kcal": 0,
+            "heart_rate_bpm": 0,
+            "elapsed_s": 2
+          },
+          "ages": {
+            "flags": 0.1,
+            "speed_kmh": 0.1,
+            "distance_m": 0.1,
+            "incline_pct": 0.1,
+            "ramp_angle_deg": 0.1,
+            "energy_kcal": 0.1,
+            "energy_per_hour_kcal": 0.1,
+            "energy_per_minute_kcal": 0.1,
+            "heart_rate_bpm": 0.1,
+            "elapsed_s": 0.1
+          },
+          "armed": false,
+          "desynchronized": false,
+          "workout": {
+            "phase": "interrupted",
+            "blocks": [
+              {
+                "duration_s": 10,
+                "speed_kmh": 2.0,
+                "incline_pct": 0.0
+              },
+              {
+                "duration_s": 10,
+                "speed_kmh": 2.5,
+                "incline_pct": 1.0
+              },
+              {
+                "duration_s": 10,
+                "speed_kmh": 2.0,
+                "incline_pct": 0.0
+              }
+            ],
+            "total_s": 30,
+            "block": 3,
+            "remaining_s": 0,
+            "reason": "Pause demandée"
+          }
+        },
+        {
+          "elapsed_s": 1.81,
+          "phase": "connected",
+          "telemetry": {
+            "flags": "0x058c",
+            "speed_kmh": 0.0,
+            "distance_m": 0,
+            "incline_pct": 0.0,
+            "ramp_angle_deg": 0.0,
+            "energy_kcal": 0,
+            "energy_per_hour_kcal": 166,
+            "energy_per_minute_kcal": 0,
+            "heart_rate_bpm": 0,
+            "elapsed_s": 2
+          },
+          "ages": {
+            "flags": 0.1,
+            "speed_kmh": 0.1,
+            "distance_m": 0.1,
+            "incline_pct": 0.1,
+            "ramp_angle_deg": 0.1,
+            "energy_kcal": 0.1,
+            "energy_per_hour_kcal": 0.1,
+            "energy_per_minute_kcal": 0.1,
+            "heart_rate_bpm": 0.1,
+            "elapsed_s": 0.1
+          },
+          "armed": false,
+          "desynchronized": false,
+          "workout": {
+            "phase": "interrupted",
+            "blocks": [
+              {
+                "duration_s": 10,
+                "speed_kmh": 2.0,
+                "incline_pct": 0.0
+              },
+              {
+                "duration_s": 10,
+                "speed_kmh": 2.5,
+                "incline_pct": 1.0
+              },
+              {
+                "duration_s": 10,
+                "speed_kmh": 2.0,
+                "incline_pct": 0.0
+              }
+            ],
+            "total_s": 30,
+            "block": 3,
+            "remaining_s": 0,
+            "reason": "Pause demandée"
+          }
+        },
+        {
+          "elapsed_s": 2.06,
+          "phase": "connected",
+          "telemetry": {
+            "flags": "0x058c",
+            "speed_kmh": 0.0,
+            "distance_m": 0,
+            "incline_pct": 0.0,
+            "ramp_angle_deg": 0.0,
+            "energy_kcal": 0,
+            "energy_per_hour_kcal": 166,
+            "energy_per_minute_kcal": 0,
+            "heart_rate_bpm": 0,
+            "elapsed_s": 2
+          },
+          "ages": {
+            "flags": 0.1,
+            "speed_kmh": 0.1,
+            "distance_m": 0.1,
+            "incline_pct": 0.1,
+            "ramp_angle_deg": 0.1,
+            "energy_kcal": 0.1,
+            "energy_per_hour_kcal": 0.1,
+            "energy_per_minute_kcal": 0.1,
+            "heart_rate_bpm": 0.1,
+            "elapsed_s": 0.1
+          },
+          "armed": false,
+          "desynchronized": false,
+          "workout": {
+            "phase": "interrupted",
+            "blocks": [
+              {
+                "duration_s": 10,
+                "speed_kmh": 2.0,
+                "incline_pct": 0.0
+              },
+              {
+                "duration_s": 10,
+                "speed_kmh": 2.5,
+                "incline_pct": 1.0
+              },
+              {
+                "duration_s": 10,
+                "speed_kmh": 2.0,
+                "incline_pct": 0.0
+              }
+            ],
+            "total_s": 30,
+            "block": 3,
+            "remaining_s": 0,
+            "reason": "Pause demandée"
+          }
+        },
+        {
+          "elapsed_s": 2.33,
+          "phase": "connected",
+          "telemetry": {
+            "flags": "0x058c",
+            "speed_kmh": 0.0,
+            "distance_m": 0,
+            "incline_pct": 0.0,
+            "ramp_angle_deg": 0.0,
+            "energy_kcal": 0,
+            "energy_per_hour_kcal": 166,
+            "energy_per_minute_kcal": 0,
+            "heart_rate_bpm": 0,
+            "elapsed_s": 2
+          },
+          "ages": {
+            "flags": 0.1,
+            "speed_kmh": 0.1,
+            "distance_m": 0.1,
+            "incline_pct": 0.1,
+            "ramp_angle_deg": 0.1,
+            "energy_kcal": 0.1,
+            "energy_per_hour_kcal": 0.1,
+            "energy_per_minute_kcal": 0.1,
+            "heart_rate_bpm": 0.1,
+            "elapsed_s": 0.1
+          },
+          "armed": false,
+          "desynchronized": false,
+          "workout": {
+            "phase": "interrupted",
+            "blocks": [
+              {
+                "duration_s": 10,
+                "speed_kmh": 2.0,
+                "incline_pct": 0.0
+              },
+              {
+                "duration_s": 10,
+                "speed_kmh": 2.5,
+                "incline_pct": 1.0
+              },
+              {
+                "duration_s": 10,
+                "speed_kmh": 2.0,
+                "incline_pct": 0.0
+              }
+            ],
+            "total_s": 30,
+            "block": 3,
+            "remaining_s": 0,
+            "reason": "Pause demandée"
+          }
+        },
+        {
+          "elapsed_s": 2.58,
+          "phase": "connected",
+          "telemetry": {
+            "flags": "0x058c",
+            "speed_kmh": 0.0,
+            "distance_m": 0,
+            "incline_pct": 0.0,
+            "ramp_angle_deg": 0.0,
+            "energy_kcal": 0,
+            "energy_per_hour_kcal": 166,
+            "energy_per_minute_kcal": 0,
+            "heart_rate_bpm": 0,
+            "elapsed_s": 2
+          },
+          "ages": {
+            "flags": 0.0,
+            "speed_kmh": 0.0,
+            "distance_m": 0.0,
+            "incline_pct": 0.0,
+            "ramp_angle_deg": 0.0,
+            "energy_kcal": 0.0,
+            "energy_per_hour_kcal": 0.0,
+            "energy_per_minute_kcal": 0.0,
+            "heart_rate_bpm": 0.0,
+            "elapsed_s": 0.0
+          },
+          "armed": false,
+          "desynchronized": false,
+          "workout": {
+            "phase": "interrupted",
+            "blocks": [
+              {
+                "duration_s": 10,
+                "speed_kmh": 2.0,
+                "incline_pct": 0.0
+              },
+              {
+                "duration_s": 10,
+                "speed_kmh": 2.5,
+                "incline_pct": 1.0
+              },
+              {
+                "duration_s": 10,
+                "speed_kmh": 2.0,
+                "incline_pct": 0.0
+              }
+            ],
+            "total_s": 30,
+            "block": 3,
+            "remaining_s": 0,
+            "reason": "Pause demandée"
+          }
+        },
+        {
+          "elapsed_s": 2.83,
+          "phase": "connected",
+          "telemetry": {
+            "flags": "0x058c",
+            "speed_kmh": 0.0,
+            "distance_m": 0,
+            "incline_pct": 0.0,
+            "ramp_angle_deg": 0.0,
+            "energy_kcal": 0,
+            "energy_per_hour_kcal": 166,
+            "energy_per_minute_kcal": 0,
+            "heart_rate_bpm": 0,
+            "elapsed_s": 2
+          },
+          "ages": {
+            "flags": 0.0,
+            "speed_kmh": 0.0,
+            "distance_m": 0.0,
+            "incline_pct": 0.0,
+            "ramp_angle_deg": 0.0,
+            "energy_kcal": 0.0,
+            "energy_per_hour_kcal": 0.0,
+            "energy_per_minute_kcal": 0.0,
+            "heart_rate_bpm": 0.0,
+            "elapsed_s": 0.0
+          },
+          "armed": false,
+          "desynchronized": false,
+          "workout": {
+            "phase": "interrupted",
+            "blocks": [
+              {
+                "duration_s": 10,
+                "speed_kmh": 2.0,
+                "incline_pct": 0.0
+              },
+              {
+                "duration_s": 10,
+                "speed_kmh": 2.5,
+                "incline_pct": 1.0
+              },
+              {
+                "duration_s": 10,
+                "speed_kmh": 2.0,
+                "incline_pct": 0.0
+              }
+            ],
+            "total_s": 30,
+            "block": 3,
+            "remaining_s": 0,
+            "reason": "Pause demandée"
+          }
+        },
+        {
+          "elapsed_s": 3.09,
+          "phase": "connected",
+          "telemetry": {
+            "flags": "0x058c",
+            "speed_kmh": 0.0,
+            "distance_m": 0,
+            "incline_pct": 0.0,
+            "ramp_angle_deg": 0.0,
+            "energy_kcal": 0,
+            "energy_per_hour_kcal": 166,
+            "energy_per_minute_kcal": 0,
+            "heart_rate_bpm": 0,
+            "elapsed_s": 2
+          },
+          "ages": {
+            "flags": 0.3,
+            "speed_kmh": 0.3,
+            "distance_m": 0.3,
+            "incline_pct": 0.3,
+            "ramp_angle_deg": 0.3,
+            "energy_kcal": 0.3,
+            "energy_per_hour_kcal": 0.3,
+            "energy_per_minute_kcal": 0.3,
+            "heart_rate_bpm": 0.3,
+            "elapsed_s": 0.3
+          },
+          "armed": false,
+          "desynchronized": false,
+          "workout": {
+            "phase": "interrupted",
+            "blocks": [
+              {
+                "duration_s": 10,
+                "speed_kmh": 2.0,
+                "incline_pct": 0.0
+              },
+              {
+                "duration_s": 10,
+                "speed_kmh": 2.5,
+                "incline_pct": 1.0
+              },
+              {
+                "duration_s": 10,
+                "speed_kmh": 2.0,
+                "incline_pct": 0.0
+              }
+            ],
+            "total_s": 30,
+            "block": 3,
+            "remaining_s": 0,
+            "reason": "Pause demandée"
+          }
+        },
+        {
+          "elapsed_s": 3.34,
+          "phase": "connected",
+          "telemetry": {
+            "flags": "0x058c",
+            "speed_kmh": 0.0,
+            "distance_m": 0,
+            "incline_pct": 0.0,
+            "ramp_angle_deg": 0.0,
+            "energy_kcal": 0,
+            "energy_per_hour_kcal": 166,
+            "energy_per_minute_kcal": 0,
+            "heart_rate_bpm": 0,
+            "elapsed_s": 2
+          },
+          "ages": {
+            "flags": 0.0,
+            "speed_kmh": 0.0,
+            "distance_m": 0.0,
+            "incline_pct": 0.0,
+            "ramp_angle_deg": 0.0,
+            "energy_kcal": 0.0,
+            "energy_per_hour_kcal": 0.0,
+            "energy_per_minute_kcal": 0.0,
+            "heart_rate_bpm": 0.0,
+            "elapsed_s": 0.0
+          },
+          "armed": false,
+          "desynchronized": false,
+          "workout": {
+            "phase": "interrupted",
+            "blocks": [
+              {
+                "duration_s": 10,
+                "speed_kmh": 2.0,
+                "incline_pct": 0.0
+              },
+              {
+                "duration_s": 10,
+                "speed_kmh": 2.5,
+                "incline_pct": 1.0
+              },
+              {
+                "duration_s": 10,
+                "speed_kmh": 2.0,
+                "incline_pct": 0.0
+              }
+            ],
+            "total_s": 30,
+            "block": 3,
+            "remaining_s": 0,
+            "reason": "Pause demandée"
+          }
+        },
+        {
+          "elapsed_s": 3.59,
+          "phase": "connected",
+          "telemetry": {
+            "flags": "0x058c",
+            "speed_kmh": 0.0,
+            "distance_m": 0,
+            "incline_pct": 0.0,
+            "ramp_angle_deg": 0.0,
+            "energy_kcal": 0,
+            "energy_per_hour_kcal": 166,
+            "energy_per_minute_kcal": 0,
+            "heart_rate_bpm": 0,
+            "elapsed_s": 2
+          },
+          "ages": {
+            "flags": 0.2,
+            "speed_kmh": 0.2,
+            "distance_m": 0.2,
+            "incline_pct": 0.2,
+            "ramp_angle_deg": 0.2,
+            "energy_kcal": 0.2,
+            "energy_per_hour_kcal": 0.2,
+            "energy_per_minute_kcal": 0.2,
+            "heart_rate_bpm": 0.2,
+            "elapsed_s": 0.2
+          },
+          "armed": false,
+          "desynchronized": false,
+          "workout": {
+            "phase": "interrupted",
+            "blocks": [
+              {
+                "duration_s": 10,
+                "speed_kmh": 2.0,
+                "incline_pct": 0.0
+              },
+              {
+                "duration_s": 10,
+                "speed_kmh": 2.5,
+                "incline_pct": 1.0
+              },
+              {
+                "duration_s": 10,
+                "speed_kmh": 2.0,
+                "incline_pct": 0.0
+              }
+            ],
+            "total_s": 30,
+            "block": 3,
+            "remaining_s": 0,
+            "reason": "Pause demandée"
+          }
+        },
+        {
+          "elapsed_s": 3.86,
+          "phase": "connected",
+          "telemetry": {
+            "flags": "0x058c",
+            "speed_kmh": 0.0,
+            "distance_m": 0,
+            "incline_pct": 0.0,
+            "ramp_angle_deg": 0.0,
+            "energy_kcal": 0,
+            "energy_per_hour_kcal": 166,
+            "energy_per_minute_kcal": 0,
+            "heart_rate_bpm": 0,
+            "elapsed_s": 2
+          },
+          "ages": {
+            "flags": 0.1,
+            "speed_kmh": 0.1,
+            "distance_m": 0.1,
+            "incline_pct": 0.1,
+            "ramp_angle_deg": 0.1,
+            "energy_kcal": 0.1,
+            "energy_per_hour_kcal": 0.1,
+            "energy_per_minute_kcal": 0.1,
+            "heart_rate_bpm": 0.1,
+            "elapsed_s": 0.1
+          },
+          "armed": false,
+          "desynchronized": false,
+          "workout": {
+            "phase": "interrupted",
+            "blocks": [
+              {
+                "duration_s": 10,
+                "speed_kmh": 2.0,
+                "incline_pct": 0.0
+              },
+              {
+                "duration_s": 10,
+                "speed_kmh": 2.5,
+                "incline_pct": 1.0
+              },
+              {
+                "duration_s": 10,
+                "speed_kmh": 2.0,
+                "incline_pct": 0.0
+              }
+            ],
+            "total_s": 30,
+            "block": 3,
+            "remaining_s": 0,
+            "reason": "Pause demandée"
+          }
+        },
+        {
+          "elapsed_s": 4.11,
+          "phase": "connected",
+          "telemetry": {
+            "flags": "0x058c",
+            "speed_kmh": 0.0,
+            "distance_m": 0,
+            "incline_pct": 0.0,
+            "ramp_angle_deg": 0.0,
+            "energy_kcal": 0,
+            "energy_per_hour_kcal": 166,
+            "energy_per_minute_kcal": 0,
+            "heart_rate_bpm": 0,
+            "elapsed_s": 2
+          },
+          "ages": {
+            "flags": 0.1,
+            "speed_kmh": 0.1,
+            "distance_m": 0.1,
+            "incline_pct": 0.1,
+            "ramp_angle_deg": 0.1,
+            "energy_kcal": 0.1,
+            "energy_per_hour_kcal": 0.1,
+            "energy_per_minute_kcal": 0.1,
+            "heart_rate_bpm": 0.1,
+            "elapsed_s": 0.1
+          },
+          "armed": false,
+          "desynchronized": false,
+          "workout": {
+            "phase": "interrupted",
+            "blocks": [
+              {
+                "duration_s": 10,
+                "speed_kmh": 2.0,
+                "incline_pct": 0.0
+              },
+              {
+                "duration_s": 10,
+                "speed_kmh": 2.5,
+                "incline_pct": 1.0
+              },
+              {
+                "duration_s": 10,
+                "speed_kmh": 2.0,
+                "incline_pct": 0.0
+              }
+            ],
+            "total_s": 30,
+            "block": 3,
+            "remaining_s": 0,
+            "reason": "Pause demandée"
+          }
+        },
+        {
+          "elapsed_s": 4.36,
+          "phase": "connected",
+          "telemetry": {
+            "flags": "0x058c",
+            "speed_kmh": 0.0,
+            "distance_m": 0,
+            "incline_pct": 0.0,
+            "ramp_angle_deg": 0.0,
+            "energy_kcal": 0,
+            "energy_per_hour_kcal": 166,
+            "energy_per_minute_kcal": 0,
+            "heart_rate_bpm": 0,
+            "elapsed_s": 2
+          },
+          "ages": {
+            "flags": 0.0,
+            "speed_kmh": 0.0,
+            "distance_m": 0.0,
+            "incline_pct": 0.0,
+            "ramp_angle_deg": 0.0,
+            "energy_kcal": 0.0,
+            "energy_per_hour_kcal": 0.0,
+            "energy_per_minute_kcal": 0.0,
+            "heart_rate_bpm": 0.0,
+            "elapsed_s": 0.0
+          },
+          "armed": false,
+          "desynchronized": false,
+          "workout": {
+            "phase": "interrupted",
+            "blocks": [
+              {
+                "duration_s": 10,
+                "speed_kmh": 2.0,
+                "incline_pct": 0.0
+              },
+              {
+                "duration_s": 10,
+                "speed_kmh": 2.5,
+                "incline_pct": 1.0
+              },
+              {
+                "duration_s": 10,
+                "speed_kmh": 2.0,
+                "incline_pct": 0.0
+              }
+            ],
+            "total_s": 30,
+            "block": 3,
+            "remaining_s": 0,
+            "reason": "Pause demandée"
+          }
+        },
+        {
+          "elapsed_s": 4.62,
+          "phase": "connected",
+          "telemetry": {
+            "flags": "0x058c",
+            "speed_kmh": 0.0,
+            "distance_m": 0,
+            "incline_pct": 0.0,
+            "ramp_angle_deg": 0.0,
+            "energy_kcal": 0,
+            "energy_per_hour_kcal": 166,
+            "energy_per_minute_kcal": 0,
+            "heart_rate_bpm": 0,
+            "elapsed_s": 2
+          },
+          "ages": {
+            "flags": 0.0,
+            "speed_kmh": 0.0,
+            "distance_m": 0.0,
+            "incline_pct": 0.0,
+            "ramp_angle_deg": 0.0,
+            "energy_kcal": 0.0,
+            "energy_per_hour_kcal": 0.0,
+            "energy_per_minute_kcal": 0.0,
+            "heart_rate_bpm": 0.0,
+            "elapsed_s": 0.0
+          },
+          "armed": false,
+          "desynchronized": false,
+          "workout": {
+            "phase": "interrupted",
+            "blocks": [
+              {
+                "duration_s": 10,
+                "speed_kmh": 2.0,
+                "incline_pct": 0.0
+              },
+              {
+                "duration_s": 10,
+                "speed_kmh": 2.5,
+                "incline_pct": 1.0
+              },
+              {
+                "duration_s": 10,
+                "speed_kmh": 2.0,
+                "incline_pct": 0.0
+              }
+            ],
+            "total_s": 30,
+            "block": 3,
+            "remaining_s": 0,
+            "reason": "Pause demandée"
+          }
+        },
+        {
+          "elapsed_s": 4.88,
+          "phase": "connected",
+          "telemetry": {
+            "flags": "0x058c",
+            "speed_kmh": 0.0,
+            "distance_m": 0,
+            "incline_pct": 0.0,
+            "ramp_angle_deg": 0.0,
+            "energy_kcal": 0,
+            "energy_per_hour_kcal": 166,
+            "energy_per_minute_kcal": 0,
+            "heart_rate_bpm": 0,
+            "elapsed_s": 2
+          },
+          "ages": {
+            "flags": 0.3,
+            "speed_kmh": 0.3,
+            "distance_m": 0.3,
+            "incline_pct": 0.3,
+            "ramp_angle_deg": 0.3,
+            "energy_kcal": 0.3,
+            "energy_per_hour_kcal": 0.3,
+            "energy_per_minute_kcal": 0.3,
+            "heart_rate_bpm": 0.3,
+            "elapsed_s": 0.3
+          },
+          "armed": false,
+          "desynchronized": false,
+          "workout": {
+            "phase": "interrupted",
+            "blocks": [
+              {
+                "duration_s": 10,
+                "speed_kmh": 2.0,
+                "incline_pct": 0.0
+              },
+              {
+                "duration_s": 10,
+                "speed_kmh": 2.5,
+                "incline_pct": 1.0
+              },
+              {
+                "duration_s": 10,
+                "speed_kmh": 2.0,
+                "incline_pct": 0.0
+              }
+            ],
+            "total_s": 30,
+            "block": 3,
+            "remaining_s": 0,
+            "reason": "Pause demandée"
+          }
+        },
+        {
+          "elapsed_s": 5.16,
+          "phase": "connected",
+          "telemetry": {
+            "flags": "0x058c",
+            "speed_kmh": 0.0,
+            "distance_m": 0,
+            "incline_pct": 0.0,
+            "ramp_angle_deg": 0.0,
+            "energy_kcal": 0,
+            "energy_per_hour_kcal": 166,
+            "energy_per_minute_kcal": 0,
+            "heart_rate_bpm": 0,
+            "elapsed_s": 2
+          },
+          "ages": {
+            "flags": 0.1,
+            "speed_kmh": 0.1,
+            "distance_m": 0.1,
+            "incline_pct": 0.1,
+            "ramp_angle_deg": 0.1,
+            "energy_kcal": 0.1,
+            "energy_per_hour_kcal": 0.1,
+            "energy_per_minute_kcal": 0.1,
+            "heart_rate_bpm": 0.1,
+            "elapsed_s": 0.1
+          },
+          "armed": false,
+          "desynchronized": false,
+          "workout": {
+            "phase": "interrupted",
+            "blocks": [
+              {
+                "duration_s": 10,
+                "speed_kmh": 2.0,
+                "incline_pct": 0.0
+              },
+              {
+                "duration_s": 10,
+                "speed_kmh": 2.5,
+                "incline_pct": 1.0
+              },
+              {
+                "duration_s": 10,
+                "speed_kmh": 2.0,
+                "incline_pct": 0.0
+              }
+            ],
+            "total_s": 30,
+            "block": 3,
+            "remaining_s": 0,
+            "reason": "Pause demandée"
+          }
+        },
+        {
+          "elapsed_s": 5.41,
+          "phase": "connected",
+          "telemetry": {
+            "flags": "0x058c",
+            "speed_kmh": 0.0,
+            "distance_m": 0,
+            "incline_pct": 0.0,
+            "ramp_angle_deg": 0.0,
+            "energy_kcal": 0,
+            "energy_per_hour_kcal": 166,
+            "energy_per_minute_kcal": 0,
+            "heart_rate_bpm": 0,
+            "elapsed_s": 2
+          },
+          "ages": {
+            "flags": 0.2,
+            "speed_kmh": 0.2,
+            "distance_m": 0.2,
+            "incline_pct": 0.2,
+            "ramp_angle_deg": 0.2,
+            "energy_kcal": 0.2,
+            "energy_per_hour_kcal": 0.2,
+            "energy_per_minute_kcal": 0.2,
+            "heart_rate_bpm": 0.2,
+            "elapsed_s": 0.2
+          },
+          "armed": false,
+          "desynchronized": false,
+          "workout": {
+            "phase": "interrupted",
+            "blocks": [
+              {
+                "duration_s": 10,
+                "speed_kmh": 2.0,
+                "incline_pct": 0.0
+              },
+              {
+                "duration_s": 10,
+                "speed_kmh": 2.5,
+                "incline_pct": 1.0
+              },
+              {
+                "duration_s": 10,
+                "speed_kmh": 2.0,
+                "incline_pct": 0.0
+              }
+            ],
+            "total_s": 30,
+            "block": 3,
+            "remaining_s": 0,
+            "reason": "Pause demandée"
+          }
+        },
+        {
+          "elapsed_s": 5.66,
+          "phase": "connected",
+          "telemetry": {
+            "flags": "0x058c",
+            "speed_kmh": 0.0,
+            "distance_m": 0,
+            "incline_pct": 0.0,
+            "ramp_angle_deg": 0.0,
+            "energy_kcal": 0,
+            "energy_per_hour_kcal": 166,
+            "energy_per_minute_kcal": 0,
+            "heart_rate_bpm": 0,
+            "elapsed_s": 2
+          },
+          "ages": {
+            "flags": 0.1,
+            "speed_kmh": 0.1,
+            "distance_m": 0.1,
+            "incline_pct": 0.1,
+            "ramp_angle_deg": 0.1,
+            "energy_kcal": 0.1,
+            "energy_per_hour_kcal": 0.1,
+            "energy_per_minute_kcal": 0.1,
+            "heart_rate_bpm": 0.1,
+            "elapsed_s": 0.1
+          },
+          "armed": false,
+          "desynchronized": false,
+          "workout": {
+            "phase": "interrupted",
+            "blocks": [
+              {
+                "duration_s": 10,
+                "speed_kmh": 2.0,
+                "incline_pct": 0.0
+              },
+              {
+                "duration_s": 10,
+                "speed_kmh": 2.5,
+                "incline_pct": 1.0
+              },
+              {
+                "duration_s": 10,
+                "speed_kmh": 2.0,
+                "incline_pct": 0.0
+              }
+            ],
+            "total_s": 30,
+            "block": 3,
+            "remaining_s": 0,
+            "reason": "Pause demandée"
+          }
+        },
+        {
+          "elapsed_s": 5.92,
+          "phase": "connected",
+          "telemetry": {
+            "flags": "0x058c",
+            "speed_kmh": 0.0,
+            "distance_m": 0,
+            "incline_pct": 0.0,
+            "ramp_angle_deg": 0.0,
+            "energy_kcal": 0,
+            "energy_per_hour_kcal": 166,
+            "energy_per_minute_kcal": 0,
+            "heart_rate_bpm": 0,
+            "elapsed_s": 2
+          },
+          "ages": {
+            "flags": 0.1,
+            "speed_kmh": 0.1,
+            "distance_m": 0.1,
+            "incline_pct": 0.1,
+            "ramp_angle_deg": 0.1,
+            "energy_kcal": 0.1,
+            "energy_per_hour_kcal": 0.1,
+            "energy_per_minute_kcal": 0.1,
+            "heart_rate_bpm": 0.1,
+            "elapsed_s": 0.1
+          },
+          "armed": false,
+          "desynchronized": false,
+          "workout": {
+            "phase": "interrupted",
+            "blocks": [
+              {
+                "duration_s": 10,
+                "speed_kmh": 2.0,
+                "incline_pct": 0.0
+              },
+              {
+                "duration_s": 10,
+                "speed_kmh": 2.5,
+                "incline_pct": 1.0
+              },
+              {
+                "duration_s": 10,
+                "speed_kmh": 2.0,
+                "incline_pct": 0.0
+              }
+            ],
+            "total_s": 30,
+            "block": 3,
+            "remaining_s": 0,
+            "reason": "Pause demandée"
+          }
+        },
+        {
+          "elapsed_s": 6.17,
+          "phase": "connected",
+          "telemetry": {
+            "flags": "0x058c",
+            "speed_kmh": 0.0,
+            "distance_m": 0,
+            "incline_pct": 0.0,
+            "ramp_angle_deg": 0.0,
+            "energy_kcal": 0,
+            "energy_per_hour_kcal": 166,
+            "energy_per_minute_kcal": 0,
+            "heart_rate_bpm": 0,
+            "elapsed_s": 2
+          },
+          "ages": {
+            "flags": 0.1,
+            "speed_kmh": 0.1,
+            "distance_m": 0.1,
+            "incline_pct": 0.1,
+            "ramp_angle_deg": 0.1,
+            "energy_kcal": 0.1,
+            "energy_per_hour_kcal": 0.1,
+            "energy_per_minute_kcal": 0.1,
+            "heart_rate_bpm": 0.1,
+            "elapsed_s": 0.1
+          },
+          "armed": false,
+          "desynchronized": false,
+          "workout": {
+            "phase": "interrupted",
+            "blocks": [
+              {
+                "duration_s": 10,
+                "speed_kmh": 2.0,
+                "incline_pct": 0.0
+              },
+              {
+                "duration_s": 10,
+                "speed_kmh": 2.5,
+                "incline_pct": 1.0
+              },
+              {
+                "duration_s": 10,
+                "speed_kmh": 2.0,
+                "incline_pct": 0.0
+              }
+            ],
+            "total_s": 30,
+            "block": 3,
+            "remaining_s": 0,
+            "reason": "Pause demandée"
+          }
+        },
+        {
+          "elapsed_s": 6.42,
+          "phase": "connected",
+          "telemetry": {
+            "flags": "0x058c",
+            "speed_kmh": 0.0,
+            "distance_m": 0,
+            "incline_pct": 0.0,
+            "ramp_angle_deg": 0.0,
+            "energy_kcal": 0,
+            "energy_per_hour_kcal": 166,
+            "energy_per_minute_kcal": 0,
+            "heart_rate_bpm": 0,
+            "elapsed_s": 2
+          },
+          "ages": {
+            "flags": 0.0,
+            "speed_kmh": 0.0,
+            "distance_m": 0.0,
+            "incline_pct": 0.0,
+            "ramp_angle_deg": 0.0,
+            "energy_kcal": 0.0,
+            "energy_per_hour_kcal": 0.0,
+            "energy_per_minute_kcal": 0.0,
+            "heart_rate_bpm": 0.0,
+            "elapsed_s": 0.0
+          },
+          "armed": false,
+          "desynchronized": false,
+          "workout": {
+            "phase": "interrupted",
+            "blocks": [
+              {
+                "duration_s": 10,
+                "speed_kmh": 2.0,
+                "incline_pct": 0.0
+              },
+              {
+                "duration_s": 10,
+                "speed_kmh": 2.5,
+                "incline_pct": 1.0
+              },
+              {
+                "duration_s": 10,
+                "speed_kmh": 2.0,
+                "incline_pct": 0.0
+              }
+            ],
+            "total_s": 30,
+            "block": 3,
+            "remaining_s": 0,
+            "reason": "Pause demandée"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Reprise après pause stabilisée",
+      "success": true,
+      "elapsed_s": 2.09,
+      "samples": [
+        {
+          "elapsed_s": 0.02,
+          "phase": "connected",
+          "telemetry": {
+            "flags": "0x058c",
+            "speed_kmh": 1.0,
+            "distance_m": 0,
+            "incline_pct": 0.0,
+            "ramp_angle_deg": 0.0,
+            "energy_kcal": 0,
+            "energy_per_hour_kcal": 166,
+            "energy_per_minute_kcal": 0,
+            "heart_rate_bpm": 0,
+            "elapsed_s": 2
+          },
+          "ages": {
+            "flags": 0.0,
+            "speed_kmh": 0.0,
+            "distance_m": 0.0,
+            "incline_pct": 0.0,
+            "ramp_angle_deg": 0.0,
+            "energy_kcal": 0.0,
+            "energy_per_hour_kcal": 0.0,
+            "energy_per_minute_kcal": 0.0,
+            "heart_rate_bpm": 0.0,
+            "elapsed_s": 0.0
+          },
+          "armed": true,
+          "desynchronized": false,
+          "workout": {
+            "phase": "interrupted",
+            "blocks": [
+              {
+                "duration_s": 10,
+                "speed_kmh": 2.0,
+                "incline_pct": 0.0
+              },
+              {
+                "duration_s": 10,
+                "speed_kmh": 2.5,
+                "incline_pct": 1.0
+              },
+              {
+                "duration_s": 10,
+                "speed_kmh": 2.0,
+                "incline_pct": 0.0
+              }
+            ],
+            "total_s": 30,
+            "block": 3,
+            "remaining_s": 0,
+            "reason": "Pause demandée"
+          }
+        },
+        {
+          "elapsed_s": 0.28,
+          "phase": "connected",
+          "telemetry": {
+            "flags": "0x058c",
+            "speed_kmh": 1.0,
+            "distance_m": 0,
+            "incline_pct": 0.0,
+            "ramp_angle_deg": 0.0,
+            "energy_kcal": 0,
+            "energy_per_hour_kcal": 166,
+            "energy_per_minute_kcal": 0,
+            "heart_rate_bpm": 0,
+            "elapsed_s": 2
+          },
+          "ages": {
+            "flags": 0.3,
+            "speed_kmh": 0.3,
+            "distance_m": 0.3,
+            "incline_pct": 0.3,
+            "ramp_angle_deg": 0.3,
+            "energy_kcal": 0.3,
+            "energy_per_hour_kcal": 0.3,
+            "energy_per_minute_kcal": 0.3,
+            "heart_rate_bpm": 0.3,
+            "elapsed_s": 0.3
+          },
+          "armed": true,
+          "desynchronized": false,
+          "workout": {
+            "phase": "interrupted",
+            "blocks": [
+              {
+                "duration_s": 10,
+                "speed_kmh": 2.0,
+                "incline_pct": 0.0
+              },
+              {
+                "duration_s": 10,
+                "speed_kmh": 2.5,
+                "incline_pct": 1.0
+              },
+              {
+                "duration_s": 10,
+                "speed_kmh": 2.0,
+                "incline_pct": 0.0
+              }
+            ],
+            "total_s": 30,
+            "block": 3,
+            "remaining_s": 0,
+            "reason": "Pause demandée"
+          }
+        },
+        {
+          "elapsed_s": 0.55,
+          "phase": "connected",
+          "telemetry": {
+            "flags": "0x058c",
+            "speed_kmh": 1.0,
+            "distance_m": 0,
+            "incline_pct": 0.0,
+            "ramp_angle_deg": 0.0,
+            "energy_kcal": 0,
+            "energy_per_hour_kcal": 166,
+            "energy_per_minute_kcal": 2,
+            "heart_rate_bpm": 0,
+            "elapsed_s": 2
+          },
+          "ages": {
+            "flags": 0.1,
+            "speed_kmh": 0.1,
+            "distance_m": 0.1,
+            "incline_pct": 0.1,
+            "ramp_angle_deg": 0.1,
+            "energy_kcal": 0.1,
+            "energy_per_hour_kcal": 0.1,
+            "energy_per_minute_kcal": 0.1,
+            "heart_rate_bpm": 0.1,
+            "elapsed_s": 0.1
+          },
+          "armed": true,
+          "desynchronized": false,
+          "workout": {
+            "phase": "interrupted",
+            "blocks": [
+              {
+                "duration_s": 10,
+                "speed_kmh": 2.0,
+                "incline_pct": 0.0
+              },
+              {
+                "duration_s": 10,
+                "speed_kmh": 2.5,
+                "incline_pct": 1.0
+              },
+              {
+                "duration_s": 10,
+                "speed_kmh": 2.0,
+                "incline_pct": 0.0
+              }
+            ],
+            "total_s": 30,
+            "block": 3,
+            "remaining_s": 0,
+            "reason": "Pause demandée"
+          }
+        },
+        {
+          "elapsed_s": 0.81,
+          "phase": "connected",
+          "telemetry": {
+            "flags": "0x058c",
+            "speed_kmh": 1.0,
+            "distance_m": 0,
+            "incline_pct": 0.0,
+            "ramp_angle_deg": 0.0,
+            "energy_kcal": 0,
+            "energy_per_hour_kcal": 166,
+            "energy_per_minute_kcal": 2,
+            "heart_rate_bpm": 0,
+            "elapsed_s": 2
+          },
+          "ages": {
+            "flags": 0.2,
+            "speed_kmh": 0.2,
+            "distance_m": 0.2,
+            "incline_pct": 0.2,
+            "ramp_angle_deg": 0.2,
+            "energy_kcal": 0.2,
+            "energy_per_hour_kcal": 0.2,
+            "energy_per_minute_kcal": 0.2,
+            "heart_rate_bpm": 0.2,
+            "elapsed_s": 0.2
+          },
+          "armed": true,
+          "desynchronized": false,
+          "workout": {
+            "phase": "interrupted",
+            "blocks": [
+              {
+                "duration_s": 10,
+                "speed_kmh": 2.0,
+                "incline_pct": 0.0
+              },
+              {
+                "duration_s": 10,
+                "speed_kmh": 2.5,
+                "incline_pct": 1.0
+              },
+              {
+                "duration_s": 10,
+                "speed_kmh": 2.0,
+                "incline_pct": 0.0
+              }
+            ],
+            "total_s": 30,
+            "block": 3,
+            "remaining_s": 0,
+            "reason": "Pause demandée"
+          }
+        },
+        {
+          "elapsed_s": 1.06,
+          "phase": "connected",
+          "telemetry": {
+            "flags": "0x058c",
+            "speed_kmh": 1.0,
+            "distance_m": 0,
+            "incline_pct": 0.0,
+            "ramp_angle_deg": 0.0,
+            "energy_kcal": 0,
+            "energy_per_hour_kcal": 166,
+            "energy_per_minute_kcal": 2,
+            "heart_rate_bpm": 0,
+            "elapsed_s": 2
+          },
+          "ages": {
+            "flags": 0.2,
+            "speed_kmh": 0.2,
+            "distance_m": 0.2,
+            "incline_pct": 0.2,
+            "ramp_angle_deg": 0.2,
+            "energy_kcal": 0.2,
+            "energy_per_hour_kcal": 0.2,
+            "energy_per_minute_kcal": 0.2,
+            "heart_rate_bpm": 0.2,
+            "elapsed_s": 0.2
+          },
+          "armed": true,
+          "desynchronized": false,
+          "workout": {
+            "phase": "interrupted",
+            "blocks": [
+              {
+                "duration_s": 10,
+                "speed_kmh": 2.0,
+                "incline_pct": 0.0
+              },
+              {
+                "duration_s": 10,
+                "speed_kmh": 2.5,
+                "incline_pct": 1.0
+              },
+              {
+                "duration_s": 10,
+                "speed_kmh": 2.0,
+                "incline_pct": 0.0
+              }
+            ],
+            "total_s": 30,
+            "block": 3,
+            "remaining_s": 0,
+            "reason": "Pause demandée"
+          }
+        },
+        {
+          "elapsed_s": 1.33,
+          "phase": "connected",
+          "telemetry": {
+            "flags": "0x058c",
+            "speed_kmh": 1.0,
+            "distance_m": 0,
+            "incline_pct": 0.0,
+            "ramp_angle_deg": 0.0,
+            "energy_kcal": 0,
+            "energy_per_hour_kcal": 166,
+            "energy_per_minute_kcal": 2,
+            "heart_rate_bpm": 0,
+            "elapsed_s": 3
+          },
+          "ages": {
+            "flags": 0.2,
+            "speed_kmh": 0.2,
+            "distance_m": 0.2,
+            "incline_pct": 0.2,
+            "ramp_angle_deg": 0.2,
+            "energy_kcal": 0.2,
+            "energy_per_hour_kcal": 0.2,
+            "energy_per_minute_kcal": 0.2,
+            "heart_rate_bpm": 0.2,
+            "elapsed_s": 0.2
+          },
+          "armed": true,
+          "desynchronized": false,
+          "workout": {
+            "phase": "interrupted",
+            "blocks": [
+              {
+                "duration_s": 10,
+                "speed_kmh": 2.0,
+                "incline_pct": 0.0
+              },
+              {
+                "duration_s": 10,
+                "speed_kmh": 2.5,
+                "incline_pct": 1.0
+              },
+              {
+                "duration_s": 10,
+                "speed_kmh": 2.0,
+                "incline_pct": 0.0
+              }
+            ],
+            "total_s": 30,
+            "block": 3,
+            "remaining_s": 0,
+            "reason": "Pause demandée"
+          }
+        },
+        {
+          "elapsed_s": 1.58,
+          "phase": "connected",
+          "telemetry": {
+            "flags": "0x058c",
+            "speed_kmh": 1.0,
+            "distance_m": 0,
+            "incline_pct": 0.0,
+            "ramp_angle_deg": 0.0,
+            "energy_kcal": 0,
+            "energy_per_hour_kcal": 166,
+            "energy_per_minute_kcal": 2,
+            "heart_rate_bpm": 0,
+            "elapsed_s": 3
+          },
+          "ages": {
+            "flags": 0.1,
+            "speed_kmh": 0.1,
+            "distance_m": 0.1,
+            "incline_pct": 0.1,
+            "ramp_angle_deg": 0.1,
+            "energy_kcal": 0.1,
+            "energy_per_hour_kcal": 0.1,
+            "energy_per_minute_kcal": 0.1,
+            "heart_rate_bpm": 0.1,
+            "elapsed_s": 0.1
+          },
+          "armed": true,
+          "desynchronized": false,
+          "workout": {
+            "phase": "interrupted",
+            "blocks": [
+              {
+                "duration_s": 10,
+                "speed_kmh": 2.0,
+                "incline_pct": 0.0
+              },
+              {
+                "duration_s": 10,
+                "speed_kmh": 2.5,
+                "incline_pct": 1.0
+              },
+              {
+                "duration_s": 10,
+                "speed_kmh": 2.0,
+                "incline_pct": 0.0
+              }
+            ],
+            "total_s": 30,
+            "block": 3,
+            "remaining_s": 0,
+            "reason": "Pause demandée"
+          }
+        },
+        {
+          "elapsed_s": 1.84,
+          "phase": "connected",
+          "telemetry": {
+            "flags": "0x058c",
+            "speed_kmh": 1.0,
+            "distance_m": 0,
+            "incline_pct": 0.0,
+            "ramp_angle_deg": 0.0,
+            "energy_kcal": 0,
+            "energy_per_hour_kcal": 166,
+            "energy_per_minute_kcal": 2,
+            "heart_rate_bpm": 0,
+            "elapsed_s": 3
+          },
+          "ages": {
+            "flags": 0.2,
+            "speed_kmh": 0.2,
+            "distance_m": 0.2,
+            "incline_pct": 0.2,
+            "ramp_angle_deg": 0.2,
+            "energy_kcal": 0.2,
+            "energy_per_hour_kcal": 0.2,
+            "energy_per_minute_kcal": 0.2,
+            "heart_rate_bpm": 0.2,
+            "elapsed_s": 0.2
+          },
+          "armed": true,
+          "desynchronized": false,
+          "workout": {
+            "phase": "interrupted",
+            "blocks": [
+              {
+                "duration_s": 10,
+                "speed_kmh": 2.0,
+                "incline_pct": 0.0
+              },
+              {
+                "duration_s": 10,
+                "speed_kmh": 2.5,
+                "incline_pct": 1.0
+              },
+              {
+                "duration_s": 10,
+                "speed_kmh": 2.0,
+                "incline_pct": 0.0
+              }
+            ],
+            "total_s": 30,
+            "block": 3,
+            "remaining_s": 0,
+            "reason": "Pause demandée"
+          }
+        },
+        {
+          "elapsed_s": 2.09,
+          "phase": "connected",
+          "telemetry": {
+            "flags": "0x058c",
+            "speed_kmh": 1.0,
+            "distance_m": 0,
+            "incline_pct": 0.0,
+            "ramp_angle_deg": 0.0,
+            "energy_kcal": 0,
+            "energy_per_hour_kcal": 166,
+            "energy_per_minute_kcal": 2,
+            "heart_rate_bpm": 0,
+            "elapsed_s": 3
+          },
+          "ages": {
+            "flags": 0.2,
+            "speed_kmh": 0.2,
+            "distance_m": 0.2,
+            "incline_pct": 0.2,
+            "ramp_angle_deg": 0.2,
+            "energy_kcal": 0.2,
+            "energy_per_hour_kcal": 0.2,
+            "energy_per_minute_kcal": 0.2,
+            "heart_rate_bpm": 0.2,
+            "elapsed_s": 0.2
+          },
+          "armed": true,
+          "desynchronized": false,
+          "workout": {
+            "phase": "interrupted",
+            "blocks": [
+              {
+                "duration_s": 10,
+                "speed_kmh": 2.0,
+                "incline_pct": 0.0
+              },
+              {
+                "duration_s": 10,
+                "speed_kmh": 2.5,
+                "incline_pct": 1.0
+              },
+              {
+                "duration_s": 10,
+                "speed_kmh": 2.0,
+                "incline_pct": 0.0
+              }
+            ],
+            "total_s": 30,
+            "block": 3,
+            "remaining_s": 0,
+            "reason": "Pause demandée"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Arrêt final stable",
+      "success": true,
+      "elapsed_s": 6.53,
+      "samples": [
+        {
+          "elapsed_s": 0.02,
+          "phase": "connected",
+          "telemetry": {
+            "flags": "0x058c",
+            "speed_kmh": 1.0,
+            "distance_m": 0,
+            "incline_pct": 0.0,
+            "ramp_angle_deg": 0.0,
+            "energy_kcal": 0,
+            "energy_per_hour_kcal": 166,
+            "energy_per_minute_kcal": 2,
+            "heart_rate_bpm": 0,
+            "elapsed_s": 4
+          },
+          "ages": {
+            "flags": 0.0,
+            "speed_kmh": 0.0,
+            "distance_m": 0.0,
+            "incline_pct": 0.0,
+            "ramp_angle_deg": 0.0,
+            "energy_kcal": 0.0,
+            "energy_per_hour_kcal": 0.0,
+            "energy_per_minute_kcal": 0.0,
+            "heart_rate_bpm": 0.0,
+            "elapsed_s": 0.0
+          },
+          "armed": false,
+          "desynchronized": false,
+          "workout": {
+            "phase": "interrupted",
+            "blocks": [
+              {
+                "duration_s": 10,
+                "speed_kmh": 2.0,
+                "incline_pct": 0.0
+              },
+              {
+                "duration_s": 10,
+                "speed_kmh": 2.5,
+                "incline_pct": 1.0
+              },
+              {
+                "duration_s": 10,
+                "speed_kmh": 2.0,
+                "incline_pct": 0.0
+              }
+            ],
+            "total_s": 30,
+            "block": 3,
+            "remaining_s": 0,
+            "reason": "Arrêt demandé"
+          }
+        },
+        {
+          "elapsed_s": 0.3,
+          "phase": "connected",
+          "telemetry": {
+            "flags": "0x058c",
+            "speed_kmh": 0.0,
+            "distance_m": 0,
+            "incline_pct": 0.0,
+            "ramp_angle_deg": 0.0,
+            "energy_kcal": 0,
+            "energy_per_hour_kcal": 0,
+            "energy_per_minute_kcal": 0,
+            "heart_rate_bpm": 0,
+            "elapsed_s": 4
+          },
+          "ages": {
+            "flags": 0.1,
+            "speed_kmh": 0.1,
+            "distance_m": 0.1,
+            "incline_pct": 0.1,
+            "ramp_angle_deg": 0.1,
+            "energy_kcal": 0.1,
+            "energy_per_hour_kcal": 0.1,
+            "energy_per_minute_kcal": 0.1,
+            "heart_rate_bpm": 0.1,
+            "elapsed_s": 0.1
+          },
+          "armed": false,
+          "desynchronized": false,
+          "workout": {
+            "phase": "interrupted",
+            "blocks": [
+              {
+                "duration_s": 10,
+                "speed_kmh": 2.0,
+                "incline_pct": 0.0
+              },
+              {
+                "duration_s": 10,
+                "speed_kmh": 2.5,
+                "incline_pct": 1.0
+              },
+              {
+                "duration_s": 10,
+                "speed_kmh": 2.0,
+                "incline_pct": 0.0
+              }
+            ],
+            "total_s": 30,
+            "block": 3,
+            "remaining_s": 0,
+            "reason": "Arrêt demandé"
+          }
+        },
+        {
+          "elapsed_s": 0.55,
+          "phase": "connected",
+          "telemetry": {
+            "flags": "0x058c",
+            "speed_kmh": 0.0,
+            "distance_m": 0,
+            "incline_pct": 0.0,
+            "ramp_angle_deg": 0.0,
+            "energy_kcal": 0,
+            "energy_per_hour_kcal": 166,
+            "energy_per_minute_kcal": 0,
+            "heart_rate_bpm": 0,
+            "elapsed_s": 4
+          },
+          "ages": {
+            "flags": 0.1,
+            "speed_kmh": 0.1,
+            "distance_m": 0.1,
+            "incline_pct": 0.1,
+            "ramp_angle_deg": 0.1,
+            "energy_kcal": 0.1,
+            "energy_per_hour_kcal": 0.1,
+            "energy_per_minute_kcal": 0.1,
+            "heart_rate_bpm": 0.1,
+            "elapsed_s": 0.1
+          },
+          "armed": false,
+          "desynchronized": false,
+          "workout": {
+            "phase": "interrupted",
+            "blocks": [
+              {
+                "duration_s": 10,
+                "speed_kmh": 2.0,
+                "incline_pct": 0.0
+              },
+              {
+                "duration_s": 10,
+                "speed_kmh": 2.5,
+                "incline_pct": 1.0
+              },
+              {
+                "duration_s": 10,
+                "speed_kmh": 2.0,
+                "incline_pct": 0.0
+              }
+            ],
+            "total_s": 30,
+            "block": 3,
+            "remaining_s": 0,
+            "reason": "Arrêt demandé"
+          }
+        },
+        {
+          "elapsed_s": 0.81,
+          "phase": "connected",
+          "telemetry": {
+            "flags": "0x058c",
+            "speed_kmh": 0.0,
+            "distance_m": 0,
+            "incline_pct": 0.0,
+            "ramp_angle_deg": 0.0,
+            "energy_kcal": 0,
+            "energy_per_hour_kcal": 166,
+            "energy_per_minute_kcal": 0,
+            "heart_rate_bpm": 0,
+            "elapsed_s": 4
+          },
+          "ages": {
+            "flags": 0.0,
+            "speed_kmh": 0.0,
+            "distance_m": 0.0,
+            "incline_pct": 0.0,
+            "ramp_angle_deg": 0.0,
+            "energy_kcal": 0.0,
+            "energy_per_hour_kcal": 0.0,
+            "energy_per_minute_kcal": 0.0,
+            "heart_rate_bpm": 0.0,
+            "elapsed_s": 0.0
+          },
+          "armed": false,
+          "desynchronized": false,
+          "workout": {
+            "phase": "interrupted",
+            "blocks": [
+              {
+                "duration_s": 10,
+                "speed_kmh": 2.0,
+                "incline_pct": 0.0
+              },
+              {
+                "duration_s": 10,
+                "speed_kmh": 2.5,
+                "incline_pct": 1.0
+              },
+              {
+                "duration_s": 10,
+                "speed_kmh": 2.0,
+                "incline_pct": 0.0
+              }
+            ],
+            "total_s": 30,
+            "block": 3,
+            "remaining_s": 0,
+            "reason": "Arrêt demandé"
+          }
+        },
+        {
+          "elapsed_s": 1.06,
+          "phase": "connected",
+          "telemetry": {
+            "flags": "0x058c",
+            "speed_kmh": 0.0,
+            "distance_m": 0,
+            "incline_pct": 0.0,
+            "ramp_angle_deg": 0.0,
+            "energy_kcal": 0,
+            "energy_per_hour_kcal": 166,
+            "energy_per_minute_kcal": 0,
+            "heart_rate_bpm": 0,
+            "elapsed_s": 4
+          },
+          "ages": {
+            "flags": 0.0,
+            "speed_kmh": 0.0,
+            "distance_m": 0.0,
+            "incline_pct": 0.0,
+            "ramp_angle_deg": 0.0,
+            "energy_kcal": 0.0,
+            "energy_per_hour_kcal": 0.0,
+            "energy_per_minute_kcal": 0.0,
+            "heart_rate_bpm": 0.0,
+            "elapsed_s": 0.0
+          },
+          "armed": false,
+          "desynchronized": false,
+          "workout": {
+            "phase": "interrupted",
+            "blocks": [
+              {
+                "duration_s": 10,
+                "speed_kmh": 2.0,
+                "incline_pct": 0.0
+              },
+              {
+                "duration_s": 10,
+                "speed_kmh": 2.5,
+                "incline_pct": 1.0
+              },
+              {
+                "duration_s": 10,
+                "speed_kmh": 2.0,
+                "incline_pct": 0.0
+              }
+            ],
+            "total_s": 30,
+            "block": 3,
+            "remaining_s": 0,
+            "reason": "Arrêt demandé"
+          }
+        },
+        {
+          "elapsed_s": 1.31,
+          "phase": "connected",
+          "telemetry": {
+            "flags": "0x058c",
+            "speed_kmh": 0.0,
+            "distance_m": 0,
+            "incline_pct": 0.0,
+            "ramp_angle_deg": 0.0,
+            "energy_kcal": 0,
+            "energy_per_hour_kcal": 166,
+            "energy_per_minute_kcal": 0,
+            "heart_rate_bpm": 0,
+            "elapsed_s": 4
+          },
+          "ages": {
+            "flags": 0.1,
+            "speed_kmh": 0.1,
+            "distance_m": 0.1,
+            "incline_pct": 0.1,
+            "ramp_angle_deg": 0.1,
+            "energy_kcal": 0.1,
+            "energy_per_hour_kcal": 0.1,
+            "energy_per_minute_kcal": 0.1,
+            "heart_rate_bpm": 0.1,
+            "elapsed_s": 0.1
+          },
+          "armed": false,
+          "desynchronized": false,
+          "workout": {
+            "phase": "interrupted",
+            "blocks": [
+              {
+                "duration_s": 10,
+                "speed_kmh": 2.0,
+                "incline_pct": 0.0
+              },
+              {
+                "duration_s": 10,
+                "speed_kmh": 2.5,
+                "incline_pct": 1.0
+              },
+              {
+                "duration_s": 10,
+                "speed_kmh": 2.0,
+                "incline_pct": 0.0
+              }
+            ],
+            "total_s": 30,
+            "block": 3,
+            "remaining_s": 0,
+            "reason": "Arrêt demandé"
+          }
+        },
+        {
+          "elapsed_s": 1.58,
+          "phase": "connected",
+          "telemetry": {
+            "flags": "0x058c",
+            "speed_kmh": 0.0,
+            "distance_m": 0,
+            "incline_pct": 0.0,
+            "ramp_angle_deg": 0.0,
+            "energy_kcal": 0,
+            "energy_per_hour_kcal": 166,
+            "energy_per_minute_kcal": 0,
+            "heart_rate_bpm": 0,
+            "elapsed_s": 4
+          },
+          "ages": {
+            "flags": 0.2,
+            "speed_kmh": 0.2,
+            "distance_m": 0.2,
+            "incline_pct": 0.2,
+            "ramp_angle_deg": 0.2,
+            "energy_kcal": 0.2,
+            "energy_per_hour_kcal": 0.2,
+            "energy_per_minute_kcal": 0.2,
+            "heart_rate_bpm": 0.2,
+            "elapsed_s": 0.2
+          },
+          "armed": false,
+          "desynchronized": false,
+          "workout": {
+            "phase": "interrupted",
+            "blocks": [
+              {
+                "duration_s": 10,
+                "speed_kmh": 2.0,
+                "incline_pct": 0.0
+              },
+              {
+                "duration_s": 10,
+                "speed_kmh": 2.5,
+                "incline_pct": 1.0
+              },
+              {
+                "duration_s": 10,
+                "speed_kmh": 2.0,
+                "incline_pct": 0.0
+              }
+            ],
+            "total_s": 30,
+            "block": 3,
+            "remaining_s": 0,
+            "reason": "Arrêt demandé"
+          }
+        },
+        {
+          "elapsed_s": 1.84,
+          "phase": "connected",
+          "telemetry": {
+            "flags": "0x058c",
+            "speed_kmh": 0.0,
+            "distance_m": 0,
+            "incline_pct": 0.0,
+            "ramp_angle_deg": 0.0,
+            "energy_kcal": 0,
+            "energy_per_hour_kcal": 166,
+            "energy_per_minute_kcal": 0,
+            "heart_rate_bpm": 0,
+            "elapsed_s": 4
+          },
+          "ages": {
+            "flags": 0.0,
+            "speed_kmh": 0.0,
+            "distance_m": 0.0,
+            "incline_pct": 0.0,
+            "ramp_angle_deg": 0.0,
+            "energy_kcal": 0.0,
+            "energy_per_hour_kcal": 0.0,
+            "energy_per_minute_kcal": 0.0,
+            "heart_rate_bpm": 0.0,
+            "elapsed_s": 0.0
+          },
+          "armed": false,
+          "desynchronized": false,
+          "workout": {
+            "phase": "interrupted",
+            "blocks": [
+              {
+                "duration_s": 10,
+                "speed_kmh": 2.0,
+                "incline_pct": 0.0
+              },
+              {
+                "duration_s": 10,
+                "speed_kmh": 2.5,
+                "incline_pct": 1.0
+              },
+              {
+                "duration_s": 10,
+                "speed_kmh": 2.0,
+                "incline_pct": 0.0
+              }
+            ],
+            "total_s": 30,
+            "block": 3,
+            "remaining_s": 0,
+            "reason": "Arrêt demandé"
+          }
+        },
+        {
+          "elapsed_s": 2.11,
+          "phase": "connected",
+          "telemetry": {
+            "flags": "0x058c",
+            "speed_kmh": 0.0,
+            "distance_m": 0,
+            "incline_pct": 0.0,
+            "ramp_angle_deg": 0.0,
+            "energy_kcal": 0,
+            "energy_per_hour_kcal": 166,
+            "energy_per_minute_kcal": 0,
+            "heart_rate_bpm": 0,
+            "elapsed_s": 4
+          },
+          "ages": {
+            "flags": 0.1,
+            "speed_kmh": 0.1,
+            "distance_m": 0.1,
+            "incline_pct": 0.1,
+            "ramp_angle_deg": 0.1,
+            "energy_kcal": 0.1,
+            "energy_per_hour_kcal": 0.1,
+            "energy_per_minute_kcal": 0.1,
+            "heart_rate_bpm": 0.1,
+            "elapsed_s": 0.1
+          },
+          "armed": false,
+          "desynchronized": false,
+          "workout": {
+            "phase": "interrupted",
+            "blocks": [
+              {
+                "duration_s": 10,
+                "speed_kmh": 2.0,
+                "incline_pct": 0.0
+              },
+              {
+                "duration_s": 10,
+                "speed_kmh": 2.5,
+                "incline_pct": 1.0
+              },
+              {
+                "duration_s": 10,
+                "speed_kmh": 2.0,
+                "incline_pct": 0.0
+              }
+            ],
+            "total_s": 30,
+            "block": 3,
+            "remaining_s": 0,
+            "reason": "Arrêt demandé"
+          }
+        },
+        {
+          "elapsed_s": 2.38,
+          "phase": "connected",
+          "telemetry": {
+            "flags": "0x058c",
+            "speed_kmh": 0.0,
+            "distance_m": 0,
+            "incline_pct": 0.0,
+            "ramp_angle_deg": 0.0,
+            "energy_kcal": 0,
+            "energy_per_hour_kcal": 166,
+            "energy_per_minute_kcal": 0,
+            "heart_rate_bpm": 0,
+            "elapsed_s": 4
+          },
+          "ages": {
+            "flags": 0.2,
+            "speed_kmh": 0.2,
+            "distance_m": 0.2,
+            "incline_pct": 0.2,
+            "ramp_angle_deg": 0.2,
+            "energy_kcal": 0.2,
+            "energy_per_hour_kcal": 0.2,
+            "energy_per_minute_kcal": 0.2,
+            "heart_rate_bpm": 0.2,
+            "elapsed_s": 0.2
+          },
+          "armed": false,
+          "desynchronized": false,
+          "workout": {
+            "phase": "interrupted",
+            "blocks": [
+              {
+                "duration_s": 10,
+                "speed_kmh": 2.0,
+                "incline_pct": 0.0
+              },
+              {
+                "duration_s": 10,
+                "speed_kmh": 2.5,
+                "incline_pct": 1.0
+              },
+              {
+                "duration_s": 10,
+                "speed_kmh": 2.0,
+                "incline_pct": 0.0
+              }
+            ],
+            "total_s": 30,
+            "block": 3,
+            "remaining_s": 0,
+            "reason": "Arrêt demandé"
+          }
+        },
+        {
+          "elapsed_s": 2.64,
+          "phase": "connected",
+          "telemetry": {
+            "flags": "0x058c",
+            "speed_kmh": 0.0,
+            "distance_m": 0,
+            "incline_pct": 0.0,
+            "ramp_angle_deg": 0.0,
+            "energy_kcal": 0,
+            "energy_per_hour_kcal": 166,
+            "energy_per_minute_kcal": 0,
+            "heart_rate_bpm": 0,
+            "elapsed_s": 4
+          },
+          "ages": {
+            "flags": 0.1,
+            "speed_kmh": 0.1,
+            "distance_m": 0.1,
+            "incline_pct": 0.1,
+            "ramp_angle_deg": 0.1,
+            "energy_kcal": 0.1,
+            "energy_per_hour_kcal": 0.1,
+            "energy_per_minute_kcal": 0.1,
+            "heart_rate_bpm": 0.1,
+            "elapsed_s": 0.1
+          },
+          "armed": false,
+          "desynchronized": false,
+          "workout": {
+            "phase": "interrupted",
+            "blocks": [
+              {
+                "duration_s": 10,
+                "speed_kmh": 2.0,
+                "incline_pct": 0.0
+              },
+              {
+                "duration_s": 10,
+                "speed_kmh": 2.5,
+                "incline_pct": 1.0
+              },
+              {
+                "duration_s": 10,
+                "speed_kmh": 2.0,
+                "incline_pct": 0.0
+              }
+            ],
+            "total_s": 30,
+            "block": 3,
+            "remaining_s": 0,
+            "reason": "Arrêt demandé"
+          }
+        },
+        {
+          "elapsed_s": 2.91,
+          "phase": "connected",
+          "telemetry": {
+            "flags": "0x058c",
+            "speed_kmh": 0.0,
+            "distance_m": 0,
+            "incline_pct": 0.0,
+            "ramp_angle_deg": 0.0,
+            "energy_kcal": 0,
+            "energy_per_hour_kcal": 166,
+            "energy_per_minute_kcal": 0,
+            "heart_rate_bpm": 0,
+            "elapsed_s": 4
+          },
+          "ages": {
+            "flags": 0.1,
+            "speed_kmh": 0.1,
+            "distance_m": 0.1,
+            "incline_pct": 0.1,
+            "ramp_angle_deg": 0.1,
+            "energy_kcal": 0.1,
+            "energy_per_hour_kcal": 0.1,
+            "energy_per_minute_kcal": 0.1,
+            "heart_rate_bpm": 0.1,
+            "elapsed_s": 0.1
+          },
+          "armed": false,
+          "desynchronized": false,
+          "workout": {
+            "phase": "interrupted",
+            "blocks": [
+              {
+                "duration_s": 10,
+                "speed_kmh": 2.0,
+                "incline_pct": 0.0
+              },
+              {
+                "duration_s": 10,
+                "speed_kmh": 2.5,
+                "incline_pct": 1.0
+              },
+              {
+                "duration_s": 10,
+                "speed_kmh": 2.0,
+                "incline_pct": 0.0
+              }
+            ],
+            "total_s": 30,
+            "block": 3,
+            "remaining_s": 0,
+            "reason": "Arrêt demandé"
+          }
+        },
+        {
+          "elapsed_s": 3.17,
+          "phase": "connected",
+          "telemetry": {
+            "flags": "0x058c",
+            "speed_kmh": 0.0,
+            "distance_m": 0,
+            "incline_pct": 0.0,
+            "ramp_angle_deg": 0.0,
+            "energy_kcal": 0,
+            "energy_per_hour_kcal": 166,
+            "energy_per_minute_kcal": 0,
+            "heart_rate_bpm": 0,
+            "elapsed_s": 4
+          },
+          "ages": {
+            "flags": 0.2,
+            "speed_kmh": 0.2,
+            "distance_m": 0.2,
+            "incline_pct": 0.2,
+            "ramp_angle_deg": 0.2,
+            "energy_kcal": 0.2,
+            "energy_per_hour_kcal": 0.2,
+            "energy_per_minute_kcal": 0.2,
+            "heart_rate_bpm": 0.2,
+            "elapsed_s": 0.2
+          },
+          "armed": false,
+          "desynchronized": false,
+          "workout": {
+            "phase": "interrupted",
+            "blocks": [
+              {
+                "duration_s": 10,
+                "speed_kmh": 2.0,
+                "incline_pct": 0.0
+              },
+              {
+                "duration_s": 10,
+                "speed_kmh": 2.5,
+                "incline_pct": 1.0
+              },
+              {
+                "duration_s": 10,
+                "speed_kmh": 2.0,
+                "incline_pct": 0.0
+              }
+            ],
+            "total_s": 30,
+            "block": 3,
+            "remaining_s": 0,
+            "reason": "Arrêt demandé"
+          }
+        },
+        {
+          "elapsed_s": 3.42,
+          "phase": "connected",
+          "telemetry": {
+            "flags": "0x058c",
+            "speed_kmh": 0.0,
+            "distance_m": 0,
+            "incline_pct": 0.0,
+            "ramp_angle_deg": 0.0,
+            "energy_kcal": 0,
+            "energy_per_hour_kcal": 166,
+            "energy_per_minute_kcal": 0,
+            "heart_rate_bpm": 0,
+            "elapsed_s": 4
+          },
+          "ages": {
+            "flags": 0.0,
+            "speed_kmh": 0.0,
+            "distance_m": 0.0,
+            "incline_pct": 0.0,
+            "ramp_angle_deg": 0.0,
+            "energy_kcal": 0.0,
+            "energy_per_hour_kcal": 0.0,
+            "energy_per_minute_kcal": 0.0,
+            "heart_rate_bpm": 0.0,
+            "elapsed_s": 0.0
+          },
+          "armed": false,
+          "desynchronized": false,
+          "workout": {
+            "phase": "interrupted",
+            "blocks": [
+              {
+                "duration_s": 10,
+                "speed_kmh": 2.0,
+                "incline_pct": 0.0
+              },
+              {
+                "duration_s": 10,
+                "speed_kmh": 2.5,
+                "incline_pct": 1.0
+              },
+              {
+                "duration_s": 10,
+                "speed_kmh": 2.0,
+                "incline_pct": 0.0
+              }
+            ],
+            "total_s": 30,
+            "block": 3,
+            "remaining_s": 0,
+            "reason": "Arrêt demandé"
+          }
+        },
+        {
+          "elapsed_s": 3.7,
+          "phase": "connected",
+          "telemetry": {
+            "flags": "0x058c",
+            "speed_kmh": 0.0,
+            "distance_m": 0,
+            "incline_pct": 0.0,
+            "ramp_angle_deg": 0.0,
+            "energy_kcal": 0,
+            "energy_per_hour_kcal": 166,
+            "energy_per_minute_kcal": 0,
+            "heart_rate_bpm": 0,
+            "elapsed_s": 4
+          },
+          "ages": {
+            "flags": 0.1,
+            "speed_kmh": 0.1,
+            "distance_m": 0.1,
+            "incline_pct": 0.1,
+            "ramp_angle_deg": 0.1,
+            "energy_kcal": 0.1,
+            "energy_per_hour_kcal": 0.1,
+            "energy_per_minute_kcal": 0.1,
+            "heart_rate_bpm": 0.1,
+            "elapsed_s": 0.1
+          },
+          "armed": false,
+          "desynchronized": false,
+          "workout": {
+            "phase": "interrupted",
+            "blocks": [
+              {
+                "duration_s": 10,
+                "speed_kmh": 2.0,
+                "incline_pct": 0.0
+              },
+              {
+                "duration_s": 10,
+                "speed_kmh": 2.5,
+                "incline_pct": 1.0
+              },
+              {
+                "duration_s": 10,
+                "speed_kmh": 2.0,
+                "incline_pct": 0.0
+              }
+            ],
+            "total_s": 30,
+            "block": 3,
+            "remaining_s": 0,
+            "reason": "Arrêt demandé"
+          }
+        },
+        {
+          "elapsed_s": 3.97,
+          "phase": "connected",
+          "telemetry": {
+            "flags": "0x058c",
+            "speed_kmh": 0.0,
+            "distance_m": 0,
+            "incline_pct": 0.0,
+            "ramp_angle_deg": 0.0,
+            "energy_kcal": 0,
+            "energy_per_hour_kcal": 166,
+            "energy_per_minute_kcal": 0,
+            "heart_rate_bpm": 0,
+            "elapsed_s": 4
+          },
+          "ages": {
+            "flags": 0.2,
+            "speed_kmh": 0.2,
+            "distance_m": 0.2,
+            "incline_pct": 0.2,
+            "ramp_angle_deg": 0.2,
+            "energy_kcal": 0.2,
+            "energy_per_hour_kcal": 0.2,
+            "energy_per_minute_kcal": 0.2,
+            "heart_rate_bpm": 0.2,
+            "elapsed_s": 0.2
+          },
+          "armed": false,
+          "desynchronized": false,
+          "workout": {
+            "phase": "interrupted",
+            "blocks": [
+              {
+                "duration_s": 10,
+                "speed_kmh": 2.0,
+                "incline_pct": 0.0
+              },
+              {
+                "duration_s": 10,
+                "speed_kmh": 2.5,
+                "incline_pct": 1.0
+              },
+              {
+                "duration_s": 10,
+                "speed_kmh": 2.0,
+                "incline_pct": 0.0
+              }
+            ],
+            "total_s": 30,
+            "block": 3,
+            "remaining_s": 0,
+            "reason": "Arrêt demandé"
+          }
+        },
+        {
+          "elapsed_s": 4.22,
+          "phase": "connected",
+          "telemetry": {
+            "flags": "0x058c",
+            "speed_kmh": 0.0,
+            "distance_m": 0,
+            "incline_pct": 0.0,
+            "ramp_angle_deg": 0.0,
+            "energy_kcal": 0,
+            "energy_per_hour_kcal": 166,
+            "energy_per_minute_kcal": 0,
+            "heart_rate_bpm": 0,
+            "elapsed_s": 4
+          },
+          "ages": {
+            "flags": 0.0,
+            "speed_kmh": 0.0,
+            "distance_m": 0.0,
+            "incline_pct": 0.0,
+            "ramp_angle_deg": 0.0,
+            "energy_kcal": 0.0,
+            "energy_per_hour_kcal": 0.0,
+            "energy_per_minute_kcal": 0.0,
+            "heart_rate_bpm": 0.0,
+            "elapsed_s": 0.0
+          },
+          "armed": false,
+          "desynchronized": false,
+          "workout": {
+            "phase": "interrupted",
+            "blocks": [
+              {
+                "duration_s": 10,
+                "speed_kmh": 2.0,
+                "incline_pct": 0.0
+              },
+              {
+                "duration_s": 10,
+                "speed_kmh": 2.5,
+                "incline_pct": 1.0
+              },
+              {
+                "duration_s": 10,
+                "speed_kmh": 2.0,
+                "incline_pct": 0.0
+              }
+            ],
+            "total_s": 30,
+            "block": 3,
+            "remaining_s": 0,
+            "reason": "Arrêt demandé"
+          }
+        },
+        {
+          "elapsed_s": 4.47,
+          "phase": "connected",
+          "telemetry": {
+            "flags": "0x058c",
+            "speed_kmh": 0.0,
+            "distance_m": 0,
+            "incline_pct": 0.0,
+            "ramp_angle_deg": 0.0,
+            "energy_kcal": 0,
+            "energy_per_hour_kcal": 166,
+            "energy_per_minute_kcal": 0,
+            "heart_rate_bpm": 0,
+            "elapsed_s": 4
+          },
+          "ages": {
+            "flags": 0.1,
+            "speed_kmh": 0.1,
+            "distance_m": 0.1,
+            "incline_pct": 0.1,
+            "ramp_angle_deg": 0.1,
+            "energy_kcal": 0.1,
+            "energy_per_hour_kcal": 0.1,
+            "energy_per_minute_kcal": 0.1,
+            "heart_rate_bpm": 0.1,
+            "elapsed_s": 0.1
+          },
+          "armed": false,
+          "desynchronized": false,
+          "workout": {
+            "phase": "interrupted",
+            "blocks": [
+              {
+                "duration_s": 10,
+                "speed_kmh": 2.0,
+                "incline_pct": 0.0
+              },
+              {
+                "duration_s": 10,
+                "speed_kmh": 2.5,
+                "incline_pct": 1.0
+              },
+              {
+                "duration_s": 10,
+                "speed_kmh": 2.0,
+                "incline_pct": 0.0
+              }
+            ],
+            "total_s": 30,
+            "block": 3,
+            "remaining_s": 0,
+            "reason": "Arrêt demandé"
+          }
+        },
+        {
+          "elapsed_s": 4.73,
+          "phase": "connected",
+          "telemetry": {
+            "flags": "0x058c",
+            "speed_kmh": 0.0,
+            "distance_m": 0,
+            "incline_pct": 0.0,
+            "ramp_angle_deg": 0.0,
+            "energy_kcal": 0,
+            "energy_per_hour_kcal": 166,
+            "energy_per_minute_kcal": 0,
+            "heart_rate_bpm": 0,
+            "elapsed_s": 4
+          },
+          "ages": {
+            "flags": 0.1,
+            "speed_kmh": 0.1,
+            "distance_m": 0.1,
+            "incline_pct": 0.1,
+            "ramp_angle_deg": 0.1,
+            "energy_kcal": 0.1,
+            "energy_per_hour_kcal": 0.1,
+            "energy_per_minute_kcal": 0.1,
+            "heart_rate_bpm": 0.1,
+            "elapsed_s": 0.1
+          },
+          "armed": false,
+          "desynchronized": false,
+          "workout": {
+            "phase": "interrupted",
+            "blocks": [
+              {
+                "duration_s": 10,
+                "speed_kmh": 2.0,
+                "incline_pct": 0.0
+              },
+              {
+                "duration_s": 10,
+                "speed_kmh": 2.5,
+                "incline_pct": 1.0
+              },
+              {
+                "duration_s": 10,
+                "speed_kmh": 2.0,
+                "incline_pct": 0.0
+              }
+            ],
+            "total_s": 30,
+            "block": 3,
+            "remaining_s": 0,
+            "reason": "Arrêt demandé"
+          }
+        },
+        {
+          "elapsed_s": 4.98,
+          "phase": "connected",
+          "telemetry": {
+            "flags": "0x058c",
+            "speed_kmh": 0.0,
+            "distance_m": 0,
+            "incline_pct": 0.0,
+            "ramp_angle_deg": 0.0,
+            "energy_kcal": 0,
+            "energy_per_hour_kcal": 166,
+            "energy_per_minute_kcal": 0,
+            "heart_rate_bpm": 0,
+            "elapsed_s": 4
+          },
+          "ages": {
+            "flags": 0.0,
+            "speed_kmh": 0.0,
+            "distance_m": 0.0,
+            "incline_pct": 0.0,
+            "ramp_angle_deg": 0.0,
+            "energy_kcal": 0.0,
+            "energy_per_hour_kcal": 0.0,
+            "energy_per_minute_kcal": 0.0,
+            "heart_rate_bpm": 0.0,
+            "elapsed_s": 0.0
+          },
+          "armed": false,
+          "desynchronized": false,
+          "workout": {
+            "phase": "interrupted",
+            "blocks": [
+              {
+                "duration_s": 10,
+                "speed_kmh": 2.0,
+                "incline_pct": 0.0
+              },
+              {
+                "duration_s": 10,
+                "speed_kmh": 2.5,
+                "incline_pct": 1.0
+              },
+              {
+                "duration_s": 10,
+                "speed_kmh": 2.0,
+                "incline_pct": 0.0
+              }
+            ],
+            "total_s": 30,
+            "block": 3,
+            "remaining_s": 0,
+            "reason": "Arrêt demandé"
+          }
+        },
+        {
+          "elapsed_s": 5.25,
+          "phase": "connected",
+          "telemetry": {
+            "flags": "0x058c",
+            "speed_kmh": 0.0,
+            "distance_m": 0,
+            "incline_pct": 0.0,
+            "ramp_angle_deg": 0.0,
+            "energy_kcal": 0,
+            "energy_per_hour_kcal": 166,
+            "energy_per_minute_kcal": 0,
+            "heart_rate_bpm": 0,
+            "elapsed_s": 4
+          },
+          "ages": {
+            "flags": 0.0,
+            "speed_kmh": 0.0,
+            "distance_m": 0.0,
+            "incline_pct": 0.0,
+            "ramp_angle_deg": 0.0,
+            "energy_kcal": 0.0,
+            "energy_per_hour_kcal": 0.0,
+            "energy_per_minute_kcal": 0.0,
+            "heart_rate_bpm": 0.0,
+            "elapsed_s": 0.0
+          },
+          "armed": false,
+          "desynchronized": false,
+          "workout": {
+            "phase": "interrupted",
+            "blocks": [
+              {
+                "duration_s": 10,
+                "speed_kmh": 2.0,
+                "incline_pct": 0.0
+              },
+              {
+                "duration_s": 10,
+                "speed_kmh": 2.5,
+                "incline_pct": 1.0
+              },
+              {
+                "duration_s": 10,
+                "speed_kmh": 2.0,
+                "incline_pct": 0.0
+              }
+            ],
+            "total_s": 30,
+            "block": 3,
+            "remaining_s": 0,
+            "reason": "Arrêt demandé"
+          }
+        },
+        {
+          "elapsed_s": 5.5,
+          "phase": "connected",
+          "telemetry": {
+            "flags": "0x058c",
+            "speed_kmh": 0.0,
+            "distance_m": 0,
+            "incline_pct": 0.0,
+            "ramp_angle_deg": 0.0,
+            "energy_kcal": 0,
+            "energy_per_hour_kcal": 166,
+            "energy_per_minute_kcal": 0,
+            "heart_rate_bpm": 0,
+            "elapsed_s": 4
+          },
+          "ages": {
+            "flags": 0.1,
+            "speed_kmh": 0.1,
+            "distance_m": 0.1,
+            "incline_pct": 0.1,
+            "ramp_angle_deg": 0.1,
+            "energy_kcal": 0.1,
+            "energy_per_hour_kcal": 0.1,
+            "energy_per_minute_kcal": 0.1,
+            "heart_rate_bpm": 0.1,
+            "elapsed_s": 0.1
+          },
+          "armed": false,
+          "desynchronized": false,
+          "workout": {
+            "phase": "interrupted",
+            "blocks": [
+              {
+                "duration_s": 10,
+                "speed_kmh": 2.0,
+                "incline_pct": 0.0
+              },
+              {
+                "duration_s": 10,
+                "speed_kmh": 2.5,
+                "incline_pct": 1.0
+              },
+              {
+                "duration_s": 10,
+                "speed_kmh": 2.0,
+                "incline_pct": 0.0
+              }
+            ],
+            "total_s": 30,
+            "block": 3,
+            "remaining_s": 0,
+            "reason": "Arrêt demandé"
+          }
+        },
+        {
+          "elapsed_s": 5.77,
+          "phase": "connected",
+          "telemetry": {
+            "flags": "0x058c",
+            "speed_kmh": 0.0,
+            "distance_m": 0,
+            "incline_pct": 0.0,
+            "ramp_angle_deg": 0.0,
+            "energy_kcal": 0,
+            "energy_per_hour_kcal": 166,
+            "energy_per_minute_kcal": 0,
+            "heart_rate_bpm": 0,
+            "elapsed_s": 4
+          },
+          "ages": {
+            "flags": 0.2,
+            "speed_kmh": 0.2,
+            "distance_m": 0.2,
+            "incline_pct": 0.2,
+            "ramp_angle_deg": 0.2,
+            "energy_kcal": 0.2,
+            "energy_per_hour_kcal": 0.2,
+            "energy_per_minute_kcal": 0.2,
+            "heart_rate_bpm": 0.2,
+            "elapsed_s": 0.2
+          },
+          "armed": false,
+          "desynchronized": false,
+          "workout": {
+            "phase": "interrupted",
+            "blocks": [
+              {
+                "duration_s": 10,
+                "speed_kmh": 2.0,
+                "incline_pct": 0.0
+              },
+              {
+                "duration_s": 10,
+                "speed_kmh": 2.5,
+                "incline_pct": 1.0
+              },
+              {
+                "duration_s": 10,
+                "speed_kmh": 2.0,
+                "incline_pct": 0.0
+              }
+            ],
+            "total_s": 30,
+            "block": 3,
+            "remaining_s": 0,
+            "reason": "Arrêt demandé"
+          }
+        },
+        {
+          "elapsed_s": 6.02,
+          "phase": "connected",
+          "telemetry": {
+            "flags": "0x058c",
+            "speed_kmh": 0.0,
+            "distance_m": 0,
+            "incline_pct": 0.0,
+            "ramp_angle_deg": 0.0,
+            "energy_kcal": 0,
+            "energy_per_hour_kcal": 166,
+            "energy_per_minute_kcal": 0,
+            "heart_rate_bpm": 0,
+            "elapsed_s": 4
+          },
+          "ages": {
+            "flags": 0.0,
+            "speed_kmh": 0.0,
+            "distance_m": 0.0,
+            "incline_pct": 0.0,
+            "ramp_angle_deg": 0.0,
+            "energy_kcal": 0.0,
+            "energy_per_hour_kcal": 0.0,
+            "energy_per_minute_kcal": 0.0,
+            "heart_rate_bpm": 0.0,
+            "elapsed_s": 0.0
+          },
+          "armed": false,
+          "desynchronized": false,
+          "workout": {
+            "phase": "interrupted",
+            "blocks": [
+              {
+                "duration_s": 10,
+                "speed_kmh": 2.0,
+                "incline_pct": 0.0
+              },
+              {
+                "duration_s": 10,
+                "speed_kmh": 2.5,
+                "incline_pct": 1.0
+              },
+              {
+                "duration_s": 10,
+                "speed_kmh": 2.0,
+                "incline_pct": 0.0
+              }
+            ],
+            "total_s": 30,
+            "block": 3,
+            "remaining_s": 0,
+            "reason": "Arrêt demandé"
+          }
+        },
+        {
+          "elapsed_s": 6.28,
+          "phase": "connected",
+          "telemetry": {
+            "flags": "0x058c",
+            "speed_kmh": 0.0,
+            "distance_m": 0,
+            "incline_pct": 0.0,
+            "ramp_angle_deg": 0.0,
+            "energy_kcal": 0,
+            "energy_per_hour_kcal": 166,
+            "energy_per_minute_kcal": 0,
+            "heart_rate_bpm": 0,
+            "elapsed_s": 4
+          },
+          "ages": {
+            "flags": 0.2,
+            "speed_kmh": 0.2,
+            "distance_m": 0.2,
+            "incline_pct": 0.2,
+            "ramp_angle_deg": 0.2,
+            "energy_kcal": 0.2,
+            "energy_per_hour_kcal": 0.2,
+            "energy_per_minute_kcal": 0.2,
+            "heart_rate_bpm": 0.2,
+            "elapsed_s": 0.2
+          },
+          "armed": false,
+          "desynchronized": false,
+          "workout": {
+            "phase": "interrupted",
+            "blocks": [
+              {
+                "duration_s": 10,
+                "speed_kmh": 2.0,
+                "incline_pct": 0.0
+              },
+              {
+                "duration_s": 10,
+                "speed_kmh": 2.5,
+                "incline_pct": 1.0
+              },
+              {
+                "duration_s": 10,
+                "speed_kmh": 2.0,
+                "incline_pct": 0.0
+              }
+            ],
+            "total_s": 30,
+            "block": 3,
+            "remaining_s": 0,
+            "reason": "Arrêt demandé"
+          }
+        },
+        {
+          "elapsed_s": 6.53,
+          "phase": "connected",
+          "telemetry": {
+            "flags": "0x058c",
+            "speed_kmh": 0.0,
+            "distance_m": 0,
+            "incline_pct": 0.0,
+            "ramp_angle_deg": 0.0,
+            "energy_kcal": 0,
+            "energy_per_hour_kcal": 166,
+            "energy_per_minute_kcal": 0,
+            "heart_rate_bpm": 0,
+            "elapsed_s": 4
+          },
+          "ages": {
+            "flags": 0.1,
+            "speed_kmh": 0.1,
+            "distance_m": 0.1,
+            "incline_pct": 0.1,
+            "ramp_angle_deg": 0.1,
+            "energy_kcal": 0.1,
+            "energy_per_hour_kcal": 0.1,
+            "energy_per_minute_kcal": 0.1,
+            "heart_rate_bpm": 0.1,
+            "elapsed_s": 0.1
+          },
+          "armed": false,
+          "desynchronized": false,
+          "workout": {
+            "phase": "interrupted",
+            "blocks": [
+              {
+                "duration_s": 10,
+                "speed_kmh": 2.0,
+                "incline_pct": 0.0
+              },
+              {
+                "duration_s": 10,
+                "speed_kmh": 2.5,
+                "incline_pct": 1.0
+              },
+              {
+                "duration_s": 10,
+                "speed_kmh": 2.0,
+                "incline_pct": 0.0
+              }
+            ],
+            "total_s": 30,
+            "block": 3,
+            "remaining_s": 0,
+            "reason": "Arrêt demandé"
+          }
+        }
+      ]
+    }
+  ],
+  "physical_confirmation": "pending",
+  "success": true
+}
