@@ -1,6 +1,6 @@
 """Modèles SQLAlchemy. Toute évolution passe par une migration dans versions/."""
 
-from sqlalchemy import CheckConstraint, Index, MetaData, String, text
+from sqlalchemy import CheckConstraint, ForeignKey, ForeignKeyConstraint, Index, JSON, MetaData, String, UniqueConstraint, text
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 
 # Noms de contraintes stables : les migrations SQLite par recopie de table (batch) en dépendent.
@@ -35,3 +35,39 @@ class Profile(Base):
     # Horodatages UTC ISO 8601, au même format partout : ils se trient comme du texte.
     created_at: Mapped[str] = mapped_column(String(40))
     updated_at: Mapped[str] = mapped_column(String(40))
+
+
+class Workout(Base):
+    __tablename__ = "workouts"
+    __table_args__ = (UniqueConstraint("profile_id", "id"),)
+
+    id: Mapped[str] = mapped_column(String(32), primary_key=True)
+    profile_id: Mapped[str] = mapped_column(ForeignKey("profiles.id", ondelete="CASCADE"), index=True)
+    created_at: Mapped[str] = mapped_column(String(40))
+
+
+class WorkoutVersion(Base):
+    """Snapshots immuables ; seule la suppression de la séance/profil les retire."""
+    __tablename__ = "workout_versions"
+    __table_args__ = (
+        CheckConstraint("version >= 1", name="version"),
+        CheckConstraint("author IN ('human', 'chatgpt')", name="author"),
+    )
+
+    workout_id: Mapped[str] = mapped_column(ForeignKey("workouts.id", ondelete="CASCADE"), primary_key=True)
+    version: Mapped[int] = mapped_column(primary_key=True)
+    name: Mapped[str] = mapped_column(String(80))
+    author: Mapped[str] = mapped_column(String(16))
+    author_name: Mapped[str] = mapped_column(String(64))
+    items: Mapped[list] = mapped_column(JSON)
+    created_at: Mapped[str] = mapped_column(String(40))
+
+
+class WorkoutSelection(Base):
+    """Au plus une prochaine séance par profil, nécessairement dans sa bibliothèque."""
+    __tablename__ = "workout_selections"
+    __table_args__ = (ForeignKeyConstraint(
+        ["profile_id", "workout_id"], ["workouts.profile_id", "workouts.id"], ondelete="CASCADE"),)
+
+    profile_id: Mapped[str] = mapped_column(ForeignKey("profiles.id", ondelete="CASCADE"), primary_key=True)
+    workout_id: Mapped[str] = mapped_column(String(32))

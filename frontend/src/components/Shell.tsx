@@ -4,12 +4,13 @@ import { errorMessage } from '../lib/api'
 import { chooseProfile, createProfile, loadProfiles, NAME_MAX, useCurrentProfile, useProfiles, type Profile } from '../lib/profiles'
 import { checkServer, useServer } from '../lib/server'
 import { href, navigate, type Route } from '../lib/router'
-import { TodayIcon } from './Icons'
+import { LibraryIcon, TodayIcon } from './Icons'
 import { Avatar, cx, Group, Row, Sheet, Tile } from './ui'
 
 /** Destinations réellement construites. Chaque brique ajoute la sienne. */
 const TABS = [
   { key: 'today', label: 'Aujourd’hui', href: href.today, Icon: TodayIcon, match: ['today'] },
+  { key: 'library', label: 'Séances', href: href.library, Icon: LibraryIcon, match: ['library', 'workout', 'editor'] },
 ] as const
 
 /** iOS n’affiche pas de barre d’onglets pour une seule destination. */
@@ -220,12 +221,14 @@ export function Page({
   overline,
   back,
   trailing,
+  showAvatar = true,
   children,
 }: {
   title: string
   overline?: string
   back?: { label: string; href: string }
   trailing?: ReactNode
+  showAvatar?: boolean
   children: ReactNode
 }) {
   const scrolled = useScrolled(back ? 30 : 44)
@@ -252,7 +255,7 @@ export function Page({
           </div>
           <div className="flex items-center gap-4 justify-self-end">
             {trailing}
-            {scrolled && <span className="desk:hidden"><ProfileButton size={30} /></span>}
+            {scrolled && showAvatar && <span className="desk:hidden"><ProfileButton size={30} /></span>}
           </div>
         </div>
       </header>
@@ -266,7 +269,7 @@ export function Page({
             </div>
             <h1 className="text-largetitle">{title}</h1>
           </div>
-          <span className="mb-1 desk:hidden"><ProfileButton /></span>
+          {showAvatar && <span className="mb-1 desk:hidden"><ProfileButton /></span>}
         </div>
         <ServerBanner />
         {children}

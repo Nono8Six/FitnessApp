@@ -9,7 +9,7 @@ Une seule brique en cours dans le périmètre demandé. Les cases indiquent les 
 - [x] **Brique 0 · Design** : direction visuelle sombre, téléphone et PC, validée le 4 octobre 2026 ([DESIGN.md](DESIGN.md)).
 - [x] **Brique 1 · Socle** : l’app s’ouvre sur le PC et le téléphone, servie par le PC, sans donnée de démonstration.
 - [x] **Brique 2 · Profils** : base SQLite, profils créés, renommés et supprimés, choix du profil.
-- [ ] **Brique 3 · Séances manuelles** : créer, modifier, enregistrer et retrouver ses séances.
+- [x] **Brique 3 · Séances manuelles** : créer, modifier, dupliquer, supprimer et retrouver ses séances ; choix pour Aujourd’hui par profil.
 - [ ] **Brique 4 · Connexion ChatGPT** : Sign in with ChatGPT sur le PC, compte et forfait vérifiés.
 - [ ] **Brique 5 · Coach** : conversation réelle avec ChatGPT, en streaming, enregistrée par profil.
 - [ ] **Brique 6 · Séances par ChatGPT** : ChatGPT conçoit ou ajuste une séance, validée et enregistrée dans la bibliothèque.
@@ -182,6 +182,8 @@ Audit complémentaire sur Windows le 4 octobre 2026 : lancement par double-clic,
 
 ### Brique 3 · Séances manuelles
 
+**État :** livrée le 4 octobre 2026. Migration additive `0003`, bibliothèque et éditeur reliés au serveur, anciennes versions consultables. Les modifications concurrentes d’une même version sont refusées pour préserver le travail enregistré.
+
 **Livré :** créer, modifier, dupliquer, supprimer et retrouver ses séances ; en choisir une pour Aujourd’hui.
 
 **Travail :**
@@ -191,9 +193,13 @@ Audit complémentaire sur Windows le 4 octobre 2026 : lancement par double-clic,
 4. Aujourd’hui : carte « Prochaine séance » choisie par l’utilisateur, sinon état vide.
 
 **Fait quand :**
-- [ ] Une séance créée sur le téléphone apparaît sur le PC.
-- [ ] Une séance invalide ne peut pas être enregistrée, même par appel direct à l’API (test).
-- [ ] Les tests couvrent l’expansion des répétitions et les bornes.
+- [x] Une séance créée sur le téléphone apparaît sur le PC (bibliothèque commune en base, actualisée à l’ouverture et au retour sur l’application).
+- [x] Une séance invalide ne peut pas être enregistrée, même par appel direct à l’API (test).
+- [x] Les tests couvrent l’expansion des répétitions et les bornes.
+
+**Règles livrées :** vitesse 1–16 km/h, **pente 0–10 %** (précision d’Arnaud), blocs de 30 à 3 600 secondes, 60 minutes et 120 segments maximum répétitions comprises. Expansion, durée et distance prévues calculées exclusivement en Python. Les versions conservent leur auteur et son nom au moment de l’écriture. Aujourd’hui utilise la dernière version de la séance choisie ; supprimer cette séance efface sa sélection et ses versions, supprimer un profil efface ses séances. Les autres profils sont préservés. Le modèle prévoit la provenance ChatGPT, mais seule la création humaine est exposée ici.
+
+**Contrôles :** build frontend, tests ciblés API/calculs/migrations/profils, vérification Chrome sur PC et viewport téléphone avec une base de contrôle isolée. Pas d’essai sur téléphone physique ni sur le tapis. Les bornes de conception ci-dessus ne modifient pas les protections d’exécution du POC.
 
 **Pas dans cette brique :** démarrage sur le tapis, ChatGPT.
 

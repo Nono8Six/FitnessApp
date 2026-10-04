@@ -3,12 +3,14 @@
 const TIMEOUT_MS = 4_000
 
 export type ApiErrorKind = 'network' | 'http' | 'format'
+export interface ValidationIssue { path: (string | number)[]; message: string }
 
 export class ApiError extends Error {
   readonly kind: ApiErrorKind
   readonly status?: number
   /** Requête concernée (« PATCH /api/profiles/arnaud »), pour la console uniquement. */
   readonly request: string
+  issues?: ValidationIssue[]
 
   constructor(kind: ApiErrorKind, message: string, status: number | undefined, context: { label: string; cause?: unknown }) {
     super(message, { cause: context.cause })
@@ -57,15 +59,23 @@ export async function api<T>(path: string, { method = 'GET', body, validate, tim
     if (!res.ok) {
       // Le code reste dans la console ; l’écran n’affiche qu’une phrase.
       let detail: unknown
+      let issues: ValidationIssue[] | undefined
       try {
-        detail = ((await res.json()) as { detail?: unknown }).detail
+        const payload: unknown = await res.json()
+        detail = isRecord(payload) ? payload.detail : undefined
+        if (isRecord(payload) && Array.isArray(payload.issues)) {
+          issues = payload.issues.filter((v): v is ValidationIssue => isRecord(v) && typeof v.message === 'string'
+            && Array.isArray(v.path) && v.path.every(p => typeof p === 'string' || typeof p === 'number'))
+        }
       } catch {
         detail = undefined
       }
       const message = res.status < 500 && typeof detail === 'string' && detail.length > 0 && detail.length <= 200
         ? detail
         : 'Serveur du PC indisponible'
-      throw new ApiError('http', message, res.status, { label })
+      const error = new ApiError('http', message, res.status, { label })
+      error.issues = issues
+      throw error
     }
     let value: unknown
     try {

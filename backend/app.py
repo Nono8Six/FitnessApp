@@ -16,6 +16,7 @@ from poc.server import local_addresses, phone_addresses
 
 from . import __version__
 from .api import profiles as profiles_api
+from .api import workouts as workouts_api
 from .config import data_dir as resolve_data_dir
 from .storage import StorageError, open_database
 from .training.profiles import ensure_default_profiles
@@ -114,10 +115,14 @@ def create_app(*, simulation: bool = False, data_root: Path | None = None, dist:
         }
 
     @app.exception_handler(RequestValidationError)
-    async def invalid_request(_request, exc: RequestValidationError):
+    async def invalid_request(request: Request, exc: RequestValidationError):
+        if "/workouts" in request.url.path:
+            issue = workouts_api.validation_issue(list(exc.errors()), exc.body)
+            return JSONResponse({"detail": issue["message"], "issues": [issue]}, status_code=422)
         return JSONResponse({"detail": profiles_api.validation_message(list(exc.errors()))}, status_code=422)
 
     app.include_router(profiles_api.router)
+    app.include_router(workouts_api.router)
 
     @app.api_route("/api/{_path:path}", methods=["GET", "POST", "PUT", "PATCH", "DELETE"])
     async def unknown_api(_path: str):
