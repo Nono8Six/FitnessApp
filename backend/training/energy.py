@@ -8,16 +8,12 @@ from math import hypot
 
 def estimate(blocks: list[dict], weight_kg: float | None) -> dict:
     active = total = ascent = 0.0
-    automatic = outside_range = False
+    outside_range = False
     for block in blocks:
         speed = block["speed"] * 1000 / 60  # m/min
         grade = block["incline"] / 100
         minutes = block["sec"] / 60
-        gait = block["gait"]
-        if gait == "auto":
-            automatic = True
-            gait = "walk" if block["speed"] <= 6 else "run"
-        if gait == "walk":
+        if block["speed"] <= 6:
             oxygen = 0.1 * speed + 1.8 * speed * grade
             outside_range |= not 3 <= block["speed"] <= 6
         else:
@@ -34,7 +30,7 @@ def estimate(blocks: list[dict], weight_kg: float | None) -> dict:
             "active_kcal": round(active, 1) if weight_kg is not None else None,
             "total_kcal": round(total, 1) if weight_kg is not None else None,
             "weight_kg": weight_kg,
-            "automatic_gait": automatic,
+            "automatic_gait": True,
             "outside_range": outside_range,
         },
     }

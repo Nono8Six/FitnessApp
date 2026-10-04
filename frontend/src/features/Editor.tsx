@@ -1,7 +1,7 @@
 import { ArrowDown, ArrowUp, Minus, Plus, Repeat as RepeatIcon, Trash2 } from 'lucide-react'
 import { useEffect, useId, useRef, useState } from 'react'
 import { Page } from '../components/Shell'
-import { Button, cx, Segmented } from '../components/ui'
+import { Button, cx } from '../components/ui'
 import { WorkoutError, WorkoutLoading, WorkoutSummary } from '../components/WorkoutSummary'
 import { errorMessage } from '../lib/api'
 import { href, navigate } from '../lib/router'
@@ -54,16 +54,6 @@ function StepFields({ value, onChange, errorAt }: { value: Step; onChange: (valu
     <NumberField label="Durée" unit="min" step={0.5} value={value.sec / 60} error={errorAt('sec')} onChange={v => onChange({ ...value, sec: Number((v * 60).toFixed(4)) })} />
     <NumberField label="Vitesse" unit="km/h" step={0.5} value={value.speed} error={errorAt('speed')} onChange={v => onChange({ ...value, speed: v })} />
     <NumberField label="Pente" unit="%" step={0.5} value={value.incline} error={errorAt('incline')} onChange={v => onChange({ ...value, incline: v })} />
-    <div className="border-t border-sep px-4 py-3">
-      <div className="flex flex-wrap items-center justify-between gap-2">
-        <span className="text-subhead">Déplacement</span>
-        <Segmented label="Déplacement pour le calcul des calories" value={value.gait ?? 'auto'}
-          options={[{ value: 'auto', label: 'Auto' }, { value: 'walk', label: 'Marche' }, { value: 'run', label: 'Course' }]}
-          onChange={gait => onChange({ ...value, gait })} className="w-[210px]" />
-      </div>
-      <p className="mt-2 text-caption text-label-2">{(value.gait ?? 'auto') === 'auto' ? 'Calcul : marche jusqu’à 6 km/h, course au-delà. Ajustez si besoin.' : 'Utilisé pour estimer les calories de ce bloc.'}</p>
-      {errorAt('gait') && <p role="alert" className="mt-2 text-footnote text-red">{errorAt('gait')}</p>}
-    </div>
   </>
 }
 

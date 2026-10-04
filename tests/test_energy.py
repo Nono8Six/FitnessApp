@@ -43,7 +43,7 @@ class EnergyTests(unittest.TestCase):
         self.assertIsNone(missing["energy"]["total_kcal"])
         self.assertEqual(missing["ascent_m"], result["ascent_m"])
 
-    def test_gait_override_and_validity_flags(self):
+    def test_automatic_gait_and_legacy_compatibility(self):
         for speed, gait, outside in [(3, "walk", False), (6, "walk", False), (2.9, "walk", True),
                                      (6.1, "walk", True), (8, "run", True), (8.04, "run", False), (16, "run", False)]:
             with self.subTest(speed=speed, gait=gait):
@@ -51,14 +51,19 @@ class EnergyTests(unittest.TestCase):
         auto = calculation([step(6, gait="auto")])["energy"]
         self.assertTrue(auto["automatic_gait"])
         self.assertEqual(auto["active_kcal"], 40)
-        self.assertEqual(calculation([step(6, gait="run")])["energy"]["active_kcal"], 80)
-        self.assertFalse(calculation([step()])["energy"]["automatic_gait"])
+        self.assertEqual(calculation([step(6, gait="run")])["energy"]["active_kcal"], 40)
+        self.assertEqual(calculation([step(12, gait="walk")])["energy"]["active_kcal"], 160)
+        # Le seuil est appliqué sans choix utilisateur, y compris dans les répétitions.
+        self.assertEqual(calculation([step(6.01)])["energy"]["active_kcal"], 80.1)
+        legacy = WorkoutInput(name="Ancienne", items=[{"repeat": 2, "steps": [step(gait="run")]}])
+        self.assertNotIn("gait", legacy.model_dump()["items"][0]["steps"][0])
+        self.assertTrue(calculation([step()])["energy"]["automatic_gait"])
 
     def test_migration_and_api_keep_versions_selection_and_profile_data(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp); (root / "reel").mkdir()
             engine = create_db_engine(root / "reel" / "fitness.db")
-            legacy = [{k: v for k, v in step().items() if k != "gait"}]
+            legacy = [step(gait="run")]
             with engine.begin() as conn:
                 config = alembic_config(); config.attributes["connection"] = conn
                 command.upgrade(config, "0003")

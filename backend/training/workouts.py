@@ -30,7 +30,9 @@ class Step(Input):
     sec: Annotated[int, Field(ge=30, le=MAX_SECONDS)]
     speed: Annotated[float, Field(ge=1, le=16)]
     incline: Annotated[float, Field(ge=0, le=10)]
-    gait: Literal["auto", "walk", "run"] = "auto"
+    # Compatibilité des anciennes versions/clients : accepté, ignoré par le calcul,
+    # et absent des nouveaux snapshots. Le choix dépend uniquement de la vitesse.
+    gait: Literal["auto", "walk", "run"] = Field(default="auto", exclude=True)
 
 
 class Repeat(Input):

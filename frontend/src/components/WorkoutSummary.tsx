@@ -23,7 +23,7 @@ export function WorkoutSummary({ data, editing = false }: { data: Preview; editi
           <div className="space-y-2 pb-2 leading-relaxed">
             <p><span className="num font-medium text-label">≈ {Math.round(energy.total_kcal!)} kcal totales</span>, dont les calories actives affichées ci-dessus. Le total inclut une dépense de repos standard.</p>
             <p>Calcul ACSM avec le poids actuel du profil ({dec1(energy.weight_kg)} kg), la durée, la vitesse et la pente de chaque segment. Le dénivelé représente une montée équivalente sur cette distance.</p>
-            {energy.automatic_gait && <p>En mode Auto : marche jusqu’à 6 km/h, course au-delà. Vous pouvez préciser le déplacement dans l’éditeur.</p>}
+            <p>Le calcul suppose automatiquement la marche jusqu’à 6 km/h, puis la course au-delà.</p>
             {energy.outside_range && <p className="text-orange">Certains blocs sont hors des plages de vitesse les mieux adaptées au calcul : marche de 3 à 6 km/h, course à partir d’environ 8 km/h. L’estimation y est plus incertaine.</p>}
             <p>Ce sont des prévisions, pas des calories mesurées. Les changements rapides d’allure, l’appui sur les poignées et les différences individuelles peuvent modifier la dépense réelle.</p>
             {!editing && <a href={href.settings} className="inline-flex min-h-11 items-center font-medium text-accent">Modifier mon poids →</a>}

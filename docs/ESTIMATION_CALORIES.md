@@ -19,7 +19,7 @@ Le dénivelé équivalent est géométrique : somme des `distance_bande_m × g /
 
 ## Déplacement et limites
 
-Le déplacement (Auto, Marche, Course) est distinct du rôle du bloc (échauffement, récupération…). En Auto, l'application **suppose** la marche jusqu'à 6 km/h inclus, puis la course. C'est une convention de l'application, pas un seuil physiologique personnel. L'utilisateur peut la corriger par bloc. Les anciennes versions sans ce champ utilisent Auto à la lecture ; leur JSON reste intact.
+Le calcul est entièrement automatique : l'application **suppose** la marche jusqu'à 6 km/h inclus, puis la course. C'est une convention de l'application, pas un seuil physiologique personnel ni une détection du mouvement. Aucun réglage de déplacement dans l'éditeur. Le rôle du bloc (échauffement, récupération…) ne change pas ce calcul. Les anciens champs `gait` restent acceptés pour compatibilité, mais sont ignorés dans les prévisions et omis des nouveaux snapshots. Le JSON des anciennes versions reste intact.
 
 L'ACSM indique les meilleures plages de précision : marche de 50 à 100 m/min (3–6 km/h), course autour de 134 m/min et au-delà (environ 8 km/h). Voir tableau 7.2, page imprimée 159, [ACSM Guidelines, 8e édition](https://www.pelvichealthinstitute.org/wp-content/uploads/2025/04/ACSMs-Guidelines-for-Exercise-Testing-and-Prescription-Eighth-Edition.pdf). Hors de ces plages, l'estimation reste disponible mais le détail signale l'extrapolation ; aucun mélange arbitraire des deux formules.
 
