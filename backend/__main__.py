@@ -35,6 +35,7 @@ def main():
     parser.add_argument("--port", type=int, default=PORT)
     parser.add_argument("--simulation", action="store_true", help="Données séparées des vraies séances")
     parser.add_argument("--open-browser", action="store_true", help="Ouvrir l'application sur le PC")
+    parser.add_argument("--managed", action="store_true", help="Arrêt piloté par le lanceur sur son entrée standard")
     args = parser.parse_args()
     if not 1 <= args.port <= 65535:
         parser.error("Le port doit être compris entre 1 et 65535.")
@@ -54,12 +55,27 @@ def main():
             print(f"Téléphone sur le même Wi-Fi : http://{address}:{args.port}")
         if not app.state.phone_addresses:
             print("Adresse Wi-Fi du PC non déterminée : vérifier l'adresse IPv4 dans Windows.")
-    print("Arrêt : Ctrl+C.\n", flush=True)
+    print("Arrêt : bouton du lanceur." if args.managed else "Arrêt : Ctrl+C.", flush=True)
     # Un seul processus : il possédera le Bluetooth du tapis (brique 7).
     server = uvicorn.Server(uvicorn.Config(app, host=args.host, port=args.port, workers=1, log_level="warning"))
+    if args.managed:
+        threading.Thread(target=stop_when_requested, args=(server,), daemon=True).start()
     if args.open_browser:
         threading.Thread(target=open_when_ready, args=(server, f"http://127.0.0.1:{args.port}"), daemon=True).start()
     server.run()
+
+
+def stop_when_requested(server: uvicorn.Server) -> None:
+    """Canal privé hérité du parent ; aucun endpoint d'arrêt exposé au réseau."""
+    try:
+        for line in sys.stdin:
+            if line.strip() == "stop":
+                break
+            logging.warning("Commande du lanceur non reconnue.")
+    except (OSError, UnicodeError) as exc:
+        logging.error("Canal du lanceur perdu : %s", exc)
+    # EOF signifie aussi que le lanceur a disparu : pas de serveur orphelin.
+    server.should_exit = True
 
 
 if __name__ == "__main__":

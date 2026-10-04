@@ -1,5 +1,6 @@
 import base64
 import hashlib
+import os
 from contextlib import asynccontextmanager
 from datetime import datetime, timezone
 from pathlib import Path
@@ -60,6 +61,8 @@ def create_app(*, simulation: bool = False, data_root: Path | None = None, dist:
     data = resolve_data_dir(simulation=simulation, root=data_root)
     addresses = phone_addresses()[0] if network_enabled else []
     started_at = datetime.now(timezone.utc).isoformat(timespec="seconds")
+    # Identifiant de corrélation du processus détenu, pas une clé d'accès.
+    instance_id = os.environ.get("FITNESS_SERVER_INSTANCE")
     # Migrations puis profils par défaut, avant d'accepter la moindre requête.
     database = open_database(data)
     try:
@@ -109,6 +112,7 @@ def create_app(*, simulation: bool = False, data_root: Path | None = None, dist:
             "mode": "simulation" if simulation else "reel",
             "data_dir": str(data),
             "started_at": started_at,
+            "instance_id": instance_id,
             "schema": database.schema,
             "interface": (dist / "index.html").is_file(),
             "network": {"enabled": network_enabled, "addresses": addresses},

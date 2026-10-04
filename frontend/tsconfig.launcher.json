@@ -1,0 +1,4 @@
+{
+  "extends": "./tsconfig.json",
+  "include": ["src/launcher", "vite.launcher.config.ts"]
+}

@@ -2,3 +2,6 @@
 __pycache__/
 /data/
 .pytest_cache/
+/launcher/target/
+/launcher/bin/
+/launcher/gen/

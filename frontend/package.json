@@ -7,7 +7,9 @@
     "dev": "vite --host",
     "build": "tsc -b && vite build",
     "preview": "vite preview --host",
-    "typecheck": "tsc -b"
+    "typecheck": "tsc -b",
+    "build:launcher": "tsc -p tsconfig.launcher.json && vite build --config vite.launcher.config.ts",
+    "dev:launcher": "vite --config vite.launcher.config.ts --host 127.0.0.1 --strictPort"
   },
   "dependencies": {
     "@fontsource-variable/inter": "^5.3.0",

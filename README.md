@@ -2,7 +2,7 @@
 
 ## Application
 
-**Sur Windows : double-cliquer sur `Lancer Fitness.cmd`.** Une fenêtre démarre le serveur, affiche l'adresse « Téléphone » (même Wi-Fi) et le navigateur du PC s'ouvre dès qu'il est prêt. Garder cette fenêtre ouverte ; `Ctrl+C` arrête le serveur. Au premier lancement, autoriser Python dans le pare-feu Windows sur le réseau privé.
+**Sur Windows : double-cliquer sur `Lancer Fitness.cmd`.** Dans la fenêtre Fitness, cliquer **Démarrer**, puis **Ouvrir l’application**. **Arrêter** coupe le serveur ; fermer la fenêtre l'arrête aussi. L'état, le journal et l'adresse « Téléphone » suivent le vrai serveur. Au premier lancement, autoriser Python dans le pare-feu Windows sur le réseau privé si l'accès téléphone est souhaité. Voir [le lanceur](launcher/README.md).
 
 Dans PowerShell, depuis ce dossier :
 
@@ -15,7 +15,7 @@ Dans PowerShell, depuis ce dossier :
 
 Le premier lancement nécessite Python 3.12 et Node.js LTS : le script prépare `.venv`, installe les dépendances et construit l'interface. Ensuite, il réutilise les dépendances et le build inchangés ; aucun téléchargement n'est nécessaire. Les empreintes des fichiers détectent aussi une suppression ou un changement avec un ancien horodatage. Les sources, manifests et lockfiles restent intacts.
 
-Le double-clic équivaut à `.\start-app.ps1 -Reseau -Ouvrir`. Sans `-Reseau`, le serveur n'écoute que sur le PC. Un téléphone physique reste à recevoir.
+Le lanceur propose « Accès téléphone » et « Simulation » avant le démarrage. Il réutilise la préparation du script ci-dessus. Sa première construction nécessite aussi Rust, les outils C++ Microsoft et WebView2 ; l'exécutable déjà construit n'a pas besoin de Rust. Le mode console reste accessible avec `start-app.ps1` ou les paramètres habituels de `Lancer Fitness.cmd`. Sans `-Reseau`, le serveur console n'écoute que sur le PC. Un téléphone physique reste à recevoir.
 
 Si le port 4330 est déjà utilisé, le script affiche une erreur explicite : ouvrir l'app déjà lancée ou arrêter sa fenêtre avec `Ctrl+C`. `-Port 4331` permet de choisir un autre port. `-Reconstruire` force une nouvelle construction de l'interface.
 

@@ -3,7 +3,8 @@ param(
     [switch]$Reseau,
     [ValidateRange(1, 65535)][int]$Port = 4330,
     [switch]$Reconstruire,
-    [switch]$Ouvrir
+    [switch]$Ouvrir,
+    [switch]$Preparer
 )
 # Lance l'application Fitness sur ce PC. Le POC (start-poc.ps1) reste independant.
 $ErrorActionPreference = 'Stop'
@@ -28,20 +29,8 @@ try {
     $probe.Stop()
 }
 
-# Une empreinte du contenu detecte aussi les suppressions et les anciens horodatages.
-function Get-SourceFingerprint([string]$Directory, [string[]]$RelativePaths) {
-    $paths = $RelativePaths | ForEach-Object { Join-Path $Directory $_ } | Where-Object { Test-Path -LiteralPath $_ }
-    $entries = Get-ChildItem -LiteralPath $paths -Recurse -File | Sort-Object FullName | ForEach-Object {
-        $relative = $_.FullName.Substring($Directory.Length + 1).Replace('\', '/')
-        "$relative=$((Get-FileHash -LiteralPath $_.FullName -Algorithm SHA256).Hash)"
-    }
-    $sha = [System.Security.Cryptography.SHA256]::Create()
-    try {
-        return [BitConverter]::ToString($sha.ComputeHash([System.Text.Encoding]::UTF8.GetBytes(($entries -join "`n")))).Replace('-', '')
-    } finally {
-        $sha.Dispose()
-    }
-}
+# Empreinte partagee avec la construction du lanceur graphique.
+. (Join-Path $PSScriptRoot 'scripts\prepare-helpers.ps1')
 
 # Python : environnement .venv partage avec le POC
 $appPython = Join-Path $PSScriptRoot '.venv\Scripts\python.exe'
@@ -92,21 +81,18 @@ if ($build) {
     }
     Push-Location -LiteralPath $frontend
     try {
-        $dependencyHash = Get-SourceFingerprint $frontend @('package.json', 'package-lock.json')
-        $installed = Join-Path $frontend 'node_modules\.fitness-dependencies.sha256'
-        $install = -not (Test-Path -LiteralPath $installed)
-        if (-not $install) { $install = (Get-Content -LiteralPath $installed -Raw).Trim() -ne $dependencyHash }
-        if ($install) {
-            npm.cmd ci
-            if ($LASTEXITCODE -ne 0) { throw 'Installation des dependances de l interface impossible.' }
-            Set-Content -LiteralPath $installed -Value $dependencyHash -Encoding ASCII
-        }
+        Install-FrontendDependencies $frontend
         npm.cmd run build
         if ($LASTEXITCODE -ne 0) { throw 'Construction de l interface impossible.' }
         Set-Content -LiteralPath $buildStamp -Value $sourceHash -Encoding ASCII
     } finally {
         Pop-Location
     }
+}
+
+if ($Preparer) {
+    Write-Host 'Fitness est pret a demarrer.'
+    exit 0
 }
 
 $appArguments = @('-m', 'backend', '--host', $appListen, '--port', "$Port")

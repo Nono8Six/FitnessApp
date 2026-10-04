@@ -4,6 +4,7 @@ import shutil
 import sqlite3
 import tempfile
 import unittest
+from contextlib import contextmanager
 from pathlib import Path
 
 from fastapi.testclient import TestClient
@@ -46,8 +47,15 @@ class ProfileTests(unittest.TestCase):
         self.stop()
         return self.start(simulation)
 
+    @contextmanager
     def db(self, mode="reel"):
-        return sqlite3.connect(self.root / mode / DATABASE_FILE)
+        # Le contexte sqlite3 valide la transaction mais ne ferme pas la connexion.
+        conn = sqlite3.connect(self.root / mode / DATABASE_FILE)
+        try:
+            with conn:
+                yield conn
+        finally:
+            conn.close()
 
     # ---------- Base et migrations ----------
 
