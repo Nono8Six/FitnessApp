@@ -26,12 +26,13 @@ git log --oneline --left-right HEAD...origin/main
 - Travailler sur `main` à jour : `git switch main`, puis `git merge --ff-only origin/main`. Si `main` n'existe pas, utiliser `git switch --track -c main origin/main`.
 - Si `origin/main` a avancé pendant le travail, récupérer et intégrer ses commits (`git pull --rebase origin main` pour ses propres commits non poussés) avant de pousser, sans effacer le travail de l’autre contributeur.
 - En présence de modifications locales, de fichiers non suivis ou de commits propres à une autre tâche, les préserver et identifier leur propriétaire avant de changer de branche ou d'intégrer des changements qui les touchent. Continuer les travaux indépendants quand c'est possible.
-- Ne pas utiliser `reset --hard`, `clean`, un stash automatique, un force-push ou une suppression de branche pour faire disparaître un écart. Ne pas modifier les fichiers d'un autre contributeur sans comprendre leur rôle.
+- Ne pas utiliser `reset --hard`, `clean`, un stash automatique ou un force-push pour faire disparaître un écart. Ne pas modifier les fichiers d'un autre contributeur sans comprendre leur rôle.
 - Le cloud fournit déjà un environnement isolé : utiliser le checkout existant. Ne créer un Git worktree que sur demande explicite.
 
 ## Commits et avancement
 
 - Pousser directement sur `main`, par commits cohérents. Pas de branche ni de PR, sauf demande d’Arnaud.
+- Aucune branche obsolète : une branche dont les commits sont déjà dans `main` est supprimée, en local et sur GitHub (`git branch -d <nom>`, `git push origin --delete <nom>`). Vérifier d’abord avec `git branch -r --merged origin/main`.
 - Le message de commit décrit le résultat concret, les vérifications exécutées et les limites.
 - Relire `PLAN_V1_FITNESS_APP.md` avant chaque brique. Une seule brique en cours ; la suivante attend la validation d'Arnaud. Ne cocher une brique qu'après cette validation, dans un commit dédié.
 - Les preuves et décisions durables vivent dans le dépôt, avec la fonction concernée. Les chats et brouillons cloud ne remplacent pas le suivi versionné.
