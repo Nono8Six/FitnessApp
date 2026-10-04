@@ -24,12 +24,15 @@ export function Library({ profile }: { profile: string }) {
           <Search size={18} /><input value={q} onChange={e => setQ(e.target.value)} placeholder="Rechercher" aria-label="Rechercher une séance"
             className="min-w-0 flex-1 bg-transparent text-body text-label outline-none placeholder:text-label-2" />
         </label>
+        {state.data.workouts[0].summary.energy.weight_kg === null && <a href={href.settings}
+          className="pressable mb-4 flex min-h-11 items-center text-subhead text-accent">Renseigner mon poids pour estimer les calories →</a>}
         <div className="grid gap-3 desk:grid-cols-2 desk:gap-4">
           {list.map(p => <article key={p.id} className="min-w-0 rounded-[22px] bg-surface p-5">
             <a href={href.workout(p.id)} className="pressable block rounded-[8px] focus-visible:outline-2 focus-visible:outline-accent">
             <div className="flex items-baseline justify-between gap-3"><h2 className="min-w-0 break-words text-headline">{p.name}</h2><span className="num shrink-0 text-subhead text-label-2">{clock(p.summary.sec)}</span></div>
             <p className="num mt-1 text-footnote text-label-2">{dec1(p.summary.km)} km · {dec1(p.summary.minSpeed)}–{dec1(p.summary.maxSpeed)} km/h · {p.summary.count} segments</p>
             </a>
+            {p.summary.energy.active_kcal !== null && <p className="num mt-2 text-footnote text-label-2"><span className="font-semibold text-label">≈ {Math.round(p.summary.energy.active_kcal)} kcal</span> actives estimées · {Math.round(p.summary.ascent_m)} m de montée équivalente</p>}
             <ProgrammeChart blocks={p.blocks} className="mt-4" />
             {state.data.selected_id === p.id && <p className="mt-3 flex items-center gap-1.5 text-footnote font-medium text-accent"><Check size={15} />Prochaine séance</p>}
             <a href={href.workout(p.id)} className="pressable mt-2 flex min-h-11 items-center justify-center rounded-[12px] bg-fill-3 text-subhead font-semibold text-accent">Voir la séance</a>

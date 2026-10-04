@@ -40,8 +40,8 @@ def list_workouts(profile_id: str, request: Request):
 @router.post("/preview")
 def preview(profile_id: str, data: WorkoutInput, request: Request):
     with transaction(request) as session:
-        workouts.get_profile(session, profile_id)
-        return workouts.preview(data)
+        profile = workouts.get_profile(session, profile_id)
+        return workouts.preview(data, profile.weight_kg)
 
 
 @router.patch("/selection")
@@ -95,6 +95,7 @@ FIELDS = {
     "steps": "Une répétition doit contenir de 1 à 120 blocs",
     "items": "La séance doit contenir de 1 à 120 blocs ou répétitions",
     "kind": "Type de bloc inconnu",
+    "gait": "Déplacement : auto, marche ou course",
     "base_version": "La version d’origine est requise pour modifier une séance",
     "workout_id": "Choisissez une séance de ce profil",
 }

@@ -1,6 +1,6 @@
 """Modèles SQLAlchemy. Toute évolution passe par une migration dans versions/."""
 
-from sqlalchemy import CheckConstraint, ForeignKey, ForeignKeyConstraint, Index, JSON, MetaData, String, UniqueConstraint, text
+from sqlalchemy import CheckConstraint, Float, ForeignKey, ForeignKeyConstraint, Index, JSON, MetaData, String, UniqueConstraint, text
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 
 # Noms de contraintes stables : les migrations SQLite par recopie de table (batch) en dépendent.
@@ -32,6 +32,8 @@ class Profile(Base):
     name: Mapped[str] = mapped_column(String(64))
     weekly_goal: Mapped[int]
     speed_unit: Mapped[str] = mapped_column(String(8))
+    weight_kg: Mapped[float | None] = mapped_column(Float, CheckConstraint(
+        "weight_kg BETWEEN 20 AND 300", name="weight_kg"))
     # Horodatages UTC ISO 8601, au même format partout : ils se trient comme du texte.
     created_at: Mapped[str] = mapped_column(String(40))
     updated_at: Mapped[str] = mapped_column(String(40))

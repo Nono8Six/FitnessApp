@@ -47,6 +47,7 @@ def clean_name(value: str) -> str:
 
 Name = Annotated[str, AfterValidator(clean_name)]
 WeeklyGoal = Annotated[int, Field(ge=WEEKLY_GOAL_MIN, le=WEEKLY_GOAL_MAX)]
+Weight = Annotated[float, Field(ge=20, le=300, allow_inf_nan=False)]
 
 
 class ProfileOut(BaseModel):
@@ -56,6 +57,7 @@ class ProfileOut(BaseModel):
     name: str
     weekly_goal: int
     speed_unit: SpeedUnit
+    weight_kg: float | None
     created_at: str
     updated_at: str
 
@@ -68,6 +70,7 @@ class ProfileCreate(BaseModel):
     name: Name
     weekly_goal: WeeklyGoal = DEFAULT_WEEKLY_GOAL
     speed_unit: SpeedUnit = DEFAULT_SPEED_UNIT
+    weight_kg: Weight | None = None
 
 
 class ProfileUpdate(BaseModel):
@@ -76,13 +79,14 @@ class ProfileUpdate(BaseModel):
     name: Name | None = None
     weekly_goal: WeeklyGoal | None = None
     speed_unit: SpeedUnit | None = None
+    weight_kg: Weight | None = None
 
     @model_validator(mode="after")
     def at_least_one_value(self):
         if not self.model_fields_set:
             raise ValueError("aucun champ à modifier")
         for name in self.model_fields_set:
-            if getattr(self, name) is None:
+            if name != "weight_kg" and getattr(self, name) is None:
                 raise ValueError(f"{name} ne peut pas être vide")
         return self
 
@@ -157,7 +161,7 @@ def create_profile(session: Session, data: ProfileCreate) -> ProfileOut:
         n += 1
     now = utc_now()
     row = Profile(id=profile_id, name=data.name, weekly_goal=data.weekly_goal, speed_unit=data.speed_unit,
-                  created_at=now, updated_at=now)
+                  weight_kg=data.weight_kg, created_at=now, updated_at=now)
     session.add(row)
     _flush(session)
     return ProfileOut.model_validate(row)

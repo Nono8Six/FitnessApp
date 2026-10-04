@@ -19,7 +19,7 @@ const UNITS: { value: SpeedUnit; label: string }[] = [
  * Un refus restaure la valeur enregistrée et donne le message à afficher sous la ligne.
  */
 function useSaved<K extends keyof ProfileChanges>(profile: Profile, field: K) {
-  const [draft, setDraft] = useState<Profile[K] | null>(null)
+  const [draft, setDraft] = useState<Profile[K] | undefined>(undefined)
   const [error, setError] = useState<string>()
   const last = useRef(0)
   const save = (value: Profile[K]) => {
@@ -27,17 +27,44 @@ function useSaved<K extends keyof ProfileChanges>(profile: Profile, field: K) {
     setDraft(value)
     setError(undefined)
     saveProfile(profile.id, { [field]: value } as ProfileChanges).then(
-      () => { if (token === last.current) setDraft(null) },
+      () => { if (token === last.current) setDraft(undefined) },
       (err: unknown) => {
         console.warn('Fitness : enregistrement du profil refusé', err)
         if (token === last.current) {
-          setDraft(null)
+          setDraft(undefined)
           setError(errorMessage(err))
         }
       },
     )
   }
-  return { value: draft ?? profile[field], error, setError, save }
+  return { value: draft === undefined ? profile[field] : draft, saving: draft !== undefined, error, setError, save }
+}
+
+function WeightInput({ value, onChange, onInvalid, disabled, error }: {
+  value: number | null; onChange: (value: number | null) => void
+  onInvalid: (message: string | undefined) => void; disabled: boolean; error?: string
+}) {
+  const [draft, setDraft] = useState<string | null>(null)
+  const formatted = value === null ? '' : String(value).replace('.', ',')
+  const commit = () => {
+    if (draft === null) return
+    const text = draft.trim()
+    const weight = text === '' ? null : Number(text.replace(',', '.'))
+    if (weight !== null && (!/^\d+(?:[.,]\d+)?$/.test(text) || !Number.isFinite(weight) || weight < 20 || weight > 300)) {
+      onInvalid('Saisissez un poids de 20 à 300 kg, ou videz le champ pour l’effacer.')
+      return
+    }
+    setDraft(null); onInvalid(undefined)
+    if (weight !== value) onChange(weight)
+  }
+  return <div className="flex items-baseline gap-1">
+    <input aria-label="Poids (kg)" aria-invalid={!!error} inputMode="decimal" enterKeyHint="done" autoComplete="off"
+      disabled={disabled} value={draft ?? formatted} placeholder="À renseigner"
+      onChange={e => setDraft(e.target.value)} onBlur={commit}
+      onKeyDown={e => { if (e.key === 'Enter') e.currentTarget.blur(); if (e.key === 'Escape') { setDraft(null); onInvalid(undefined) } }}
+      className="num h-11 w-32 rounded-[8px] bg-transparent px-2 text-right text-body outline-none placeholder:text-label-3 focus:bg-fill-3 disabled:text-label-3" />
+    <span className="text-subhead text-label-2">kg</span>
+  </div>
 }
 
 /** Nom modifiable sur place, enregistré à la sortie du champ ou avec Entrée ; Échap annule. */
@@ -119,7 +146,9 @@ function ProfileSettings({ profile, readOnly }: { profile: Profile; readOnly: bo
   const name = useSaved(profile, 'name')
   const goal = useSaved(profile, 'weekly_goal')
   const unit = useSaved(profile, 'speed_unit')
+  const weight = useSaved(profile, 'weight_kg')
   return (
+    <>
     <Group header={profile.name}>
       <ControlRow
         title="Nom"
@@ -140,6 +169,15 @@ function ProfileSettings({ profile, readOnly }: { profile: Profile; readOnly: bo
         control={<Segmented options={UNITS} value={unit.value} onChange={unit.save} label="Unité" disabled={readOnly} className="w-[148px]" />}
       />
     </Group>
+    <Group header="Estimation des calories" className="mt-9">
+      <ControlRow title="Poids" error={weight.error}
+        control={<WeightInput value={weight.value} onChange={weight.save} onInvalid={weight.setError}
+          error={weight.error} disabled={readOnly || weight.saving} />} />
+      <p className="px-4 pt-1 pb-4 text-footnote text-label-2" role={weight.saving ? 'status' : undefined}>
+        {weight.saving ? 'Enregistrement…' : 'Utilisé avec la vitesse, la pente et le type de déplacement de chaque bloc. Videz le champ pour retirer votre poids.'}
+      </p>
+    </Group>
+    </>
   )
 }
 

@@ -4,11 +4,12 @@ import { loadProfiles } from './profiles'
 import { useServer } from './server'
 import type { Block, BlockKind } from './types'
 
-export interface Step { kind: BlockKind; sec: number; speed: number; incline: number }
+export interface Step { kind: BlockKind; sec: number; speed: number; incline: number; gait?: 'auto' | 'walk' | 'run' }
 export interface Repeat { repeat: number; steps: Step[] }
 export type Item = Step | Repeat
 export interface WorkoutInput { name: string; items: Item[] }
-export interface Preview { blocks: Block[]; summary: { sec: number; km: number; count: number; minSpeed: number; maxSpeed: number } }
+export interface Energy { active_kcal: number | null; total_kcal: number | null; weight_kg: number | null; automatic_gait: boolean; outside_range: boolean }
+export interface Preview { blocks: Block[]; summary: { sec: number; km: number; count: number; minSpeed: number; maxSpeed: number; ascent_m: number; energy: Energy } }
 export interface Workout extends WorkoutInput, Preview {
   id: string; version: number; author: 'human' | 'chatgpt'; author_name: string; created_at: string
 }
@@ -18,14 +19,21 @@ export const KIND_LABEL: Record<BlockKind, string> = {
   warmup: 'Échauffement', steady: 'Allure continue', run: 'Course', recover: 'Récupération', cooldown: 'Retour au calme',
 }
 export const isRepeat = (item: Item): item is Repeat => 'repeat' in item
+export const GAIT_LABEL = { auto: 'Auto', walk: 'Marche', run: 'Course' } as const
 const finite = (v: unknown): v is number => typeof v === 'number' && Number.isFinite(v)
+const isEnergy = (v: unknown): v is Energy => isRecord(v)
+  && typeof v.automatic_gait === 'boolean' && typeof v.outside_range === 'boolean'
+  && ((v.weight_kg === null && v.active_kcal === null && v.total_kcal === null)
+    || (finite(v.weight_kg) && finite(v.active_kcal) && finite(v.total_kcal)))
 const isStep = (v: unknown): v is Step => isRecord(v) && typeof v.kind === 'string' && Object.hasOwn(KIND_LABEL, v.kind)
   && finite(v.sec) && finite(v.speed) && finite(v.incline)
+  && (v.gait === undefined || (typeof v.gait === 'string' && Object.hasOwn(GAIT_LABEL, v.gait)))
 const isItem = (v: unknown): v is Item => isStep(v) || (isRecord(v) && Number.isInteger(v.repeat)
   && Array.isArray(v.steps) && v.steps.length > 0 && v.steps.every(isStep))
 export const isPreview = (v: unknown): v is Preview => isRecord(v) && Array.isArray(v.blocks) && v.blocks.length > 0
   && v.blocks.every((b: unknown) => isStep(b) && isRecord(b) && finite(b.index) && finite(b.start) && finite(b.end) && typeof b.label === 'string')
-  && isRecord(v.summary) && ['sec', 'km', 'count', 'minSpeed', 'maxSpeed'].every(k => finite((v.summary as Record<string, unknown>)[k]))
+  && isRecord(v.summary) && ['sec', 'km', 'count', 'minSpeed', 'maxSpeed', 'ascent_m'].every(k => finite((v.summary as Record<string, unknown>)[k]))
+  && isEnergy(v.summary.energy)
 export const isWorkout = (v: unknown): v is Workout => isPreview(v) && isRecord(v)
   && typeof v.id === 'string' && typeof v.name === 'string' && Number.isInteger(v.version)
   && (v.author === 'human' || v.author === 'chatgpt') && typeof v.author_name === 'string'

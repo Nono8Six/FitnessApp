@@ -59,6 +59,7 @@ def delete_profile(profile_id: str, request: Request) -> list[ProfileOut]:
 
 
 FIELDS = {
+    "weight_kg": "Poids : de 20 à 300 kg, ou vide pour l’effacer",
     "name": f"Nom : de 1 à {profiles.NAME_MAX} caractères, sans caractère de contrôle",
     "weekly_goal": f"Objectif hebdomadaire : nombre entier de {profiles.WEEKLY_GOAL_MIN} à {profiles.WEEKLY_GOAL_MAX}",
     "speed_unit": "Unité : « kmh » ou « pace »",

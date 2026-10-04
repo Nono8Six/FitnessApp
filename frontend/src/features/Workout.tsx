@@ -6,7 +6,7 @@ import { WorkoutError, WorkoutLoading, WorkoutSummary } from '../components/Work
 import { errorMessage } from '../lib/api'
 import { clock, dec1 } from '../lib/format'
 import { href, navigate } from '../lib/router'
-import { deleteWorkout, duplicateWorkout, isRepeat, KIND_LABEL, readVersions, selectWorkout, useLibrary, type Workout as WorkoutData } from '../lib/workouts'
+import { deleteWorkout, duplicateWorkout, GAIT_LABEL, isRepeat, KIND_LABEL, readVersions, selectWorkout, useLibrary, type Workout as WorkoutData } from '../lib/workouts'
 
 export function Workout({ profile, id }: { profile: string; id: string }) {
   const { state, reload } = useLibrary(profile)
@@ -40,7 +40,7 @@ export function Workout({ profile, id }: { profile: string; id: string }) {
             <div className="mt-7 grid gap-5">
               {shown.items.map((item, i) => <Group key={i} header={isRepeat(item) ? `Répéter ${item.repeat} fois` : undefined}>
                 {(isRepeat(item) ? item.steps : [item]).map((step, j) => <Row key={j} title={KIND_LABEL[step.kind]}
-                  subtitle={`${dec1(step.speed)} km/h · ${dec1(step.incline)} %`} trailing={<span className="num">{clock(step.sec)}</span>} />)}
+                  subtitle={`${dec1(step.speed)} km/h · ${dec1(step.incline)} % · ${GAIT_LABEL[step.gait ?? 'auto']}`} trailing={<span className="num">{clock(step.sec)}</span>} />)}
               </Group>)}
             </div>
           </section>

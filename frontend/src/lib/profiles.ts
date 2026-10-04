@@ -7,12 +7,13 @@ export interface Profile {
   name: string
   weekly_goal: number
   speed_unit: SpeedUnit
+  weight_kg: number | null
   created_at: string
   updated_at: string
 }
 
 export type SpeedUnit = 'kmh' | 'pace'
-export type ProfileChanges = Partial<Pick<Profile, 'name' | 'weekly_goal' | 'speed_unit'>>
+export type ProfileChanges = Partial<Pick<Profile, 'name' | 'weekly_goal' | 'speed_unit' | 'weight_kg'>>
 
 export const WEEKLY_GOAL_MIN = 1
 export const WEEKLY_GOAL_MAX = 14
@@ -34,6 +35,7 @@ export function isProfile(value: unknown): value is Profile {
     && Number.isInteger(value.weekly_goal)
     && (value.weekly_goal as number) >= WEEKLY_GOAL_MIN && (value.weekly_goal as number) <= WEEKLY_GOAL_MAX
     && (value.speed_unit === 'kmh' || value.speed_unit === 'pace')
+    && (value.weight_kg === null || (typeof value.weight_kg === 'number' && Number.isFinite(value.weight_kg) && value.weight_kg >= 20 && value.weight_kg <= 300))
     && isDate(value.created_at) && isDate(value.updated_at)
 }
 

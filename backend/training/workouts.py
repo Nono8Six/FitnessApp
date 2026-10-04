@@ -13,6 +13,7 @@ from sqlalchemy.orm import Session
 
 from ..storage.models import Workout, WorkoutSelection, WorkoutVersion
 from .profiles import get_profile, utc_now
+from .energy import estimate
 
 MAX_SECONDS = 3600
 MAX_SEGMENTS = 120
@@ -29,6 +30,7 @@ class Step(Input):
     sec: Annotated[int, Field(ge=30, le=MAX_SECONDS)]
     speed: Annotated[float, Field(ge=1, le=16)]
     incline: Annotated[float, Field(ge=0, le=10)]
+    gait: Literal["auto", "walk", "run"] = "auto"
 
 
 class Repeat(Input):
@@ -76,7 +78,7 @@ class WorkoutConflict(Exception):
     pass
 
 
-def preview(data: WorkoutInput) -> dict:
+def preview(data: WorkoutInput, weight_kg: float | None = None) -> dict:
     """Expansion ordonnée et calculs partagés par aperçu, lecture et enregistrement."""
     blocks = []
     elapsed = 0
@@ -89,7 +91,8 @@ def preview(data: WorkoutInput) -> dict:
             elapsed += step.sec
             distance += step.speed * step.sec / 3600
     return {"blocks": blocks, "summary": {"sec": elapsed, "km": round(distance, 6), "count": len(blocks),
-            "minSpeed": min(b["speed"] for b in blocks), "maxSpeed": max(b["speed"] for b in blocks)}}
+            "minSpeed": min(b["speed"] for b in blocks), "maxSpeed": max(b["speed"] for b in blocks),
+            **estimate(blocks, weight_kg)}}
 
 
 def _workout(session: Session, profile_id: str, workout_id: str) -> Workout:
@@ -105,26 +108,26 @@ def _latest(session: Session, workout_id: str) -> WorkoutVersion:
                            .order_by(WorkoutVersion.version.desc()).limit(1)).one()
 
 
-def _out(row: WorkoutVersion) -> dict:
+def _out(row: WorkoutVersion, weight_kg: float | None) -> dict:
     data = WorkoutInput(name=row.name, items=row.items)
     return {"id": row.workout_id, "version": row.version, "name": row.name, "items": row.items,
-            "author": row.author, "author_name": row.author_name, "created_at": row.created_at, **preview(data)}
+            "author": row.author, "author_name": row.author_name, "created_at": row.created_at, **preview(data, weight_kg)}
 
 
 def get_workout(session: Session, profile_id: str, workout_id: str) -> dict:
     _workout(session, profile_id, workout_id)
-    return _out(_latest(session, workout_id))
+    return _out(_latest(session, workout_id), get_profile(session, profile_id).weight_kg)
 
 
 def list_workouts(session: Session, profile_id: str) -> dict:
-    get_profile(session, profile_id)
+    profile = get_profile(session, profile_id)
     latest = select(WorkoutVersion.workout_id, func.max(WorkoutVersion.version).label("version")).group_by(
         WorkoutVersion.workout_id).subquery()
     rows = session.scalars(select(WorkoutVersion).join(Workout).join(latest,
         (WorkoutVersion.workout_id == latest.c.workout_id) & (WorkoutVersion.version == latest.c.version))
         .where(Workout.profile_id == profile_id).order_by(WorkoutVersion.created_at.desc(), Workout.id))
     selected = session.get(WorkoutSelection, profile_id)
-    return {"workouts": [_out(row) for row in rows], "selected_id": selected.workout_id if selected else None}
+    return {"workouts": [_out(row, profile.weight_kg) for row in rows], "selected_id": selected.workout_id if selected else None}
 
 
 def _add_version(session: Session, profile_id: str, workout_id: str, version: int, data: WorkoutInput) -> dict:
@@ -133,7 +136,7 @@ def _add_version(session: Session, profile_id: str, workout_id: str, version: in
         author_name=get_profile(session, profile_id).name, created_at=utc_now())
     session.add(row)
     session.flush()
-    return _out(row)
+    return _out(row, get_profile(session, profile_id).weight_kg)
 
 
 def create_workout(session: Session, profile_id: str, data: WorkoutInput) -> dict:
@@ -176,5 +179,6 @@ def select_workout(session: Session, profile_id: str, workout_id: str | None) ->
 
 def versions(session: Session, profile_id: str, workout_id: str) -> list[dict]:
     _workout(session, profile_id, workout_id)
-    return [_out(row) for row in session.scalars(select(WorkoutVersion)
+    weight_kg = get_profile(session, profile_id).weight_kg
+    return [_out(row, weight_kg) for row in session.scalars(select(WorkoutVersion)
         .where(WorkoutVersion.workout_id == workout_id).order_by(WorkoutVersion.version.desc()))]

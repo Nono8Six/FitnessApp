@@ -21,7 +21,8 @@ URL = "/api/profiles/arnaud/workouts"
 class ValidationTests(unittest.TestCase):
     def test_expansion_order_timing_and_distance(self):
         result = preview(WorkoutInput.model_validate(BASE))
-        self.assertEqual(result["summary"], {"sec": 840, "km": 1.6, "count": 7, "minSpeed": 4, "maxSpeed": 9})
+        self.assertEqual({k: result["summary"][k] for k in ("sec", "km", "count", "minSpeed", "maxSpeed")},
+                         {"sec": 840, "km": 1.6, "count": 7, "minSpeed": 4, "maxSpeed": 9})
         self.assertEqual([b["kind"] for b in result["blocks"]], ["warmup", "run", "recover", "run", "recover", "run", "recover"])
         self.assertEqual([b["start"] for b in result["blocks"]], [0, 300, 420, 480, 600, 660, 780])
         self.assertEqual(result["blocks"][-1]["end"], 840)
@@ -124,7 +125,8 @@ class WorkoutApiTests(unittest.TestCase):
     def test_invalid_direct_requests_do_not_write(self):
         cases = []
         for field, invalid_values in {"sec": [29, 3601, 30.5, True, "60", None],
-                "speed": [0.99, 16.01, True, "5", None], "incline": [-0.1, 10.01, True, None], "kind": ["unknown"]}.items():
+                "speed": [0.99, 16.01, True, "5", None], "incline": [-0.1, 10.01, True, None],
+                "kind": ["unknown"], "gait": ["unknown", None, 1]}.items():
             for value in invalid_values:
                 data = copy.deepcopy(BASE); data["items"][0][field] = value; cases.append(data)
         for value in [0, -1, 121, 1.5, True, "3"]:
@@ -178,7 +180,7 @@ class MigrationTests(unittest.TestCase):
                 self.assertEqual(profiles[0]["name"], "Profil conservé")
                 self.assertEqual(profiles[0]["weekly_goal"], 7)
                 self.assertEqual(profiles[0]["speed_unit"], "pace")
-                self.assertEqual(client.get("/api/health").json()["schema"], "0003")
+                self.assertEqual(client.get("/api/health").json()["schema"], "0004")
             finally:
                 app.state.database.close()
 

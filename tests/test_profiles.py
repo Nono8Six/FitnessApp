@@ -17,7 +17,7 @@ from backend.storage import DATABASE_FILE, StorageError, open_database
 from backend.storage.database import MIGRATIONS, alembic_config, create_db_engine
 
 URL = "http://127.0.0.1:4330"
-HEAD = "0003"
+HEAD = "0004"
 
 
 class ProfileTests(unittest.TestCase):
@@ -66,7 +66,7 @@ class ProfileTests(unittest.TestCase):
         with self.db() as conn:
             self.assertEqual(conn.execute("SELECT version_num FROM alembic_version").fetchall(), [(HEAD,)])
             columns = [row[1] for row in conn.execute("PRAGMA table_info(profiles)")]
-        self.assertEqual(columns, ["id", "name", "weekly_goal", "speed_unit", "created_at", "updated_at"])
+        self.assertEqual(columns, ["id", "name", "weekly_goal", "speed_unit", "created_at", "updated_at", "weight_kg"])
 
     def test_connections_use_wal_and_foreign_keys(self):
         self.start()
@@ -79,7 +79,8 @@ class ProfileTests(unittest.TestCase):
         self.stop()
         with self.db() as conn:
             for statement in ("UPDATE profiles SET weekly_goal = 0", "UPDATE profiles SET weekly_goal = 15",
-                              "UPDATE profiles SET speed_unit = 'mph'"):
+                              "UPDATE profiles SET speed_unit = 'mph'", "UPDATE profiles SET weight_kg = 0",
+                              "UPDATE profiles SET weight_kg = 301"):
                 with self.subTest(statement=statement), self.assertRaises(sqlite3.IntegrityError):
                     conn.execute(statement)
 
@@ -210,6 +211,22 @@ class ProfileTests(unittest.TestCase):
         self.assertEqual(client.get("/api/profiles/arnaud").json(), before)
 
     # ---------- Créer, renommer, supprimer ----------
+
+    def test_weight_validation_persistence_and_removal(self):
+        client = self.start()
+        for value in [0, 19.9, 300.1, True, "75"]:
+            response = client.patch("/api/profiles/arnaud", json={"weight_kg": value})
+            self.assertEqual(response.status_code, 422, response.text)
+            self.assertIn("Poids", response.json()["detail"])
+        response = client.patch("/api/profiles/arnaud", content='{"weight_kg": NaN}', headers={"content-type": "application/json"})
+        self.assertEqual(response.status_code, 422)
+        for value in [20, 300, 75.5]:
+            self.assertEqual(client.patch("/api/profiles/arnaud", json={"weight_kg": value}).json()["weight_kg"], value)
+        client = self.restart()
+        self.assertEqual(client.get("/api/profiles/arnaud").json()["weight_kg"], 75.5)
+        self.assertIsNone(client.get("/api/profiles/ophelie").json()["weight_kg"])
+        self.assertIsNone(client.patch("/api/profiles/arnaud", json={"weight_kg": None}).json()["weight_kg"])
+        self.assertEqual(client.post("/api/profiles", json={"name": "Test poids", "weight_kg": 80}).json()["weight_kg"], 80)
 
     def create(self, client, **body):
         return client.post("/api/profiles", json=body)
