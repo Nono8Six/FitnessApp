@@ -2,7 +2,7 @@
 
 4 octobre 2026. Complément du même jour, à la demande d’Arnaud : créer, renommer et supprimer des profils, chacun avec ses propres données. Toutes les captures et tous les contrôles ci-dessous portent sur la version complétée (schéma `0002`).
 
-Vérifié dans un conteneur Linux : Python 3.12, Node 22, Chromium 1194 headless (Playwright 1.56). Windows, PowerShell, le téléphone physique et la validation d’Arnaud ne sont pas couverts ici.
+Vérifié dans un conteneur Linux : Python 3.12, Node 22, Chromium 1194 headless (Playwright 1.56). Windows, PowerShell et le téléphone physique ne sont pas couverts ici. Ce dossier conserve les contrôles déjà réalisés ; les prochaines livraisons suivent les contrôles proportionnés d'[AGENTS.md](../../../../../AGENTS.md).
 
 ## Captures (serveur réel, build de production, base neuve)
 

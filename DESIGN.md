@@ -136,4 +136,4 @@ Interdits : sous-titres marketing, mentions « démonstration » ou « fictif »
 ## 10. Limites
 
 - Mode sombre uniquement. Les jetons sont regroupés pour qu’un thème clair puisse être ajouté sans toucher aux composants.
-- Pas encore vérifié sur iPhone physique, Safari iOS, Android ni pendant un effort réel : chaque brique le fait pour ses écrans.
+- Pas encore vérifié sur iPhone physique, Safari iOS, Android ni pendant un effort réel. Corriger les problèmes rencontrés à l'usage selon [AGENTS.md](AGENTS.md).

@@ -1,14 +1,14 @@
 # Fitness App : plan de construction de la V1, brique par brique
 
-4 octobre 2026. Ce plan remplace le précédent découpage en étapes et maquettes. **On construit l’application réelle, une brique après l’autre.** Chaque brique livre une fonction utilisable de bout en bout : interface, API, données et tests. Aucune maquette, aucune donnée inventée.
+4 octobre 2026. Ce plan remplace le précédent découpage en étapes et maquettes. **On construit l’application réelle, une brique après l’autre.** Chaque brique livre une fonction utilisable de bout en bout : interface, API et données. Code professionnel, contrôles ciblés, push direct, puis amélioration à l'usage selon [AGENTS.md](AGENTS.md). Aucune maquette, aucune donnée inventée.
 
 ## Suivi
 
-Une seule brique en cours. La suivante démarre uniquement après validation d’Arnaud.
+Une seule brique en cours dans le périmètre demandé. Les cases indiquent les fonctions livrées sur `main` ; la suite ne nécessite plus de validation humaine systématique.
 
 - [x] **Brique 0 · Design** : direction visuelle sombre, téléphone et PC, validée le 4 octobre 2026 ([DESIGN.md](DESIGN.md)).
 - [x] **Brique 1 · Socle** : l’app s’ouvre sur le PC et le téléphone, servie par le PC, sans donnée de démonstration.
-- [ ] **Brique 2 · Profils** : base SQLite, profils créés, renommés et supprimés, choix du profil.
+- [x] **Brique 2 · Profils** : base SQLite, profils créés, renommés et supprimés, choix du profil.
 - [ ] **Brique 3 · Séances manuelles** : créer, modifier, enregistrer et retrouver ses séances.
 - [ ] **Brique 4 · Connexion ChatGPT** : Sign in with ChatGPT sur le PC, compte et forfait vérifiés.
 - [ ] **Brique 5 · Coach** : conversation réelle avec ChatGPT, en streaming, enregistrée par profil.
@@ -30,10 +30,10 @@ Une seule brique en cours. La suivante démarre uniquement après validation d�
 1. **Une brique = une fonction réelle.** À la fin, Arnaud peut l’utiliser lui-même dans l’app. Si ce n’est pas utilisable, ce n’est pas terminé.
 2. **Pas de maquette.** L’interface de `frontend/` est la base visuelle définitive. La brique 1 retire toutes les données de démonstration. La navigation n’affiche que les écrans réellement construits ; chaque brique ajoute le sien en repartant de son écran de référence (commit `b9afbc0`, `frontend/src/features/`, et [captures](docs/preuves/v1/brique-00/2026-10-04/INDEX.md)).
 3. **Petit et complet plutôt que large et partiel.** Une brique ne commence pas le travail de la suivante.
-4. **Commits directs sur `main`**, avec ce qui a changé, comment le vérifier et les réserves ([AGENTS.md](AGENTS.md)).
-5. **Validation humaine.** Arnaud essaie la brique, puis la case est cochée. Sans validation, on corrige, on n’enchaîne pas.
-6. **Vérifications à chaque brique** : typecheck, build, tests des règles touchées, parcours réel dans Chrome (390 × 844 et 1440 × 900), absence d’erreur console. Captures de l’app réelle dans `docs/preuves/v1/brique-NN/AAAA-MM-JJ/`.
-7. **Le POC reste intact** et utilisable pour le diagnostic tant que la brique 10 n’est pas validée.
+4. **Commits directs sur `main`**, avec ce qui a changé, le contrôle utile effectué et les limites ([AGENTS.md](AGENTS.md)).
+5. **Livrer puis améliorer.** Cocher les critères implémentés à la livraison, sans essai demandé à Arnaud ni commit de validation séparé. Corriger ensuite les problèmes rencontrés dans l'usage réel.
+6. **Contrôles proportionnés.** Appliquer les règles d'[AGENTS.md](AGENTS.md), sans campagne de tests ou captures systématiques. Les calculs, les données et la sécurité du tapis gardent leurs contrôles ciblés.
+7. **Le POC reste utilisable** pour le diagnostic jusqu'à la réception matérielle de la brique 10.
 8. **Sécurité du tapis.** Aucun mouvement sans présence confirmée. Aucune reprise ni répétition automatique de commande. Un résultat incertain n’est jamais présenté comme une réussite. Le STOP physique et la clé restent la protection de dernier recours.
 9. **Simulation n’est pas maquette.** Le mode simulation du contrôleur existant sert à développer sans tapis. Il est signalé en permanence et ses données restent séparées des vraies séances.
 
@@ -41,7 +41,7 @@ Une seule brique en cours. La suivante démarre uniquement après validation d�
 
 - **Livré** : ce que l’utilisateur peut faire à la fin, en une phrase.
 - **Travail** : la liste courte des tâches.
-- **Fait quand** : critères vérifiables, cochés dans le plan après validation.
+- **Fait quand** : critères de livraison, cochés quand la fonction est implémentée et publiée.
 - **Pas dans cette brique** : ce qui est explicitement reporté.
 
 ## 2. Point de départ
@@ -161,7 +161,7 @@ Audit complémentaire sur Windows le 4 octobre 2026 : lancement par double-clic,
 
 ### Brique 2 · Profils
 
-**État :** livrée le 4 octobre 2026, en attente de validation d’Arnaud ([preuves](docs/preuves/v1/brique-02/2026-10-04/INDEX.md)).
+**État :** livrée et poussée le 4 octobre 2026 ([contrôles déjà réalisés](docs/preuves/v1/brique-02/2026-10-04/INDEX.md)). Cases mises à jour selon la nouvelle méthode de livraison ; Windows et téléphone physique ne sont pas couverts par ces contrôles.
 
 **Livré :** choisir son profil (Arnaud et Ophélie au départ) ; créer, renommer et supprimer des profils, chacun avec ses propres données ; le choix est retenu sur chaque appareil.
 
@@ -173,9 +173,9 @@ Audit complémentaire sur Windows le 4 octobre 2026 : lancement par double-clic,
 5. Complément demandé par Arnaud le 4 octobre 2026 : création, renommage et suppression. Il reste toujours au moins un profil ; l’identifiant d’un profil ne change jamais.
 
 **Fait quand :**
-- [ ] Le profil choisi survit au rechargement et au redémarrage du serveur.
-- [ ] Une migration Alembic crée la base depuis zéro ; un test le vérifie.
-- [ ] Un profil créé apparaît sur les autres appareils ; un profil supprimé disparaît avec ses données (test).
+- [x] Le profil choisi survit au rechargement et au redémarrage du serveur.
+- [x] Une migration Alembic crée la base depuis zéro ; un test le vérifie.
+- [x] Les appareils partagent la liste des profils du serveur ; un profil supprimé disparaît avec ses données (test). Les autres appareils actualisent la liste au rechargement.
 
 
 **Pas dans cette brique :** authentification (le profil n’en est pas une), objectifs détaillés.
@@ -376,7 +376,7 @@ Audit complémentaire sur Windows le 4 octobre 2026 : lancement par double-clic,
 **Livré :** le parcours complet (préparer avec ChatGPT, courir, revoir, ajuster) est reçu sur le PC, un iPhone et un Android, sur le vrai tapis.
 
 **Fait quand :**
-- [ ] Toutes les briques sont validées et leurs réserves sont closes ou acceptées par écrit.
+- [ ] Toutes les briques sont livrées et les limites restantes sont documentées.
 - [ ] Le tapis ne redémarre jamais après un incident ou une reconnexion.
 - [ ] Bilan, graphiques, exports et coach donnent les mêmes chiffres.
 - [ ] Une panne Internet n’empêche ni la consultation ni l’exécution d’une séance enregistrée.

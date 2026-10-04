@@ -2,7 +2,7 @@
 
 4 octobre 2026. Livraison initiale vérifiée dans un conteneur Linux, Python 3.11, Node 22, Chromium 1194 headless, PowerShell 7.4. À ce moment, Windows réel, Windows PowerShell 5.1 et le téléphone physique sur le Wi-Fi n’avaient pas été vérifiés.
 
-Un [audit complémentaire sur Windows](AUDIT_WINDOWS.md) a depuis vérifié le lanceur, le double-clic, les relances et Chrome sur ce PC. Le téléphone physique sur le Wi-Fi et la validation d’Arnaud restent attendus.
+Un [audit complémentaire sur Windows](AUDIT_WINDOWS.md) a depuis vérifié le lanceur, le double-clic, les relances et Chrome sur ce PC. La brique a été validée par Arnaud le 4 octobre 2026 (voir le [plan](../../../../../PLAN_V1_FITNESS_APP.md)). L'essai sur téléphone physique n'a pas de preuve versionnée.
 
 ## Captures (serveur réel, build de production)
 
