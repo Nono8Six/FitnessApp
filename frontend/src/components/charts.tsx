@@ -37,7 +37,7 @@ export function Ring({ value, size = 64, stroke = 10, color = 'var(--color-accen
 
 /* ---------- Programme profile ---------- */
 
-export function ProgrammeChart({ blocks, height = 80, compact = false, className }: {
+export function ProgrammeChart({ blocks, height = 112, compact = false, className }: {
   blocks: Block[]; height?: number; compact?: boolean; className?: string
 }) {
   const [ref, w] = useWidth<HTMLDivElement>()
@@ -53,9 +53,11 @@ export function ProgrammeChart({ blocks, height = 80, compact = false, className
   const inclineTop = speedBottom + 38, inclineHeight = compact ? 32 : 48
   const inclineBottom = inclineTop + inclineHeight
   const svgHeight = inclineBottom + 26
-  // Échelles séparées et fixes : la hauteur reste comparable entre les séances.
+  // Partir de zéro préserve les proportions ; arrondir au palier de 2 supérieur
+  // rend les séances lentes lisibles sans tronquer l'axe ni changer au survol.
+  const speedMax = Math.max(2, Math.ceil(Math.max(0, ...blocks.map(b => b.speed)) / 2) * 2)
   const x = (seconds: number) => seconds / (total || 1) * plotWidth
-  const speedY = (speed: number) => speedBottom - speed / 16 * height
+  const speedY = (speed: number) => speedBottom - speed / speedMax * height
   const inclineY = (incline: number) => inclineBottom - incline / 10 * inclineHeight
   const inclinePath = blocks.map((b, i) => `${i ? 'L' : 'M'}${x(b.start)},${inclineY(b.incline)}H${x(b.end)}`).join(' ')
   const gap = blocks.length > 24 ? 0.5 : 2
@@ -107,7 +109,7 @@ export function ProgrammeChart({ blocks, height = 80, compact = false, className
         <text x={plotWidth} y={14} textAnchor="end" fill="var(--color-accent)" fontSize={13} className="num">{active ? dec1(active.speed) : range('speed')} km/h</text>
         <text x={0} y={inclineTop - 12} fill="var(--color-incline)" fontSize={13} fontWeight={600}>Inclinaison</text>
         <text x={plotWidth} y={inclineTop - 12} textAnchor="end" fill="var(--color-incline)" fontSize={13} className="num">{active ? dec1(active.incline) : range('incline')} %</text>
-        {[0, 8, 16].map(value => <g key={`speed-${value}`}>
+        {[0, speedMax / 2, speedMax].map(value => <g key={`speed-${value}`}>
           <line x1={0} x2={plotWidth} y1={speedY(value)} y2={speedY(value)} stroke="var(--color-sep)" strokeWidth={0.5} />
           <text x={plotWidth + 6} y={speedY(value) + 4} fill="var(--color-label-2)" fontSize={10}>{value}</text>
         </g>)}

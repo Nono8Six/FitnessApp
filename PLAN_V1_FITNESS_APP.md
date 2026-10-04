@@ -203,6 +203,8 @@ Audit complémentaire sur Windows le 4 octobre 2026 : lancement par double-clic,
 
 **Amélioration du graphique (4 octobre 2026) :** vitesse en barres vertes/grises (km/h) et inclinaison en escalier violet (%) sur deux zones temporelles alignées, avec échelles distinctes. Dans la bibliothèque, Aujourd’hui et l’éditeur, survol ou toucher d’un segment affiche son type, son intervalle, sa durée et ses deux consignes. Le toucher conserve la sélection ; boutons précédent/suivant et flèches du clavier donnent accès aux segments courts, Échap efface la sélection. Build et vérification Chrome du survol, du clavier et des événements tactiles en viewport téléphone ; pas de réception sur téléphone physique.
 
+**Lisibilité de la vitesse :** zone agrandie à 96 px dans la bibliothèque et 112 px ailleurs ; axe de zéro au maximum de la séance arrondi au palier de 2 km/h supérieur. Les barres ne sont plus écrasées par une échelle systématique jusqu’à 16 km/h. Les graduations restent affichées et les proportions sont conservées.
+
 **Pas dans cette brique :** démarrage sur le tapis, ChatGPT.
 
 ### Brique 4 · Connexion ChatGPT

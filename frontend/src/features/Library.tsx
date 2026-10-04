@@ -30,7 +30,7 @@ export function Library({ profile }: { profile: string }) {
             <div className="flex items-baseline justify-between gap-3"><h2 className="min-w-0 break-words text-headline">{p.name}</h2><span className="num shrink-0 text-subhead text-label-2">{clock(p.summary.sec)}</span></div>
             <p className="num mt-1 text-footnote text-label-2">{dec1(p.summary.km)} km · {dec1(p.summary.minSpeed)}–{dec1(p.summary.maxSpeed)} km/h · {p.summary.count} segments</p>
             </a>
-            <ProgrammeChart blocks={p.blocks} height={44} compact className="mt-4" />
+            <ProgrammeChart blocks={p.blocks} height={96} compact className="mt-4" />
             {state.data.selected_id === p.id && <p className="mt-3 flex items-center gap-1.5 text-footnote font-medium text-accent"><Check size={15} />Prochaine séance</p>}
             <a href={href.workout(p.id)} className="pressable mt-2 flex min-h-11 items-center justify-center rounded-[12px] bg-fill-3 text-subhead font-semibold text-accent">Voir la séance</a>
           </article>)}
