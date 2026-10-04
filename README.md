@@ -2,7 +2,7 @@
 
 ## Application
 
-**Sur Windows : double-cliquer sur `Lancer Fitness.cmd`.** Dans la fenêtre Fitness, cliquer **Démarrer**, puis **Ouvrir l’application**. **Arrêter** coupe le serveur ; fermer la fenêtre l'arrête aussi. L'état, le journal et l'adresse « Téléphone » suivent le vrai serveur. Au premier lancement, autoriser Python dans le pare-feu Windows sur le réseau privé si l'accès téléphone est souhaité. Voir [le lanceur](launcher/README.md).
+**Sur Windows : double-cliquer sur `Lancer Fitness.cmd`.** Dans la fenêtre Fitness, cliquer **Démarrer**, puis **Ouvrir l’application**. **Arrêter** termine le serveur, y compris s'il a été lancé en console. Fermer la fenêtre arrête le serveur qu'elle a démarré ; un serveur lancé ailleurs reste actif. L'état, le journal et l'adresse « Téléphone » suivent le vrai serveur. Au premier lancement, autoriser Python dans le pare-feu Windows sur le réseau privé si l'accès téléphone est souhaité. Voir [le lanceur](launcher/README.md).
 
 Dans PowerShell, depuis ce dossier :
 

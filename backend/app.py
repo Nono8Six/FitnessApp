@@ -5,6 +5,7 @@ from contextlib import asynccontextmanager
 from datetime import datetime, timezone
 from pathlib import Path
 from urllib.parse import urlparse
+from uuid import uuid4
 
 from fastapi import FastAPI, Request
 from fastapi.exceptions import RequestValidationError
@@ -62,7 +63,7 @@ def create_app(*, simulation: bool = False, data_root: Path | None = None, dist:
     addresses = phone_addresses()[0] if network_enabled else []
     started_at = datetime.now(timezone.utc).isoformat(timespec="seconds")
     # Identifiant de corrélation du processus détenu, pas une clé d'accès.
-    instance_id = os.environ.get("FITNESS_SERVER_INSTANCE")
+    instance_id = os.environ.get("FITNESS_SERVER_INSTANCE") or uuid4().hex
     # Migrations puis profils par défaut, avant d'accepter la moindre requête.
     database = open_database(data)
     try:
@@ -74,13 +75,21 @@ def create_app(*, simulation: bool = False, data_root: Path | None = None, dist:
 
     @asynccontextmanager
     async def lifespan(_app):
-        yield
-        database.close()
+        control = getattr(_app.state, "launcher_control", None)
+        try:
+            if control:
+                control.publish()
+            yield
+        finally:
+            if control:
+                control.close()
+            database.close()
 
     app = FastAPI(title="Fitness", docs_url=None, redoc_url=None, openapi_url=None, lifespan=lifespan)
     app.state.data_dir = data
     app.state.database = database
     app.state.phone_addresses = addresses
+    app.state.instance_id = instance_id
     app.add_middleware(TrustedHostMiddleware, allowed_hosts=["localhost", "127.0.0.1", "[::1]", *local_addresses()])
     app.add_middleware(GZipMiddleware, minimum_size=1000)
 
@@ -113,10 +122,18 @@ def create_app(*, simulation: bool = False, data_root: Path | None = None, dist:
             "data_dir": str(data),
             "started_at": started_at,
             "instance_id": instance_id,
+            "pid": os.getpid(),
             "schema": database.schema,
             "interface": (dist / "index.html").is_file(),
             "network": {"enabled": network_enabled, "addresses": addresses},
         }
+
+    @app.post("/api/launcher/stop")
+    async def stop_from_launcher(request: Request):
+        control = getattr(app.state, "launcher_control", None)
+        if control is None:
+            return JSONResponse({"detail": "Arrêt local indisponible"}, status_code=503)
+        return await control.stop(request)
 
     @app.exception_handler(RequestValidationError)
     async def invalid_request(request: Request, exc: RequestValidationError):

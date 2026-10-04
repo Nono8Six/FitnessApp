@@ -3,6 +3,7 @@ export type Options = { simulation: boolean; network: boolean }
 export type Snapshot = {
   phase: Phase
   owned: boolean
+  can_stop: boolean
   pid: number | null
   url: string
   mode: 'reel' | 'simulation' | null

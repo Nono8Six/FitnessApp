@@ -1,8 +1,8 @@
 # Lanceur Windows Fitness
 
-Double-cliquer sur **`Lancer Fitness.cmd`** à la racine, puis **Démarrer → Ouvrir l'application**. La fenêtre conserve l'état, la durée de fonctionnement, les adresses PC/téléphone et les 200 dernières lignes du journal. Choisir l'accès téléphone et le mode simulation avant le démarrage. **Arrêter** termine le serveur ; pendant la préparation, le bouton devient **Annuler**. Fermer la fenêtre demande aussi l'arrêt.
+Double-cliquer sur **`Lancer Fitness.cmd`** à la racine, puis **Démarrer → Ouvrir l'application**. La fenêtre conserve l'état, la durée de fonctionnement, les adresses PC/téléphone et les 200 dernières lignes du journal. Choisir l'accès téléphone et le mode simulation avant le démarrage. **Arrêter** termine le serveur ; pendant la préparation, le bouton devient **Annuler**. Fermer la fenêtre demande l'arrêt du serveur qu'elle a démarré.
 
-Un serveur Fitness déjà lancé ailleurs est signalé et peut être ouvert. Le lanceur ne l'arrête pas et ne le remplace pas. Un autre service qui occupe le port produit une erreur explicite. Aucun redémarrage automatique.
+Un serveur Fitness lancé en console peut aussi être ouvert et arrêté depuis le lanceur. Celui-ci vérifie son identité et son canal local avant d'activer **Arrêter**. Fermer la fenêtre laisse ce serveur externe en marche ; seuls les serveurs démarrés par cette fenêtre s'arrêtent à sa fermeture. Pour un serveur externe, le journal suit les actions du lanceur ; les sorties du serveur restent dans sa console. Une ancienne version sans canal d'arrêt doit être arrêtée une fois avec `Ctrl+C`, puis relancée. Un autre service qui occupe le port reste intact. Aucun redémarrage automatique.
 
 ## Installation et mise à jour
 
@@ -24,13 +24,16 @@ La fenêtre [Tauri 2](https://v2.tauri.app/develop/calling-rust/) réutilise Rea
 
 Rust exécute `start-app.ps1 -Preparer`, puis un seul backend Python avec `--managed`. Les empreintes de contenu réutilisent les dépendances et les builds inchangés. La disponibilité vient de `/api/health`, avec un identifiant de corrélation propre au processus : ni un port ouvert ni un serveur voisin ne sont présentés comme notre serveur prêt.
 
-L'arrêt passe par l'entrée standard héritée, sans endpoint réseau d'arrêt. Uvicorn termine son cycle de vie et ferme la base. Après 10 secondes sans arrêt, seul le processus détenu est forcé et l'erreur reste visible. Un Job Windows conserve les enfants du lanceur : sa disparition ferme aussi Python et les éventuels processus de préparation. Le POC et le tapis ne sont pas pilotés par ce lanceur.
+Pour son propre serveur, l'arrêt passe par l'entrée standard héritée. Pour un serveur externe, Rust lit le canal privé dans le dossier de données (`launcher/servers/<pid>.json`), puis vérifie le projet, le port et l'identifiant de l'instance. La requête `/api/launcher/stop` exige la boucle locale, une clé aléatoire de 256 bits et l'identifiant exact ; elle refuse les origines navigateur et les clients réseau, même munis de la clé. La clé n'apparaît ni dans `/api/health`, ni dans l'interface ou les journaux ; le fichier est supprimé à la fermeture du serveur. Un fichier laissé après un crash ne correspond pas à une nouvelle instance.
+
+Uvicorn termine son cycle de vie et ferme la base. Après 10 secondes sans arrêt, seul un processus détenu est forcé et l'erreur reste visible ; un serveur externe ne subit aucun arrêt forcé. Un Job Windows conserve les enfants du lanceur : sa disparition ferme aussi Python et les éventuels processus de préparation. Le POC et le tapis ne sont pas pilotés par ce lanceur.
 
 ## Vérifications
 
 ```powershell
 # Depuis la racine
 .\.venv\Scripts\python.exe -m unittest discover -s tests -p test_managed_server.py -v
+.\.venv\Scripts\python.exe -m unittest discover -s tests -p test_launcher_control.py -v
 .\.venv\Scripts\python.exe launcher/test_supervisor.py -v
 
 # Depuis launcher/
@@ -38,7 +41,7 @@ cargo test --release --locked
 cargo clippy --release --locked -- -D warnings
 ```
 
-Les tests vérifient le véritable superviseur Windows et le backend avec des données et ports isolés : démarrage/arrêt, conservation des profils au redémarrage, annulation, fermeture du parent, crash, serveur externe et port occupé. Les contrôles SQLite vérifient l'intégrité après les arrêts.
+Les tests vérifient le véritable superviseur Windows et le backend avec des données et ports isolés : démarrage/arrêt, conservation des profils au redémarrage, annulation, fermeture du parent, crash, arrêt d'un serveur console, conservation de celui-ci à la fermeture du lanceur, serveur non vérifié et port occupé. Les contrôles SQLite vérifient l'intégrité après les arrêts. Les tests du canal vérifient aussi les refus sans clé, avec une origine navigateur, depuis le réseau et avec un ancien identifiant.
 
 Pour vérifier les boutons dans Chrome avec la même supervision Rust :
 
@@ -55,4 +58,4 @@ npm run dev:launcher
 
 Ce pont est réservé au développement, lié à `127.0.0.1:4391` et aux origines du serveur Vite sur 5175. Il est absent du lancement normal. Arrêter les deux terminaux après la vérification.
 
-Réception du 4 octobre 2026 : builds React et Windows réussis ; 2 tests Rust et 6 tests du superviseur réussis ; commandes du backend géré vérifiées ; démarrer, ouvrir Fitness et arrêter effectués dans Chrome avec le vrai Rust. La fenêtre Windows a été compilée et son processus vérifié ; son rendu WebView2 et ses clics natifs restent distincts du parcours Chrome, les outils natifs n'étant pas disponibles dans cette session. Aucun essai Bluetooth ou téléphone physique.
+Vérification du 4 octobre 2026 : builds React et Windows réussis, Clippy sans avertissement ; 2 tests Rust, 9 tests du superviseur, 3 tests du canal local et 2 tests du backend géré réussis. Le scénario initial a été reproduit dans la fenêtre Windows, puis l'arrêt d'un serveur lancé en console a été effectué dans cette fenêtre et dans Chrome avec le vrai Rust : retour à « À l'arrêt », processus terminé, port fermé et SQLite intègre. Chrome ne présente aucune erreur console. Pendant l'arrêt, les boutons et options restent désactivés ; les options affichées correspondent encore au serveur en cours d'arrêt. Aucun essai Bluetooth ou téléphone physique.

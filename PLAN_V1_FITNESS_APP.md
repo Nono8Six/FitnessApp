@@ -385,7 +385,7 @@ Contrôles de ce complément : build et 46 tests ciblés réussis (calculs, API,
 
 **Travail :** runtime Python embarqué, interface compilée, raccourci, mise à jour qui préserve les données, mesures de performance.
 
-**Complément demandé le 4 octobre 2026 :** [lanceur Windows Rust/Tauri](launcher/README.md) livré séparément : démarrer, arrêter, ouvrir l'application, état réel et journal. Le double-clic utilise l'exécutable local et conserve le mode console. L'arrêt propre, les processus enfants et les données ont des vérifications ciblées. Le runtime Python embarqué et l'installateur autonome restent à faire ; la brique 16 complète reste donc ouverte. Ce complément ne modifie pas le périmètre des séances développé en parallèle.
+**Complément demandé le 4 octobre 2026 :** [lanceur Windows Rust/Tauri](launcher/README.md) livré séparément : démarrer, arrêter, ouvrir l'application, état réel et journal. Le double-clic utilise l'exécutable local et conserve le mode console. L'arrêt propre, les processus enfants et les données ont des vérifications ciblées. Le lanceur peut aussi arrêter un serveur Fitness lancé en console, après vérification du projet et de l'instance par un canal local authentifié ; il conserve ce serveur à la fermeture de la fenêtre. Une ancienne version demande une relance initiale. Le runtime Python embarqué et l'installateur autonome restent à faire ; la brique 16 complète reste donc ouverte. Ce complément ne modifie pas le périmètre des séances développé en parallèle.
 
 ### Brique 17 · Réception finale
 

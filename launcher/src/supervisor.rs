@@ -11,6 +11,8 @@ use std::time::{Duration, Instant, SystemTime, UNIX_EPOCH};
 
 pub const URL: &str = "http://127.0.0.1:4330";
 const LOG_LIMIT: usize = 200;
+const INTERFACE_ERROR: &str =
+    "L'interface Fitness n'est pas construite. Relancer depuis le projet.";
 
 #[derive(Clone, Deserialize, Serialize)]
 pub struct Options {
@@ -30,6 +32,7 @@ pub struct LogLine {
 pub struct Snapshot {
     pub phase: String,
     pub owned: bool,
+    pub can_stop: bool,
     pub pid: Option<u32>,
     pub url: String,
     pub mode: Option<String>,
@@ -45,6 +48,7 @@ impl Default for Snapshot {
         Self {
             phase: "stopped".into(),
             owned: false,
+            can_stop: false,
             pid: None,
             url: URL.into(),
             mode: None,
@@ -159,8 +163,11 @@ impl Controller {
     }
 
     pub fn stop(&self) -> Result<(), String> {
-        if !self.snapshot().owned {
-            return Err("Ce serveur n'a pas été lancé par cette fenêtre.".into());
+        if !self.snapshot().can_stop {
+            return Err(
+                "Arrêt local indisponible. Arrêter la console avec Ctrl+C, puis relancer Fitness."
+                    .into(),
+            );
         }
         self.sender
             .try_send(Request::Stop)
@@ -256,6 +263,7 @@ fn spawn(
     }
     update(state, |s| {
         s.owned = true;
+        s.can_stop = true;
         s.pid = Some(child.id());
     });
     Ok(OwnedChild {
@@ -277,6 +285,63 @@ struct Health {
     network: Network,
     #[serde(default)]
     instance_id: Option<String>,
+    #[serde(default)]
+    pid: Option<u32>,
+}
+
+#[derive(Deserialize)]
+struct LocalControl {
+    pid: u32,
+    port: u16,
+    instance_id: String,
+    project_root: PathBuf,
+    token: String,
+}
+
+impl LocalControl {
+    fn read(root: &Path, info: &Health, port: u16) -> Result<Self, String> {
+        let unavailable = || {
+            "Canal d'arrêt local introuvable ou invalide. Redémarrer la console Fitness pour le mettre à jour.".to_string()
+        };
+        let pid = info.pid.ok_or_else(unavailable)?;
+        let data = std::env::var_os("FITNESS_DATA_DIR")
+            .map(PathBuf::from)
+            .or_else(|| {
+                std::env::var_os("LOCALAPPDATA").map(|path| PathBuf::from(path).join("FitnessApp"))
+            })
+            .ok_or_else(unavailable)?;
+        let file = std::fs::File::open(data.join(format!("launcher/servers/{pid}.json")))
+            .map_err(|_| unavailable())?;
+        let control: Self = serde_json::from_reader(file.take(16384)).map_err(|_| unavailable())?;
+        let canonical_root = root.canonicalize().map_err(|_| unavailable())?;
+        if control.pid != pid
+            || control.port != port
+            || Some(control.instance_id.as_str()) != info.instance_id.as_deref()
+            || control.project_root.canonicalize().ok().as_ref() != Some(&canonical_root)
+            || control.token.len() != 64
+            || !control.token.bytes().all(|byte| byte.is_ascii_hexdigit())
+        {
+            return Err(unavailable());
+        }
+        Ok(control)
+    }
+
+    fn stop(&self, agent: &ureq::Agent, url: &str) -> Result<(), String> {
+        let response = agent
+            .post(&format!("{url}/api/launcher/stop"))
+            .header("Authorization", &format!("Bearer {}", self.token))
+            .send_json(serde_json::json!({ "instance_id": self.instance_id }))
+            .map_err(|error| format!("Arrêt local refusé ou serveur indisponible : {error}"))?;
+        if response.status().as_u16() != 202 {
+            return Err("Le serveur n'a pas confirmé la demande d'arrêt.".into());
+        }
+        Ok(())
+    }
+}
+
+struct ExternalStop {
+    instance_id: String,
+    requested: Instant,
 }
 
 #[derive(Deserialize)]
@@ -334,9 +399,38 @@ fn apply_health(state: &Shared, info: Health, owned: bool, port: u16) {
         s.error = if info.interface {
             None
         } else {
-            Some("L'interface Fitness n'est pas construite. Relancer depuis le projet.".into())
+            Some(INTERFACE_ERROR.into())
         };
     });
+}
+
+fn apply_external(state: &Shared, info: Health, root: &Path, port: u16) -> Option<LocalControl> {
+    let control = LocalControl::read(root, &info, port);
+    let pid = info.pid;
+    let previous = state.lock().unwrap_or_else(|p| p.into_inner()).clone();
+    apply_health(state, info, false, port);
+    update(state, |s| {
+        s.pid = pid;
+        s.can_stop = control.is_ok();
+        if let Err(error) = &control {
+            s.error = Some(error.clone());
+        } else if previous.phase == "external"
+            && previous.pid == pid
+            && previous.can_stop
+            && previous.error.as_deref() != Some(INTERFACE_ERROR)
+        {
+            // Une erreur d'arrêt reste visible jusqu'à une nouvelle action ou un nouveau serveur.
+            s.error = previous.error;
+        }
+    });
+    if control.is_ok() && (!previous.can_stop || previous.pid != pid) {
+        log(
+            state,
+            "lanceur",
+            "Serveur Fitness lancé ailleurs détecté. Arrêt disponible ici.",
+        );
+    }
+    control.ok()
 }
 
 fn request_stop(child: &mut OwnedChild, state: &Shared) {
@@ -370,13 +464,22 @@ fn run(root: PathBuf, port: u16, receiver: mpsc::Receiver<Request>, state: Share
         .build()
         .new_agent();
     let mut child: Option<OwnedChild> = None;
+    let mut external: Option<LocalControl> = None;
+    let mut external_stop: Option<ExternalStop> = None;
     let mut last_health = Instant::now() - Duration::from_secs(3);
     let mut quitting: Option<mpsc::Sender<()>> = None;
     loop {
+        let health_interval = if external_stop.is_some() {
+            Duration::from_millis(250)
+        } else {
+            Duration::from_secs(2)
+        };
         match receiver.recv_timeout(Duration::from_millis(100)) {
-            Ok(Request::Start(options)) if child.is_none() && quitting.is_none() => {
+            Ok(Request::Start(options))
+                if child.is_none() && quitting.is_none() && external_stop.is_none() =>
+            {
                 if let Some(info) = health(&agent, &url) {
-                    apply_health(&state, info, false, port);
+                    external = apply_external(&state, info, &root, port);
                     continue;
                 }
                 if port_busy(port) {
@@ -412,6 +515,46 @@ fn run(root: PathBuf, port: u16, receiver: mpsc::Receiver<Request>, state: Share
                 if let Some(process) = child.as_mut() {
                     update(&state, |s| s.error = None);
                     request_stop(process, &state);
+                } else if external_stop.is_none() {
+                    let result = (|| {
+                        let expected = external.as_ref().ok_or("Arrêt local indisponible.")?;
+                        let info = health(&agent, &url)
+                            .ok_or("Le serveur ne répond plus. Actualiser son état.")?;
+                        let current = LocalControl::read(&root, &info, port)?;
+                        if current.instance_id != expected.instance_id
+                            || current.pid != expected.pid
+                        {
+                            return Err(
+                                "Le serveur a changé. Aucun nouveau serveur n'a été arrêté."
+                                    .to_string(),
+                            );
+                        }
+                        current.stop(&agent, &url)?;
+                        Ok(current.instance_id)
+                    })();
+                    match result {
+                        Ok(instance_id) => {
+                            external_stop = Some(ExternalStop {
+                                instance_id,
+                                requested: Instant::now(),
+                            });
+                            update(&state, |s| {
+                                s.phase = "stopping".into();
+                                s.can_stop = false;
+                                s.error = None;
+                            });
+                            last_health = Instant::now() - Duration::from_secs(3);
+                            log(
+                                &state,
+                                "lanceur",
+                                "Arrêt propre demandé au serveur lancé ailleurs.",
+                            );
+                        }
+                        Err(error) => {
+                            log(&state, "lanceur", &error);
+                            update(&state, |s| s.error = Some(error));
+                        }
+                    }
                 }
             }
             Ok(Request::Quit(done)) => {
@@ -438,6 +581,7 @@ fn run(root: PathBuf, port: u16, receiver: mpsc::Receiver<Request>, state: Share
                     let process = child.take().expect("processus détenu");
                     update(&state, |s| {
                         s.owned = false;
+                        s.can_stop = false;
                         s.pid = None;
                         s.phone_urls.clear();
                         s.started_at = None;
@@ -556,11 +700,45 @@ fn run(root: PathBuf, port: u16, receiver: mpsc::Receiver<Request>, state: Share
                     }
                 }
             }
-        } else if last_health.elapsed() >= Duration::from_secs(2) && quitting.is_none() {
+        } else if last_health.elapsed() >= health_interval && quitting.is_none() {
             last_health = Instant::now();
-            if let Some(info) = health(&agent, &url) {
-                apply_health(&state, info, false, port);
+            let info = health(&agent, &url);
+            if let Some(stopping) = external_stop.as_ref() {
+                if info.is_none() && !port_busy(port) {
+                    external_stop = None;
+                    external = None;
+                    update(&state, |s| {
+                        *s = Snapshot {
+                            logs: s.logs.clone(),
+                            url: s.url.clone(),
+                            ..Snapshot::default()
+                        }
+                    });
+                    log(&state, "lanceur", "Serveur arrêté.");
+                } else if info.as_ref().is_some_and(|info| {
+                    info.instance_id.as_deref() != Some(stopping.instance_id.as_str())
+                }) {
+                    external_stop = None;
+                    external = None;
+                    fail(
+                        &state,
+                        "Le serveur a changé pendant l'arrêt. Aucun nouvel arrêt envoyé.",
+                    );
+                    update(&state, |s| s.can_stop = false);
+                } else if stopping.requested.elapsed() > Duration::from_secs(10) {
+                    external_stop = None;
+                    let error = "L'arrêt n'a pas abouti sous 10 s. Le serveur externe reste actif ; aucun arrêt forcé.";
+                    log(&state, "lanceur", error);
+                    update(&state, |s| {
+                        s.phase = "external".into();
+                        s.can_stop = true;
+                        s.error = Some(error.into());
+                    });
+                }
+            } else if let Some(info) = info {
+                external = apply_external(&state, info, &root, port);
             } else {
+                external = None;
                 update(&state, |s| {
                     if s.phase == "external" {
                         *s = Snapshot {
@@ -622,6 +800,7 @@ mod tests {
                 mode: "reel".into(),
                 interface: true,
                 instance_id: None,
+                pid: None,
                 network: Network {
                     enabled: true,
                     addresses: vec!["192.168.1.10".into(), "evil/../".into()],

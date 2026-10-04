@@ -9,6 +9,7 @@ import uvicorn
 
 from .app import create_app
 from .config import StartupError
+from .launcher_control import LauncherControl
 
 PORT = 4330
 
@@ -55,9 +56,10 @@ def main():
             print(f"Téléphone sur le même Wi-Fi : http://{address}:{args.port}")
         if not app.state.phone_addresses:
             print("Adresse Wi-Fi du PC non déterminée : vérifier l'adresse IPv4 dans Windows.")
-    print("Arrêt : bouton du lanceur." if args.managed else "Arrêt : Ctrl+C.", flush=True)
+    print("Arrêt : bouton du lanceur." if args.managed else "Arrêt : Ctrl+C ou bouton du lanceur.", flush=True)
     # Un seul processus : il possédera le Bluetooth du tapis (brique 7).
     server = uvicorn.Server(uvicorn.Config(app, host=args.host, port=args.port, workers=1, log_level="warning"))
+    app.state.launcher_control = LauncherControl(server, args.port, app.state.instance_id)
     if args.managed:
         threading.Thread(target=stop_when_requested, args=(server,), daemon=True).start()
     if args.open_browser:
@@ -66,7 +68,7 @@ def main():
 
 
 def stop_when_requested(server: uvicorn.Server) -> None:
-    """Canal privé hérité du parent ; aucun endpoint d'arrêt exposé au réseau."""
+    """Canal privé hérité du parent, également fermé si le lanceur disparaît."""
     try:
         for line in sys.stdin:
             if line.strip() == "stop":

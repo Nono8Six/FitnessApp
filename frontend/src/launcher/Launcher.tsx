@@ -55,8 +55,8 @@ export default function Launcher() {
   const busy = phase === 'preparing' || phase === 'starting' || phase === 'stopping'
   const ready = phase === 'running' || phase === 'external'
   const disabled = pending || !!connectionError || !snapshot
-  const editable = !disabled && !snapshot.owned && phase !== 'external'
-  const shownOptions = snapshot?.owned || phase === 'external'
+  const editable = !disabled && !snapshot.owned && !busy && phase !== 'external'
+  const shownOptions = snapshot?.owned || phase === 'external' || phase === 'stopping'
     ? { simulation: snapshot?.mode === 'simulation', network: snapshot?.network ?? options.network } : options
   const error = connectionError || actionError || snapshot?.error
   const elapsed = snapshot?.started_at ? Math.max(0, Math.floor(Date.now() / 1000) - snapshot.started_at) : null
@@ -86,7 +86,9 @@ export default function Launcher() {
           {phase === 'preparing' ? 'Les dépendances et l’interface sont vérifiées. Le premier démarrage peut prendre quelques minutes.'
             : phase === 'starting' ? 'En attente de la réponse de Fitness…'
             : phase === 'stopping' ? 'Le serveur termine ses opérations avant de s’arrêter.'
-            : phase === 'external' ? 'Lancé ailleurs. Vous pouvez l’ouvrir ; cette fenêtre ne peut pas l’arrêter.'
+            : phase === 'external' ? snapshot?.can_stop
+              ? 'Lancé ailleurs. Vous pouvez l’ouvrir ou l’arrêter depuis cette fenêtre.'
+              : 'Ancien serveur ou canal d’arrêt indisponible. Arrêtez sa console avec Ctrl+C, puis relancez Fitness.'
             : ready ? `Fitness est disponible · ${snapshot?.mode === 'simulation' ? 'Simulation' : 'Données réelles'}`
             : 'Démarrez Fitness, puis ouvrez l’application sur ce PC.'}
         </p>
@@ -95,7 +97,7 @@ export default function Launcher() {
 
       <div className="mt-5 grid grid-cols-2 gap-3">
         <Button disabled={!editable} onClick={() => void action('start_server')}><Play size={17} aria-hidden />Démarrer</Button>
-        <Button variant={snapshot?.owned ? 'danger' : 'gray'} disabled={disabled || !snapshot?.owned || phase === 'stopping'} onClick={() => void action('stop_server')}>
+        <Button variant={snapshot?.can_stop ? 'danger' : 'gray'} disabled={disabled || !snapshot?.can_stop || phase === 'stopping'} onClick={() => void action('stop_server')}>
           <Square size={15} aria-hidden />{phase === 'preparing' ? 'Annuler' : 'Arrêter'}
         </Button>
         <Button variant="gray" className="col-span-2" disabled={disabled || !ready} onClick={() => void action('open_app')}>
