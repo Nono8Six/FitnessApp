@@ -1,9 +1,10 @@
 import { useRef, useState } from 'react'
 import { Page } from '../components/Shell'
-import { ControlRow, Group, Row, Segmented, Stepper } from '../components/ui'
+import { Button, ControlRow, Group, Row, Segmented, Sheet, Stepper } from '../components/ui'
 import { errorMessage } from '../lib/api'
 import {
-  saveProfile, useCurrentProfile, WEEKLY_GOAL_MAX, WEEKLY_GOAL_MIN, type Profile, type ProfileChanges, type SpeedUnit,
+  deleteProfile, NAME_MAX, saveProfile, useCurrentProfile, useProfiles, WEEKLY_GOAL_MAX, WEEKLY_GOAL_MIN,
+  type Profile, type ProfileChanges, type SpeedUnit,
 } from '../lib/profiles'
 import { href } from '../lib/router'
 import { useServer, type Health } from '../lib/server'
@@ -39,11 +40,92 @@ function useSaved<K extends keyof ProfileChanges>(profile: Profile, field: K) {
   return { value: draft ?? profile[field], error, setError, save }
 }
 
+/** Nom modifiable sur place, enregistré à la sortie du champ ou avec Entrée ; Échap annule. */
+function NameInput({ value, onChange, onInvalid, disabled }: {
+  value: string
+  onChange: (v: string) => void
+  onInvalid: (message: string | undefined) => void
+  disabled: boolean
+}) {
+  const [draft, setDraft] = useState<string | null>(null)
+  const commit = () => {
+    if (draft === null) return
+    const name = draft.trim()
+    if (!name) {
+      onInvalid('Nom requis')
+      return
+    }
+    setDraft(null)
+    onInvalid(undefined)
+    if (name !== value) onChange(name)
+  }
+  return (
+    <input
+      aria-label="Nom"
+      maxLength={NAME_MAX}
+      autoComplete="off"
+      enterKeyHint="done"
+      disabled={disabled}
+      value={draft ?? value}
+      onFocus={() => setDraft((d) => d ?? value)}
+      onChange={(e) => setDraft(e.target.value)}
+      onBlur={commit}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter') e.currentTarget.blur()
+        if (e.key === 'Escape') { setDraft(null); onInvalid(undefined) }
+      }}
+      className="h-11 w-full min-w-0 rounded-[8px] bg-transparent px-2 text-right text-body text-label-2 outline-none focus:bg-fill-3 focus:text-label disabled:text-label-3"
+    />
+  )
+}
+
+/** Confirmation avant suppression : le profil et toutes ses données disparaissent. */
+function DeleteProfile({ profile, readOnly }: { profile: Profile; readOnly: boolean }) {
+  const [open, setOpen] = useState(false)
+  const [error, setError] = useState<string>()
+  const [deleting, setDeleting] = useState(false)
+  const close = () => { if (!deleting) setOpen(false) }
+  const confirm = async () => {
+    setDeleting(true)
+    setError(undefined)
+    try {
+      await deleteProfile(profile.id)
+    } catch (err) {
+      console.warn('Fitness : suppression du profil refusée', err)
+      setError(errorMessage(err))
+      setDeleting(false)
+    }
+    // En cas de succès, ce composant disparaît avec le profil supprimé.
+  }
+  return (
+    <>
+      <Group className="mt-6">
+        <button type="button" disabled={readOnly} onClick={() => { setError(undefined); setOpen(true) }}
+          className="g-row flex min-h-11 w-full items-center justify-center px-4 text-body text-red active:bg-fill-4 desk:hover:bg-fill-4 disabled:text-label-3">
+          Supprimer le profil
+        </button>
+      </Group>
+      <Sheet open={open} onClose={close} title="Supprimer le profil"
+        leading={<button type="button" onClick={close} className="pressable -ml-2 h-11 min-w-11 px-2 text-body text-accent">Annuler</button>}>
+        <p className="px-1 pt-2 text-subhead break-words text-label-2">Les réglages et toutes les données de {profile.name} seront supprimés de ce PC.</p>
+        {error && <p role="alert" className="mt-3 px-1 text-footnote text-red">{error}</p>}
+        <Button variant="danger" className="mt-6 w-full" onClick={confirm} disabled={deleting}>Supprimer</Button>
+      </Sheet>
+    </>
+  )
+}
+
 function ProfileSettings({ profile, readOnly }: { profile: Profile; readOnly: boolean }) {
+  const name = useSaved(profile, 'name')
   const goal = useSaved(profile, 'weekly_goal')
   const unit = useSaved(profile, 'speed_unit')
   return (
     <Group header={profile.name}>
+      <ControlRow
+        title="Nom"
+        error={name.error}
+        control={<div className="w-[180px] max-w-[45vw]"><NameInput value={name.value} onChange={name.save} onInvalid={name.setError} disabled={readOnly} /></div>}
+      />
       <ControlRow
         title="Séances par semaine"
         error={goal.error}
@@ -80,13 +162,18 @@ function ApplicationSettings({ health }: { health: Health }) {
 
 export function Settings() {
   const server = useServer()
+  const profiles = useProfiles()
   const current = useCurrentProfile()
+  const count = profiles.status === 'loading' ? 0 : profiles.profiles?.length ?? 0
+  const readOnly = server.status !== 'ok'
   const health = server.status === 'loading' ? undefined : server.health
   return (
     <Page title="Réglages" back={{ label: 'Aujourd’hui', href: href.today }}>
       <div className="desk:max-w-[760px]">
         {/* Une clé par profil : changer de profil abandonne la saisie et les messages du précédent. */}
-        {current && <ProfileSettings key={current.id} profile={current} readOnly={server.status !== 'ok'} />}
+        {current && <ProfileSettings key={current.id} profile={current} readOnly={readOnly} />}
+        {/* Le dernier profil ne peut pas être supprimé : la ligne n’apparaît qu’avec au moins deux profils. */}
+        {current && count > 1 && <DeleteProfile key={current.id} profile={current} readOnly={readOnly} />}
         {health && <ApplicationSettings health={health} />}
       </div>
     </Page>

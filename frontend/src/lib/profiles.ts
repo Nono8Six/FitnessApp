@@ -1,5 +1,5 @@
 import { useSyncExternalStore } from 'react'
-import { api, errorMessage, isRecord } from './api'
+import { api, ApiError, errorMessage, isRecord } from './api'
 
 /** Profil du serveur. Le choix du profil n’est pas une authentification. */
 export interface Profile {
@@ -12,10 +12,11 @@ export interface Profile {
 }
 
 export type SpeedUnit = 'kmh' | 'pace'
-export type ProfileChanges = Partial<Pick<Profile, 'weekly_goal' | 'speed_unit'>>
+export type ProfileChanges = Partial<Pick<Profile, 'name' | 'weekly_goal' | 'speed_unit'>>
 
 export const WEEKLY_GOAL_MIN = 1
 export const WEEKLY_GOAL_MAX = 14
+export const NAME_MAX = 40
 
 export type ProfilesState =
   | { status: 'loading' }
@@ -49,9 +50,10 @@ function readStored(): string | null {
   }
 }
 
-function writeStored(id: string) {
+function writeStored(id: string | null) {
   try {
-    window.localStorage.setItem(STORAGE_KEY, id)
+    if (id === null) window.localStorage.removeItem(STORAGE_KEY)
+    else window.localStorage.setItem(STORAGE_KEY, id)
   } catch {
     // Stockage refusé (navigation privée, quota) : le choix vaut pour cette page seulement.
   }
@@ -135,8 +137,17 @@ export function chooseProfile(id: string) {
 
 const queues = new Map<string, Promise<unknown>>()
 
+const profileUrl = (id: string) => `/api/profiles/${encodeURIComponent(id)}`
+
 async function patch(id: string, changes: ProfileChanges): Promise<Profile> {
-  const saved = await api(`/api/profiles/${encodeURIComponent(id)}`, { method: 'PATCH', body: changes, validate: isProfile })
+  let saved: Profile
+  try {
+    saved = await api(profileUrl(id), { method: 'PATCH', body: changes, validate: isProfile })
+  } catch (error) {
+    // Profil supprimé depuis un autre appareil : la liste est relue et l’appareil passe au premier profil.
+    if (error instanceof ApiError && error.status === 404) void loadProfiles()
+    throw error
+  }
   const list = known(state)
   if (list) set({ status: 'ok', profiles: list.map((p) => (p.id === saved.id ? saved : p)) })
   return saved
@@ -151,4 +162,22 @@ export function saveProfile(id: string, changes: ProfileChanges): Promise<Profil
   queues.set(id, run)
   void run.catch(() => undefined).finally(() => { if (queues.get(id) === run) queues.delete(id) })
   return run
+}
+
+/** Crée le profil et le choisit sur cet appareil. */
+export async function createProfile(name: string): Promise<Profile> {
+  const created = await api('/api/profiles', { method: 'POST', body: { name }, validate: isProfile })
+  set({ status: 'ok', profiles: [...(known(state) ?? []).filter((p) => p.id !== created.id), created] })
+  chooseProfile(created.id)
+  return created
+}
+
+/** Supprime le profil et ses données. Si c’était le profil de l’appareil, le premier restant le remplace. */
+export async function deleteProfile(id: string): Promise<void> {
+  const remaining = await api(profileUrl(id), { method: 'DELETE', validate: isProfileList })
+  if (stored === id) {
+    stored = null
+    writeStored(null)
+  }
+  set({ status: 'ok', profiles: remaining })
 }

@@ -29,7 +29,7 @@ export function errorMessage(error: unknown): string {
 }
 
 interface Options<T> {
-  method?: 'GET' | 'PATCH'
+  method?: 'GET' | 'POST' | 'PATCH' | 'DELETE'
   body?: unknown
   /** Vérifie la forme de la réponse : une réponse inattendue n’est jamais affichée. */
   validate: (value: unknown) => value is T
@@ -47,7 +47,8 @@ export async function api<T>(path: string, { method = 'GET', body, validate, tim
         method,
         signal: ctrl.signal,
         cache: 'no-store',
-        headers: body === undefined ? undefined : { 'content-type': 'application/json' },
+        // Le serveur exige du JSON pour toute requête qui modifie, même sans corps.
+        headers: method === 'GET' ? undefined : { 'content-type': 'application/json' },
         body: body === undefined ? undefined : JSON.stringify(body),
       })
     } catch (cause) {

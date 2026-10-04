@@ -1,6 +1,7 @@
-import { Check, ChevronLeft, ChevronsUpDown, RefreshCw, Settings as SettingsIcon, WifiOff } from 'lucide-react'
+import { Check, ChevronLeft, ChevronsUpDown, Plus, RefreshCw, Settings as SettingsIcon, WifiOff } from 'lucide-react'
 import { useEffect, useState, type ReactNode } from 'react'
-import { chooseProfile, loadProfiles, useCurrentProfile, useProfiles, type Profile } from '../lib/profiles'
+import { errorMessage } from '../lib/api'
+import { chooseProfile, createProfile, loadProfiles, NAME_MAX, useCurrentProfile, useProfiles, type Profile } from '../lib/profiles'
 import { checkServer, useServer } from '../lib/server'
 import { href, navigate, type Route } from '../lib/router'
 import { TodayIcon } from './Icons'
@@ -14,12 +15,14 @@ const TABS = [
 /** iOS n’affiche pas de barre d’onglets pour une seule destination. */
 const HAS_TAB_BAR = TABS.length > 1
 
-const initial = (p: Profile) => p.name.charAt(0).toLocaleUpperCase('fr-FR')
+/** Premier caractère du nom, emoji compris. */
+export const initial = (p: Profile) => (Array.from(p.name)[0] ?? '').toLocaleUpperCase('fr-FR')
 
 /* ---------- Profile switcher ---------- */
 
 let openProfiles: (() => void) | null = null
 export const showProfiles = () => openProfiles?.()
+let openNewProfile: (() => void) | null = null
 
 /** Choix du profil de cet appareil. Serveur injoignable : liste en lecture seule. */
 function ProfileSheet() {
@@ -49,6 +52,12 @@ function ProfileSheet() {
               trailing={p.id === current?.id ? <Check size={20} strokeWidth={2.6} className="text-accent" aria-label="Profil actuel" /> : null}
             />
           ))}
+          <Row
+            onClick={readOnly ? undefined : () => { close(); openNewProfile?.() }}
+            chevron={false}
+            leading={<Tile color={readOnly ? '#8e8e93' : undefined}><Plus size={20} strokeWidth={2.4} /></Tile>}
+            title={<span className={readOnly ? 'text-label-3' : 'text-accent'}>Nouveau profil</span>}
+          />
         </Group>
       )}
       <Group className="mt-6">
@@ -58,6 +67,62 @@ function ProfileSheet() {
           title="Réglages"
         />
       </Group>
+    </Sheet>
+  )
+}
+
+/** Nom saisi, profil créé sur le serveur puis choisi sur cet appareil. */
+function NewProfileSheet() {
+  const [open, setOpen] = useState(false)
+  const [name, setName] = useState('')
+  const [error, setError] = useState<string>()
+  const [saving, setSaving] = useState(false)
+  useEffect(() => {
+    openNewProfile = () => {
+      setName('')
+      setError(undefined)
+      setOpen(true)
+    }
+    return () => void (openNewProfile = null)
+  }, [])
+  const close = () => setOpen(false)
+  const ready = name.trim().length > 0 && !saving
+  const create = async () => {
+    if (!ready) return
+    setSaving(true)
+    setError(undefined)
+    try {
+      await createProfile(name.trim())
+      close()
+    } catch (err) {
+      console.warn('Fitness : création du profil refusée', err)
+      setError(errorMessage(err))
+    } finally {
+      setSaving(false)
+    }
+  }
+  return (
+    <Sheet open={open} onClose={close} title="Nouveau profil"
+      leading={<button type="button" onClick={close} className="pressable -ml-2 h-11 min-w-11 px-2 text-body text-accent">Annuler</button>}
+      trailing={<button type="button" onClick={create} disabled={!ready}
+        className="pressable -mr-2 h-11 min-w-11 px-2 text-headline text-accent disabled:text-label-3">Créer</button>}>
+      <Group>
+        <div className="g-row pl-4">
+          <input
+            autoFocus
+            aria-label="Nom"
+            placeholder="Nom"
+            maxLength={NAME_MAX}
+            autoComplete="off"
+            enterKeyHint="done"
+            value={name}
+            onChange={(e) => { setName(e.target.value); setError(undefined) }}
+            onKeyDown={(e) => { if (e.key === 'Enter') void create() }}
+            className="h-11 w-full bg-transparent pr-4 text-body outline-none placeholder:text-label-3"
+          />
+        </div>
+      </Group>
+      {error && <p role="alert" className="mt-2 px-4 text-footnote text-red">{error}</p>}
     </Sheet>
   )
 }
@@ -274,6 +339,7 @@ export function Shell({ route, children }: { route: Route; children: ReactNode }
       <main className="desk:pl-[248px]">{children}</main>
       <TabBar route={route} />
       <ProfileSheet />
+      <NewProfileSheet />
       <ProfilesSync />
     </>
   )
