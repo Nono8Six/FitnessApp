@@ -126,7 +126,7 @@ def reserve(session, profile, conversation, payload):
     from .workout_proposals import snapshot
     context = snapshot(session, profile, payload.workout_target) if payload.workout_target else None
     turn = CoachTurn(id=uuid4().hex, profile_id=profile, conversation_id=conversation, request_id=payload.request_id,
-        user_text=payload.text, answer="", status="running", error=None, model=None, sources=[], proposals=[], usage={"requests": 0, "reports": []},
+        user_text=payload.text, answer="", status="running", error=None, model=None, sources=[], proposals=[], questions=[], usage={"requests": 0, "reports": []},
         created_at=now, updated_at=now, workout_context=context)
     if not session.scalar(select(CoachTurn.id).where(CoachTurn.conversation_id == conversation).limit(1)):
         row.title = " ".join(payload.text.split())[:100]

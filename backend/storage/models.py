@@ -112,6 +112,8 @@ class CoachTurn(Base):
     model: Mapped[str | None] = mapped_column(String(200))
     sources: Mapped[list] = mapped_column(JSON)
     proposals: Mapped[list] = mapped_column(JSON)
+    # Questions à choix affichées en cases ; la réponse arrive dans le message suivant.
+    questions: Mapped[list] = mapped_column(JSON, server_default=text("'[]'"))
     usage: Mapped[dict] = mapped_column(JSON)
     workout_context: Mapped[dict | None] = mapped_column(JSON)
     created_at: Mapped[str] = mapped_column(String(40))

@@ -2,7 +2,9 @@
 import json
 from datetime import datetime
 
-from pydantic import Field, ValidationError
+from typing import Annotated
+
+from pydantic import Field, StringConstraints, ValidationError, field_validator
 from sqlalchemy import func, select
 from sqlalchemy.exc import SQLAlchemyError
 
@@ -48,6 +50,27 @@ class Proposal(Input):
     quote: str = Field(min_length=1, max_length=500)
 
 
+Choice = Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=60)]
+
+
+class Question(Input):
+    label: Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=80)] = Field(
+        description="Question courte, ex. « Temps disponible ».")
+    options: list[Choice] = Field(min_length=2, max_length=5,
+        description="Réponses courtes et distinctes, sans lettre A/B/C. « Autre » est ajouté par l'interface.")
+
+    @field_validator("options")
+    @classmethod
+    def distinct(cls, value):
+        if len({v.casefold() for v in value}) != len(value):
+            raise ValueError("Options en double")
+        return value
+
+
+class Questions(Input):
+    questions: list[Question] = Field(min_length=1, max_length=3)
+
+
 DEFINITIONS = {
     "get_profile": (Input, "Lire le profil actif, objectifs, poids, unités, sélection, date locale et données absentes."),
     "list_workouts": (Search, "Rechercher les séances existantes (dernière version), avec estimations backend. Pagination explicite."),
@@ -57,6 +80,7 @@ DEFINITIONS = {
     "read_conversation": (History, "Lire les échanges précédents, datés, du plus récent vers les pages plus anciennes, avec les séances proposées. Réponses incomplètes signalées."),
     "read_message": (MessageDetail, "Lire le texte complet d'une ancienne réponse par extraits paginés, après read_conversation."),
     "search_memories": (Search, "Lire les préférences durables explicitement enregistrées par l'utilisateur, avec dates."),
+    "ask_questions": (Questions, "Afficher 1 à 3 questions à choix en cases interactives sous ta réponse ; l'utilisateur répond dans son prochain message. Une seule fois par réponse."),
     "propose_memory": (Proposal, "Proposer une préférence durable UNIQUEMENT sur demande explicite de la retenir. Citer exactement le message actuel. N'enregistre rien : l'utilisateur doit confirmer dans l'interface."),
     "validate_workout": (workout_proposals.ProposalInput, "Valider un programme complet avant proposition : bornes, échauffement, retour au calme, objectif et niveau. Renvoie les erreurs précises et les prévisions Python. Corriger les erreurs avant de proposer."),
     "propose_workout": (workout_proposals.ProposalInput, "Proposer une séance structurée validée, jamais l'enregistrer. L'interface affiche Enregistrer, Modifier, Ignorer. Si workout_target est fourni par le contexte serveur, ajuster exactement cette version. Sinon target facultatif pour ajuster une version lue via get_workout. Pas de target pour une nouvelle séance."),
@@ -126,7 +150,8 @@ def execute(database, profile, name, arguments, *, user_text, simulation=False, 
                 result = store.turns(session, profile, payload.conversation_id, payload.offset, payload.limit)
                 result["items"] = [{k: t[k] for k in ("id", "user_text", "status", "created_at")} |
                     {"answer": t["answer"][:1500], "answer_partial": len(t["answer"]) > 1500,
-                     "workout_proposals": [workout_proposals.brief(p) for p in t["workout_proposals"]]} for t in result["items"]]
+                     "workout_proposals": [workout_proposals.brief(p) for p in t["workout_proposals"]],
+                     "questions": t["questions"]} for t in result["items"]]
                 return result
             if name == "read_message":
                 row = store.owned(session, store.CoachTurn, profile, payload.turn_id)
@@ -136,6 +161,9 @@ def execute(database, profile, name, arguments, *, user_text, simulation=False, 
                         "partial": end < len(row.answer)}
             if name == "search_memories":
                 return store.memories(session, profile, **payload.model_dump())
+            if name == "ask_questions":
+                return {"questions": payload.model_dump()["questions"], "shown": True,
+                        "note": "Questions affichées en cases avec une option Autre. Ne les répète pas dans le texte."}
             if name == "propose_memory":
                 if payload.quote not in user_text:
                     return {"error": "La citation doit provenir exactement du message utilisateur actuel."}

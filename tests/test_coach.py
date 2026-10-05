@@ -174,7 +174,7 @@ class CoachDataTests(unittest.TestCase):
         self.db.close()
         self.app = create_app(data_root=Path(self.tmp.name))
         self.db = self.app.state.database
-        self.assertEqual(self.db.schema, "0007")
+        self.assertEqual(self.db.schema, "0008")
         with self.db.transaction() as session:
             self.assertEqual(workouts.get_workout(session, "arnaud", self.workout["id"]), self.workout)
             self.assertEqual(store.conversations(session, "arnaud")["total"], 0)
@@ -251,6 +251,30 @@ class CoachStreamTests(unittest.IsolatedAsyncioTestCase):
         # Un nouveau message conserve le préfixe du premier envoi, dates comprises.
         await self.run_turn()
         self.assertEqual(payloads[2]["input"][:len(payloads[0]["input"])], payloads[0]["input"])
+
+    async def test_questions_are_validated_kept_and_recalled(self):
+        questions = [{"label": "Temps disponible", "options": ["30 min", "45 min", "60 min"]}]
+        payloads = []
+        async def transport(token, payload):
+            payloads.append(payload)
+            if len(payloads) == 1:
+                yield completed([{"type": "function_call", "namespace": "fitness", "name": "ask_questions", "call_id": "q0",
+                                  "arguments": json.dumps({"questions": [{"label": "Seul", "options": ["Oui"]}]})},
+                                 {"type": "function_call", "namespace": "fitness", "name": "ask_questions", "call_id": "q1",
+                                  "arguments": json.dumps({"questions": questions})}])
+            else:
+                yield {"type": "response.output_text.delta", "delta": "Quelques questions pour bien viser."}
+                yield completed()
+        self.runtime.transport = transport
+        turn, _ = await self.run_turn()
+        self.assertEqual((turn["status"], turn["error"], turn["questions"]), ("completed", None, questions))
+        outputs = [json.loads(i["output"]) for i in payloads[1]["input"] if i.get("type") == "function_call_output"]
+        self.assertIn("error", outputs[0])
+        await self.run_turn()
+        recalled = [m["content"] for m in payloads[2]["input"] if m.get("role") == "assistant"]
+        self.assertIn('"Temps disponible"', recalled[0])
+        read = tools.execute(self.db, "arnaud", "read_conversation", json.dumps({"conversation_id": self.conversation}), user_text="")
+        self.assertEqual(read["items"][0]["questions"], questions)
 
     async def test_eof_preserves_partial_as_failed(self):
         async def transport(*_):

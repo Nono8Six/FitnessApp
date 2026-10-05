@@ -10,6 +10,7 @@ import { archiveConversation, createConversation, readConversations, readTurns, 
 import { href } from '../lib/router'
 import { CoachMemory } from './CoachMemory'
 import { WorkoutProposalCard } from '../components/WorkoutProposal'
+import { CoachQuestions } from '../components/CoachQuestions'
 import type { WorkoutTarget } from '../lib/coach'
 
 const empty = <T,>(): PageData<T> => ({ items: [], total: 0, next_offset: null, partial: false })
@@ -160,7 +161,9 @@ export function Coach({ profile, target, conversationId, createWorkout }: { prof
     if (!text || busy.current || active || blocked) return
     busy.current = true; setSending(true); setError(''); follow.current = true
     const ctrl = new AbortController(); controller.current = ctrl
-    let id = conversation, final: Turn | undefined
+    // Réponses des cases : la saisie en cours n'est pas touchée.
+    const fromDraft = text === draft.trim()
+    let id = conversation, accepted = false
     try {
       request.current ??= { text, id: newRequestId() }
       if (request.current.text !== text) request.current = { text, id: newRequestId() }
@@ -171,10 +174,13 @@ export function Coach({ profile, target, conversationId, createWorkout }: { prof
         setConversation(id); setCurrent(created); remember(`fitness.coach.current.${profile}`, id)
         // URL consultable après rechargement, sans remonter le composant ni couper le flux.
         window.history.replaceState(null, '', href.coachConversation(id))
+        void reloadList().catch(() => undefined)
       }
-      await sendMessage(profile, id, text, request.current.id, ctrl.signal, turn => { final = turn; updateTurn(turn) }, workoutTarget)
-      if (mounted.current && final?.status === 'completed') { changeDraft(''); request.current = null }
-      else if (final && final.status !== 'running') request.current = null
+      await sendMessage(profile, id, text, request.current.id, ctrl.signal, turn => {
+        updateTurn(turn)
+        // Message enregistré par le serveur : la saisie se vide, « Reprendre le message » le restitue au besoin.
+        if (!accepted) { accepted = true; request.current = null; if (fromDraft && mounted.current) changeDraft('') }
+      }, workoutTarget)
     } catch (e) {
       if (mounted.current) setError(ctrl.signal.aborted ? 'Réponse interrompue. Votre saisie est conservée.' : errorMessage(e))
     } finally {
@@ -301,6 +307,8 @@ export function Coach({ profile, target, conversationId, createWorkout }: { prof
               </div>}
               {turn.status === 'completed' && turn.error === 'tool_error' && <p className="mt-3 text-footnote text-orange" role="status">Une consultation a échoué : les données correspondantes n’ont pas pu être vérifiées.</p>}
               {turn.status === 'completed' && turn.error === 'workout_invalid' && <p className="mt-3 text-subhead text-red" role="alert">{turn.error_message ?? 'La proposition reste invalide. Aucun programme correspondant n’a été enregistré.'}</p>}
+              {!!turn.questions?.length && <CoachQuestions key={`${turn.id}:${turn.status}`} questions={turn.questions} disabled={locked || blocked}
+                onSubmit={turn.status === 'completed' && turn.id === turns.items.at(-1)?.id ? text => void send(text) : undefined} />}
               {turn.workout_proposals.map(value => <WorkoutProposalCard key={value.id} profile={profile} value={value} changed={() => {
                 void readTurns(profile, turn.conversation_id).then(data => { if (mounted.current) setTurns(data) }).catch(e => { if (mounted.current) setError(errorMessage(e)) })
               }} />)}

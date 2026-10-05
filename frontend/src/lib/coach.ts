@@ -15,11 +15,15 @@ const isWorkoutProposal = (v: unknown): v is WorkoutProposal => isRecord(v) && t
 export interface Conversation { id: string; title: string; created_at: string; updated_at: string; archived_at: string | null }
 export interface Source { id: string; version: number; name: string; href: string }
 export interface Proposal { content: string; quote: string; saved_memory_id?: string | null }
+/** Question à choix du coach ; « Autre » est ajouté par l'interface. */
+export interface Question { label: string; options: string[] }
 export interface Turn {
   id: string; conversation_id: string; request_id: string; user_text: string; answer: string
   status: 'running' | 'completed' | 'interrupted' | 'failed'; error: string | null; error_message: string | null
   model: string | null; sources: Source[]; proposals: Proposal[]; created_at: string; updated_at: string
   workout_proposals: WorkoutProposal[]
+  /** Absent d'un serveur antérieur à la migration 0008. */
+  questions?: Question[]
   usage: { requests: number; reports: { input_tokens: number | null; output_tokens: number | null; cached_input_tokens: number | null }[] }
 }
 export interface Memory { id: string; content: string; source_turn_id: string | null; proposal_index: number | null; created_at: string; updated_at: string }
@@ -27,6 +31,8 @@ export interface PageData<T> { items: T[]; total: number; next_offset: number | 
 
 const dates = (v: Record<string, unknown>) => typeof v.created_at === 'string' && typeof v.updated_at === 'string'
 const nullableText = (v: unknown) => v === null || typeof v === 'string'
+const isQuestion = (v: unknown): v is Question => isRecord(v) && typeof v.label === 'string'
+  && Array.isArray(v.options) && v.options.length >= 2 && v.options.every(o => typeof o === 'string')
 const isConversation = (v: unknown): v is Conversation => isRecord(v) && typeof v.id === 'string' && typeof v.title === 'string' && dates(v)
   && nullableText(v.archived_at)
 const isSource = (v: unknown): v is Source => isRecord(v) && typeof v.id === 'string' && typeof v.name === 'string'
@@ -38,6 +44,7 @@ export const isTurn = (v: unknown): v is Turn => isRecord(v) && typeof v.id === 
   && Array.isArray(v.sources) && v.sources.every(isSource) && Array.isArray(v.proposals)
   && v.proposals.every(p => isRecord(p) && typeof p.content === 'string' && typeof p.quote === 'string')
   && Array.isArray(v.workout_proposals) && v.workout_proposals.every(isWorkoutProposal)
+  && (v.questions === undefined || Array.isArray(v.questions) && v.questions.every(isQuestion))
   && isRecord(v.usage) && Number.isInteger(v.usage.requests) && Array.isArray(v.usage.reports)
   && v.usage.reports.every(r => isRecord(r) && ['input_tokens', 'output_tokens', 'cached_input_tokens'].every(k => r[k] === null || Number.isInteger(r[k])))
 const isMemory = (v: unknown): v is Memory => isRecord(v) && typeof v.id === 'string' && typeof v.content === 'string'

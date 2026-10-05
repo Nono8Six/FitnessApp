@@ -40,9 +40,12 @@ Si la demande sort de ces bornes, dis-le simplement et propose l'équivalent fai
 1. Rassemble l'essentiel en tenant compte de toute la conversation, de la mémoire et du profil :
    objectif, temps disponible, niveau réel (marche active confortable ? capable de courir quelques
    minutes, à quelle vitesse ?), gêne ou contrainte (genoux, dos, reprise après une pause).
-2. S'il manque une information qui change vraiment le programme, pose 1 à 3 questions courtes, en
-   un seul message, avec des choix simples (ex. « A) jamais couru B) quelques minutes C) 20 min et
-   plus »). Ne redemande jamais ce qui est déjà connu. Un seul tour de questions : ensuite, ou si la
+2. S'il manque une information qui change vraiment le programme, appelle ask_questions avec 1 à 3
+   questions courtes et 2 à 5 réponses courtes chacune (ex. « Course » : « Jamais couru »,
+   « Quelques minutes », « 20 min et plus »). Elles s'affichent en cases, avec « Autre » ajouté par
+   l'interface. Ton texte se limite alors à une phrase chaleureuse d'introduction : ne répète ni les
+   questions ni les options, et ne propose pas encore de séance. Ne redemande jamais ce qui est
+   déjà connu. Un seul tour de questions : ensuite, ou si la
    personne dit « fais au mieux », construis avec des hypothèses prudentes et annonce-les en une
    ligne (ex. « je pars sur un niveau intermédiaire, sans gêne connue »).
 3. Réfléchis avant de proposer : objectif → structure (continu, alternance, marche inclinée) → dose
@@ -180,7 +183,7 @@ class Runtime:
         queue.put_nowait(dict(turn))
 
     async def persist(self, profile, turn, queue):
-        fields = {k: turn[k] for k in ("answer", "status", "error", "model", "sources", "proposals", "usage")}
+        fields = {k: turn[k] for k in ("answer", "status", "error", "model", "sources", "proposals", "questions", "usage")}
         writing = asyncio.create_task(asyncio.to_thread(self.db, store.save_turn, profile, turn["id"], write=True, **fields))
         try:
             saved = await asyncio.shield(writing)
@@ -213,8 +216,11 @@ class Runtime:
             if cards:
                 suffix += ("\n\n[Séances proposées dans cette réponse, affichées en cartes : "
                            + json.dumps(cards, ensure_ascii=False, separators=(",", ":")) + "]")
+            if previous["questions"]:
+                suffix += ("\n\n[Questions affichées en cases ; le message suivant y répond : "
+                           + json.dumps(previous["questions"], ensure_ascii=False, separators=(",", ":")) + "]")
             pair = [{"role": "user", "content": f"[{previous['created_at']}] {previous['user_text']}"}]
-            if answer or cards:
+            if answer or cards or previous["questions"]:
                 state = f"[Réponse {previous['status']}, incomplète] " if previous["status"] != "completed" else ""
                 pair.append({"role": "assistant", "content": f"{state}{answer}{suffix}"})
             cost = len(json.dumps(pair))
@@ -339,7 +345,7 @@ class Runtime:
                 raise inference.InferenceError("incomplete")
             calls = [item for item in output if item.get("type") == "function_call"]
             if not calls:
-                if not turn["answer"].strip() and not turn.get('workout_proposals'):
+                if not turn["answer"].strip() and not turn.get('workout_proposals') and not turn["questions"]:
                     raise inference.InferenceError("incomplete")
                 turn.update(status="completed", error='workout_invalid' if workout_invalid else "tool_error" if tool_had_error else None)
                 return
@@ -359,12 +365,17 @@ class Runtime:
                     source = result["source"]
                     if source not in turn["sources"]:
                         turn["sources"] = [*turn["sources"], source]
+                if "questions" in result:
+                    if turn["questions"]:
+                        result = {"error": "Une seule série de questions par réponse : elle est déjà affichée."}
+                    else:
+                        turn["questions"] = result["questions"]
                 if "proposal" in result and result["proposal"] not in turn["proposals"] and len(turn["proposals"]) < 10:
                     turn["proposals"] = [*turn["proposals"], result["proposal"]]
                 if "error" in result:
                     if name in {'validate_workout', 'propose_workout'}:
                         workout_invalid = True
-                    else:
+                    elif name != 'ask_questions':  # Corrigée par le modèle, sans donnée manquante.
                         tool_had_error = True
                     logger.warning("Coach : outil %s refusé ou indisponible, réponse %s",
                                    name if name in tools.DEFINITIONS else "inconnu", turn["id"])
