@@ -16,9 +16,14 @@ export interface Energy { active_kcal: number | null; total_kcal: number | null;
 export interface Preview { blocks: Block[]; summary: { sec: number; km: number; count: number; minSpeed: number; maxSpeed: number; ascent_m: number; energy: Energy } }
 export interface Workout extends WorkoutInput, Preview {
   id: string; version: number; author: 'human' | 'chatgpt'; author_name: string; created_at: string
-  origin: { kind: 'catalog' | 'chatgpt'; template_id?: string; level?: Level; conversation_id?: string; turn_id?: string; proposal_id?: string } | null
+  origin: { kind: 'catalog' | 'chatgpt'; template_id?: string; level?: Level; target?: CatalogTarget; conversation_id?: string; turn_id?: string; proposal_id?: string } | null
 }
 export interface CatalogWorkout extends WorkoutInput, Preview { template_id: string; description: string; goal: Goal; level: Level }
+export interface CatalogTarget { duration_sec?: number; active_kcal?: number }
+export interface CatalogOption {
+  template_id: string; name: string; description: string; goal: Goal; level: Level
+  weight_kg: number | null; workout: CatalogWorkout | null; message: string | null
+}
 export const randomId = () => Array.from(crypto.getRandomValues(new Uint8Array(16)), v => v.toString(16).padStart(2, '0')).join('')
 export interface LibraryData { workouts: Workout[]; selected_id: string | null }
 
@@ -51,12 +56,19 @@ export const isWorkoutInput = (v: unknown): v is WorkoutInput => isRecord(v) && 
   && (v.goal === null || v.goal === undefined || Object.hasOwn(GOALS, String(v.goal)))
   && (v.level === null || v.level === undefined || Object.hasOwn(LEVELS, String(v.level)))
 export const workoutUrl = (profile: string) => `/api/profiles/${encodeURIComponent(profile)}/workouts`
-export const readCatalog = (profile: string) => api(`${workoutUrl(profile)}/catalog`, {
-  validate: (v): v is CatalogWorkout[] => Array.isArray(v) && v.every(w => isPreview(w) && isWorkoutInput(w) && isRecord(w)
-    && typeof w.template_id === 'string' && typeof w.description === 'string' && !!w.goal && !!w.level),
+export const previewCatalog = (profile: string, target: CatalogTarget) => api(`${workoutUrl(profile)}/catalog/preview`, {
+  method: 'POST', body: target,
+  validate: (v): v is CatalogOption[] => Array.isArray(v) && v.length > 0 && v.every(w => isRecord(w)
+    && typeof w.template_id === 'string' && typeof w.name === 'string' && typeof w.description === 'string'
+    && Object.hasOwn(GOALS, String(w.goal)) && Object.hasOwn(LEVELS, String(w.level))
+    && (w.weight_kg === null || finite(w.weight_kg))
+    && ((w.workout === null && typeof w.message === 'string')
+      || (isPreview(w.workout) && isWorkoutInput(w.workout) && isRecord(w.workout)
+        && w.workout.template_id === w.template_id && w.workout.level === w.level && w.workout.goal === w.goal
+        && w.workout.description === w.description && w.message === null))),
 })
-export const addCatalog = (profile: string, data: CatalogWorkout) => api(`${workoutUrl(profile)}/catalog`, {
-  method: 'POST', body: { template_id: data.template_id, level: data.level }, validate: isWorkout,
+export const addCatalog = (profile: string, data: CatalogWorkout, target: CatalogTarget = {}) => api(`${workoutUrl(profile)}/catalog`, {
+  method: 'POST', body: { template_id: data.template_id, level: data.level, target }, validate: isWorkout,
 })
 export const readWorkout = (profile: string, id: string) => api(`${workoutUrl(profile)}/${encodeURIComponent(id)}`, { validate: isWorkout })
 export const readVersions = (profile: string, id: string) => api(`${workoutUrl(profile)}/${encodeURIComponent(id)}/versions`, {

@@ -24,10 +24,10 @@ export function WeightLink({ className }: { className?: string }) {
 }
 
 /** Mesures prévues, explication des calories, puis consignes par segment. */
-export function WorkoutSummary({ data, editing = false }: { data: Preview; editing?: boolean }) {
+export function WorkoutSummary({ data, editing = false, compact = false }: { data: Preview; editing?: boolean; compact?: boolean }) {
   const energy = data.summary.energy
   return <>
-    <StatGrid stats={workoutStats(data.summary)} />
+    <StatGrid stats={workoutStats(data.summary)} compact={compact} />
     {energy.weight_kg === null ? editing
       ? <p className="mt-2 px-4 text-footnote text-label-2">Pour les calories, renseignez votre poids dans Réglages après avoir enregistré la séance.</p>
       : <WeightLink className="mt-3" />

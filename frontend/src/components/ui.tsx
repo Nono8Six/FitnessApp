@@ -353,9 +353,10 @@ export interface Stat {
 }
 
 /** Cellules séparées par des filets, comme le détail d’un exercice dans Forme. */
-export function StatGrid({ stats, className }: { stats: Stat[]; className?: string }) {
+export function StatGrid({ stats, className, compact = false }: { stats: Stat[]; className?: string; compact?: boolean }) {
   return (
-    <dl className={cx('grid grid-cols-2 gap-px overflow-hidden rounded-[12px] bg-sep-opaque desk:grid-flow-col desk:auto-cols-fr desk:grid-cols-none', className)}>
+    <dl className={cx('grid grid-cols-2 gap-px overflow-hidden rounded-[12px] bg-sep-opaque',
+      !compact && 'desk:grid-flow-col desk:auto-cols-fr desk:grid-cols-none', className)}>
       {stats.map((s) => (
         <div key={s.label} className={cx('min-w-0 bg-surface px-3.5 py-3 desk:px-4', s.wide && 'col-span-2 desk:col-span-1')}>
           <dt className="truncate text-subhead text-label">{s.label}</dt>

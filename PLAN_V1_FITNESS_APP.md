@@ -273,7 +273,7 @@ Contrôles de ce complément : build et 46 tests ciblés réussis (calculs, API,
 
 ### Brique 6 · Catalogue et séances personnalisées avec ChatGPT
 
-**Livré :** Séances propose Découvrir et Mes séances. Un modèle du catalogue devient une copie personnelle modifiable. Depuis Coach ou Séances, une demande libre produit une carte structurée ; depuis une séance ou son éditeur, Ajuster avec ChatGPT propose une nouvelle version avec comparaison avant acceptation.
+**Livré :** Séances propose Découvrir et Mes séances. Dans Découvrir, choisir en amont une durée ou des calories actives visées adapte les programmes et leurs prévisions à la saisie et au niveau. Un modèle du catalogue devient une copie personnelle modifiable. Depuis Coach ou Séances, une demande libre produit une carte structurée ; depuis une séance ou son éditeur, Ajuster avec ChatGPT propose une nouvelle version avec comparaison avant acceptation.
 
 **Périmètre livré :**
 1. Catalogue Python sans IA : Dépense calorique, Jambes et fessiers — marche inclinée, Endurance ; deux formats par objectif, trois variantes explicites Facile/Intermédiaire/Soutenu, avec échauffement et retour au calme. Le niveau décrit les consignes, pas les capacités de la personne.
@@ -282,6 +282,7 @@ Contrôles de ce complément : build et 46 tests ciblés réussis (calculs, API,
 4. Carte persistante : explication, objectif/niveau, prévisions backend, aperçu et blocs ; Enregistrer, Modifier, Ignorer. Un texte seul n’enregistre jamais une séance. Les URL des conversations permettent de retrouver les propositions après rechargement.
 5. Acceptation sous verrou SQLite, idempotente même en concurrence ; propriétaire et version de départ contrôlés. Un ajustement crée une nouvelle version de la même séance ou signale le conflit. Une retouche manuelle est attribuée au profil ; une proposition acceptée sans retouche à ChatGPT. La provenance conserve le lien vers la conversation.
 6. Migration additive 0007 : métadonnées facultatives, snapshot de la séance transmise et table des propositions. Profils, séances, versions, sélections, conversations et mémoire conservés. Aucun ajout automatique du catalogue aux profils.
+7. Complément du 5 octobre : cible exclusive durée (15–60 min) ou calories actives, difficulté choisie avant le format et réglable dans l’aperçu. Calcul Python partagé, recalcul après 200 ms de saisie ; réponses anciennes écartées et ajout impossible pendant le recalcul. Vitesses, pentes, ordre et nombre de passages préservés ; durées centrales réparties à la seconde, blocs de 30 s minimum, échauffement/retour au calme de 5 min chacun. Cible calorique résolue avec le poids actuel, sans dépasser 60 min : poids absent ou cible hors plage explicités, jamais forcés. L’ajout recalcule et conserve la cible dans la provenance sans modifier les séances existantes ni le catalogue.
 
 **Fait quand :**
 - [x] Les dix-huit variantes sont valides et l’aperçu change réellement avec le niveau ; une copie ajoutée et modifiée ne change pas le catalogue.
@@ -290,10 +291,11 @@ Contrôles de ce complément : build et 46 tests ciblés réussis (calculs, API,
 - [x] Les refus de validation et leur correction sont contrôlés par les tests ciblés du flux (transport simulé), ainsi que l’échec restant invalide. Les requêtes répétées, les acceptations concurrentes et les conflits de version ne créent pas de doublons.
 - [x] Origine et auteur réels affichés ; isolation des profils, conservation de la migration et calories inconnues sans poids contrôlées.
 - [x] Build frontend et 74 tests ciblés réussis ; parcours Chrome sur PC et viewport téléphone : découvrir, niveau, ajouter, modifier, Aujourd’hui, filtres, propositions, rechargement, édition et ajustement.
+- [x] Complément durée/calories : durée exacte et structure des dix-huit variantes, objectif calorique/poids/bornes, validation API et copie fidèle contrôlés par trois tests critiques supplémentaires. Build et tests séances/énergie/propositions réussis ; Chrome : 25 min, 150 kcal, changement de niveau, cible impossible, saisie vide, ajout et rechargement, formats PC et viewport téléphone.
 
 **Vérification locale du 5 octobre 2026 :** serveur 4330 redémarré avec le code de cette brique, schéma 0007 et ressources du build contrôlés. Une sauvegarde SQLite a précédé la migration ; comparaison des sept tables préexistantes, intégrité et clés étrangères conformes. Les essais réels sont dans le seul profil « Vérification brique 6 », conservé séparément des données personnelles. Un premier essai d’endurance annonçait 30 min avec 35 min de blocs : proposition ignorée, ajout du contrôle de durée, puis génération correcte de 30 min. Les trois créations retenues et l’ajustement ont chacun terminé sans erreur.
 
-**Limites :** les essais de refus/correction automatique utilisent un transport simulé, contrairement aux créations et à l’ajustement réellement effectués avec ChatGPT. Le viewport téléphone de Chrome ne prouve pas Safari/iPhone ou Android physique. Le catalogue reste utilisable sans ChatGPT ; ses estimations ne garantissent aucune dépense ni perte de poids. Les consignes sont des programmes de conception, sans autorisation de mouvement du tapis.
+**Limites :** les essais de refus/correction automatique utilisent un transport simulé, contrairement aux créations et à l’ajustement réellement effectués avec ChatGPT. Le viewport téléphone de Chrome ne prouve pas Safari/iPhone ou Android physique. Le catalogue reste utilisable sans ChatGPT ; ses estimations ne garantissent aucune dépense ni perte de poids. L’adaptation en temps réel concerne la préparation, pas l’effort en cours (brique 8) ; certains formats soutenus demandent au moins 16 min pour conserver leurs passages. Les consignes sont des programmes de conception, sans autorisation de mouvement du tapis.
 
 **Pas dans cette brique :** Bluetooth, exécution sur le tapis, historique d’activités, planning.
 

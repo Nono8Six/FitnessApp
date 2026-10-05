@@ -4,6 +4,9 @@ Les niveaux décrivent les consignes, pas l'aptitude d'une personne. Toutes les
 variantes utilisent la validation et l'estimation des séances personnelles.
 """
 from typing import Literal
+from math import floor
+
+from pydantic import Field, model_validator
 
 from .workouts import Input, WorkoutInput, WorkoutNotFound, create_workout, preview
 from .profiles import get_profile
@@ -52,9 +55,103 @@ def variants():
     return result
 
 
+class CatalogTarget(Input):
+    duration_sec: int | None = Field(default=None, ge=900, le=3600)
+    active_kcal: float | None = Field(default=None, gt=0, le=5000)
+
+    @model_validator(mode='after')
+    def exclusive(self):
+        if self.duration_sec is not None and self.active_kcal is not None:
+            raise ValueError('Choisissez une durée ou des calories, pas les deux')
+        return self
+
+
 class CatalogCopy(Input):
     template_id: str
     level: Literal['easy', 'intermediate', 'hard']
+    target: CatalogTarget = Field(default_factory=CatalogTarget)
+
+
+class CatalogTargetError(Exception):
+    pass
+
+
+def resize(data, seconds):
+    """Répartir des secondes entières, avec 30 s minimum par segment.
+
+    Conserver les vitesses, pentes, ordre et cycles de la variante ; seules les
+    durées centrales changent. Échauffement et retour au calme restent à 5 min.
+    """
+    blocks = preview(data)['blocks']
+    middle = blocks[1:-1]
+    remaining = seconds - 600
+    if remaining < 30 * len(middle):
+        raise CatalogTargetError(f'Ce format nécessite au moins {(600 + 30 * len(middle)) / 60:g} min.')
+    pending = list(range(len(middle)))
+    durations = [30] * len(middle)
+    while pending:
+        weight = sum(middle[i]['sec'] for i in pending)
+        minimum = [i for i in pending if remaining * middle[i]['sec'] / weight < 30]
+        if not minimum:
+            exact = {i: remaining * middle[i]['sec'] / weight for i in pending}
+            for i in pending:
+                durations[i] = floor(exact[i])
+            missing = remaining - sum(durations[i] for i in pending)
+            for i in sorted(pending, key=lambda i: exact[i] - durations[i], reverse=True)[:missing]:
+                durations[i] += 1
+            break
+        for i in minimum:
+            pending.remove(i)
+            remaining -= 30
+    items = [data.items[0].model_dump(), *[
+        {k: b[k] for k in ('kind', 'speed', 'incline')} | {'sec': durations[i]}
+        for i, b in enumerate(middle)], data.items[-1].model_dump()]
+    return WorkoutInput(**(data.model_dump() | {'items': items}))
+
+
+def adapt(data, target, weight):
+    if target.duration_sec is not None:
+        return resize(data, target.duration_sec)
+    if target.active_kcal is None:
+        return data
+    if weight is None:
+        raise CatalogTargetError('Renseignez votre poids dans Réglages pour choisir un objectif de calories.')
+    low = max(900, 600 + 30 * len(preview(data)['blocks'][1:-1]))
+    high = 3600
+
+    def kcal(seconds):
+        return preview(resize(data, seconds), weight)['summary']['energy']['active_kcal']
+
+    lower, upper = kcal(low), kcal(high)
+    if not lower <= target.active_kcal <= upper:
+        lower_text, upper_text = (f'{v:g}'.replace('.', ',') for v in (lower, upper))
+        raise CatalogTargetError(f'À ce niveau, choisissez entre {lower_text} et {upper_text} kcal actives estimées ({low / 60:g} à 60 min).')
+    # Chercher la durée puis choisir la seconde voisine la plus proche. Le calcul
+    # partagé reste l'autorité ; aucune hausse de vitesse/pente pour forcer le but.
+    while high - low > 1:
+        mid = (low + high) // 2
+        if kcal(mid) < target.active_kcal:
+            low = mid
+        else:
+            high = mid
+    seconds = min((low, high), key=lambda s: abs(kcal(s) - target.active_kcal))
+    return resize(data, seconds)
+
+
+def preview_catalog(session, profile, target):
+    weight = get_profile(session, profile).weight_kg
+    result = []
+    for identifier, description, data in variants():
+        entry = {'template_id': identifier, 'name': data.name, 'description': description,
+                 'goal': data.goal, 'level': data.level, 'weight_kg': weight, 'workout': None, 'message': None}
+        try:
+            adjusted = adapt(data, target, weight)
+            entry['workout'] = {'template_id': identifier, 'description': description,
+                               **adjusted.model_dump(), **preview(adjusted, weight)}
+        except CatalogTargetError as exc:
+            entry['message'] = str(exc)
+        result.append(entry)
+    return result
 
 
 def list_catalog(session, profile):
@@ -64,8 +161,11 @@ def list_catalog(session, profile):
 
 
 def add_catalog(session, profile, payload):
+    weight = get_profile(session, profile).weight_kg
     for identifier, _, data in variants():
         if identifier == payload.template_id and data.level == payload.level:
+            data = adapt(data, payload.target, weight)
             return create_workout(session, profile, data,
-                origin={'kind': 'catalog', 'template_id': identifier, 'level': data.level})
+                origin={'kind': 'catalog', 'template_id': identifier, 'level': data.level,
+                        'target': payload.target.model_dump(exclude_none=True)})
     raise WorkoutNotFound()

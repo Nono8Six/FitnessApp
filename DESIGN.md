@@ -125,6 +125,8 @@ Composants SVG maison. ECharts n’est envisagé qu’à la brique 14 si le volu
 
 Les prévisions affichent durée, distance, **kcal actives estimées** et dénivelé équivalent dans une grille de mesures (2 × 2 sur téléphone, 4 colonnes sur PC). Le signe ≈ accompagne les calories ; un poids absent donne un tiret et une action vers les réglages, jamais zéro. Le dénivelé porte le libellé « Dénivelé équiv. » ; l’explication de l’estimation précise qu’il s’agit d’une montée équivalente prévue. Le détail repliable explique le total avec repos, le poids actuel et les limites sans surcharger la lecture du graphique. Les cartes de bibliothèque et d’Aujourd’hui restent compactes : mesures colorées et profil compact non interactif (barres sur l’échelle fixe 0–16 km/h, escalier de pente 0–10 %). Le graphique interactif n’apparaît que dans la séance et l’éditeur. Le choix marche/course est automatique selon la vitesse, sans sélecteur ni ligne supplémentaire dans l'éditeur ; dans les réglages, le poids utilise une saisie décimale effaçable avec validation et état d'enregistrement.
 
+Dans Découvrir, les réglages Durée/Calories et difficulté précèdent les formats. Le même réglage apparaît dans la feuille d’aperçu. La cible calorique porte sur les calories actives estimées avec le poids du profil ; les formats hors plage affichent leur limite. Toute modification recalcule les mesures et segments côté serveur, avec un chargement explicite qui empêche l’ajout d’un ancien aperçu. Les mesures dans cette feuille restent en deux colonnes, même sur PC, pour conserver des libellés et valeurs lisibles.
+
 ## 8. Mouvement
 
 Courbe `cubic-bezier(.32, .72, 0, 1)`.

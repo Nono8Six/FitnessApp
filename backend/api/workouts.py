@@ -27,6 +27,8 @@ def transaction(request: Request, *, write: bool = False):
         raise HTTPException(404, "Séance introuvable dans ce profil") from None
     except workouts.WorkoutConflict as exc:
         raise HTTPException(409, str(exc)) from None
+    except catalog.CatalogTargetError as exc:
+        raise HTTPException(422, str(exc)) from None
     except SQLAlchemyError:
         logger.exception("Accès aux séances impossible : %s %s", request.method, request.url.path)
         raise HTTPException(503, "Base de données indisponible. Réessayez dans quelques instants.") from None
@@ -55,6 +57,12 @@ def catalogue(profile_id: str, request: Request):
 def copy_catalogue(profile_id: str, data: catalog.CatalogCopy, request: Request):
     with transaction(request, write=True) as session:
         return catalog.add_catalog(session, profile_id, data)
+
+
+@router.post('/catalog/preview')
+def preview_catalogue(profile_id: str, data: catalog.CatalogTarget, request: Request):
+    with transaction(request) as session:
+        return catalog.preview_catalog(session, profile_id, data)
 
 
 @router.patch("/selection")
@@ -100,6 +108,8 @@ def versions(profile_id: str, workout_id: str, request: Request):
 
 
 FIELDS = {
+    'duration_sec': 'Durée du catalogue : de 15 à 60 minutes, en secondes entières',
+    'active_kcal': 'Objectif de calories actives : nombre positif, au plus 5 000',
     'goal': 'Objectif : dépense calorique, marche inclinée ou endurance',
     'level': 'Niveau : facile, intermédiaire ou soutenu',
     "name": "Nom : de 1 à 80 caractères, sans caractère de contrôle",

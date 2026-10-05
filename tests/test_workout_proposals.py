@@ -92,6 +92,82 @@ class ProposalTests(unittest.TestCase):
             'workout': catalog.variants()[0][2].model_dump(), 'explanation': 'Test', 'duration_sec': 1800}), user_text='30 minutes')
         self.assertIn('Durée totale incohérente', duration['issues'][0]['message'])
 
+    def test_catalog_duration_exact_and_structure_preserved(self):
+        for _, _, data in catalog.variants():
+            original = workouts.preview(data)['blocks']
+            for seconds in (900, 960, 1200, 1800, 3599, 3600):
+                if seconds - 600 < 30 * (len(original) - 2):
+                    with self.assertRaises(catalog.CatalogTargetError):
+                        catalog.adapt(data, catalog.CatalogTarget(duration_sec=seconds), None)
+                    continue
+                resized = catalog.adapt(data, catalog.CatalogTarget(duration_sec=seconds), None)
+                result = workouts.preview(resized)['blocks']
+                self.assertEqual(sum(b['sec'] for b in result), seconds)
+                self.assertEqual(result[0]['sec'], 300)
+                self.assertEqual(result[-1]['sec'], 300)
+                self.assertTrue(all(b['sec'] >= 30 for b in result))
+                self.assertEqual([(b['kind'], b['speed'], b['incline']) for b in result],
+                                 [(b['kind'], b['speed'], b['incline']) for b in original])
+                self.assertEqual(data.model_dump(), catalog.adapt(data, catalog.CatalogTarget(), None).model_dump())
+
+    def test_catalog_calorie_solver_weight_and_bounds(self):
+        for _, _, data in catalog.variants():
+            minimum = max(900, 600 + 30 * (len(workouts.preview(data)['blocks']) - 2))
+            lower = workouts.preview(catalog.resize(data, minimum), 80)['summary']['energy']['active_kcal']
+            upper = workouts.preview(catalog.resize(data, 3600), 80)['summary']['energy']['active_kcal']
+            for calories in (lower, (lower + upper) / 2, upper):
+                result = catalog.adapt(data, catalog.CatalogTarget(active_kcal=calories), 80)
+                estimate = workouts.preview(result, 80)['summary']
+                self.assertLessEqual(abs(estimate['energy']['active_kcal'] - calories), .4)
+                self.assertLessEqual(estimate['sec'], 3600)
+            for calories in (lower - .1, upper + .1):
+                with self.assertRaises(catalog.CatalogTargetError):
+                    catalog.adapt(data, catalog.CatalogTarget(active_kcal=calories), 80)
+        walk = catalog.variants()[0][2]
+        a = workouts.preview(catalog.adapt(walk, catalog.CatalogTarget(active_kcal=150), 80))
+        b = workouts.preview(catalog.adapt(walk, catalog.CatalogTarget(active_kcal=150), 100))
+        self.assertLess(b['summary']['sec'], a['summary']['sec'])
+        with self.assertRaises(catalog.CatalogTargetError):
+            catalog.adapt(walk, catalog.CatalogTarget(active_kcal=150), None)
+
+    def test_catalog_target_api_preview_copy_and_validation(self):
+        url = self.url + '/workouts/catalog'
+        original = self.client.get(url).json()
+        missing = self.client.post(url + '/preview', json={'active_kcal': 150}).json()
+        self.assertTrue(all(w['workout'] is None and 'poids' in w['message'] for w in missing))
+        payload = {'template_id': 'brisk-walk', 'level': 'easy', 'target': {'active_kcal': 150}}
+        self.assertEqual(self.client.post(url, json=payload).status_code, 422)
+        for target in ({'duration_sec': 899}, {'duration_sec': 3601}, {'duration_sec': True},
+                       {'active_kcal': 0}, {'active_kcal': 5001}, {'active_kcal': float('inf')},
+                       {'duration_sec': 1800, 'active_kcal': 150}, {'speed': 10}):
+            # JSON ne permet pas Infinity ; vérifier celui-ci au niveau du modèle.
+            if target.get('active_kcal') == float('inf'):
+                with self.assertRaises(ValueError):
+                    catalog.CatalogTarget.model_validate(target)
+                continue
+            self.assertEqual(self.client.post(url + '/preview', json=target).status_code, 422, target)
+            self.assertEqual(self.client.post(url, json=payload | {'target': target}).status_code, 422, target)
+        self.client.patch(self.url, json={'weight_kg': 80})
+        for target in ({'duration_sec': 1800}, {'active_kcal': 150}):
+            response = self.client.post(url + '/preview', json=target)
+            self.assertEqual(response.status_code, 200)
+            entries = response.json()
+            self.assertEqual(len(entries), 18)
+            expected = next(w['workout'] for w in entries if w['template_id'] == 'brisk-walk' and w['level'] == 'easy')
+            self.assertIsNotNone(expected)
+            saved = self.client.post(url, json=payload | {'target': target}).json()
+            self.assertEqual(saved['items'], expected['items'])
+            self.assertEqual(saved['summary'], expected['summary'])
+            self.assertEqual(saved['origin']['target'], target)
+            self.assertEqual(self.client.get(self.url + '/workouts/' + saved['id']).json(), saved)
+        blocked = self.client.post(url + '/preview', json={'active_kcal': 5000}).json()
+        self.assertTrue(all(w['workout'] is None and 'entre' in w['message'] for w in blocked))
+        self.assertEqual(self.client.post(url, json=payload | {'target': {'active_kcal': 5000}}).status_code, 422)
+        self.assertEqual(self.client.get('/api/profiles/ophelie/workouts').json()['workouts'], [])
+        self.assertEqual(self.client.post('/api/profiles/inconnu/workouts/catalog/preview', json={}).status_code, 404)
+        updated = self.client.get(url).json()
+        self.assertEqual([w['items'] for w in original], [w['items'] for w in updated])
+
     def test_concurrent_idempotent_acceptance_and_deleted_result(self):
         p = self.proposal()
         def accept(_):
