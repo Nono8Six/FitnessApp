@@ -218,16 +218,21 @@ function ServerBanner() {
 
 export function Page({
   title,
-  overline,
+  subtitle,
   back,
   trailing,
+  actions,
   showAvatar = true,
   children,
 }: {
   title: string
-  overline?: string
+  /** Fait sous le grand titre : date, version… */
+  subtitle?: ReactNode
   back?: { label: string; href: string }
+  /** Toujours dans la barre de navigation (Enregistrer…). */
   trailing?: ReactNode
+  /** À côté du grand titre, puis dans la barre repliée au défilement. */
+  actions?: ReactNode
   showAvatar?: boolean
   children: ReactNode
 }) {
@@ -241,35 +246,41 @@ export function Page({
           scrolled ? 'material hairline-b' : 'bg-transparent',
         )}
       >
-        <div className={cx('mx-auto grid h-11 grid-cols-[1fr_auto_1fr] items-center px-4 desk:px-10', width)}>
-          <div className="justify-self-start">
+        <div className={cx('mx-auto grid h-11 grid-cols-[1fr_auto_1fr] items-center gap-2 px-4 desk:px-10', width)}>
+          <div className="min-w-0 justify-self-start">
             {back && (
               <a href={back.href} className="pressable -ml-2 flex h-11 items-center pr-2 text-body text-accent">
-                <ChevronLeft size={28} strokeWidth={2.2} className="-mr-0.5" />
-                {back.label}
+                <ChevronLeft size={28} strokeWidth={2.2} className="-mr-0.5 shrink-0" />
+                <span className="truncate">{back.label}</span>
               </a>
             )}
           </div>
-          <div className={cx('text-headline transition-opacity duration-200', scrolled ? 'opacity-100' : 'opacity-0')} aria-hidden>
+          <div className={cx('max-w-[50vw] truncate text-headline transition-opacity duration-200 desk:max-w-[480px]', scrolled ? 'opacity-100' : 'opacity-0')} aria-hidden>
             {title}
           </div>
-          <div className="flex items-center gap-4 justify-self-end">
+          <div className="flex items-center gap-3 justify-self-end">
             {trailing}
+            {scrolled && actions}
             {scrolled && showAvatar && <span className="desk:hidden"><ProfileButton size={30} /></span>}
           </div>
         </div>
       </header>
       <div className={cx('mx-auto px-4 desk:px-10 desk:pb-16', HAS_TAB_BAR ? 'pb-36' : 'pb-[calc(48px+env(safe-area-inset-bottom))]', width)}>
-        <div className="flex items-end justify-between gap-4 pt-1 pb-4">
+        <div className="flex items-start justify-between gap-4 pt-1 pb-5">
           <div className="min-w-0">
-            <div className="flex min-h-[18px] items-center gap-2">
-              {overline && <div className="text-footnote font-semibold tracking-[0.02em] text-label-2 uppercase">{overline}</div>}
+            <h1 className="text-largetitle break-words">{title}</h1>
+            <div className="flex flex-wrap items-center gap-x-2 gap-y-1 empty:hidden">
+              {subtitle && <div className="text-subhead text-label-2">{subtitle}</div>}
               <SimulationBadge />
               <ConnectingHint />
             </div>
-            <h1 className="text-largetitle">{title}</h1>
           </div>
-          {showAvatar && <span className="mb-1 desk:hidden"><ProfileButton /></span>}
+          {(actions || showAvatar) && (
+            <div className={cx('mt-1 flex shrink-0 items-center gap-3 transition-opacity duration-200', scrolled && 'pointer-events-none opacity-0')}>
+              {actions}
+              {showAvatar && <span className="desk:hidden"><ProfileButton /></span>}
+            </div>
+          )}
         </div>
         <ServerBanner />
         {children}
@@ -280,18 +291,21 @@ export function Page({
 
 /* ---------- Navigation ---------- */
 
+/** Capsule flottante translucide, comme la barre d’onglets d’iOS 26. */
 function TabBar({ route }: { route: Route }) {
   if (!HAS_TAB_BAR) return null
   return (
-    <nav className="material hairline-t fixed inset-x-0 bottom-0 z-40 pb-safe desk:hidden" aria-label="Navigation principale">
-      <div className="mx-auto grid h-[50px] max-w-[680px]" style={{ gridTemplateColumns: `repeat(${TABS.length}, minmax(0, 1fr))` }}>
+    <nav className="pointer-events-none fixed inset-x-0 bottom-0 z-40 flex justify-center px-4 pb-[max(env(safe-area-inset-bottom),14px)] desk:hidden"
+      aria-label="Navigation principale">
+      <div className="material pointer-events-auto flex gap-1 rounded-full p-1 shadow-[0_8px_32px_rgba(0,0,0,.55),inset_0_0_0_0.5px_rgb(255_255_255/.12)]">
         {TABS.map(({ key, label, href: to, Icon, match }) => {
           const active = (match as readonly string[]).includes(route.name)
           return (
             <a key={key} href={to} aria-current={active ? 'page' : undefined}
-              className={cx('flex flex-col items-center justify-center gap-0.5 pt-1 transition-colors', active ? 'text-accent' : 'text-[#999]')}>
-              <Icon size={25} active={active} />
-              <span className="text-[10px] leading-3 font-medium tracking-[0.01em]">{label}</span>
+              className={cx('pressable flex h-[54px] min-w-[104px] flex-col items-center justify-center gap-0.5 rounded-full px-4 transition-colors duration-300',
+                active ? 'bg-fill-3 text-accent' : 'text-label')}>
+              <Icon size={24} active={active} />
+              <span className="text-[10px] leading-3 font-semibold tracking-[0.01em]">{label}</span>
             </a>
           )
         })}

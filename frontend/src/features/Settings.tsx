@@ -170,13 +170,11 @@ function ProfileSettings({ profile, readOnly }: { profile: Profile; readOnly: bo
         control={<Segmented options={UNITS} value={unit.value} onChange={unit.save} label="Unité" disabled={readOnly} className="w-[148px]" />}
       />
     </Group>
-    <Group header="Estimation des calories" className="mt-9">
+    <Group header="Estimation des calories" className="mt-9"
+      footer={<span role={weight.saving ? 'status' : undefined}>{weight.saving ? 'Enregistrement…' : 'Utilisé avec la vitesse, la pente et le type de déplacement de chaque bloc. Videz le champ pour retirer votre poids.'}</span>}>
       <ControlRow title="Poids" error={weight.error}
         control={<WeightInput value={weight.value} onChange={weight.save} onInvalid={weight.setError}
           error={weight.error} disabled={readOnly || weight.saving} />} />
-      <p className="px-4 pt-1 pb-4 text-footnote text-label-2" role={weight.saving ? 'status' : undefined}>
-        {weight.saving ? 'Enregistrement…' : 'Utilisé avec la vitesse, la pente et le type de déplacement de chaque bloc. Videz le champ pour retirer votre poids.'}
-      </p>
     </Group>
     </>
   )

@@ -1,7 +1,7 @@
-import { Copy, Pencil, Trash2 } from 'lucide-react'
+import { Copy, History, Pencil } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import { Page } from '../components/Shell'
-import { Button, Group, Row, Sheet } from '../components/ui'
+import { Button, Group, Row, Sheet, Tile } from '../components/ui'
 import { WorkoutError, WorkoutLoading, WorkoutSummary } from '../components/WorkoutSummary'
 import { errorMessage } from '../lib/api'
 import { clock, dec1 } from '../lib/format'
@@ -28,40 +28,54 @@ export function Workout({ profile, id }: { profile: string; id: string }) {
     try { await action() } catch (e) { console.warn('Fitness : action séance impossible', e); setError(errorMessage(e)) }
     finally { setBusy(false) }
   }
-  return <Page title="Séance" back={{ label: 'Séances', href: href.library }}>
+  const easy = (kind: string) => kind !== 'run' && kind !== 'steady'
+  const date = shown && new Date(shown.created_at).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' })
+  return <Page title={shown?.name ?? 'Séance'} back={{ label: 'Séances', href: href.library }}
+    subtitle={shown && `Version ${shown.version} · ${shown.author === 'human' ? shown.author_name : 'ChatGPT'} · ${date}`}>
     {state.status === 'loading' ? <WorkoutLoading /> : state.status === 'error' ? <WorkoutError message={state.message} retry={reload} />
       : !source || !shown ? <WorkoutError message="Cette séance n’existe plus dans ce profil." retry={reload} /> : <>
         <div className="grid gap-7 desk:grid-cols-[minmax(0,1fr)_minmax(280px,360px)] desk:items-start">
-          <section className="min-w-0">
-            <h2 className="break-words text-title1">{shown.name}</h2>
-            <p className="mt-2 text-footnote text-label-2">Version {shown.version} · {shown.author === 'human' ? shown.author_name : 'ChatGPT'} · {new Date(shown.created_at).toLocaleDateString('fr-FR')}</p>
-            {oldVersion && <p role="status" className="mt-3 text-subhead text-orange">Ancienne version · lecture seule</p>}
-            <div className="mt-5 rounded-[22px] bg-surface p-5"><WorkoutSummary data={shown} /></div>
-            <div className="mt-7 grid gap-5">
+          <section className="min-w-0" aria-label="Détails de la séance">
+            {oldVersion && <p role="status" className="mb-4 rounded-[12px] bg-orange/15 px-4 py-2.5 text-subhead text-orange">Ancienne version · lecture seule</p>}
+            <WorkoutSummary data={shown} />
+            <h2 className="mt-8 mb-2.5 px-1 text-title2">Segments</h2>
+            <div className="grid gap-5">
               {shown.items.map((item, i) => <Group key={i} header={isRepeat(item) ? `Répéter ${item.repeat} fois` : undefined}>
                 {(isRepeat(item) ? item.steps : [item]).map((step, j) => <Row key={j} title={KIND_LABEL[step.kind]}
-                  subtitle={`${dec1(step.speed)} km/h · ${dec1(step.incline)} %`} trailing={<span className="num">{clock(step.sec)}</span>} />)}
+                  leading={<span aria-hidden className="block h-8 w-1 rounded-full" style={{ background: easy(step.kind) ? '#636366' : 'var(--color-accent)' }} />}
+                  subtitle={<span className="num"><span className="text-speed">{dec1(step.speed)} km/h</span> · <span className="text-incline">{dec1(step.incline)} %</span></span>}
+                  trailing={<span className="num text-time">{clock(step.sec)}</span>} />)}
               </Group>)}
             </div>
           </section>
-          <aside className="grid gap-3 desk:sticky desk:top-16">
+          <aside className="grid gap-5 desk:sticky desk:top-16" aria-label="Actions">
             <Button disabled={busy || oldVersion} onClick={() => void run(async () => {
               await selectWorkout(profile, selected ? null : id); go(href.today)
-            })}>{selected ? 'Retirer d’Aujourd’hui' : 'Choisir pour Aujourd’hui'}</Button>
-            <a href={href.editWorkout(id)} className="pressable flex h-[52px] items-center justify-center gap-2 rounded-[14px] bg-fill-3 text-headline"><Pencil size={18} />Modifier</a>
-            <Button variant="gray" disabled={busy} onClick={() => void run(async () => {
-              const copy = await duplicateWorkout(profile, id); go(href.workout(copy.id))
-            })}><Copy size={18} />{oldVersion ? 'Dupliquer la version actuelle' : 'Dupliquer'}</Button>
-            <Button variant="plain" disabled={busy} onClick={() => void run(async () => {
-              setHistory(await readVersions(profile, id)); setVersion(null)
-            })}>Voir les versions</Button>
-            {history && <label className="text-footnote text-label-2">Version affichée
-              <select aria-label="Version affichée" value={version ?? source.version} onChange={e => setVersion(Number(e.target.value))}
-                className="mt-2 h-11 w-full rounded-[12px] bg-surface px-3 text-subhead text-label">
-                {history.map(w => <option key={w.version} value={w.version}>Version {w.version}{w.version === source.version ? ' · actuelle' : ''}</option>)}
-              </select>
-            </label>}
-            <Button variant="danger" disabled={busy} className="mt-4" onClick={() => setConfirmDelete(true)}><Trash2 size={18} />Supprimer</Button>
+            })} variant={selected ? 'gray' : 'primary'}>{selected ? 'Retirer d’Aujourd’hui' : 'Choisir pour Aujourd’hui'}</Button>
+            <Group>
+              <Row href={href.editWorkout(id)} leading={<Tile><Pencil size={17} strokeWidth={2.2} /></Tile>} title="Modifier" />
+              <Row onClick={busy ? undefined : () => void run(async () => {
+                const copy = await duplicateWorkout(profile, id); go(href.workout(copy.id))
+              })} leading={<Tile color="#8e8e93"><Copy size={17} strokeWidth={2.2} /></Tile>}
+                title={oldVersion ? 'Dupliquer la version actuelle' : 'Dupliquer'} chevron={false} />
+              {history ? <div className="g-row flex items-center gap-3 pl-4">
+                <Tile color="#8e8e93"><History size={17} strokeWidth={2.2} /></Tile>
+                <label className="row-sep flex min-h-11 flex-1 items-center justify-between gap-3 py-1 pr-2 text-body">Version
+                  <select aria-label="Version affichée" value={version ?? source.version} onChange={e => setVersion(Number(e.target.value))}
+                    className="h-11 min-w-0 bg-transparent text-right text-body text-label-2 outline-none">
+                    {history.map(w => <option key={w.version} value={w.version}>{w.version}{w.version === source.version ? ' · actuelle' : ''}</option>)}
+                  </select>
+                </label>
+              </div> : <Row onClick={busy ? undefined : () => void run(async () => {
+                setHistory(await readVersions(profile, id)); setVersion(null)
+              })} leading={<Tile color="#8e8e93"><History size={17} strokeWidth={2.2} /></Tile>} title="Voir les versions" />}
+            </Group>
+            <Group>
+              <button type="button" disabled={busy} onClick={() => setConfirmDelete(true)}
+                className="g-row flex min-h-11 w-full items-center justify-center px-4 text-body text-red active:bg-fill-4 desk:hover:bg-fill-4 disabled:text-label-3">
+                Supprimer la séance
+              </button>
+            </Group>
             {error && <p role="alert" className="text-subhead text-red">{error}</p>}
           </aside>
         </div>

@@ -11,8 +11,9 @@
 1. **Le chiffre d’abord.** Chaque écran a une valeur dominante. Les libellés sont courts : un nom, une unité.
 2. **Aucun texte décoratif.** Pas d’accroche, de phrase de motivation, de mention « démonstration » ni de légende qui répète ce que montre l’écran. Un texte n’apparaît que s’il porte un fait (mesure, état, limite, source) ou une action.
 3. **Les états remplacent les avertissements permanents.** Le STOP physique n’est mentionné que lorsque le canal est perdu ou incertain. L’absence de cardio s’affiche dans les données du bilan, pas sur chaque écran.
-4. **Idiomes iOS natifs.** Grands titres repliables, listes groupées en retrait, feuilles modales, contrôle segmenté, interrupteurs, barre d’onglets translucide, activité en direct réduite au-dessus des onglets.
+4. **Idiomes iOS natifs.** Grands titres repliables, listes groupées en retrait, feuilles modales, contrôle segmenté, interrupteurs, barre d’onglets en capsule flottante translucide, activité en direct réduite au-dessus des onglets.
 5. **Deux formats seulement.** Téléphone, de 360 à 899 px, et PC à partir de 900 px. Aucune mise en page tablette dédiée : entre 600 et 899 px, la colonne téléphone est centrée et limitée à 680 px.
+6. **Mesures à la manière de Forme.** Chaque mesure a sa couleur de rôle, sa valeur en chiffres arrondis et son unité en capitales dans la même couleur (`2,5 KM`, `≈ 145 KCAL`). Les cartes résument, le détail est un toucher plus loin.
 
 Références observées : app Exercice d’Apple (minuteur jaune, boutons ronds Pause/Fin), Apple Fitness (anneaux, cartes noires, accent sportif), Apple Santé (en-tête du graphique remplacé par la valeur touchée), Forme pour la densité sombre. Ce sont des inspirations : aucune ressource Apple n’est redistribuée.
 
@@ -37,14 +38,16 @@ Couleurs de rôle, une seule signification chacune :
 | Rôle | Valeur | Où |
 |---|---|---|
 | Accent / vitesse | `#B4F000` | Action principale, vitesse mesurée, blocs de course, anneau, onglet actif. Texte noir dessus. |
-| Durée | `#FFD60A` | Durée active (Direct, bilan), bouton Pause, marqueur de pause |
-| Pente | `#BF5AF2` | Valeur et courbe de pente |
+| Durée | `#FFD60A` | Durée active ou prévue (Direct, bilan, séances), bouton Pause, marqueur de pause |
+| Distance | `#2FB4FF` | Distance prévue ou mesurée |
+| Énergie | `#FF375F` | Kcal actives estimées, puis mesurées |
+| Pente | `#BF5AF2` | Valeur et courbe de pente, dénivelé équivalent |
 | Arrêt / erreur | `#FF453A` | Bouton Arrêter, canal perdu, commande inconnue, erreurs de saisie |
 | Alerte | `#FF9F0A` | Mesures anciennes, arrêt demandé, coupure de mesure dans les courbes |
 | Confirmé | `#30D158` | Connecté, interrupteurs, Reprendre, arrêt confirmé |
 | Comparaison | `#64D2FF` | Seconde séance dans le bilan |
 | Cible | blanc 55–60 %, tirets 4/4 | Consigne dans toutes les courbes |
-| Cardio (futur) | `#FF375F` | Réservé, inactif tant qu’aucune source valide n’existe |
+| Cardio (futur) | `#FF6482` | Réservé, inactif tant qu’aucune source valide n’existe |
 
 Les blocs faciles (échauffement, récupération, retour au calme) sont gris `#636366`. Les blocs durs (course, allure continue) utilisent l’accent. La couleur n’est jamais le seul signal : chaque état a un libellé ou une forme (tirets, marqueur, bande).
 
@@ -82,11 +85,11 @@ Formats : virgule décimale, espace insécable avant `:` `?` `%` et à l’inté
 
 | | Téléphone | PC |
 |---|---|---|
-| Principale | Barre d’onglets translucide : Aujourd’hui, Séances, Historique, Coach | Barre latérale de 248 px : les mêmes onglets plus Direct |
+| Principale | Capsule flottante translucide centrée en bas, onglet actif sur fond `fill-3` : Aujourd’hui, Séances, Historique, Coach | Barre latérale de 248 px : les mêmes onglets plus Direct |
 | Profil | Avatar à droite du grand titre, puis feuille de choix | Bas de la barre latérale |
 | Séance en cours | Capsule « activité en direct » au-dessus des onglets : bloc, durée, vitesse, Pause | Carte compacte dans la barre latérale ; point vert animé sur Direct |
 | Direct | Plein écran, sans onglets ; chevron pour réduire | Plein écran ; mesures à gauche, bloc et courbes à droite, commandes sous les mesures |
-| En-tête | Grand titre qui se replie en barre floutée au défilement | Identique, sans avatar |
+| En-tête | Grand titre qui se replie en barre floutée au défilement ; date ou version en `label-2` sous le titre ; boutons d’écran (+) à côté de l’avatar, puis dans la barre repliée | Identique, sans avatar |
 
 ## 6. Composants
 
@@ -96,6 +99,10 @@ Formats : virgule décimale, espace insécable avant `:` `?` `%` et à l’inté
 - **Segmenté.** Piste `fill-3`, curseur `#636366` qui glisse (300 ms).
 - **Interrupteur.** 51 × 31 px, vert quand actif.
 - **Stepper.** Valeur saisissable au clavier, avec ses boutons − / + de 44 px. Les erreurs s’affichent en rouge sous la ligne. Enregistrer est désactivé tant qu’une valeur est hors limites.
+- **Grille de mesures.** Cellules `surface` séparées par des filets de 1 px, libellé en Subhead blanc, valeur 26 px colorée. Deux colonnes sur téléphone, une ligne sur PC. Valeur inconnue : `--` en `label-3`.
+- **Carte de séance.** Carte entière cliquable avec chevron : pastille ronde de l’activité (accent sur fond accent à 16 %), nom, mesures colorées, profil compact. Pas de bouton « Voir » redondant.
+- **Section.** Titre Title 2 à gauche, action en accent à droite (« Changer »), comme « Exercices / Plus de détails » dans Forme.
+- **Chargement.** Squelette de la forme du contenu (pulsation), libellé réservé aux lecteurs d’écran.
 - **Anneau.** Trait de 11 px, piste à 22 %, extrémités arrondies.
 - **Bandeau d’état.** Fond de la couleur de rôle à 15 %, icône et une phrase.
 
@@ -110,9 +117,9 @@ Composants SVG maison. ECharts n’est envisagé qu’à la brique 14 si le volu
 - Lecture : toucher ou survoler pour placer un curseur commun à la vitesse et à la pente ; l’en-tête affiche alors temps, valeur, cible et comparaison, comme dans Apple Santé. Les flèches du clavier déplacent le curseur, Échap le retire.
 - Direct : fenêtre de 1 min, 5 min ou toute la séance ; point de mesure pulsé en bout de courbe.
 - Profil de programme : barres dont la largeur représente la durée et la hauteur la vitesse. Dans le Direct, la partie réalisée est colorée et le reste en gris foncé.
-- Séances préparées : échelles fixes et complètes **0–16 km/h** pour la vitesse et **0–10 %** pour l’inclinaison, même axe temporel. Ne pas adapter le plafond au maximum de la séance. Zones vitesse/pente de 176/144 px, ramenées à 144/128 px lorsque le graphique fait moins de 360 px de large. Barres vertes/grises avec valeurs, escalier violet avec aire et points de repère ; valeurs inscrites sur les segments assez larges (30 px minimum). Le segment survolé ou touché est repéré sur les deux zones ; son type, sa durée et ses consignes remplacent les valeurs globales dans l’en-tête du graphique. La sélection tactile reste visible après le toucher. Précédent/suivant permet de lire les segments étroits ; le graphique de la bibliothèque ne déclenche pas l’ouverture de la séance.
+- Séances préparées : échelles fixes et complètes **0–16 km/h** pour la vitesse et **0–10 %** pour l’inclinaison, même axe temporel. Ne pas adapter le plafond au maximum de la séance. Zones vitesse/pente de 176/144 px, ramenées à 144/128 px lorsque le graphique fait moins de 360 px de large. Barres vertes/grises avec valeurs, escalier violet avec aire et points de repère ; valeurs inscrites sur les segments assez larges (30 px minimum). Le segment survolé ou touché est repéré sur les deux zones ; son type, sa durée et ses consignes remplacent les valeurs globales dans l’en-tête du graphique. La sélection tactile reste visible après le toucher. Précédent/suivant permet de lire les segments étroits ; toucher le graphique interactif n’ouvre rien d’autre.
 
-Les prévisions affichent durée, distance et **kcal actives estimées** en trois colonnes. Le signe ≈ accompagne les calories ; un poids absent donne un tiret et une action vers les réglages, jamais zéro. Le dénivelé porte le libellé « équivalent prévu ». Le détail repliable explique le total avec repos, le poids actuel et les limites sans surcharger la lecture du graphique. Les cartes de bibliothèque restent compactes. Le choix marche/course est automatique selon la vitesse, sans sélecteur ni ligne supplémentaire dans l'éditeur ; dans les réglages, le poids utilise une saisie décimale effaçable avec validation et état d'enregistrement.
+Les prévisions affichent durée, distance, **kcal actives estimées** et dénivelé équivalent dans une grille de mesures (2 × 2 sur téléphone, 4 colonnes sur PC). Le signe ≈ accompagne les calories ; un poids absent donne un tiret et une action vers les réglages, jamais zéro. Le dénivelé porte le libellé « Dénivelé équiv. » ; l’explication de l’estimation précise qu’il s’agit d’une montée équivalente prévue. Le détail repliable explique le total avec repos, le poids actuel et les limites sans surcharger la lecture du graphique. Les cartes de bibliothèque et d’Aujourd’hui restent compactes : mesures colorées et profil compact non interactif (barres sur l’échelle fixe 0–16 km/h, escalier de pente 0–10 %). Le graphique interactif n’apparaît que dans la séance et l’éditeur. Le choix marche/course est automatique selon la vitesse, sans sélecteur ni ligne supplémentaire dans l'éditeur ; dans les réglages, le poids utilise une saisie décimale effaçable avec validation et état d'enregistrement.
 
 ## 8. Mouvement
 

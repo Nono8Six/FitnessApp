@@ -394,3 +394,30 @@ export function useNow(ms = 1000) {
   }, [ms])
   return n
 }
+
+/* ---------- Compact programme profile ---------- */
+
+/**
+ * Profil compact pour les listes : barres de vitesse sur l’échelle fixe 0–16 km/h,
+ * escalier de pente 0–10 % en dessous. Purement visuel ; le détail est dans la séance.
+ */
+export function ProgrammeMini({ blocks, height = 56, className }: { blocks: Block[]; height?: number; className?: string }) {
+  const [ref, w] = useWidth<HTMLDivElement>()
+  const total = blocks.at(-1)?.end ?? 0
+  const inclineH = 14, gapY = 4
+  const speedH = height - inclineH - gapY
+  const x = (s: number) => s / (total || 1) * w
+  const gap = blocks.length > 24 ? 0.5 : 1.5
+  const incline = blocks.map((b, i) => `${i ? 'L' : 'M'}${x(b.start)},${height - b.incline / 10 * inclineH}H${x(b.end)}`).join('')
+  return <div ref={ref} className={className} style={{ height }} aria-hidden>
+    {w > 0 && total > 0 && <svg width={w} height={height}>
+      <line x1={0} x2={w} y1={speedH} y2={speedH} stroke="var(--color-sep)" strokeWidth={0.5} />
+      {blocks.map(b => {
+        const h = Math.max(2, b.speed / 16 * speedH)
+        return <rect key={b.index} x={x(b.start)} y={speedH - h} width={Math.max(0.5, x(b.sec) - Math.min(gap, x(b.sec) / 3))} height={h}
+          rx={Math.min(2.5, x(b.sec) / 5)} fill={b.kind === 'run' || b.kind === 'steady' ? 'var(--color-accent)' : '#636366'} />
+      })}
+      <path d={incline} fill="none" stroke="var(--color-incline)" strokeWidth={1.5} strokeLinejoin="round" />
+    </svg>}
+  </div>
+}

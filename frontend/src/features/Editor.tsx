@@ -1,7 +1,7 @@
 import { ArrowDown, ArrowUp, Minus, Plus, Repeat as RepeatIcon, Trash2 } from 'lucide-react'
 import { useEffect, useId, useRef, useState } from 'react'
 import { Page } from '../components/Shell'
-import { Button, cx } from '../components/ui'
+import { Button, cx, StatGrid } from '../components/ui'
 import { WorkoutError, WorkoutLoading, WorkoutSummary } from '../components/WorkoutSummary'
 import { errorMessage } from '../lib/api'
 import { href, navigate } from '../lib/router'
@@ -97,14 +97,14 @@ function EditorForm({ profile, source }: { profile: string; source?: Workout }) 
   return <Page title={source ? 'Modifier' : 'Nouvelle séance'} showAvatar={false} back={{ label: 'Séances', href: source ? href.workout(source.id) : href.library }}
     trailing={<button className="pressable h-11 text-headline text-accent disabled:text-label-3" disabled={saving || preview.status !== 'ok' || !dirty}
       onClick={() => void save()}>{saving ? 'Enregistrement…' : 'Enregistrer'}</button>}>
-    <fieldset disabled={saving} className="grid min-w-0 gap-7 desk:grid-cols-[minmax(0,1fr)_minmax(260px,340px)] desk:items-start">
-      <div className="grid min-w-0 gap-7">
-        <label className="block overflow-hidden rounded-[12px] bg-surface">
-          <span className="sr-only">Nom de la séance</span>
-          <input autoComplete="off" maxLength={80} aria-label="Nom de la séance" aria-invalid={!!errorAt(['name'])} value={name} onChange={e => setName(e.target.value)}
-            className="h-[52px] w-full bg-transparent px-4 text-body outline-none placeholder:text-label-3" placeholder="Nom de la séance" />
-          {errorAt(['name']) && <span className="block px-4 pb-3 text-footnote text-red">{errorAt(['name'])}</span>}
-        </label>
+    <fieldset disabled={saving} className="grid min-w-0 gap-7 desk:grid-cols-[minmax(0,1fr)_minmax(300px,380px)] desk:items-start">
+      <label className="block min-w-0 overflow-hidden rounded-[12px] bg-surface desk:col-start-1 desk:row-start-1">
+        <span className="sr-only">Nom de la séance</span>
+        <input autoComplete="off" maxLength={80} aria-label="Nom de la séance" aria-invalid={!!errorAt(['name'])} value={name} onChange={e => setName(e.target.value)}
+          className="h-[52px] w-full bg-transparent px-4 text-headline outline-none placeholder:font-normal placeholder:text-label-3" placeholder="Nom de la séance" />
+        {errorAt(['name']) && <span className="block px-4 pb-3 text-footnote text-red">{errorAt(['name'])}</span>}
+      </label>
+      <div className="order-last grid min-w-0 gap-7 desk:order-none desk:col-start-1">
         {entries.map(({ key, value: item }, i) => <section key={key} aria-label={`Bloc ${i + 1}`}>
           <div className="mb-2 flex items-center justify-between gap-2 pl-4">
             <h2 className="text-footnote font-semibold text-label-2 uppercase">{i + 1} · {isRepeat(item) ? 'Répétition' : KIND_LABEL[item.kind]}</h2>
@@ -132,19 +132,18 @@ function EditorForm({ profile, source }: { profile: string; source?: Workout }) 
           <Button variant="gray" size="md" disabled={entries.length >= 120} onClick={() => setEntries(list => [...list, entry({ repeat: 3, steps: [newStep(), { kind: 'recover', sec: 60, speed: 4, incline: 0 }] })])}><RepeatIcon size={18} />Répétition</Button>
         </div>
       </div>
-      <aside className="order-first min-w-0 desk:sticky desk:top-16 desk:order-none" aria-label="Aperçu">
-        <div className="rounded-[22px] bg-surface p-5">
-          {preview.status === 'ok' ? <WorkoutSummary data={preview.data} editing /> : <>
-            <div className="grid grid-cols-3 gap-2">{['Durée prévue', 'Distance prévue', 'Kcal actives est.'].map(label => <div key={label}><p className="text-caption text-label-2">{label}</p><p className="num mt-1 text-[22px] text-label-3">--</p></div>)}</div>
-            <p role={preview.status === 'error' ? 'alert' : 'status'} className={cx('mt-4 text-footnote', preview.status === 'error' ? 'text-red' : 'text-label-2')}>
-              {preview.status === 'error' ? preview.message : 'Calcul de l’aperçu…'}
-            </p>
-            {preview.status === 'error' && <button onClick={retry} className="mt-2 min-h-11 text-footnote text-accent">Vérifier à nouveau</button>}
-          </>}
-          <p className="mt-4 text-footnote text-label-2">60 min maximum · 120 segments<br />1–16 km/h · pente 0–10 %</p>
-        </div>
-        {source && <p className="mt-3 px-1 text-footnote text-label-2">La version {source.version} sera conservée.</p>}
-        {error && <p role="alert" className="mt-4 text-subhead text-red">{error}</p>}
+      <aside className="min-w-0 desk:sticky desk:top-16 desk:col-start-2 desk:row-span-2 desk:row-start-1" aria-label="Aperçu">
+        {preview.status === 'ok' ? <WorkoutSummary data={preview.data} editing /> : <>
+          <StatGrid stats={['Durée prévue', 'Distance prévue', 'Kcal actives est.', 'Dénivelé équiv.'].map(label => ({ label, value: null, color: '' }))} />
+          {/* Les erreurs de champ s'affichent sous leur champ ; ici, seulement l'état et les erreurs sans champ. */}
+          {preview.status === 'error' ? !(preview.issues?.length && preview.issues.every(issue => issue.path.length > 0)) && <>
+            <p role="alert" className="mt-3 px-4 text-footnote text-red">{preview.message}</p>
+            <button onClick={retry} className="min-h-11 px-4 text-footnote text-accent">Vérifier à nouveau</button>
+          </> : <p role="status" className="mt-3 px-4 text-footnote text-label-2">Calcul de l’aperçu…</p>}
+        </>}
+        <p className="mt-3 px-4 text-footnote text-label-2">60 min maximum · 120 segments · 1–16 km/h · pente 0–10 %</p>
+        {source && <p className="mt-1 px-4 text-footnote text-label-2">La version {source.version} sera conservée.</p>}
+        {error && <p role="alert" className="mt-4 px-4 text-subhead text-red">{error}</p>}
       </aside>
     </fieldset>
   </Page>

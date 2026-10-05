@@ -37,10 +37,10 @@ export function Button({
 
 export function SectionHeader({ title, action, href }: { title: string; action?: string; href?: string }) {
   return (
-    <div className="mb-2 flex items-end justify-between px-1">
-      <h2 className="text-title3">{title}</h2>
+    <div className="mb-2.5 flex items-end justify-between gap-3 px-1">
+      <h2 className="text-title2">{title}</h2>
       {action && href && (
-        <a href={href} className="pressable text-subhead text-accent">
+        <a href={href} className="pressable -my-2 flex min-h-11 items-center text-body text-accent">
           {action}
         </a>
       )}
@@ -336,6 +336,69 @@ export function Metric({ label, value, unit, color, size = 'md' }: { label: stri
         {value}
         {unit && <span className="ml-1 text-[0.55em] font-semibold tracking-normal text-label-2">{unit}</span>}
       </div>
+    </div>
+  )
+}
+
+/* ---------- Stat grid (Forme : mesure colorée, unité en capitales) ---------- */
+
+export interface Stat {
+  label: string
+  /** null : valeur inconnue, affichée « -- » en label-3. */
+  value: string | null
+  unit?: string
+  color: string
+  /** Occupe toute la ligne sur téléphone. */
+  wide?: boolean
+}
+
+/** Cellules séparées par des filets, comme le détail d’un exercice dans Forme. */
+export function StatGrid({ stats, className }: { stats: Stat[]; className?: string }) {
+  return (
+    <dl className={cx('grid grid-cols-2 gap-px overflow-hidden rounded-[12px] bg-sep-opaque desk:grid-flow-col desk:auto-cols-fr desk:grid-cols-none', className)}>
+      {stats.map((s) => (
+        <div key={s.label} className={cx('min-w-0 bg-surface px-3.5 py-3 desk:px-4', s.wide && 'col-span-2 desk:col-span-1')}>
+          <dt className="truncate text-subhead text-label">{s.label}</dt>
+          <dd className="num mt-0.5 text-[26px] leading-[32px] font-semibold tracking-[-0.01em] whitespace-nowrap"
+            style={{ color: s.value === null ? 'var(--color-label-3)' : s.color }}>
+            {s.value ?? '--'}
+            {s.unit && s.value !== null && <span className="ml-0.5 text-[17px] font-semibold uppercase">{s.unit}</span>}
+          </dd>
+        </div>
+      ))}
+    </dl>
+  )
+}
+
+/* ---------- Activity glyph ---------- */
+
+/** Pastille ronde de l’activité, comme les icônes d’exercice de Forme. */
+export function Glyph({ children, size = 44, color = 'var(--color-accent)' }: { children: ReactNode; size?: number; color?: string }) {
+  return (
+    <span aria-hidden className="grid shrink-0 place-items-center rounded-full"
+      style={{ width: size, height: size, color, background: `color-mix(in srgb, ${color} 16%, #000)` }}>
+      {children}
+    </span>
+  )
+}
+
+/* ---------- Skeleton ---------- */
+
+/** Chargement : la forme du contenu attendu, sans texte décoratif. */
+export function Skeleton({ label, cards = 1 }: { label: string; cards?: number }) {
+  return (
+    <div role="status" className="grid gap-3 desk:grid-cols-2 desk:gap-4">
+      <span className="sr-only">{label}</span>
+      {Array.from({ length: cards }, (_, i) => (
+        <div key={i} aria-hidden className="animate-pulse rounded-[22px] bg-surface p-5">
+          <div className="flex items-center gap-3">
+            <div className="size-11 rounded-full bg-fill-3" />
+            <div className="h-4 w-1/2 rounded bg-fill-3" />
+          </div>
+          <div className="mt-5 h-7 w-2/3 rounded bg-fill-4" />
+          <div className="mt-5 h-14 rounded-[8px] bg-fill-4" />
+        </div>
+      ))}
     </div>
   )
 }
