@@ -3,10 +3,11 @@ from uuid import uuid4
 
 from pydantic import Field, field_validator
 from sqlalchemy import func, or_, select, update
+from sqlalchemy.orm import object_session
 
 from ..storage.models import CoachMemory, CoachTurn, Conversation
 from ..training.profiles import get_profile, utc_now
-from ..training.workouts import Input
+from ..training.workouts import Input, Target
 
 
 class CoachNotFound(Exception):
@@ -20,6 +21,7 @@ class CoachConflict(Exception):
 class Send(Input):
     request_id: str = Field(pattern=r"^[a-f0-9-]{32,36}$")
     text: str = Field(min_length=1, max_length=4000)
+    workout_target: Target | None = None
 
     @field_validator("text")
     @classmethod
@@ -45,7 +47,11 @@ class MemoryInput(Input):
 
 
 def out(row):
-    return {column.name: getattr(row, column.name) for column in row.__table__.columns if column.name != "profile_id"}
+    result = {column.name: getattr(row, column.name) for column in row.__table__.columns if column.name != "profile_id"}
+    if isinstance(row, CoachTurn):
+        from .workout_proposals import for_turn
+        result['workout_proposals'] = for_turn(object_session(row), row.profile_id, row.id)
+    return result
 
 
 def owned(session, cls, profile, identifier):
@@ -107,15 +113,21 @@ def reserve(session, profile, conversation, payload):
     row = owned(session, Conversation, profile, conversation)
     previous = session.scalar(select(CoachTurn).where(CoachTurn.profile_id == profile, CoachTurn.request_id == payload.request_id))
     if previous:
-        if previous.conversation_id != conversation or previous.user_text != payload.text:
+        context = previous.workout_context
+        target = payload.workout_target
+        matches = (context is None and target is None) or (context is not None and target is not None
+            and context['id'] == target.workout_id and context['version'] == target.version)
+        if previous.conversation_id != conversation or previous.user_text != payload.text or not matches:
             raise CoachConflict("Cet envoi existe déjà avec un autre contenu.")
         return out(previous), False
     if session.scalar(select(CoachTurn.id).where(CoachTurn.profile_id == profile, CoachTurn.status == "running")):
         raise CoachConflict("Une réponse est déjà en cours pour ce profil. Interrompez-la avant d’envoyer.")
     now = utc_now()
+    from .workout_proposals import snapshot
+    context = snapshot(session, profile, payload.workout_target) if payload.workout_target else None
     turn = CoachTurn(id=uuid4().hex, profile_id=profile, conversation_id=conversation, request_id=payload.request_id,
         user_text=payload.text, answer="", status="running", error=None, model=None, sources=[], proposals=[], usage={"requests": 0, "reports": []},
-        created_at=now, updated_at=now)
+        created_at=now, updated_at=now, workout_context=context)
     if not session.scalar(select(CoachTurn.id).where(CoachTurn.conversation_id == conversation).limit(1)):
         row.title = " ".join(payload.text.split())[:100]
     # Écrire dans une conversation archivée la remet dans la liste.

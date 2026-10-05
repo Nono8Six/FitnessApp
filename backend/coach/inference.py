@@ -9,6 +9,7 @@ from .protocol import MESSAGES, RESOURCE
 
 logger = logging.getLogger(__name__)
 ERRORS = {**MESSAGES,
+    'workout_invalid': 'La proposition reste invalide. Aucun programme correspondant n’a été enregistré. Précisez la demande pour réessayer.',
     "limit": "Limite d’utilisation ChatGPT atteinte. Consultez votre usage avant de réessayer.",
     "usage_unavailable": "L’usage du forfait ne peut pas être vérifié. Réessayez plus tard.",
     "unsupported": "Ce modèle ou cette fonction n’est pas disponible avec la connexion actuelle.",

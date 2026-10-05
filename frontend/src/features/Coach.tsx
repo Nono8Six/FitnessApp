@@ -9,6 +9,8 @@ import { readChatGPT, type ChatGPTState } from '../lib/chatgpt'
 import { archiveConversation, createConversation, readConversations, readTurns, sendMessage, stopTurn, type Conversation, type PageData, type Proposal, type Turn } from '../lib/coach'
 import { href } from '../lib/router'
 import { CoachMemory } from './CoachMemory'
+import { WorkoutProposalCard } from '../components/WorkoutProposal'
+import type { WorkoutTarget } from '../lib/coach'
 
 const empty = <T,>(): PageData<T> => ({ items: [], total: 0, next_offset: null, partial: false })
 const date = (value: string) => new Date(value).toLocaleString('fr-FR', { dateStyle: 'short', timeStyle: 'short' })
@@ -28,16 +30,17 @@ function remember(key: string, value: string) { try { sessionStorage.setItem(key
 /** Clavier physique : Entrée envoie, Maj+Entrée va à la ligne. Au toucher, Entrée reste un retour à la ligne. */
 const finePointer = () => typeof matchMedia === 'function' && matchMedia('(pointer: fine)').matches
 
-const SUGGESTIONS = ['Que me conseilles-tu aujourd’hui ?', 'J’ai vingt minutes et je suis fatigué : quelle séance choisir ?', 'Qu’avais-tu conseillé la dernière fois ?']
+const SUGGESTIONS = ['Crée une séance : objectif, durée, difficulté et marche ou course…', 'Que me conseilles-tu aujourd’hui ?', 'Qu’avais-tu conseillé la dernière fois ?']
 
 function IconButton({ label, onClick, disabled, children, className }: { label: string; onClick: () => void; disabled?: boolean; children: ReactNode; className?: string }) {
   return <button type="button" aria-label={label} title={label} onClick={onClick} disabled={disabled}
     className={cx('pressable grid size-[34px] shrink-0 place-items-center rounded-full bg-fill-3 text-accent disabled:text-label-3', className)}>{children}</button>
 }
 
-export function Coach({ profile }: { profile: string }) {
+export function Coach({ profile, target, conversationId, createWorkout }: { profile: string; target?: WorkoutTarget; conversationId?: string; createWorkout?: boolean }) {
   const draftKey = `fitness.coach.draft.${profile}`
-  const [draft, setDraft] = useState(() => stored(draftKey))
+  const [draft, setDraft] = useState(() => target ? 'Ajuste cette séance : ' : createWorkout ? 'Crée une séance : ' : stored(draftKey))
+  const [workoutTarget, setWorkoutTarget] = useState(target)
   const [conversations, setConversations] = useState<PageData<Conversation>>(empty)
   const [conversation, setConversation] = useState<string>('')
   const [current, setCurrent] = useState<Conversation>()
@@ -80,13 +83,15 @@ export function Coach({ profile }: { profile: string }) {
   }
   const open = async (c: Conversation) => {
     const generation = ++readGeneration.current
-    setHistory(false); setConversation(c.id); setCurrent(c); remember(`fitness.coach.current.${profile}`, c.id)
+    setWorkoutTarget(undefined); setHistory(false); setConversation(c.id); setCurrent(c); remember(`fitness.coach.current.${profile}`, c.id)
+    window.history.replaceState(null, '', href.coachConversation(c.id))
     setTurns(empty()); setReading(true); setError(''); follow.current = true
-    try { const data = await readTurns(profile, c.id); if (mounted.current && generation === readGeneration.current) setTurns(data) }
+    try { const data = await readTurns(profile, c.id); if (mounted.current && generation === readGeneration.current) { setTurns(data); setCurrent(data.conversation) } }
     catch (e) { if (mounted.current && generation === readGeneration.current) setError(errorMessage(e)) }
     finally { if (mounted.current && generation === readGeneration.current) setReading(false) }
   }
   const startNew = () => {
+    setWorkoutTarget(undefined)
     readGeneration.current++; setHistory(false); setConversation(''); setCurrent(undefined); setTurns(empty()); setError(''); changeDraft('')
     remember(`fitness.coach.current.${profile}`, '')
     composer.current?.focus()
@@ -97,6 +102,11 @@ export function Coach({ profile }: { profile: string }) {
     readConversations(profile).then(data => {
       if (!current) return
       setConversations(data)
+      if (target || createWorkout) return
+      if (conversationId) {
+        void open({ id: conversationId, title: 'Conversation de la séance', created_at: '', updated_at: '', archived_at: null })
+        return
+      }
       const previous = stored(`fitness.coach.current.${profile}`)
       const found = data.items.find(c => c.id === previous) ?? data.items[0]
       if (found) void open(found)
@@ -159,8 +169,10 @@ export function Coach({ profile }: { profile: string }) {
         id = created.id
         if (!mounted.current) return
         setConversation(id); setCurrent(created); remember(`fitness.coach.current.${profile}`, id)
+        // URL consultable après rechargement, sans remonter le composant ni couper le flux.
+        window.history.replaceState(null, '', href.coachConversation(id))
       }
-      await sendMessage(profile, id, text, request.current.id, ctrl.signal, turn => { final = turn; updateTurn(turn) })
+      await sendMessage(profile, id, text, request.current.id, ctrl.signal, turn => { final = turn; updateTurn(turn) }, workoutTarget)
       if (mounted.current && final?.status === 'completed') { changeDraft(''); request.current = null }
       else if (final && final.status !== 'running') request.current = null
     } catch (e) {
@@ -246,6 +258,7 @@ export function Coach({ profile }: { profile: string }) {
     <div className="coach-layout">
       <aside className="coach-history" aria-label="Conversations précédentes">{list}</aside>
       <section className="min-w-0" aria-label="Conversation avec le coach">
+        {workoutTarget && <p role="status" className="mb-5 rounded-[12px] bg-surface px-4 py-3 text-subhead text-label-2">Ajustement de la version {workoutTarget.version}. <a className="text-accent" href={`${href.workout(workoutTarget.workout_id)}?version=${workoutTarget.version}`}>Voir la séance</a></p>}
         {current?.archived_at && conversation && <div role="status" className="mb-5 flex items-center gap-3 rounded-[12px] bg-surface py-1.5 pr-1.5 pl-4">
           <Archive size={17} className="shrink-0 text-label-2" />
           <p className="flex-1 text-subhead text-label-2">Conversation archivée</p>
@@ -294,6 +307,10 @@ export function Coach({ profile }: { profile: string }) {
                 </div>
               </div>}
               {turn.status === 'completed' && turn.error === 'tool_error' && <p className="mt-3 text-footnote text-orange" role="status">Une consultation a échoué : les données correspondantes n’ont pas pu être vérifiées.</p>}
+              {turn.status === 'completed' && turn.error === 'workout_invalid' && <p className="mt-3 text-subhead text-red" role="alert">{turn.error_message ?? 'La proposition reste invalide. Aucun programme correspondant n’a été enregistré.'}</p>}
+              {turn.workout_proposals.map(value => <WorkoutProposalCard key={value.id} profile={profile} value={value} changed={() => {
+                void readTurns(profile, turn.conversation_id).then(data => { if (mounted.current) setTurns(data) }).catch(e => { if (mounted.current) setError(errorMessage(e)) })
+              }} />)}
               {turn.proposals.map((value, index) => <div key={index} className="mt-4 rounded-[14px] bg-surface p-4">
                 <p className="flex items-center gap-1.5 text-footnote font-semibold text-label-2"><BookOpen size={14} />{value.saved_memory_id ? 'Préférence enregistrée' : 'Préférence proposée'}</p>
                 <p className="mt-1.5 text-body">{value.content}</p>

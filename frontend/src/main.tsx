@@ -18,19 +18,19 @@ function App() {
   const profile = useCurrentProfile()
   const previousProfile = useRef(profile?.id)
   useEffect(() => {
-    if (previousProfile.current && previousProfile.current !== profile?.id && (route.name === 'editor' || route.name === 'workout')) {
-      navigate(href.library)
+    if (previousProfile.current && previousProfile.current !== profile?.id && (route.name === 'editor' || route.name === 'workout' || route.name === 'coach')) {
+      navigate(route.name === 'coach' ? href.coach : href.library)
     }
     previousProfile.current = profile?.id
   }, [profile?.id, route.name])
   return (
     <Shell route={route}>
-      <div key={`${profile?.id}:${route.name}:${'id' in route ? route.id ?? '' : ''}:${route.name === 'workout' ? route.version ?? '' : ''}`}>
+      <div key={`${profile?.id}:${JSON.stringify(route)}`}>
         {route.name === 'settings' ? <Settings /> : !profile ? <Page title="Fitness"><p className="text-label-2" role="status">Chargement du profil…</p></Page>
-          : route.name === 'library' ? <Library profile={profile.id} />
-          : route.name === 'editor' ? <Editor profile={profile.id} id={route.id} />
+          : route.name === 'library' ? <Library profile={profile.id} initialView={route.view} />
+          : route.name === 'editor' ? <Editor profile={profile.id} id={route.id} proposalId={route.proposalId} />
           : route.name === 'workout' ? <Workout profile={profile.id} id={route.id} requestedVersion={route.version} />
-          : route.name === 'coach' ? <Suspense fallback={<Page title="Coach"><p role="status" className="text-label-2">Chargement…</p></Page>}><Coach profile={profile.id} /></Suspense>
+          : route.name === 'coach' ? <Suspense fallback={<Page title="Coach"><p role="status" className="text-label-2">Chargement…</p></Page>}><Coach profile={profile.id} target={route.target} conversationId={route.conversationId} createWorkout={route.createWorkout} /></Suspense>
           : <Today profile={profile.id} />}
       </div>
     </Shell>

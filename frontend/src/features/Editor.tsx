@@ -5,7 +5,9 @@ import { Button, cx, StatGrid } from '../components/ui'
 import { WorkoutError, WorkoutLoading, WorkoutSummary } from '../components/WorkoutSummary'
 import { errorMessage } from '../lib/api'
 import { href, navigate } from '../lib/router'
-import { isRepeat, KIND_LABEL, readWorkout, saveWorkout, usePreview, type Item, type LoadState, type Step, type Workout } from '../lib/workouts'
+import { GOALS, LEVELS, isRepeat, KIND_LABEL, readWorkout, saveWorkout, usePreview, type Goal, type Level, type Item, type LoadState, type Step, type Workout } from '../lib/workouts'
+import { acceptWorkoutProposal, readWorkoutProposal, type WorkoutProposal } from '../lib/coach'
+import { WorkoutDifferences } from '../components/WorkoutProposal'
 
 /** Le texte saisi reste visible, même invalide. Aucun retour silencieux à l'ancienne valeur. */
 function NumberField({ value, onChange, step, label, unit, error }: {
@@ -61,18 +63,21 @@ let nextKey = 0
 const entry = (value: Item) => ({ key: ++nextKey, value })
 const newStep = (): Step => ({ kind: 'steady', sec: 300, speed: 5, incline: 0 })
 
-function EditorForm({ profile, source }: { profile: string; source?: Workout }) {
-  const [name, setName] = useState(source?.name ?? '')
-  const [entries, setEntries] = useState(() => (source?.items ?? [newStep()]).map(entry))
+function EditorForm({ profile, source, proposal }: { profile: string; source?: Workout; proposal?: WorkoutProposal }) {
+  const initial = proposal?.workout ?? source
+  const [name, setName] = useState(initial?.name ?? '')
+  const [goal, setGoal] = useState<Goal | null>(initial?.goal ?? null)
+  const [level, setLevel] = useState<Level | null>(initial?.level ?? null)
+  const [entries, setEntries] = useState(() => (initial?.items ?? [newStep()]).map(entry))
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
   const mounted = useRef(true)
   useEffect(() => { mounted.current = true; return () => { mounted.current = false } }, [])
-  const input = { name, items: entries.map(e => e.value) }
+  const input = { name, items: entries.map(e => e.value), goal, level }
   const { state: preview, retry } = usePreview(profile, input)
   const errorAt = (path: (string | number)[]) => preview.status === 'error'
     ? preview.issues?.find(issue => JSON.stringify(issue.path) === JSON.stringify(path))?.message : undefined
-  const dirty = JSON.stringify(input) !== JSON.stringify(source ? { name: source.name, items: source.items } : { name: '', items: [newStep()] })
+  const dirty = JSON.stringify(input) !== JSON.stringify(initial ? { name: initial.name, items: initial.items, goal: initial.goal ?? null, level: initial.level ?? null } : { name: '', items: [newStep()], goal: null, level: null })
   useEffect(() => {
     if (!dirty) return
     const beforeUnload = (event: BeforeUnloadEvent) => event.preventDefault()
@@ -87,15 +92,15 @@ function EditorForm({ profile, source }: { profile: string; source?: Workout }) 
     if (saving || preview.status !== 'ok') return
     setSaving(true); setError('')
     try {
-      const saved = await saveWorkout(profile, input, source)
+      const saved = proposal ? await acceptWorkoutProposal(profile, proposal.id, input) : await saveWorkout(profile, input, source)
       if (mounted.current) navigate(href.workout(saved.id))
     } catch (e) {
       console.warn('Fitness : enregistrement de séance impossible', e)
       setError(errorMessage(e)); setSaving(false)
     }
   }
-  return <Page title={source ? 'Modifier' : 'Nouvelle séance'} showAvatar={false} back={{ label: 'Séances', href: source ? href.workout(source.id) : href.library }}
-    trailing={<button className="pressable h-11 text-headline text-accent disabled:text-label-3" disabled={saving || preview.status !== 'ok' || !dirty}
+  return <Page title={proposal ? 'Modifier la proposition' : source ? 'Modifier' : 'Nouvelle séance'} showAvatar={false} back={{ label: proposal ? 'Coach' : 'Séances', href: proposal ? href.coachConversation(proposal.conversation_id) : source ? href.workout(source.id) : href.myWorkouts }}
+    trailing={<button className="pressable h-11 text-headline text-accent disabled:text-label-3" disabled={saving || preview.status !== 'ok' || (!dirty && !proposal)}
       onClick={() => void save()}>{saving ? 'Enregistrement…' : 'Enregistrer'}</button>}>
     <fieldset disabled={saving} className="grid min-w-0 gap-7 desk:grid-cols-[minmax(0,1fr)_minmax(300px,380px)] desk:items-start">
       <label className="block min-w-0 overflow-hidden rounded-[12px] bg-surface desk:col-start-1 desk:row-start-1">
@@ -133,6 +138,18 @@ function EditorForm({ profile, source }: { profile: string; source?: Workout }) 
         </div>
       </div>
       <aside className="min-w-0 desk:sticky desk:top-16 desk:col-start-2 desk:row-span-2 desk:row-start-1" aria-label="Aperçu">
+        <div className="mb-4 grid grid-cols-1 gap-2">
+          <label className="flex min-h-11 items-center justify-between gap-2 rounded-[12px] bg-surface px-3 text-subhead">Objectif
+            <select aria-label="Objectif de la séance" className="h-11 min-w-0 max-w-[75%] bg-surface text-right text-label-2" value={goal ?? ''} onChange={e => setGoal((e.target.value || null) as Goal | null)}>
+              <option value="">Non renseigné</option>{Object.entries(GOALS).map(([value, label]) => <option key={value} value={value}>{label}</option>)}
+            </select>
+          </label>
+          <label className="flex min-h-11 items-center justify-between gap-2 rounded-[12px] bg-surface px-3 text-subhead">Niveau
+            <select aria-label="Niveau de la séance" className="h-11 bg-surface text-label-2" value={level ?? ''} onChange={e => setLevel((e.target.value || null) as Level | null)}>
+              <option value="">Non renseigné</option>{Object.entries(LEVELS).map(([value, label]) => <option key={value} value={value}>{label}</option>)}
+            </select>
+          </label>
+        </div>
         {preview.status === 'ok' ? <WorkoutSummary data={preview.data} editing /> : <>
           <StatGrid stats={['Durée prévue', 'Distance prévue', 'Kcal actives est.', 'Dénivelé équiv.'].map(label => ({ label, value: null, color: '' }))} />
           {/* Les erreurs de champ s'affichent sous leur champ ; ici, seulement l'état et les erreurs sans champ. */}
@@ -143,15 +160,28 @@ function EditorForm({ profile, source }: { profile: string; source?: Workout }) 
         </>}
         <p className="mt-3 px-4 text-footnote text-label-2">60 min maximum · 120 segments · 1–16 km/h · pente 0–10 %</p>
         {source && <p className="mt-1 px-4 text-footnote text-label-2">La version {source.version} sera conservée.</p>}
+        {proposal?.base && preview.status === 'ok' && <WorkoutDifferences before={proposal.base} after={preview.data} />}
+        {source && <div className="mt-3 px-4">
+          <a aria-disabled={dirty || saving} href={dirty || saving ? undefined : href.coachAdjust(source.id, source.version)} className={dirty || saving ? 'text-subhead text-label-3' : 'inline-flex min-h-11 items-center text-subhead text-accent'}>Ajuster avec ChatGPT</a>
+          {dirty && <p className="mt-2 text-footnote text-label-2">Enregistrez vos changements avant de demander un ajustement.</p>}
+        </div>}
         {error && <p role="alert" className="mt-4 px-4 text-subhead text-red">{error}</p>}
       </aside>
     </fieldset>
   </Page>
 }
 
-export function Editor({ profile, id }: { profile: string; id?: string }) {
+export function Editor({ profile, id, proposalId }: { profile: string; id?: string; proposalId?: string }) {
   const [source, setSource] = useState<LoadState<Workout>>({ status: 'loading' })
+  const [proposal, setProposal] = useState<LoadState<WorkoutProposal>>({ status: 'loading' })
   const [revision, setRevision] = useState(0)
+  useEffect(() => {
+    if (!proposalId) return
+    let active = true; setProposal({ status: 'loading' })
+    readWorkoutProposal(profile, proposalId).then(data => { if (active) setProposal({ status: 'ok', data }) })
+      .catch(e => { if (active) setProposal({ status: 'error', message: errorMessage(e) }) })
+    return () => { active = false }
+  }, [profile, proposalId, revision])
   useEffect(() => {
     if (!id) return
     let active = true
@@ -161,6 +191,12 @@ export function Editor({ profile, id }: { profile: string; id?: string }) {
     })
     return () => { active = false }
   }, [profile, id, revision])
+  if (proposalId) {
+    if (proposal.status === 'ok' && proposal.data.status === 'pending') return <EditorForm profile={profile} proposal={proposal.data} />
+    return <Page title="Proposition" back={{ label: 'Coach', href: href.coach }}>
+      {proposal.status === 'loading' ? <WorkoutLoading /> : <WorkoutError message={proposal.status === 'error' ? proposal.message : 'Cette proposition a déjà été enregistrée ou ignorée.'} retry={() => setRevision(v => v + 1)} />}
+    </Page>
+  }
   if (!id) return <EditorForm profile={profile} />
   if (source.status === 'ok') return <EditorForm profile={profile} source={source.data} />
   return <Page title="Modifier" back={{ label: 'Séances', href: href.library }}>

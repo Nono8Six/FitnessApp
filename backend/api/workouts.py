@@ -7,6 +7,7 @@ from sqlalchemy.exc import SQLAlchemyError
 
 from .profiles import database, validation_message as profile_validation_message
 from ..training import workouts
+from ..training import catalog
 from ..training.profiles import ProfileNotFound
 from ..training.workouts import SelectionInput, WorkoutInput, WorkoutUpdate
 
@@ -42,6 +43,18 @@ def preview(profile_id: str, data: WorkoutInput, request: Request):
     with transaction(request) as session:
         profile = workouts.get_profile(session, profile_id)
         return workouts.preview(data, profile.weight_kg)
+
+
+@router.get('/catalog')
+def catalogue(profile_id: str, request: Request):
+    with transaction(request) as session:
+        return catalog.list_catalog(session, profile_id)
+
+
+@router.post('/catalog', status_code=201)
+def copy_catalogue(profile_id: str, data: catalog.CatalogCopy, request: Request):
+    with transaction(request, write=True) as session:
+        return catalog.add_catalog(session, profile_id, data)
 
 
 @router.patch("/selection")
@@ -87,6 +100,8 @@ def versions(profile_id: str, workout_id: str, request: Request):
 
 
 FIELDS = {
+    'goal': 'Objectif : dépense calorique, marche inclinée ou endurance',
+    'level': 'Niveau : facile, intermédiaire ou soutenu',
     "name": "Nom : de 1 à 80 caractères, sans caractère de contrôle",
     "sec": "Durée : nombre entier de secondes, de 30 à 3 600",
     "speed": "Vitesse : de 1 à 16 km/h",

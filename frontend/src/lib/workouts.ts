@@ -7,12 +7,19 @@ import type { Block, BlockKind } from './types'
 export interface Step { kind: BlockKind; sec: number; speed: number; incline: number }
 export interface Repeat { repeat: number; steps: Step[] }
 export type Item = Step | Repeat
-export interface WorkoutInput { name: string; items: Item[] }
+export type Goal = 'calories' | 'incline' | 'endurance'
+export type Level = 'easy' | 'intermediate' | 'hard'
+export const GOALS: Record<Goal, string> = { calories: 'Dépense calorique', incline: 'Jambes et fessiers — marche inclinée', endurance: 'Endurance' }
+export const LEVELS: Record<Level, string> = { easy: 'Facile', intermediate: 'Intermédiaire', hard: 'Soutenu' }
+export interface WorkoutInput { name: string; items: Item[]; goal?: Goal | null; level?: Level | null }
 export interface Energy { active_kcal: number | null; total_kcal: number | null; weight_kg: number | null; automatic_gait: boolean; outside_range: boolean }
 export interface Preview { blocks: Block[]; summary: { sec: number; km: number; count: number; minSpeed: number; maxSpeed: number; ascent_m: number; energy: Energy } }
 export interface Workout extends WorkoutInput, Preview {
   id: string; version: number; author: 'human' | 'chatgpt'; author_name: string; created_at: string
+  origin: { kind: 'catalog' | 'chatgpt'; template_id?: string; level?: Level; conversation_id?: string; turn_id?: string; proposal_id?: string } | null
 }
+export interface CatalogWorkout extends WorkoutInput, Preview { template_id: string; description: string; goal: Goal; level: Level }
+export const randomId = () => Array.from(crypto.getRandomValues(new Uint8Array(16)), v => v.toString(16).padStart(2, '0')).join('')
 export interface LibraryData { workouts: Workout[]; selected_id: string | null }
 
 export const KIND_LABEL: Record<BlockKind, string> = {
@@ -39,7 +46,18 @@ export const isWorkout = (v: unknown): v is Workout => isPreview(v) && isRecord(
 const isLibrary = (v: unknown): v is LibraryData => isRecord(v) && Array.isArray(v.workouts)
   && v.workouts.every(isWorkout) && (v.selected_id === null || typeof v.selected_id === 'string')
 const isSelection = (v: unknown): v is { selected_id: string | null } => isRecord(v) && (v.selected_id === null || typeof v.selected_id === 'string')
+export const isWorkoutInput = (v: unknown): v is WorkoutInput => isRecord(v) && typeof v.name === 'string'
+  && Array.isArray(v.items) && v.items.every(isItem)
+  && (v.goal === null || v.goal === undefined || Object.hasOwn(GOALS, String(v.goal)))
+  && (v.level === null || v.level === undefined || Object.hasOwn(LEVELS, String(v.level)))
 export const workoutUrl = (profile: string) => `/api/profiles/${encodeURIComponent(profile)}/workouts`
+export const readCatalog = (profile: string) => api(`${workoutUrl(profile)}/catalog`, {
+  validate: (v): v is CatalogWorkout[] => Array.isArray(v) && v.every(w => isPreview(w) && isWorkoutInput(w) && isRecord(w)
+    && typeof w.template_id === 'string' && typeof w.description === 'string' && !!w.goal && !!w.level),
+})
+export const addCatalog = (profile: string, data: CatalogWorkout) => api(`${workoutUrl(profile)}/catalog`, {
+  method: 'POST', body: { template_id: data.template_id, level: data.level }, validate: isWorkout,
+})
 export const readWorkout = (profile: string, id: string) => api(`${workoutUrl(profile)}/${encodeURIComponent(id)}`, { validate: isWorkout })
 export const readVersions = (profile: string, id: string) => api(`${workoutUrl(profile)}/${encodeURIComponent(id)}/versions`, {
   validate: (v): v is Workout[] => Array.isArray(v) && v.every(isWorkout),

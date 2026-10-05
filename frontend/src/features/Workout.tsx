@@ -3,10 +3,11 @@ import { useEffect, useRef, useState } from 'react'
 import { Page } from '../components/Shell'
 import { Button, Group, Row, Sheet, Tile } from '../components/ui'
 import { WorkoutError, WorkoutLoading, WorkoutSummary } from '../components/WorkoutSummary'
+import { WorkoutLabels } from '../components/WorkoutCard'
+import { WorkoutBlocks } from '../components/WorkoutBlocks'
 import { errorMessage } from '../lib/api'
-import { clock, dec1 } from '../lib/format'
 import { href, navigate } from '../lib/router'
-import { deleteWorkout, duplicateWorkout, isRepeat, KIND_LABEL, readVersions, selectWorkout, useLibrary, type Workout as WorkoutData } from '../lib/workouts'
+import { deleteWorkout, duplicateWorkout, readVersions, selectWorkout, useLibrary, type Workout as WorkoutData } from '../lib/workouts'
 
 export function Workout({ profile, id, requestedVersion }: { profile: string; id: string; requestedVersion?: number }) {
   const { state, reload } = useLibrary(profile)
@@ -41,7 +42,6 @@ export function Workout({ profile, id, requestedVersion }: { profile: string; id
     try { await action() } catch (e) { console.warn('Fitness : action séance impossible', e); setError(errorMessage(e)) }
     finally { setBusy(false) }
   }
-  const easy = (kind: string) => kind !== 'run' && kind !== 'steady'
   const date = shown && new Date(shown.created_at).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' })
   return <Page title={shown?.name ?? 'Séance'} back={{ label: 'Séances', href: href.library }}
     subtitle={shown && `Version ${shown.version} · ${shown.author === 'human' ? shown.author_name : 'ChatGPT'} · ${date}`}>
@@ -52,16 +52,10 @@ export function Workout({ profile, id, requestedVersion }: { profile: string; id
         <div className="grid gap-7 desk:grid-cols-[minmax(0,1fr)_minmax(280px,360px)] desk:items-start">
           <section className="min-w-0" aria-label="Détails de la séance">
             {oldVersion && <p role="status" className="mb-4 rounded-[12px] bg-orange/15 px-4 py-2.5 text-subhead text-orange">Ancienne version · lecture seule</p>}
+            <WorkoutLabels data={shown} />
             <WorkoutSummary data={shown} />
             <h2 className="mt-8 mb-2.5 px-1 text-title2">Segments</h2>
-            <div className="grid gap-5">
-              {shown.items.map((item, i) => <Group key={i} header={isRepeat(item) ? `Répéter ${item.repeat} fois` : undefined}>
-                {(isRepeat(item) ? item.steps : [item]).map((step, j) => <Row key={j} title={KIND_LABEL[step.kind]}
-                  leading={<span aria-hidden className="block h-8 w-1 rounded-full" style={{ background: easy(step.kind) ? '#636366' : 'var(--color-accent)' }} />}
-                  subtitle={<span className="num"><span className="text-speed">{dec1(step.speed)} km/h</span> · <span className="text-incline">{dec1(step.incline)} %</span></span>}
-                  trailing={<span className="num text-time">{clock(step.sec)}</span>} />)}
-              </Group>)}
-            </div>
+            <WorkoutBlocks data={shown} />
           </section>
           <aside className="grid gap-5 desk:sticky desk:top-16" aria-label="Actions">
             <Button disabled={busy || oldVersion} onClick={() => void run(async () => {
@@ -69,6 +63,7 @@ export function Workout({ profile, id, requestedVersion }: { profile: string; id
             })} variant={selected ? 'gray' : 'primary'}>{selected ? 'Retirer d’Aujourd’hui' : 'Choisir pour Aujourd’hui'}</Button>
             <Group>
               <Row href={href.editWorkout(id)} leading={<Tile><Pencil size={17} strokeWidth={2.2} /></Tile>} title="Modifier" />
+              <Row href={href.coachAdjust(id, shown.version)} title="Ajuster avec ChatGPT" />
               <Row onClick={busy ? undefined : () => void run(async () => {
                 const copy = await duplicateWorkout(profile, id); go(href.workout(copy.id))
               })} leading={<Tile color="#8e8e93"><Copy size={17} strokeWidth={2.2} /></Tile>}
@@ -91,6 +86,8 @@ export function Workout({ profile, id, requestedVersion }: { profile: string; id
                 Supprimer la séance
               </button>
             </Group>
+            <p className="px-1 text-footnote text-label-2">{shown.origin?.kind === 'catalog' ? 'Origine : modèle du catalogue' : shown.origin?.kind === 'chatgpt' ? 'Origine : proposition ChatGPT' : 'Origine : création manuelle'}
+              {shown.origin?.conversation_id && <> · <a href={href.coachConversation(shown.origin.conversation_id)} className="text-accent">Conversation</a></>}</p>
             {error && <p role="alert" className="text-subhead text-red">{error}</p>}
           </aside>
         </div>

@@ -8,7 +8,8 @@ from fastapi.responses import StreamingResponse
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy import select
 
-from ..coach import store
+from ..coach import store, workout_proposals
+from ..training import workouts
 from ..coach.inference import ERRORS
 from ..storage.models import CoachMemory, CoachTurn
 from ..training.profiles import ProfileNotFound
@@ -25,6 +26,10 @@ def transaction(request, write=False):
             yield session
     except (ProfileNotFound, store.CoachNotFound):
         raise HTTPException(404, "Donnée introuvable dans ce profil") from None
+    except workouts.WorkoutNotFound:
+        raise HTTPException(404, 'Séance introuvable dans ce profil') from None
+    except workouts.WorkoutConflict as exc:
+        raise HTTPException(409, str(exc)) from None
     except store.CoachConflict as exc:
         raise HTTPException(409, str(exc)) from None
     except SQLAlchemyError:
@@ -49,6 +54,7 @@ def create(profile_id: str, request: Request):
 def read(profile_id: str, conversation_id: str, request: Request, offset: int = Query(0, ge=0), limit: int = Query(20, ge=1, le=50)):
     with transaction(request) as session:
         data = store.turns(session, profile_id, conversation_id, offset, limit)
+        data['conversation'] = store.out(store.owned(session, store.Conversation, profile_id, conversation_id))
         accepted = {(m.source_turn_id, m.proposal_index): m.id for m in session.scalars(select(CoachMemory).where(
             CoachMemory.profile_id == profile_id, CoachMemory.source_turn_id.in_([t["id"] for t in data["items"]])))}
         for turn in data["items"]:
@@ -69,7 +75,7 @@ async def send(profile_id: str, conversation_id: str, payload: store.Send, reque
     runtime = request.app.state.coach
     try:
         turn, fresh = await runtime.start(profile_id, conversation_id, payload)
-    except (ProfileNotFound, store.CoachNotFound):
+    except (ProfileNotFound, store.CoachNotFound, workouts.WorkoutNotFound):
         raise HTTPException(404, "Conversation introuvable dans ce profil") from None
     except store.CoachConflict as exc:
         raise HTTPException(409, str(exc)) from None
@@ -78,6 +84,25 @@ async def send(profile_id: str, conversation_id: str, payload: store.Send, reque
         raise HTTPException(503, "Enregistrement impossible. Votre saisie est conservée.") from None
     return StreamingResponse(runtime.stream(profile_id, turn, fresh), media_type="text/event-stream",
                              headers={"X-Accel-Buffering": "no", "Cache-Control": "no-store"})
+
+
+@router.get('/workout-proposals/{proposal_id}')
+def read_proposal(profile_id: str, proposal_id: str, request: Request):
+    with transaction(request) as session:
+        row = store.owned(session, workout_proposals.WorkoutProposal, profile_id, proposal_id)
+        return workout_proposals.render(session, row)
+
+
+@router.post('/workout-proposals/{proposal_id}/accept')
+def accept_proposal(profile_id: str, proposal_id: str, payload: workout_proposals.Acceptance, request: Request):
+    with transaction(request, True) as session:
+        return workout_proposals.accept(session, profile_id, proposal_id, payload)
+
+
+@router.post('/workout-proposals/{proposal_id}/ignore')
+def ignore_proposal(profile_id: str, proposal_id: str, request: Request):
+    with transaction(request, True) as session:
+        return workout_proposals.ignore(session, profile_id, proposal_id)
 
 
 @router.post("/messages/{turn_id}/stop")

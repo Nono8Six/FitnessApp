@@ -148,8 +148,9 @@ def create_app(*, simulation: bool = False, data_root: Path | None = None, dist:
 
     @app.exception_handler(RequestValidationError)
     async def invalid_request(request: Request, exc: RequestValidationError):
-        if "/workouts" in request.url.path:
-            issue = workouts_api.validation_issue(list(exc.errors()), exc.body)
+        if "/workouts" in request.url.path or '/workout-proposals' in request.url.path:
+            body = exc.body.get('edited_workout') if isinstance(exc.body, dict) and 'edited_workout' in exc.body else exc.body
+            issue = workouts_api.validation_issue(list(exc.errors()), body)
             return JSONResponse({"detail": issue["message"], "issues": [issue]}, status_code=422)
         return JSONResponse({"detail": profiles_api.validation_message(list(exc.errors()))}, status_code=422)
 

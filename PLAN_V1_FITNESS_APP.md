@@ -12,7 +12,7 @@ Une seule brique en cours dans le périmètre demandé. Les cases indiquent les 
 - [x] **Brique 3 · Séances manuelles** : créer, modifier, dupliquer, supprimer et retrouver ses séances ; choix pour Aujourd’hui par profil.
 - [x] **Brique 4 · Connexion ChatGPT** : connexion sur le PC, compte et permission du forfait vérifiés, modèles du compte, coffre Windows et reprise de session. Limites des essais détaillées ci-dessous.
 - [x] **Brique 5 · Coach** : conversations persistantes, lecture des données existantes et mémoire contrôlée ; réponses réelles vérifiées, cache automatique préparé sans gain observé lors des essais courts.
-- [ ] **Brique 6 · Séances par ChatGPT** : ChatGPT conçoit ou ajuste une séance, validée et enregistrée dans la bibliothèque.
+- [x] **Brique 6 · Catalogue et séances personnalisées** : six formats, trois niveaux, copies personnelles ; création et ajustement ChatGPT validés, persistants et acceptés explicitement.
 - [ ] **Brique 7 · Tapis dans l’app** : contrôleur du POC intégré, connexion et état du tapis en direct (simulation d’abord).
 - [ ] **Brique 8 · Exécuter une séance** : démarrer, suivre, mettre en pause, reprendre, arrêter (simulation).
 - [ ] **Brique 9 · Enregistrer et revoir** : mesures conservées, bilan réel, ressenti.
@@ -271,23 +271,31 @@ Contrôles de ce complément : build et 46 tests ciblés réussis (calculs, API,
 
 **Pas dans cette brique :** génération ou modification de séance, enregistrement d'une séance proposée, planning, notifications, tâche autonome, historique d'activités et commandes au tapis.
 
-### Brique 6 · Séances par ChatGPT
+### Brique 6 · Catalogue et séances personnalisées avec ChatGPT
 
-**Livré :** « Crée-moi une séance de 30 minutes avec des côtes » produit une carte de séance. Enregistrer l’ajoute à la bibliothèque. Depuis l’Éditeur, « Ajuster avec ChatGPT » propose une nouvelle version, affichée en différences.
+**Livré :** Séances propose Découvrir et Mes séances. Un modèle du catalogue devient une copie personnelle modifiable. Depuis Coach ou Séances, une demande libre produit une carte structurée ; depuis une séance ou son éditeur, Ajuster avec ChatGPT propose une nouvelle version avec comparaison avant acceptation.
 
-**Travail :**
-1. Réutiliser `list_workouts` et `get_workout` livrés en brique 5 ; ajouter uniquement les outils `validate_workout` et `propose_workout`.
-2. `propose_workout` passe par la validation de la brique 3. En cas d’erreur, ChatGPT reçoit les erreurs exactes et corrige.
-3. Carte de proposition (design existant) : profil, durée, distance, blocs ; Enregistrer, Modifier, Ignorer.
-4. Enregistrement idempotent : un double clic ne crée pas deux séances. Auteur « ChatGPT », lien vers la conversation.
-5. Ajustement d’une séance existante : nouvelle version, différences affichées avant d’accepter.
+**Périmètre livré :**
+1. Catalogue Python sans IA : Dépense calorique, Jambes et fessiers — marche inclinée, Endurance ; deux formats par objectif, trois variantes explicites Facile/Intermédiaire/Soutenu, avec échauffement et retour au calme. Le niveau décrit les consignes, pas les capacités de la personne.
+2. Recherche et filtres objectif/niveau dans Mes séances ; création manuelle, modification, duplication, suppression, versions et sélection distincte pour Aujourd’hui conservées. Les anciennes séances gardent un objectif et un niveau inconnus jusqu’à une saisie explicite.
+3. Outils validate_workout et propose_workout : validation métier Python partagée, bornes de conception inchangées, somme des blocs comparée à la durée totale annoncée ; erreurs précises renvoyées au modèle dans les six échanges existants. Aucun calcul de calories JavaScript.
+4. Carte persistante : explication, objectif/niveau, prévisions backend, aperçu et blocs ; Enregistrer, Modifier, Ignorer. Un texte seul n’enregistre jamais une séance. Les URL des conversations permettent de retrouver les propositions après rechargement.
+5. Acceptation sous verrou SQLite, idempotente même en concurrence ; propriétaire et version de départ contrôlés. Un ajustement crée une nouvelle version de la même séance ou signale le conflit. Une retouche manuelle est attribuée au profil ; une proposition acceptée sans retouche à ChatGPT. La provenance conserve le lien vers la conversation.
+6. Migration additive 0007 : métadonnées facultatives, snapshot de la séance transmise et table des propositions. Profils, séances, versions, sélections, conversations et mémoire conservés. Aucun ajout automatique du catalogue aux profils.
 
 **Fait quand :**
-- [ ] Trois demandes réelles différentes produisent des séances valides, enregistrées et modifiables.
-- [ ] Une proposition hors limites est refusée puis corrigée par ChatGPT, sans intervention.
-- [ ] La séance enregistrée affiche son auteur et son origine.
+- [x] Les dix-huit variantes sont valides et l’aperçu change réellement avec le niveau ; une copie ajoutée et modifiée ne change pas le catalogue.
+- [x] Trois demandes réelles différentes donnent des séances valides, enregistrées et modifiables : marche calorique 20 min, endurance 30 min, marche inclinée 25 min, avec le modèle déjà choisi gpt-5.6-luna.
+- [x] Ajustement réel 25 → 20 min : comparaison des segments, durée, vitesses, pentes et prévisions ; version 2 acceptée, version 1 conservée.
+- [x] Les refus de validation et leur correction sont contrôlés par les tests ciblés du flux (transport simulé), ainsi que l’échec restant invalide. Les requêtes répétées, les acceptations concurrentes et les conflits de version ne créent pas de doublons.
+- [x] Origine et auteur réels affichés ; isolation des profils, conservation de la migration et calories inconnues sans poids contrôlées.
+- [x] Build frontend et 74 tests ciblés réussis ; parcours Chrome sur PC et viewport téléphone : découvrir, niveau, ajouter, modifier, Aujourd’hui, filtres, propositions, rechargement, édition et ajustement.
 
-**Pas dans cette brique :** exécution sur le tapis, planning.
+**Vérification locale du 5 octobre 2026 :** serveur 4330 redémarré avec le code de cette brique, schéma 0007 et ressources du build contrôlés. Une sauvegarde SQLite a précédé la migration ; comparaison des sept tables préexistantes, intégrité et clés étrangères conformes. Les essais réels sont dans le seul profil « Vérification brique 6 », conservé séparément des données personnelles. Un premier essai d’endurance annonçait 30 min avec 35 min de blocs : proposition ignorée, ajout du contrôle de durée, puis génération correcte de 30 min. Les trois créations retenues et l’ajustement ont chacun terminé sans erreur.
+
+**Limites :** les essais de refus/correction automatique utilisent un transport simulé, contrairement aux créations et à l’ajustement réellement effectués avec ChatGPT. Le viewport téléphone de Chrome ne prouve pas Safari/iPhone ou Android physique. Le catalogue reste utilisable sans ChatGPT ; ses estimations ne garantissent aucune dépense ni perte de poids. Les consignes sont des programmes de conception, sans autorisation de mouvement du tapis.
+
+**Pas dans cette brique :** Bluetooth, exécution sur le tapis, historique d’activités, planning.
 
 ### Brique 7 · Tapis dans l’app
 

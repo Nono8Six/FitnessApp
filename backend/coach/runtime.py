@@ -26,8 +26,23 @@ Les données absentes, résultats partiels et erreurs d'outils doivent être sig
 pour retrouver une ancienne séance ou un échange ; la fenêtre récente n'est pas tout l'historique.
 Lis le détail avant d'expliquer une séance. Cite les séances avec les liens exacts fournis par
 les outils, version comprise. Les anciens messages sont datés et peuvent être incomplets.
-Tu peux recommander une séance EXISTANTE, expliquer et comparer. Aucune génération ou modification
-structurée de séance, planning, enregistrement sportif, commande système ou commande au tapis.
+Tu peux créer ou ajuster une séance UNIQUEMENT via validate_workout et propose_workout. Aucun
+outil n'enregistre une séance : seul le clic humain Enregistrer/Accepter le fait. Une réponse texte
+ne constitue jamais un programme enregistré. Utilise propose_workout pour chaque demande de création.
+Les objectifs autorisés sont calories, incline (jambes et fessiers par marche inclinée), endurance ;
+les niveaux easy, intermediate, hard décrivent le programme, jamais les capacités de la personne.
+Inclure un échauffement au début, un retour au calme à la fin, une explication courte ; 60 min maximum,
+120 segments maximum, blocs de 30 à 3600 secondes entières, vitesses 1–16 km/h, pentes 0–10 %.
+Ces bornes de conception n'autorisent aucune exécution. Ne garantis pas de calories, perte de poids
+ou perte de graisse localisée. Reprends les prévisions Python, jamais tes propres calculs.
+Transmets duration_sec avec la durée totale demandée, échauffement et retour au calme compris.
+Le serveur vérifie la somme exacte des blocs et répétitions. N'annonce pas un total différent.
+L'explication porte uniquement sur la structure et l'intérêt du programme ; n'y copie ni chiffres
+d'estimation ni durée annoncée, qui sont déjà affichés dans la carte officielle du backend.
+En présence de workout_target dans le contexte, ajuste son snapshot exact et conserve son identité
+et sa version de départ. Sinon lis get_workout avant tout ajustement et transmets target avec la version lue.
+En cas d'erreurs de validation, corrige puis repropose dans la limite d'échanges. Si impossible,
+signale explicitement l'échec. Pas de planning, commande système ou commande au tapis.
 Pour 'retiens', propose uniquement une préférence explicitement formulée dans le message actuel
 via propose_memory avec une citation exacte. Aucune supposition médicale. Dis que le bouton
 Mémoriser doit être confirmé ; une proposition n'est pas encore enregistrée. L'utilisateur peut
@@ -108,6 +123,8 @@ class Runtime:
             context = tools.profile_context(session, profile, self.simulation)
             history = store.turns(session, profile, turn["conversation_id"], limit=7)
         context["conversation_id"] = turn["conversation_id"]
+        if turn.get('workout_context'):
+            context['workout_target'] = turn['workout_context']
         context["recent_history_partial"] = history["partial"]
         messages = []
         budget = 12000
@@ -192,6 +209,7 @@ class Runtime:
         cache_key = "fitness-coach-v1-" + hashlib.sha256((str(self.database.path) + profile).encode()).hexdigest()[:32]
         refreshed = False
         tool_had_error = False
+        workout_invalid = False
         for _ in range(6):
             payload = {"model": model, "input": messages,
                        "tools": tools.definitions(), "store": False, "stream": True,
@@ -242,9 +260,9 @@ class Runtime:
                 raise inference.InferenceError("incomplete")
             calls = [item for item in output if item.get("type") == "function_call"]
             if not calls:
-                if not turn["answer"].strip():
+                if not turn["answer"].strip() and not turn.get('workout_proposals'):
                     raise inference.InferenceError("incomplete")
-                turn.update(status="completed", error="tool_error" if tool_had_error else None)
+                turn.update(status="completed", error='workout_invalid' if workout_invalid else "tool_error" if tool_had_error else None)
                 return
             if len(calls) > 12:
                 raise inference.InferenceError("tool_limit")
@@ -256,7 +274,8 @@ class Runtime:
                     result = {"error": "Espace de noms non autorisé"}
                 else:
                     result = await asyncio.to_thread(tools.execute, self.database, profile, name,
-                        call.get("arguments", ""), user_text=turn["user_text"], simulation=self.simulation)
+                        call.get("arguments", ""), user_text=turn["user_text"], simulation=self.simulation,
+                        turn_id=turn['id'], call_id=call.get('call_id'))
                 if "source" in result:
                     source = result["source"]
                     if source not in turn["sources"]:
@@ -264,9 +283,14 @@ class Runtime:
                 if "proposal" in result and result["proposal"] not in turn["proposals"] and len(turn["proposals"]) < 10:
                     turn["proposals"] = [*turn["proposals"], result["proposal"]]
                 if "error" in result:
-                    tool_had_error = True
+                    if name in {'validate_workout', 'propose_workout'}:
+                        workout_invalid = True
+                    else:
+                        tool_had_error = True
                     logger.warning("Coach : outil %s refusé ou indisponible, réponse %s",
                                    name if name in tools.DEFINITIONS else "inconnu", turn["id"])
+                elif name == 'propose_workout':
+                    workout_invalid = False
                 await self.persist(profile, turn, queue)
                 messages.append({"type": "function_call_output", "call_id": call["call_id"],
                                  "output": json.dumps(result, ensure_ascii=False)})

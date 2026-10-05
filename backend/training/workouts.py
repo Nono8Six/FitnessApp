@@ -43,6 +43,8 @@ class Repeat(Input):
 class WorkoutInput(Input):
     name: Annotated[str, Field(min_length=1, max_length=80)]
     items: Annotated[list[Step | Repeat], Field(min_length=1, max_length=MAX_SEGMENTS)]
+    goal: Literal['calories', 'incline', 'endurance'] | None = None
+    level: Literal['easy', 'intermediate', 'hard'] | None = None
 
     @field_validator("name")
     @classmethod
@@ -66,6 +68,11 @@ class WorkoutInput(Input):
 
 class WorkoutUpdate(WorkoutInput):
     base_version: Annotated[int, Field(ge=1)]
+
+
+class Target(Input):
+    workout_id: str = Field(pattern=r'^[a-f0-9]{32}$')
+    version: int = Field(ge=1)
 
 
 class SelectionInput(Input):
@@ -113,6 +120,7 @@ def _latest(session: Session, workout_id: str) -> WorkoutVersion:
 def _out(row: WorkoutVersion, weight_kg: float | None) -> dict:
     data = WorkoutInput(name=row.name, items=row.items)
     return {"id": row.workout_id, "version": row.version, "name": row.name, "items": row.items,
+            "goal": row.goal, "level": row.level, "origin": row.origin,
             "author": row.author, "author_name": row.author_name, "created_at": row.created_at, **preview(data, weight_kg)}
 
 
@@ -132,34 +140,38 @@ def list_workouts(session: Session, profile_id: str) -> dict:
     return {"workouts": [_out(row, profile.weight_kg) for row in rows], "selected_id": selected.workout_id if selected else None}
 
 
-def _add_version(session: Session, profile_id: str, workout_id: str, version: int, data: WorkoutInput) -> dict:
+def _add_version(session: Session, profile_id: str, workout_id: str, version: int, data: WorkoutInput,
+                 *, author="human", origin=None) -> dict:
     row = WorkoutVersion(workout_id=workout_id, version=version, name=data.name,
-        items=[i.model_dump() for i in data.items], author="human",
-        author_name=get_profile(session, profile_id).name, created_at=utc_now())
+        items=[i.model_dump() for i in data.items], author=author, goal=data.goal, level=data.level, origin=origin,
+        author_name="ChatGPT" if author == "chatgpt" else get_profile(session, profile_id).name, created_at=utc_now())
     session.add(row)
     session.flush()
     return _out(row, get_profile(session, profile_id).weight_kg)
 
 
-def create_workout(session: Session, profile_id: str, data: WorkoutInput) -> dict:
+def create_workout(session: Session, profile_id: str, data: WorkoutInput, *, author="human", origin=None) -> dict:
     get_profile(session, profile_id)
     row = Workout(id=uuid4().hex, profile_id=profile_id, created_at=utc_now())
     session.add(row)
     session.flush()
-    return _add_version(session, profile_id, row.id, 1, data)
+    return _add_version(session, profile_id, row.id, 1, data, author=author, origin=origin)
 
 
-def update_workout(session: Session, profile_id: str, workout_id: str, data: WorkoutUpdate) -> dict:
+def update_workout(session: Session, profile_id: str, workout_id: str, data: WorkoutUpdate,
+                   *, author="human", origin=None) -> dict:
     _workout(session, profile_id, workout_id)
     previous = _latest(session, workout_id)
     if previous.version != data.base_version:
         raise WorkoutConflict("Cette séance a changé sur un autre écran. Rechargez-la avant de modifier.")
-    return _add_version(session, profile_id, workout_id, previous.version + 1, data)
+    return _add_version(session, profile_id, workout_id, previous.version + 1, data,
+                        author=author, origin=origin if origin is not None else previous.origin)
 
 
 def duplicate_workout(session: Session, profile_id: str, workout_id: str) -> dict:
     source = get_workout(session, profile_id, workout_id)
-    return create_workout(session, profile_id, WorkoutInput(name=source["name"][:72] + " · copie", items=source["items"]))
+    return create_workout(session, profile_id, WorkoutInput(name=source["name"][:72] + " · copie", items=source["items"],
+        goal=source['goal'], level=source['level']), origin=source['origin'])
 
 
 def delete_workout(session: Session, profile_id: str, workout_id: str) -> dict:

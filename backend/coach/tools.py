@@ -7,6 +7,7 @@ from sqlalchemy import func, select
 from sqlalchemy.exc import SQLAlchemyError
 
 from . import store
+from . import workout_proposals
 from ..storage.models import Workout, WorkoutSelection, WorkoutVersion
 from ..training import workouts
 from ..training.profiles import ProfileNotFound, get_profile
@@ -57,11 +58,13 @@ DEFINITIONS = {
     "read_message": (MessageDetail, "Lire le texte complet d'une ancienne réponse par extraits paginés, après read_conversation."),
     "search_memories": (Search, "Lire les préférences durables explicitement enregistrées par l'utilisateur, avec dates."),
     "propose_memory": (Proposal, "Proposer une préférence durable UNIQUEMENT sur demande explicite de la retenir. Citer exactement le message actuel. N'enregistre rien : l'utilisateur doit confirmer dans l'interface."),
+    "validate_workout": (workout_proposals.ProposalInput, "Valider un programme complet avant proposition : bornes, échauffement, retour au calme, objectif et niveau. Renvoie les erreurs précises et les prévisions Python. Corriger les erreurs avant de proposer."),
+    "propose_workout": (workout_proposals.ProposalInput, "Proposer une séance structurée validée, jamais l'enregistrer. L'interface affiche Enregistrer, Modifier, Ignorer. Si workout_target est fourni par le contexte serveur, ajuster exactement cette version. Sinon target facultatif pour ajuster une version lue via get_workout. Pas de target pour une nouvelle séance."),
 }
 
 
 def definitions():
-    return [{"type": "namespace", "name": "fitness", "description": "Données locales du seul profil actif. Lecture sportive uniquement.",
+    return [{"type": "namespace", "name": "fitness", "description": "Données locales du seul profil actif. Lecture et propositions soumises à confirmation humaine.",
              "tools": [{"type": "function", "name": name, "description": description,
                         "parameters": model.model_json_schema(), "strict": False}
                        for name, (model, description) in DEFINITIONS.items()]}]
@@ -96,12 +99,23 @@ def summaries(session, query, weight, offset, limit):
             "estimates": "Prévisions recalculées avec le poids actuel ; jamais des résultats réalisés."}
 
 
-def execute(database, profile, name, arguments, *, user_text, simulation=False):
+def execute(database, profile, name, arguments, *, user_text, simulation=False, turn_id=None, call_id=None):
     """Le résultat contient des données, jamais des autorisations supplémentaires."""
     if name not in DEFINITIONS:
         return {"error": "Outil non autorisé"}
     try:
         payload = DEFINITIONS[name][0].model_validate_json(arguments)
+        if name in {'validate_workout', 'propose_workout'}:
+            with database.write() if name == 'propose_workout' else database.transaction() as session:
+                current = get_profile(session, profile)
+                if payload.target:
+                    workout_proposals.snapshot(session, profile, payload.target)
+                if name == 'validate_workout':
+                    return {'valid': True, **workouts.preview(payload.workout, current.weight_kg)}
+                if not turn_id or not call_id:
+                    return {'error': 'Une réponse du coach et un appel identifiés sont requis.'}
+                proposal = workout_proposals.propose(session, profile, turn_id, call_id, payload)
+                return {'workout_proposal': proposal, 'saved': False, 'requires_user_confirmation': True}
         with database.transaction() as session:
             current = get_profile(session, profile)
             if name == "get_profile":
@@ -143,10 +157,15 @@ def execute(database, profile, name, arguments, *, user_text, simulation=False):
             data = workouts._out(row, current.weight_kg)
             # Les items contiennent tous les blocs et répétitions. Ne pas renvoyer aussi leur expansion.
             return {k: v for k, v in data.items() if k != "blocks"} | {"source": workout_link(data), "estimates": "Prévisions au poids actuel, pas une activité réalisée."}
-    except (ValidationError, ValueError, TypeError, json.JSONDecodeError):
+    except ValidationError as exc:
+        return {'error': 'Arguments invalides. Corriger les erreurs suivantes.',
+                'issues': [{'path': list(e['loc']), 'message': e['msg']} for e in exc.errors(include_input=False, include_url=False)]}
+    except (ValueError, TypeError, json.JSONDecodeError):
         return {"error": "Arguments invalides. Respectez le schéma de l'outil ; aucun champ profil n'est accepté."}
     except (ProfileNotFound, store.CoachNotFound, workouts.WorkoutNotFound):
         return {"error": "Donnée introuvable dans le profil actif."}
+    except (store.CoachConflict, workouts.WorkoutConflict) as exc:
+        return {'error': str(exc)}
     except SQLAlchemyError:
         # Les exceptions SQL peuvent contenir les paramètres : ne pas les sérialiser.
         return {"error": "Lecture impossible : base locale indisponible. Ne pas interpréter comme une absence de données."}

@@ -63,6 +63,9 @@ class WorkoutVersion(Base):
     author_name: Mapped[str] = mapped_column(String(64))
     items: Mapped[list] = mapped_column(JSON)
     created_at: Mapped[str] = mapped_column(String(40))
+    goal: Mapped[str | None] = mapped_column(String(16))
+    level: Mapped[str | None] = mapped_column(String(16))
+    origin: Mapped[dict | None] = mapped_column(JSON)
 
 
 class WorkoutSelection(Base):
@@ -110,6 +113,7 @@ class CoachTurn(Base):
     sources: Mapped[list] = mapped_column(JSON)
     proposals: Mapped[list] = mapped_column(JSON)
     usage: Mapped[dict] = mapped_column(JSON)
+    workout_context: Mapped[dict | None] = mapped_column(JSON)
     created_at: Mapped[str] = mapped_column(String(40))
     updated_at: Mapped[str] = mapped_column(String(40))
 
@@ -124,3 +128,21 @@ class CoachMemory(Base):
     proposal_index: Mapped[int | None]
     created_at: Mapped[str] = mapped_column(String(40))
     updated_at: Mapped[str] = mapped_column(String(40))
+
+
+class WorkoutProposal(Base):
+    """Proposition validée, indépendante du texte du coach ; acceptation atomique."""
+    __tablename__ = 'workout_proposals'
+    __table_args__ = (UniqueConstraint('turn_id', 'call_id'),
+                      CheckConstraint("status IN ('pending', 'accepted', 'ignored')", name='status'))
+    id: Mapped[str] = mapped_column(String(32), primary_key=True)
+    profile_id: Mapped[str] = mapped_column(ForeignKey('profiles.id', ondelete='CASCADE'), index=True)
+    turn_id: Mapped[str] = mapped_column(ForeignKey('coach_turns.id', ondelete='CASCADE'), index=True)
+    call_id: Mapped[str] = mapped_column(String(200))
+    workout: Mapped[dict] = mapped_column(JSON)
+    explanation: Mapped[str] = mapped_column(String(600))
+    base: Mapped[dict | None] = mapped_column(JSON)
+    status: Mapped[str] = mapped_column(String(16))
+    accepted_id: Mapped[str | None] = mapped_column(String(32))
+    accepted_version: Mapped[int | None]
+    created_at: Mapped[str] = mapped_column(String(40))
