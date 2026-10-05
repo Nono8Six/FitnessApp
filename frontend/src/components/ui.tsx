@@ -502,22 +502,40 @@ export function Sheet({
   wide?: boolean
 }) {
   const id = useId()
+  const panel = useRef<HTMLDivElement>(null)
+  const closeRef = useRef(onClose)
+  closeRef.current = onClose
   useEffect(() => {
     if (!open) return
-    const onKey = (e: KeyboardEvent) => e.key === 'Escape' && onClose()
+    const previousFocus = document.activeElement instanceof HTMLElement ? document.activeElement : null
+    const root = document.getElementById('root')
+    const previousInert = root?.inert ?? false
+    if (root) root.inert = true
+    const focusable = () => [...(panel.current?.querySelectorAll<HTMLElement>('button:not(:disabled), a[href], input:not(:disabled), select:not(:disabled), textarea:not(:disabled), summary, [tabindex="0"]') ?? [])].filter(node => node.getClientRects().length > 0)
+    ;(focusable()[0] ?? panel.current)?.focus({preventScroll: true})
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') { e.preventDefault(); closeRef.current() }
+      if (e.key !== 'Tab') return
+      const nodes = focusable()
+      if (!nodes.length) { e.preventDefault(); return }
+      if (e.shiftKey && document.activeElement === nodes[0]) { e.preventDefault(); nodes.at(-1)?.focus() }
+      else if (!e.shiftKey && document.activeElement === nodes.at(-1)) { e.preventDefault(); nodes[0].focus() }
+    }
     document.addEventListener('keydown', onKey)
     const prev = document.body.style.overflow
     document.body.style.overflow = 'hidden'
     return () => {
       document.removeEventListener('keydown', onKey)
       document.body.style.overflow = prev
+      if (root) root.inert = previousInert
+      previousFocus?.focus({ preventScroll: true })
     }
-  }, [open, onClose])
+  }, [open])
   if (!open) return null
   return createPortal(
     <div className="fixed inset-0 z-50 flex items-end justify-center desk:items-center" role="dialog" aria-modal="true" aria-labelledby={title ? id : undefined}>
       <div className="animate-fade absolute inset-0 bg-black/60" onClick={onClose} />
-      <div className={cx('animate-sheet relative max-h-[92dvh] w-full overflow-y-auto overscroll-contain rounded-t-[14px] bg-surface desk:rounded-[14px]',
+      <div ref={panel} tabIndex={-1} className={cx('animate-sheet relative max-h-[92dvh] w-full overflow-y-auto overscroll-contain rounded-t-[14px] bg-surface desk:rounded-[14px]',
         wide ? 'desk:max-w-[640px]' : 'desk:max-w-[480px]', !footer && 'pb-safe desk:pb-0')}>
         <div className="sticky top-0 z-10 bg-surface/85 backdrop-blur-xl">
           <div className="mx-auto mt-1.5 h-[5px] w-9 rounded-full bg-label-3 desk:hidden" />

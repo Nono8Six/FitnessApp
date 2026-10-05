@@ -88,3 +88,13 @@ Vérification de cette modification :
 - Le [journal corrigé](preuves/vitesse-corrigee-diagnostic.json) confirme exactement : contrôle → vitesse 1 (`026400`) → Start (`07`) → vitesse 2 (`02c800`) → STOP (`0801`), sans erreur. Le [journal avant correction](preuves/vitesse-avant-correction.json) reste conservé.
 
 La version servie pour ce dernier essai est le processus 21008 sur le port 4317. Ces identifiants sont datés. La validation à 16 concerne le logiciel et la saisie ; le matériel n'a pas été essayé à cette vitesse. Le tapis est laissé connecté, arrêté et désarmé.
+
+## 7. Application : exécution préparée le 5 octobre 2026
+
+La brique 8 implémente le démarrage, les transitions, Pause/Reprendre et STOP sur le transport FTMS réel partagé, avec le même moteur en simulation. La connexion passive devient contrôlable uniquement lors du départ explicitement confirmé : abonnement aux indications du Control Point et acquisition du contrôle, démarrage au minimum, mouvement observé, puis cible. L’autorisation de séance est bornée séparément de l’activation de 10 min du POC ; ses limites de programme restent intactes.
+
+Le moteur de l’application impose **1–2,5 km/h et 0–1 %**, ainsi que les plages et pas lus. Les capacités annoncées 16/10 et les plafonds logiciels du diagnostic 4/3 ne sont pas une réception physique supplémentaire. Un programme hors périmètre est refusé, jamais réécrit.
+
+Vérification logicielle : transport de test Bleak pour la branche réelle (souscription, réponses, refus, commande en vol suivie de STOP, absence de réponse, STOP accepté sans zéro, récupération passive), tests du POC conservés. Les essais de l’interface et la séance longue utilisent uniquement le simulateur, dans un dossier séparé. Voir [le plan, brique 8](../PLAN_V1_FITNESS_APP.md) et [le contrat d’exécution](EXECUTION_SEANCE.md) pour les résultats et limites.
+
+**Aucun essai moteur sur le RUN500 pour cette livraison.** La brique 10 doit recevoir le parcours de l’application, la séance longue, les pertes réelles et les extensions de vitesse/pente. Les sujets physiques ouverts au § 4 restent ouverts, notamment l’arrêt sans PC/BLE et la suspension effective d’un téléphone.

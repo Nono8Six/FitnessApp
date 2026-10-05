@@ -70,6 +70,11 @@ class Controller:
         self.sim_distance = 0.0
         self.sim_elapsed = 0
         self.audit_error = None
+        # L'application possède sa propre autorisation bornée et son moteur.
+        # Le diagnostic conserve ses limites et son watchdog de dix minutes.
+        self.session_limits = None
+        self.control_notifications = False
+        self.last_command = None
         self.log("info", "Contrôleur prêt", mode="simulation" if simulation else "ble")
 
     def log(self, level: str, message: str, **details):
@@ -163,6 +168,10 @@ class Controller:
             self.services = []
             self.desynchronized = False
             self.control_acquired = False
+            self.control_notifications = False
+            if self.session_limits is not None:
+                self.read_only = True
+            self.session_limits = None
             self.owner = None
             try:
                 if self.simulation:
@@ -215,6 +224,7 @@ class Controller:
                         if "write" in props and "indicate" in props:
                             if not self.read_only:
                                 await asyncio.wait_for(client.start_notify(chars[ftms.CONTROL], self._control_notification), 6)
+                                self.control_notifications = True
                             self.capabilities["control_point"] = True
                     if client.services.get_service(ftms.DOMYOS_SERVICE):
                         self.log("warning", "Service Domyos propriétaire présent : le contrôle FTMS doit être vérifié physiquement")
@@ -260,8 +270,13 @@ class Controller:
         if self.lifecycle_lock.locked():
             raise ControllerError("Attendre la fin de la connexion ou de la recherche")
         async with self.lifecycle_lock:
-            if not self.read_only:
-                await self.halt("Déconnexion demandée")
+            if not self.read_only and self.session_limits is None:
+                try:
+                    await self.halt("Déconnexion demandée")
+                except ControllerError:
+                    # La récupération d'un canal incertain exige précisément
+                    # sa fermeture ; elle ne certifie pas l'arrêt physique.
+                    self.log("warning", "Déconnexion après arrêt non confirmé : vérifier le STOP physique")
             await self._close_client()
             self._disconnected(None)
 
@@ -337,8 +352,9 @@ class Controller:
             if field not in self.received_at or now - self.received_at[field] > STALE_SECONDS:
                 raise ControllerError("Vitesse ou inclinaison absente/périmée : commande bloquée")
         speed, incline = self.telemetry["speed_kmh"], self.telemetry["incline_pct"]
-        if not (0 <= speed <= MAX_SPEED and 0 <= incline <= MAX_INCLINE):
-            raise ControllerError("Le tapis dépasse les limites POC. Réduire vitesse/pente sur la console avant de poursuivre.")
+        limits = self.session_limits or {"speed": MAX_SPEED, "incline": MAX_INCLINE}
+        if not (0 <= speed <= limits["speed"] and 0 <= incline <= limits["incline"]):
+            raise ControllerError("Mesures hors du périmètre autorisé. Réduisez la vitesse ou la pente sur la console.")
 
     def _validate_value(self, action: str, value: float | None, *, ceiling: float | None = None):
         if action in ("speed", "incline"):
@@ -349,7 +365,8 @@ class Controller:
                 raise ControllerError("Cette commande n'est pas annoncée par le tapis")
             try:
                 ftms.validate_target(value, self.capabilities.get(f"{action}_range"),
-                                     ceiling if ceiling is not None else MAX_SPEED if action == "speed" else MAX_INCLINE,
+                                     ceiling if ceiling is not None else (self.session_limits or
+                                         {"speed": MAX_SPEED, "incline": MAX_INCLINE})[action],
                                      scale=100 if action == "speed" else 10)
             except ValueError as exc:
                 raise ControllerError(str(exc)) from exc
@@ -380,6 +397,46 @@ class Controller:
         if self.read_only:
             raise ControllerError("Connexion en lecture seule : commandes du tapis indisponibles")
 
+    async def prepare_session_control(self, limits: dict):
+        """S'abonner aux indications AVANT d'autoriser les écritures de séance.
+
+        Appelé seulement par le moteur après le compte à rebours et la présence.
+        Reconnexion obligatoire si la préparation du canal échoue.
+        """
+        if self.phase != "connected" or not self.capabilities.get("control_point"):
+            raise ControllerError("Le tapis ne permet pas le contrôle de cette séance.")
+        if self.desynchronized:
+            raise ControllerError("Utilisez le STOP physique, puis reconnectez le tapis.")
+        async with self.lifecycle_lock:
+            if not self.simulation and not self.control_notifications:
+                try:
+                    await asyncio.wait_for(self.client.start_notify(ftms.CONTROL, self._control_notification), 6)
+                    self.control_notifications = True
+                except Exception as exc:
+                    self.desynchronized = True
+                    self.log("error", "Préparation du contrôle impossible", detail=str(exc))
+                    raise ControllerError("Contrôle indisponible. Reconnectez le tapis avant de réessayer.") from exc
+            self.session_limits = dict(limits)
+            self.read_only = False
+
+    async def arm_session(self, owner: str, deadline: float):
+        """Autorisation de la séance : jamais renouvelée par un heartbeat."""
+        self._ensure_writable()
+        self._ensure_restart_ready()
+        if self.owner and self.owner != owner:
+            raise ControllerError("La séance est commandée depuis un autre écran.")
+        self.owner = owner
+        self.owner_heartbeat = time.monotonic()
+        self.armed_until = deadline
+        try:
+            self._ensure_ready(owner)
+            await self._exchange("request_control")
+            self.control_acquired = True
+        except BaseException:
+            self.armed_until = 0
+            self.owner = None
+            raise
+
     async def _exchange(self, action: str, value: float | None = None):
         self._ensure_writable()
         if self.command_lock.locked():
@@ -391,6 +448,7 @@ class Controller:
             future = asyncio.get_running_loop().create_future()
             self.pending = (payload[0], future)
             self.log("command", "Demande de commande FTMS", action=action, value=value, raw=payload.hex())
+            self.last_command = {"action": action, "value": value, "status": "sent"}
             try:
                 if self.audit_error and action not in ("stop", "pause"):
                     raise ControllerError(self.audit_error)
@@ -413,24 +471,31 @@ class Controller:
                         await self.client.write_gatt_char(ftms.CONTROL, payload, response=True)
                     code = await future
                 if code != 1:
+                    self.last_command["status"] = "refused"
                     if code == 5:
                         self.control_acquired = False
                         self.armed_until = 0
                     self.log("error", ftms.RESULTS[code], action=action, result_code=code)
                     raise ControllerError(ftms.RESULTS[code])
                 self.log("accepted", "Commande acceptée — effet physique à vérifier", action=action, value=value)
+                self.last_command["status"] = "accepted"
                 return code
             except (TimeoutError, asyncio.CancelledError) as exc:
                 self.desynchronized = True
+                self.last_command["status"] = "unknown"
                 self.armed_until = 0
                 self.log("error", "Réponse absente : résultat inconnu, aucune répétition automatique", action=action)
                 if isinstance(exc, asyncio.CancelledError):
                     raise
                 raise ControllerError("Réponse absente : résultat inconnu. Vérifier la console et reconnecter avant de reprendre.") from exc
             except ControllerError:
+                if self.phase != "connected":
+                    self.desynchronized = True
+                    self.last_command["status"] = "unknown"
                 raise
             except Exception as exc:
                 self.desynchronized = True
+                self.last_command["status"] = "unknown"
                 self.armed_until = 0
                 self.log("error", "Écriture Bluetooth incertaine", detail=str(exc), action=action)
                 raise ControllerError(f"Écriture Bluetooth incertaine : {exc}") from exc
@@ -610,7 +675,7 @@ class Controller:
     async def _watchdog(self):
         while True:
             await asyncio.sleep(0.5)
-            if self.owner:
+            if self.owner and self.session_limits is None:
                 now = time.monotonic()
                 unhealthy = now >= self.armed_until or now - self.owner_heartbeat > LEASE_SECONDS
                 stale = any(now - self.received_at.get(key, 0) > STALE_SECONDS for key in ("speed_kmh", "incline_pct"))
@@ -634,7 +699,7 @@ class Controller:
             self._sim_notification()
 
     async def close(self):
-        if not self.read_only:
+        if not self.read_only and self.session_limits is None:
             with contextlib.suppress(ControllerError):
                 await self.halt("Fermeture du serveur")
         if self.watchdog_task:

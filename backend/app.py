@@ -22,6 +22,8 @@ from .api import workouts as workouts_api
 from .api import chatgpt as chatgpt_api
 from .api import coach as coach_api
 from .api import device as device_api
+from .api import execution as execution_api
+from .training.execution import Execution
 from .device.runtime import DeviceRuntime
 from .coach.connection import Connection
 from .coach.runtime import Runtime
@@ -87,12 +89,14 @@ def create_app(*, simulation: bool = False, data_root: Path | None = None, dist:
         control = getattr(_app.state, "launcher_control", None)
         try:
             await _app.state.device.start()
+            await _app.state.execution.start_runtime()
             _app.state.chatgpt.start()
             if control:
                 control.publish()
             yield
         finally:
             try:
+                await _app.state.execution.close()
                 await _app.state.device.close()
             finally:
                 await _app.state.coach.close()
@@ -110,6 +114,8 @@ def create_app(*, simulation: bool = False, data_root: Path | None = None, dist:
     app.state.coach = Runtime(database, app.state.chatgpt, simulation)
     try:
         app.state.device = DeviceRuntime(data, simulation, instance_id)
+        app.state.execution = Execution(app.state.device, database)
+        app.state.device.execution = app.state.execution
     except OSError as exc:
         database.close()
         raise StartupError(f"Journal du tapis impossible à créer dans {data / 'device'} : {exc}") from exc
@@ -171,6 +177,7 @@ def create_app(*, simulation: bool = False, data_root: Path | None = None, dist:
     app.include_router(chatgpt_api.router)
     app.include_router(coach_api.router)
     app.include_router(device_api.router)
+    app.include_router(execution_api.router)
 
     @app.api_route("/api/{_path:path}", methods=["GET", "POST", "PUT", "PATCH", "DELETE"])
     async def unknown_api(_path: str):

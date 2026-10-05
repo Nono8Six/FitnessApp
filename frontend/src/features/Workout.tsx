@@ -8,6 +8,7 @@ import { WorkoutBlocks } from '../components/WorkoutBlocks'
 import { errorMessage } from '../lib/api'
 import { href, navigate } from '../lib/router'
 import { deleteWorkout, duplicateWorkout, GOALS, LEVELS, readVersions, selectWorkout, useLibrary, type Workout as WorkoutData } from '../lib/workouts'
+import { StartButton } from './Direct'
 
 const shortDate = (value: string) => new Date(value).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' })
 
@@ -65,9 +66,10 @@ export function Workout({ profile, id, requestedVersion }: { profile: string; id
               </div>
             </div>
             {oldVersion && <p role="status" className="rounded-[12px] bg-orange/15 px-4 py-2.5 text-subhead text-orange">Ancienne version · lecture seule</p>}
+            <StartButton profile={profile} workout={shown} />
             <Button disabled={busy || oldVersion} onClick={() => void run(async () => {
               await selectWorkout(profile, selected ? null : id); go(href.today)
-            })} variant={selected ? 'gray' : 'primary'}>{selected ? 'Retirer d’Aujourd’hui' : 'Choisir pour Aujourd’hui'}</Button>
+            })} variant="gray">{selected ? 'Retirer d’Aujourd’hui' : 'Choisir pour Aujourd’hui'}</Button>
           </div>
           <section className="min-w-0 desk:col-start-1 desk:row-span-2 desk:row-start-1" aria-label="Détails de la séance">
             <WorkoutSummary data={shown} />

@@ -17,9 +17,9 @@ const metricInfo = [
   { key: 'energy_kcal', label: 'Kcal tapis', unit: 'kcal', color: 'var(--color-energy)' },
 ] as const
 
-export function TreadmillSettings({ readOnly }: { readOnly: boolean }) {
+export function TreadmillSettings({ readOnly, initialOpen = false }: { readOnly: boolean; initialOpen?: boolean }) {
   const device = useDevice()
-  const [open, setOpen] = useState(false)
+  const [open, setOpen] = useState(initialOpen)
   const [searched, setSearched] = useState(false)
   const s = device.data?.state
   const live = device.status === 'live'
@@ -60,7 +60,7 @@ export function TreadmillSettings({ readOnly }: { readOnly: boolean }) {
         </span>
         <h3 className="mt-3 text-title3">{s?.device_name ?? 'RUN500'}</h3>
         <p role="status" className="mt-1 text-subhead">{status}</p>
-        <p className="mt-2 inline-flex items-center gap-1.5 rounded-full bg-fill-3 px-3 py-1 text-footnote text-label-2"><Lock size={12} strokeWidth={2.6} />Lecture seule · pilotage sur la console</p>
+        <p className="mt-2 inline-flex items-center gap-1.5 rounded-full bg-fill-3 px-3 py-1 text-footnote text-label-2"><Lock size={12} strokeWidth={2.6} />{s?.control_active ? 'Séance en cours · pilotage dans Direct' : 'Observation · démarrage depuis une séance'}</p>
       </div>
       {device.error && <p role="alert" className="mb-3 rounded-[12px] bg-red/15 px-4 py-2.5 text-subhead text-red">{device.error}</p>}
       {!s && <div role="status" className="h-[52px] animate-pulse rounded-[14px] bg-fill-3"><span className="sr-only">Chargement de l’état du tapis</span></div>}
@@ -103,7 +103,7 @@ export function TreadmillSettings({ readOnly }: { readOnly: boolean }) {
         </Group>
         {!!s?.capability_errors.length && <p role="alert" className="mt-2 px-4 text-footnote text-orange">Certaines capacités n’ont pas pu être lues. Déconnectez puis reconnectez pour réessayer.</p>}
         <Group className="mt-6">
-          <button type="button" disabled={disabled} onClick={() => void device.act('disconnect')}
+          <button type="button" disabled={disabled || s?.control_active} onClick={() => void device.act('disconnect')}
             className="g-row flex min-h-11 w-full items-center justify-center px-4 text-body text-accent active:bg-fill-4 desk:hover:bg-fill-4 disabled:text-label-3">
             {s?.phase === 'disconnecting' || device.pending === 'disconnect' ? 'Déconnexion en cours…' : 'Déconnecter'}
           </button>

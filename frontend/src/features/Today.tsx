@@ -7,6 +7,7 @@ import { WeightLink, WorkoutError, WorkoutLoading, workoutStats } from '../compo
 import { useToday } from '../lib/date'
 import { href } from '../lib/router'
 import { useLibrary } from '../lib/workouts'
+import { StartButton } from './Direct'
 
 export function Today({ profile }: { profile: string }) {
   const today = useToday()
@@ -27,6 +28,7 @@ export function Today({ profile }: { profile: string }) {
               <StatGrid stats={workoutStats(selected.summary)} className="mt-4 [&>div]:bg-surface-2" />
               <ProgrammeMini blocks={selected.blocks} height={64} className="mt-4" />
             </a>
+            <StartButton profile={profile} workout={selected} className="mt-4 w-full" />
             {selected.summary.energy.weight_kg === null && <WeightLink className="mt-3" />}
           </section> : <section aria-label="Prochaine séance" className="flex flex-col items-center rounded-[22px] bg-surface px-6 py-12 text-center">
             <Glyph size={64}><RunIcon size={32} /></Glyph>

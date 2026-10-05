@@ -203,3 +203,112 @@
   .coach-history { display: block; position: sticky; top: 64px; max-height: calc(100dvh - 96px); overflow-y: auto; }
 }
 @media (min-width: 900px) { .coach-composer { bottom: 0; padding-bottom: 16px; } }
+
+/* Direct : lecture pendant l'effort, commandes ancrées dans la hauteur disponible. */
+.live-screen { position: fixed; inset: 0; z-index: 45; display: flex; flex-direction: column; height: 100dvh; background: var(--color-bg); }
+.live-header { display: flex; align-items: center; gap: 12px; flex: none; min-height: 64px; padding: max(env(safe-area-inset-top), 8px) 16px 8px; }
+.live-mode { color: var(--color-orange); background: rgb(255 159 10 / .15); border-radius: 20px; padding: 4px 8px; font-size: 11px; line-height: 16px; font-weight: 600; }
+.live-layout { display: flex; flex: 1; min-height: 0; flex-direction: column; position: relative; overflow: hidden; }
+.live-primary { display: contents; }
+.live-glance { flex: none; padding: 4px 20px 20px; }
+.live-status { display: flex; align-items: center; gap: 8px; min-height: 24px; font-size: 15px; font-weight: 600; }
+.live-speed { display: flex; align-items: baseline; gap: 12px; max-width: 100%; text-align: left; font-size: 104px; line-height: 112px; font-weight: 700; letter-spacing: -.045em; }
+.live-speed-unit { font-family: var(--font-sans); font-size: 17px; line-height: 24px; font-weight: 600; letter-spacing: 0; }
+.live-speed.is-pace { font-size: 72px; }
+.live-measure-label { margin-top: -4px; color: var(--color-label-2); font-size: 13px; line-height: 18px; }
+.live-duration { display: flex; align-items: baseline; gap: 12px; margin-top: 12px; }
+.live-duration strong { font-size: 40px; line-height: 48px; font-weight: 600; letter-spacing: -.025em; }
+.live-secondary { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 12px; }
+.live-secondary p { font-size: 30px; line-height: 36px; font-weight: 600; letter-spacing: -.02em; }
+.live-secondary small { margin-left: 6px; font-family: var(--font-sans); font-size: 14px; letter-spacing: 0; }
+.live-detail { min-height: 0; flex: 1; overflow-y: auto; overscroll-behavior: contain; padding: 0 20px calc(156px + env(safe-area-inset-bottom)); scrollbar-width: none; }
+.live-detail::-webkit-scrollbar { display: none; }
+.live-block { padding: 16px 0 20px; box-shadow: inset 0 .5px 0 var(--color-sep); }
+.live-target { display: flex; align-items: baseline; gap: 16px; margin-top: 12px; font-size: 22px; line-height: 28px; }
+.live-target > span:first-child { font-family: var(--font-sans); font-size: 15px; }
+.live-target b { font-weight: 600; }
+.live-target small { font-size: 12px; letter-spacing: 0; }
+.live-block-progress { height: 4px; overflow: hidden; border-radius: 2px; background: var(--color-surface-3); margin-top: 16px; }
+.live-block-progress span { height: 100%; display: block; background: var(--color-accent); }
+.live-next { margin-top: 12px; font-size: 13px; line-height: 20px; }
+.live-programme { margin: 4px 0 24px; }
+.live-chart-readout { display: flex; align-items: center; gap: 8px; min-height: 68px; padding: 8px 0; }
+.live-curves > div:first-child { flex-wrap: wrap; }
+.live-controls-wrap { position: absolute; bottom: 0; left: 0; right: 0; z-index: 3; padding: 16px 24px max(16px, env(safe-area-inset-bottom)); background: linear-gradient(to bottom, transparent, var(--color-bg) 16px); }
+.live-controls { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; max-width: 360px; margin: 0 auto; }
+.live-control { display: flex; align-items: center; flex-direction: column; gap: 8px; min-width: 0; background: none; }
+.live-control > span { display: grid; place-items: center; width: 68px; height: 68px; border-radius: 50%; transition: background-color 160ms, transform 160ms; }
+.live-control b { font-size: 15px; line-height: 20px; font-weight: 600; }
+.live-control.pause { color: var(--color-yellow); }
+.live-control.pause > span { background: var(--color-yellow); color: #000; }
+.live-control.resume { color: var(--color-green); }
+.live-control.resume > span { background: var(--color-green); color: #000; }
+.live-control.stop { color: var(--color-red); }
+.live-control.stop > span { background: var(--color-red); color: #000; }
+.live-control:disabled { color: var(--color-label-3); }
+.live-control:disabled > span { background: var(--color-fill-3); color: var(--color-label-3); }
+.live-control:active:not(:disabled) > span { transform: scale(.95); }
+.live-control:focus-visible { outline-offset: 6px; }
+.live-notice { max-height: 112px; overflow-y: auto; border-radius: 12px; background: rgb(255 159 10 / .15); color: var(--color-orange); padding: 10px 12px; margin: 0 auto 12px; font-size: 13px; line-height: 18px; }
+.live-notice.is-urgent { background: rgb(255 69 58 / .15); color: var(--color-red); }
+.live-action-hint { min-height: 18px; margin-bottom: 12px; text-align: center; font-size: 13px; line-height: 18px; }
+.live-empty, .live-countdown { display: flex; flex: 1; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 24px; }
+.live-countdown strong { font-size: 160px; line-height: 192px; font-weight: 700; letter-spacing: -.045em; color: var(--color-time); }
+.live-finish { text-align: center; }
+.live-activity-mobile { position: fixed; left: 16px; right: 16px; bottom: calc(84px + max(env(safe-area-inset-bottom), 14px)); z-index: 40; display: flex; align-items: center; background: rgb(35 35 37 / .94); backdrop-filter: blur(24px); border-radius: 22px; max-width: 648px; margin: auto; }
+.live-activity-desktop { margin-top: 8px; display: flex; align-items: center; background: var(--color-surface); border-radius: 14px; }
+.live-activity-desktop a { padding-left: 12px; }
+.live-activity-desktop button { margin-right: 8px; }
+.has-live-activity { padding-bottom: 100px; }
+.has-live-activity .coach-composer { bottom: calc(168px + max(env(safe-area-inset-bottom), 14px)); }
+@media (max-width: 389px) {
+  .live-glance { padding: 0 16px 12px; }
+  .live-header { gap: 8px; }
+  .live-speed { font-size: 104px; line-height: 108px; gap: 8px; }
+  .live-speed-unit { font-size: 14px; }
+  .live-duration { margin-top: 8px; }
+  .live-duration strong { font-size: 40px; line-height: 44px; }
+  .live-secondary { margin-top: 8px; }
+  .live-detail { padding-left: 16px; padding-right: 16px; }
+  .live-block { padding-top: 12px; }
+  .live-block h2 { font-size: 22px; line-height: 28px; }
+  .live-target { margin-top: 8px; }
+}
+@media (min-width: 600px) and (max-width: 899px) {
+  .live-header, .live-layout { width: 100%; max-width: 680px; margin: 0 auto; }
+}
+@media (min-width: 900px) {
+  .live-header { width: 100%; max-width: 1260px; margin: 0 auto; padding: 16px 40px; min-height: 84px; }
+  .live-layout { flex: 1; display: grid; grid-template-columns: minmax(360px, .85fr) minmax(0, 1fr); gap: 64px; width: 100%; max-width: 1260px; margin: 0 auto; padding: 16px 40px 32px; overflow: hidden; }
+  .live-primary { display: flex; min-width: 0; flex-direction: column; justify-content: space-between; }
+  .live-glance { padding: 0; }
+  .live-speed { font-size: 168px; line-height: 180px; gap: 16px; }
+  .live-speed-unit { font-size: 24px; line-height: 32px; }
+  .live-speed.is-pace { font-size: 112px; }
+  .live-measure-label { font-size: 15px; line-height: 20px; }
+  .live-duration { display: block; margin-top: 24px; }
+  .live-duration strong { font-size: 56px; line-height: 64px; }
+  .live-duration > span { display: block; margin-top: 4px; }
+  .live-secondary { margin-top: 28px; gap: 24px; }
+  .live-secondary p { font-size: 36px; line-height: 44px; }
+  .live-secondary small { font-size: 17px; }
+  .live-detail { padding: 0 8px 16px 0; overflow-y: auto; scrollbar-width: thin; }
+  .live-detail::-webkit-scrollbar { display: initial; }
+  .live-controls-wrap { position: relative; top: auto; margin-top: 28px; padding: 16px 0 0; background: var(--color-bg); }
+  .live-controls { margin-left: 0; max-width: 320px; }
+  .live-notice { position: absolute; bottom: calc(100% + 8px); margin-left: 0; margin-bottom: 0; max-width: 440px; width: 100%; }
+  .live-action-hint { position: absolute; bottom: 108px; text-align: left; }
+  .live-block { padding-top: 0; box-shadow: none; }
+  .live-block h2 { margin-top: 8px; font-size: 28px; line-height: 34px; }
+  .live-target { margin-top: 16px; }
+  .live-next { font-size: 15px; }
+  .live-programme { margin: 8px 0 24px; }
+  .live-activity-mobile { display: none; }
+  .has-live-activity { padding-bottom: 0; }
+  .has-live-activity .coach-composer { bottom: 0; }
+}
+@media (min-width: 900px) and (max-width: 1100px) {
+  .live-layout { gap: 32px; grid-template-columns: minmax(320px, .85fr) minmax(0, 1fr); padding-right: 32px; padding-left: 32px; }
+  .live-speed { font-size: 136px; line-height: 152px; }
+  .live-speed-unit { font-size: 17px; }
+}

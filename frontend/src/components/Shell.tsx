@@ -1,4 +1,4 @@
-import { Check, ChevronLeft, ChevronsUpDown, Plus, RefreshCw, Settings as SettingsIcon, WifiOff } from 'lucide-react'
+import { Check, ChevronLeft, ChevronsUpDown, Plus, Radio, RefreshCw, Settings as SettingsIcon, WifiOff } from 'lucide-react'
 import { useEffect, useState, type ReactNode } from 'react'
 import { errorMessage } from '../lib/api'
 import { chooseProfile, createProfile, loadProfiles, NAME_MAX, useCurrentProfile, useProfiles, type Profile } from '../lib/profiles'
@@ -6,6 +6,8 @@ import { checkServer, useServer } from '../lib/server'
 import { href, navigate, type Route } from '../lib/router'
 import { CoachIcon, LibraryIcon, TodayIcon } from './Icons'
 import { Avatar, cx, Group, Row, Sheet, Tile } from './ui'
+import { Activity, ReturnToPreparation } from '../features/Direct'
+import { inProgress, useExecution } from '../lib/execution'
 
 /** Destinations réellement construites. Chaque brique ajoute la sienne. */
 const TABS = [
@@ -330,6 +332,7 @@ function SidebarProfile() {
 }
 
 function Sidebar({ route }: { route: Route }) {
+  const execution = useExecution()
   return (
     <aside className="fixed inset-y-0 left-0 z-40 hidden w-[248px] flex-col bg-[#0c0c0d] px-3 py-5 shadow-[inset_-0.5px_0_0_var(--color-sep)] desk:flex">
       <div className="mb-5 px-2.5 text-title3 font-bold">Fitness</div>
@@ -346,17 +349,24 @@ function Sidebar({ route }: { route: Route }) {
           )
         })}
       </nav>
+      {inProgress(execution.feed?.session.phase) && <>
+        <a href={href.direct} className="mt-3 flex min-h-11 items-center gap-2.5 rounded-[8px] px-2.5 text-subhead text-accent"><Radio size={19} />Direct</a>
+        <Activity desktop />
+      </>}
       <SidebarProfile />
     </aside>
   )
 }
 
 export function Shell({ route, children }: { route: Route; children: ReactNode }) {
+  const direct = route.name === 'direct'
+  const e = useExecution()
+  const active = inProgress(e.feed?.session.phase)
   return (
     <>
-      <Sidebar route={route} />
-      <main className="desk:pl-[248px]">{children}</main>
-      <TabBar route={route} />
+      {!direct && <Sidebar route={route} />}
+      <main className={cx(!direct && 'desk:pl-[248px]', !direct && active && 'has-live-activity')}>{children}{!direct && <ReturnToPreparation />}</main>
+      {!direct && <><Activity /><TabBar route={route} /></>}
       <ProfileSheet />
       <NewProfileSheet />
       <ProfilesSync />

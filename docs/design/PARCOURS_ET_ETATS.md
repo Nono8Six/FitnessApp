@@ -21,8 +21,8 @@ Référence fonctionnelle des écrans, à appliquer brique par brique ([plan](..
 | Démarrer | Commencer → « Avant de démarrer » : tapis connecté, clé, bande libre | Feuille centrée | Démarrer désactivé sans les deux confirmations ; compte à rebours 3 s annulable | 8 |
 | Suivre | Direct plein écran : durée, vitesse, cible, distance, pente, allure, bloc, suite, profil réalisé, courbes | Mesures à gauche, bloc et courbes à droite | Toucher la vitesse bascule km/h ↔ min/km | 8 |
 | Quitter le Direct | Chevron ; capsule d’activité au-dessus des onglets | Carte dans la barre latérale | Pause et Reprendre depuis la capsule | 8 |
-| Pause | Bouton jaune, effet immédiat ; bandeau « En pause » | Identique | Durée active figée | 8 |
-| Reprendre | Bouton vert, puis « Bande libre » | Identique | Aucun redémarrage sans confirmation | 8 |
+| Pause | Bouton jaune, demande immédiate ; « Pause demandée » puis « En pause » | Identique | Durée active figée dès la demande ; pause confirmée après réponse et mesure de zéro stabilisée | 8 |
+| Reprendre | Bouton vert, puis clé et bande libre | Identique | Réservé au propriétaire, mêmes confirmations et préconditions qu’au démarrage, point conservé | 8 |
 | Arrêter | Bouton rouge ; « Arrêt demandé » puis « Arrêt confirmé · 0,0 km/h » | Identique | Une demande n’est jamais un arrêt confirmé | 8 |
 | Bilan | Chiffres, courbes liées, blocs prévus et mesurés, ressenti, événements, données | Deux colonnes | Ressenti 1–10 facultatif | 9 |
 | Analyser | Coach : question sur l’historique, sources ouvrables | Identique | Chiffres identiques au bilan | 12 |
@@ -41,12 +41,15 @@ Référence fonctionnelle des écrans, à appliquer brique par brique ([plan](..
 | Proposition invalide | Erreurs renvoyées à ChatGPT ; la carte n’apparaît qu’une fois valide | 6 |
 | Coach hors ligne | Bandeau neutre, composeur désactivé ; séances et historique disponibles | 5 |
 | Tapis absent / connexion en cours | Réglages > Tapis et feuille « Avant de démarrer » : état réel, Démarrer désactivé | 7 |
-| Hors du périmètre reçu | Démarrage refusé, limite affichée | 8 |
+| Programme incompatible | Bloc et limite affichés ; aucune valeur modifiée. Réel 1–2,5 km/h / 0–1 %, simulation jusqu’à 16/10, capacités et pas lus imposés | 8 |
 | Démarrage | Compte à rebours, Annuler | 8 |
 | Transition | La cible change avant la mesure ; rampe visible | 8 |
 | Mesures anciennes | `--` en gris, dernière mesure datée, bandeau orange | 8 |
 | Tapis déconnecté | Bandeau rouge, STOP physique, commandes désactivées aux mêmes places | 8 |
 | Résultat de commande inconnu | Bandeau rouge, STOP physique puis reconnexion | 8 |
+| Observateur | Même séance et mêmes mesures ; Pause et Arrêter disponibles, Reprendre désactivé et propriétaire indiqué | 8 |
+| Observation interrompue | Mesures actuelles `--`, durée marquée dernière reçue, commandes désactivées aux mêmes places, reconnexion d’observation seule | 8 |
+| Programme terminé | Temps actif complet ; arrêt demandé puis confirmé, Terminer revient à Aujourd’hui | 8 |
 | Séance interrompue | Bilan marqué interrompu, données conservées | 9 |
 | Donnée manquante | Trou dans la courbe, bande orange, événement, couverture | 9 |
 | Erreur de stockage | Bandeau rouge, dernier lot confirmé indiqué | 9 |
@@ -60,3 +63,5 @@ Référence fonctionnelle des écrans, à appliquer brique par brique ([plan](..
 | G03 progression | Profil des blocs réalisés et à venir | 8 |
 | G05 régularité | Anneau et barres par jour, totaux mensuels | 11 |
 | G04, G06–G10 | Comparaison, calendrier, distributions, ressenti, qualité | 14 |
+
+Le Direct masque onglets et barre latérale. Les commandes restent ancrées pendant les transitions et les erreurs ; les détails défilent sur petit écran. Chevron, capsule et activité latérale conservent le même suivi global. Le curseur commun affiche une heure de mesure distincte des chiffres actuels ; l’axe des courbes inclut les pauses, la progression utilise exclusivement le temps actif. Aucune sauvegarde d’activité ni bilan n’est livré avant la brique 9.

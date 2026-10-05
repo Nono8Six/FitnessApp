@@ -1,13 +1,15 @@
 import { useEffect, useState } from 'react'
 
 /** Les routes apparaissent avec la brique qui construit leur écran. */
-export type Route = { name: 'today' } | { name: 'settings' }
+export type Route = { name: 'today' } | { name: 'settings'; treadmill?: boolean } | { name: 'direct' }
   | { name: 'coach'; conversationId?: string; target?: { workout_id: string; version: number }; createWorkout?: boolean }
   | { name: 'library'; view?: 'discover' | 'mine' } | { name: 'editor'; id?: string; proposalId?: string }
   | { name: 'workout'; id: string; version?: number }
 
 export function parse(hash: string): Route {
   if (hash === href.settings) return { name: 'settings' }
+  if (hash === href.treadmill) return { name: 'settings', treadmill: true }
+  if (hash === href.direct) return { name: 'direct' }
   if (hash === href.library) return { name: 'library' }
   if (hash === href.myWorkouts) return { name: 'library', view: 'mine' }
   if (hash === href.coach) return { name: 'coach' }
@@ -27,6 +29,8 @@ export function parse(hash: string): Route {
 export const href = {
   today: '#/',
   settings: '#/reglages',
+  treadmill: '#/reglages?tapis=1',
+  direct: '#/direct',
   coach: '#/coach',
   library: '#/seances',
   myWorkouts: '#/seances?vue=mes',

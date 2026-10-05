@@ -14,7 +14,7 @@ Une seule brique en cours dans le périmètre demandé. Les cases indiquent les 
 - [x] **Brique 5 · Coach** : conversations persistantes, lecture des données existantes et mémoire contrôlée ; réponses réelles vérifiées, cache automatique préparé sans gain observé lors des essais courts.
 - [x] **Brique 6 · Catalogue et séances personnalisées** : six formats, trois niveaux, copies personnelles ; création et ajustement ChatGPT validés, persistants et acceptés explicitement.
 - [ ] **Brique 7 · Tapis dans l’app** : logiciel livré, connexion en lecture seule et état en direct vérifiés en simulation ; essai RUN500 et téléphone physique restant à faire.
-- [ ] **Brique 8 · Exécuter une séance** : démarrer, suivre, mettre en pause, reprendre, arrêter (simulation).
+- [x] **Brique 8 · Exécuter une séance** : moteur réel et simulé, Direct, pause/reprise et arrêt ; simulation vérifiée, réception physique de l’application encore ouverte.
 - [ ] **Brique 9 · Enregistrer et revoir** : mesures conservées, bilan réel, ressenti.
 - [ ] **Brique 10 · RUN500 réel** : réception matérielle progressive du parcours et des pertes.
 - [ ] **Brique 11 · Historique et semaine** : historique, objectifs, Aujourd’hui alimenté par les vraies séances.
@@ -335,22 +335,28 @@ Contrôles de ce complément : build et 46 tests ciblés réussis (calculs, API,
 
 ### Brique 8 · Exécuter une séance
 
-**Livré :** depuis Aujourd’hui ou Séances, Commencer, confirmer la clé et la bande, puis suivre la séance dans Direct, avec Pause, Reprendre et Arrêter. En simulation.
+**Livré :** depuis Aujourd’hui ou la fiche d’une séance, Commencer, confirmer la clé et la bande, compte à rebours annulable, puis Direct, Pause, Reprendre au même point et Arrêter. Le même moteur utilise le RUN500 réel ou le simulateur, selon le mode du serveur. Le chemin réel est implémenté dès cette brique ; la brique 10 reçoit le matériel et élargit progressivement ses limites.
 
 **Travail :**
-1. Moteur de séance côté PC : blocs, transitions, durée active, fin de programme. Profil et séance figés au démarrage.
-2. Règles du POC conservées : démarrage au minimum puis consigne, attente de la réponse à chaque commande, aucune répétition automatique, verrouillage sur résultat inconnu, arrêt si l’écran propriétaire disparaît.
-3. Pause et reprise au même point, avec confirmation de présence.
-4. Direct branché sur le WebSocket : chiffres, bloc, suite, profil réalisé, courbes, états (mesures anciennes, déconnecté, commande inconnue).
-5. Activité en direct réduite (capsule et barre latérale).
-6. Périmètre de vitesse et de pente borné au périmètre matériel reçu. Une séance qui le dépasse est refusée au démarrage, avec la limite affichée.
+1. Horloge et transitions sur le PC ; profil, version et blocs figés. Programmes de l’application jusqu’à 60 min et 120 segments, sans reprendre les limites de durée du diagnostic.
+2. Passage explicite au contrôle : abonnement aux réponses du Control Point, acquisition du contrôle, vitesse minimale, Start, mouvement observé, puis consignes. Commandes sérialisées, sans répétition ; Pause/STOP attendent l’échange déjà envoyé. Arrêt confirmé seulement après réponse acceptée, stabilisation et nouvelle mesure de zéro.
+3. Autorisation absolue : durée prévue + 30 s par bloc + 15 min de pause cumulée + 15 s. Aucun renouvellement par heartbeat. L’écran propriétaire envoie son contact toutes les 3 s ; après 12 s de silence, le PC demande STOP. Un observateur ne renouvelle pas cette présence. Réduire et naviguer conservent le propriétaire ; recharger devient un nouvel observateur, sans reprise automatique.
+4. Pause demandée : temps actif figé, point conservé. Reprise réservée au propriétaire avec les deux nouvelles confirmations et préconditions revérifiées. Les pauses confirmées et la remise en mouvement sont exclues du temps actif ; les transitions entre blocs pendant l’effort y restent incluses.
+5. Direct plein écran : vitesse dominante et durée jaune ; commandes de 68 px ancrées sur téléphone, deux colonnes sur PC. Capsule mobile et activité latérale, graphiques SVG synchronisés (1 min / 5 min / séance), curseur daté souris/toucher/clavier, trous pour mesures indisponibles, buffers bornés. Valeur absente distincte de zéro ; aucun panneau cardio vide.
+6. Réel : **1–2,5 km/h et 0–1 %**, plage/pas lus également imposés. Simulation : jusqu’à 16 km/h et 10 %, selon ses capacités. Programme incompatible refusé avec le bloc et la limite, sans correction silencieuse. Les plafonds 4 km/h/3 % et l’autorisation de 10 min du POC restent distincts.
 
 **Fait quand :**
-- [ ] Une séance de 30 min complète en simulation, avec 2 pauses, sur téléphone et PC simultanément.
-- [ ] Les tests couvrent les transitions, la pause, l’arrêt pendant une commande et le résultat inconnu.
-- [ ] Fermer l’écran propriétaire déclenche l’arrêt prévu.
+- [x] Une séance de 30 min complète en simulation, avec 2 pauses, sur deux clients Chrome distincts : PC 1366 × 768 et téléphone 390 × 844. 1 800 s actives, 322,44 s de pauses, 2 140,58 s d’observation réelle sans accélération, 2 133 trames ; même état final sur les deux écrans, STOP confirmé avec vitesse nulle.
+- [x] 52 tests ciblés réussis (16 moteur/API, 9 tapis, 20 POC, 7 serveur) ; le transport BLE de test exerce le chemin réel, y compris abonnement, refus, STOP en cours d’échange, timeout, réponse STOP sans effet, récupération passive, limites, opérations concurrentes et autorisation.
+- [x] Dernière version servie : fermeture du propriétaire en mouvement, observateur encore ouvert → STOP confirmé à zéro ; aucune reprise automatique après redémarrage du serveur. Annulation du compte à rebours → aucune commande, connexion restée en lecture seule, aucun mouvement.
+- [x] `npm run build` réussi (TypeScript inclus).
+- [x] Chrome : 360 × 640, 390 × 844, PC 1366 × 768 et seuil 899/900 px, sans débordement ; Direct actif, pause, capsule/sidebar, allure, confirmations et Échap/focus, curseur commun clavier/toucher. Coupure ciblée d’un observateur : mesures `--`, durée dernière reçue et commandes désactivées aux mêmes positions ; les deux clients de l’essai long restent connectés. Consoles du parcours normal sans erreur/alerte.
 
-**Pas dans cette brique :** conservation durable de la séance, matériel réel en mouvement.
+**Limites :** le verrouillage ou la suspension du téléphone peuvent arrêter ses heartbeats. Si le PC et le Bluetooth restent utilisables, le PC demande STOP après 12 s ; une perte du PC/BLE laisse l’arrêt matériel non garanti. Résultat incertain : STOP physique, déconnexion/reconnexion passive, mesures fraîches à zéro, puis clôture de la séance interrompue, sans réarmement. Réglages > Tapis affiche honnêtement le contrôle actif et refuse la déconnexion pendant une séance. Détails et API dans [Exécution d’une séance](docs/EXECUTION_SEANCE.md).
+
+**Livraison logicielle du 5 octobre 2026 :** serveur habituel 4330 relancé, API d’exécution disponible, JS/CSS servis identiques au build ; neuf tables SQLite et coffre ChatGPT identiques avant/après, intégrité et clés étrangères conformes. Sources du lanceur, manifests et lockfiles inchangés, aucune migration ni recherche Bluetooth réelle. Vérification isolée sur 4331, données extérieures distinctes. La relance par script a rencontré un fichier npm verrouillé : dépendances restaurées par `npm ci` sans changement du lockfile, préparation et build ensuite réussis ; serveur lancé directement et toujours arrêtable par le canal local existant du lanceur.
+
+**Pas dans cette brique :** conservation durable, bilan, historique, réception physique du nouveau parcours ou extension du périmètre reçu. Les commandes réelles sont disponibles ; aucun essai moteur RUN500 n’a été réalisé pour cette livraison.
 
 ### Brique 9 · Enregistrer et revoir
 
@@ -372,7 +378,7 @@ Contrôles de ce complément : build et 46 tests ciblés réussis (calculs, API,
 
 **Livré :** les séances fonctionnent sur le vrai tapis, dans un périmètre reçu et documenté.
 
-**Travail :** protocole progressif, avec présence humaine et autorisation à chaque palier.
+**Travail :** réception du moteur déjà implémenté en brique 8, avec présence humaine et autorisation à chaque palier.
 1. Séance courte à 1–2,5 km/h : démarrage, transitions, pause, reprise, arrêt.
 2. Séance de 30 min à basse vitesse.
 3. Pertes : clé retirée, Bluetooth coupé, téléphone verrouillé, veille du PC, arrêt du processus.

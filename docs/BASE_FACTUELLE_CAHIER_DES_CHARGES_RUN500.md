@@ -649,3 +649,11 @@ La chaîne de preuve de cette base est :
 Les liens vers les sources Bluetooth et Decathlon figurent près des faits qu’ils justifient. Le standard consulté est FTMS 1.0.1 ; cela ne prouve pas une version précise de conformité du firmware essayé.
 
 Lors d’un nouvel essai ou d’un changement, ajouter **date, version, appareil, consigne, réponse, mesure, résultat humain et limites de preuve**. Ne pas supprimer un échec historique et ne pas remplacer « annoncé » par « fonctionne » sur la seule base d’un test logiciel. Cette base prépare le cahier des charges ; la décision finale de périmètre et la réception de l’application restent des étapes distinctes.
+
+## 20. Évolution logicielle de l’application — 5 octobre 2026
+
+La brique 8 ajoute le moteur de séance réel/simulé et son Direct, sans nouvel essai physique. Son périmètre réel est **1–2,5 km/h et 0–1 %**, avec validation des plages/pas lus ; les annonces 16/10 restent distinctes de la réception. Le transport partagé prépare réellement les indications du Control Point avant d’acquérir le contrôle et suit minimum → Start → mouvement observé → consigne. Les programmes de l’application acceptent 60 min et 120 segments ; leur échéance absolue inclut les transitions et un budget cumulé de pause de 15 min. L’autorisation et les plafonds du diagnostic restent inchangés.
+
+Un faux transport Bleak vérifie commandes, réponses et mesures du chemin réel, y compris STOP pendant l’échange, refus, résultat inconnu et STOP accepté sans effet. Il ne prouve aucun mouvement physique. Les parcours Chrome et la séance longue sont simulés ; la fermeture/suspension du propriétaire déclenche une demande STOP après son silence, sans garantie d’arrêt matériel si le PC/BLE est perdu. Résultats détaillés dans [la brique 8 du plan](../PLAN_V1_FITNESS_APP.md) et [le contrat d’exécution](EXECUTION_SEANCE.md).
+
+Les inventaires et essais des sections précédentes décrivent le POC au 4 octobre ; ils restent historiques. La brique 10 doit recevoir le nouveau parcours sur RUN500 et élargir ses limites palier par palier. Aucun nouveau protocole propriétaire ni commande Coach n’a été ajouté.

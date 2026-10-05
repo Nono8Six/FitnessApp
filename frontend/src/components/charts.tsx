@@ -281,16 +281,18 @@ export function TimeChart({
     if (!onCursor) return
     if (dragging.current || e.pointerType === 'mouse') onCursor(tFromEvent(e))
   }
-  const onUp = (e: PointerEvent) => {
+  const onUp = () => {
     dragging.current = false
-    if (e.pointerType !== 'mouse') onCursor?.(null)
+    // La lecture tactile reste sélectionnée jusqu'à Échap / Effacer.
   }
   const onKey = (e: KeyboardEvent) => {
     if (!onCursor) return
     const stepS = (x1 - x0) / 60
-    const cur = cursor ?? x0
+    const cur = Math.max(x0, Math.min(x1, cursor ?? x0))
     if (e.key === 'ArrowRight') { onCursor(Math.min(x1, cur + stepS)); e.preventDefault() }
     if (e.key === 'ArrowLeft') { onCursor(Math.max(x0, cur - stepS)); e.preventDefault() }
+    if (e.key === 'Home') { onCursor(x0); e.preventDefault() }
+    if (e.key === 'End') { onCursor(x1); e.preventDefault() }
     if (e.key === 'Escape') onCursor(null)
   }
 
@@ -299,7 +301,9 @@ export function TimeChart({
   return (
     <div ref={ref} style={{ height }} className="select-none">
       {w > 0 && (
-        <svg width={w} height={height} role="img" aria-label={`${label} (${unit})`} tabIndex={onCursor ? 0 : undefined} onKeyDown={onKey}
+        <svg width={w} height={height} role={onCursor ? 'slider' : 'img'} aria-label={`${label} (${unit})`} tabIndex={onCursor ? 0 : undefined} onKeyDown={onKey}
+          aria-valuemin={onCursor ? x0 : undefined} aria-valuemax={onCursor ? x1 : undefined} aria-valuenow={onCursor ? cursor ?? x0 : undefined}
+          aria-valuetext={onCursor ? `Lecture à ${clock(cursor ?? x0)}` : undefined}
           className="touch-pan-y outline-none focus-visible:outline-2 focus-visible:outline-accent">
           <defs>
             <linearGradient id={gradId} x1="0" x2="0" y1="0" y2="1">

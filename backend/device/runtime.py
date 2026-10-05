@@ -24,6 +24,7 @@ class DeviceRuntime:
         self.subscribers = set()
         self.task = None
         self.last_phase = "disconnected"
+        self.execution = None
 
     async def start(self):
         await self.controller.start()
@@ -45,7 +46,9 @@ class DeviceRuntime:
         elif self.operation in ("scan", "connect") and phase == "disconnected":
             phase = "scanning" if self.operation == "scan" else "connecting"
         return copy.deepcopy({
-            "mode": "simulation" if controller.simulation else "reel", "read_only": True,
+            "mode": "simulation" if controller.simulation else "reel", "read_only": controller.read_only,
+            "control_active": bool(self.execution and self.execution.phase in
+                                   ("starting", "running", "transitioning", "pausing", "paused", "stopping")),
             "phase": phase, "device_name": controller.device_name,
             "devices": [row for row in controller.device_rows if row["candidate"]],
             "capabilities": controller.capabilities, "capability_errors": controller.capability_errors,
@@ -75,6 +78,8 @@ class DeviceRuntime:
             self.publish()
 
     async def perform(self, operation: str, address: str | None = None):
+        if self.execution and self.execution.phase in ("countdown", "starting", "running", "transitioning", "pausing", "paused", "stopping"):
+            raise ControllerError("Une séance est en cours. Demandez son arrêt dans Direct avant de déconnecter le tapis.")
         if self.operation_lock.locked():
             raise ControllerError("Une opération est déjà en cours. Attendre sa fin.")
         async with self.operation_lock:

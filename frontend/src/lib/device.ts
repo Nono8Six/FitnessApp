@@ -7,7 +7,8 @@ export interface Measurement { value: number | null; age_s: number | null; quali
 export interface DeviceRange { min: number; max: number; step: number }
 export interface DeviceState {
   mode: 'simulation' | 'reel'
-  read_only: true
+  read_only: boolean
+  control_active: boolean
   phase: 'disconnected' | 'scanning' | 'connecting' | 'connected' | 'disconnecting'
   device_name: string | null
   devices: { name: string; address: string }[]
@@ -30,7 +31,7 @@ function isEvent(value: unknown): value is DeviceEvent {
   if (!isRecord(value) || !['snapshot', 'state'].includes(String(value.type)) || typeof value.instance_id !== 'string'
     || !Number.isSafeInteger(value.sequence) || Number(value.sequence) < 0 || !isRecord(value.state)) return false
   const s = value.state
-  if (!['simulation', 'reel'].includes(String(s.mode)) || s.read_only !== true
+  if (!['simulation', 'reel'].includes(String(s.mode)) || typeof s.read_only !== 'boolean' || typeof s.control_active !== 'boolean'
     || !['disconnected', 'scanning', 'connecting', 'connected', 'disconnecting'].includes(String(s.phase))
     || !(s.device_name === null || typeof s.device_name === 'string')
     || !(s.error === null || typeof s.error === 'string') || !finite(s.stale_after_s) || s.stale_after_s <= 0
@@ -47,6 +48,8 @@ function isEvent(value: unknown): value is DeviceEvent {
       && ['fresh', 'stale', 'absent'].includes(String(m.quality))
   })
 }
+
+export const isDeviceState = (value: unknown): value is DeviceState => isEvent({type: 'state', instance_id: 'check', sequence: 0, state: value})
 
 /** Reconnecter l'observation uniquement ; aucune connexion automatique au tapis. */
 export function useDevice() {
