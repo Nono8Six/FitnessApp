@@ -10,6 +10,8 @@ export type Item = Step | Repeat
 export type Goal = 'calories' | 'incline' | 'endurance'
 export type Level = 'easy' | 'intermediate' | 'hard'
 export const GOALS: Record<Goal, string> = { calories: 'Dépense calorique', incline: 'Jambes et fessiers — marche inclinée', endurance: 'Endurance' }
+/** Libellés courts des capsules de filtre ; les titres de section gardent le nom complet. */
+export const GOAL_SHORT: Record<Goal, string> = { calories: 'Calories', incline: 'Marche inclinée', endurance: 'Endurance' }
 export const LEVELS: Record<Level, string> = { easy: 'Facile', intermediate: 'Intermédiaire', hard: 'Soutenu' }
 export interface WorkoutInput { name: string; items: Item[]; goal?: Goal | null; level?: Level | null }
 export interface Energy { active_kcal: number | null; total_kcal: number | null; weight_kg: number | null; automatic_gait: boolean; outside_range: boolean }
@@ -36,6 +38,8 @@ export const KIND_LABEL: Record<BlockKind, string> = {
   warmup: 'Échauffement', steady: 'Allure continue', run: 'Course', recover: 'Récupération', cooldown: 'Retour au calme',
 }
 export const isRepeat = (item: Item): item is Repeat => 'repeat' in item
+/** Blocs d'effort en accent, blocs faciles en gris (DESIGN.md). */
+export const isHard = (kind: BlockKind) => kind === 'run' || kind === 'steady'
 const finite = (v: unknown): v is number => typeof v === 'number' && Number.isFinite(v)
 const isEnergy = (v: unknown): v is Energy => isRecord(v)
   && typeof v.automatic_gait === 'boolean' && typeof v.outside_range === 'boolean'

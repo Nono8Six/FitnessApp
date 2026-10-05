@@ -1,11 +1,11 @@
-import { ArrowDown, ArrowUp, Minus, Plus, Repeat as RepeatIcon, Trash2 } from 'lucide-react'
+import { ArrowDown, ArrowUp, ChevronsUpDown, Minus, Plus, Repeat as RepeatIcon, Sparkles, Trash2 } from 'lucide-react'
 import { useEffect, useId, useRef, useState } from 'react'
 import { Page } from '../components/Shell'
-import { Button, cx, StatGrid } from '../components/ui'
+import { Button, cx, Group, Menu, StatGrid } from '../components/ui'
 import { WorkoutError, WorkoutLoading, WorkoutSummary } from '../components/WorkoutSummary'
 import { errorMessage } from '../lib/api'
 import { href, navigate } from '../lib/router'
-import { GOALS, LEVELS, isRepeat, KIND_LABEL, readWorkout, saveWorkout, usePreview, type Goal, type Level, type Item, type LoadState, type Step, type Workout } from '../lib/workouts'
+import { GOALS, LEVELS, isHard, isRepeat, KIND_LABEL, readWorkout, saveWorkout, usePreview, type Goal, type Level, type Item, type LoadState, type Step, type Workout } from '../lib/workouts'
 import { acceptWorkoutProposal, readWorkoutProposal, type WorkoutProposal } from '../lib/coach'
 import { WorkoutDifferences } from '../components/WorkoutProposal'
 
@@ -45,14 +45,25 @@ function NumberField({ value, onChange, step, label, unit, error }: {
   </div>
 }
 
+/** Ligne de liste avec un menu déroulant à droite, à la place d'un sélecteur natif. */
+function MenuRow<T extends string>({ title, label, value, options, empty, onChange }: {
+  title: string; label: string; value: T | null; options: Record<T, string>; empty?: string; onChange: (value: T | null) => void
+}) {
+  const entries = Object.entries(options) as [T, string][]
+  return <div className="g-row pl-4">
+    <div className="row-sep flex min-h-11 items-center gap-3 pr-2">
+      <span className="min-w-0 flex-1 text-body">{title}</span>
+      <Menu label={`${label} : ${value ? options[value] : empty}`} className="pressable -my-px flex h-11 min-w-0 items-center gap-1 rounded-[8px] px-2 text-body text-label-2 disabled:text-label-3"
+        button={<><span className="truncate">{value ? options[value] : empty}</span><ChevronsUpDown size={15} className="shrink-0" /></>}
+        items={[...(empty === undefined ? [] : [{ label: empty, checked: value === null, onSelect: () => onChange(null) }, 'separator' as const]),
+          ...entries.map(([key, text]) => ({ label: text, checked: value === key, onSelect: () => onChange(key) }))]} />
+    </div>
+  </div>
+}
+
 function StepFields({ value, onChange, errorAt }: { value: Step; onChange: (value: Step) => void; errorAt: (field: string) => string | undefined }) {
   return <>
-    <label className="flex min-h-11 items-center justify-between gap-3 px-4 pt-1 text-footnote text-label-2">Type
-      <select aria-label="Type de bloc" value={value.kind} onChange={e => onChange({ ...value, kind: e.target.value as Step['kind'] })}
-        className="h-11 min-w-0 max-w-[75%] bg-surface text-subhead font-semibold text-label">
-        {Object.entries(KIND_LABEL).map(([kind, label]) => <option key={kind} value={kind}>{label}</option>)}
-      </select>
-    </label>
+    <MenuRow title="Type" label="Type de bloc" value={value.kind} options={KIND_LABEL} onChange={kind => kind && onChange({ ...value, kind })} />
     <NumberField label="Durée" unit="min" step={0.5} value={value.sec / 60} error={errorAt('sec')} onChange={v => onChange({ ...value, sec: Number((v * 60).toFixed(4)) })} />
     <NumberField label="Vitesse" unit="km/h" step={0.5} value={value.speed} error={errorAt('speed')} onChange={v => onChange({ ...value, speed: v })} />
     <NumberField label="Pente" unit="%" step={0.5} value={value.incline} error={errorAt('incline')} onChange={v => onChange({ ...value, incline: v })} />
@@ -111,8 +122,11 @@ function EditorForm({ profile, source, proposal }: { profile: string; source?: W
       </label>
       <div className="order-last grid min-w-0 gap-7 desk:order-none desk:col-start-1">
         {entries.map(({ key, value: item }, i) => <section key={key} aria-label={`Bloc ${i + 1}`}>
-          <div className="mb-2 flex items-center justify-between gap-2 pl-4">
-            <h2 className="text-footnote font-semibold text-label-2 uppercase">{i + 1} · {isRepeat(item) ? 'Répétition' : KIND_LABEL[item.kind]}</h2>
+          <div className="mb-1 flex items-center justify-between gap-2 pl-4">
+            <h2 className="flex min-w-0 items-center gap-2 text-footnote text-label-2 uppercase">
+              <span aria-hidden className={cx('h-3.5 w-1 shrink-0 rounded-full', isRepeat(item) ? 'bg-label-2' : isHard(item.kind) ? 'bg-accent' : 'bg-[#636366]')} />
+              <span className="truncate">{i + 1} · {isRepeat(item) ? `Répéter ${Number.isFinite(item.repeat) ? item.repeat : '--'} fois` : KIND_LABEL[item.kind]}</span>
+            </h2>
             <div className="flex shrink-0">
               <button aria-label={`Monter le bloc ${i + 1}`} disabled={i === 0} onClick={() => move(i, -1)} className="grid size-11 place-items-center text-label-2 disabled:text-label-3"><ArrowUp size={17} /></button>
               <button aria-label={`Descendre le bloc ${i + 1}`} disabled={i === entries.length - 1} onClick={() => move(i, 1)} className="grid size-11 place-items-center text-label-2 disabled:text-label-3"><ArrowDown size={17} /></button>
@@ -122,10 +136,13 @@ function EditorForm({ profile, source, proposal }: { profile: string; source?: W
           <div className="overflow-hidden rounded-[12px] bg-surface">
             {isRepeat(item) ? <>
               <NumberField label="Répéter" unit="fois" step={1} value={item.repeat} error={errorAt(['items', i, 'repeat'])} onChange={repeat => update(i, { ...item, repeat })} />
-              {item.steps.map((step, j) => <div key={j} className="border-t-[6px] border-black">
+              {item.steps.map((step, j) => <div key={j} className="border-t-8 border-bg">
+                <p className="flex items-center gap-2 px-4 pt-2.5 text-footnote font-semibold text-label-2">
+                  <span aria-hidden className={cx('h-3 w-1 rounded-full', isHard(step.kind) ? 'bg-accent' : 'bg-[#636366]')} />Bloc {j + 1}
+                </p>
                 <StepFields value={step} errorAt={field => errorAt(['items', i, 'steps', j, field])} onChange={value => update(i, { ...item, steps: item.steps.map((s, k) => k === j ? value : s) })} />
               </div>)}
-              <div className="flex flex-wrap gap-1 border-t-[6px] border-black p-2">
+              <div className="flex flex-wrap gap-1 border-t-8 border-bg p-2">
                 <Button variant="plain" size="md" onClick={() => update(i, { ...item, steps: [...item.steps, newStep()] })}>Ajouter un bloc</Button>
                 {item.steps.length > 1 && <Button variant="plain" size="md" onClick={() => update(i, { ...item, steps: item.steps.slice(0, -1) })}>Retirer le dernier</Button>}
               </div>
@@ -138,20 +155,12 @@ function EditorForm({ profile, source, proposal }: { profile: string; source?: W
         </div>
       </div>
       <aside className="min-w-0 desk:sticky desk:top-16 desk:col-start-2 desk:row-span-2 desk:row-start-1" aria-label="Aperçu">
-        <div className="mb-4 grid grid-cols-1 gap-2">
-          <label className="flex min-h-11 items-center justify-between gap-2 rounded-[12px] bg-surface px-3 text-subhead">Objectif
-            <select aria-label="Objectif de la séance" className="h-11 min-w-0 max-w-[75%] bg-surface text-right text-label-2" value={goal ?? ''} onChange={e => setGoal((e.target.value || null) as Goal | null)}>
-              <option value="">Non renseigné</option>{Object.entries(GOALS).map(([value, label]) => <option key={value} value={value}>{label}</option>)}
-            </select>
-          </label>
-          <label className="flex min-h-11 items-center justify-between gap-2 rounded-[12px] bg-surface px-3 text-subhead">Niveau
-            <select aria-label="Niveau de la séance" className="h-11 bg-surface text-label-2" value={level ?? ''} onChange={e => setLevel((e.target.value || null) as Level | null)}>
-              <option value="">Non renseigné</option>{Object.entries(LEVELS).map(([value, label]) => <option key={value} value={value}>{label}</option>)}
-            </select>
-          </label>
-        </div>
+        <Group className="mb-4">
+          <MenuRow title="Objectif" label="Objectif de la séance" value={goal} options={GOALS} empty="Non renseigné" onChange={setGoal} />
+          <MenuRow title="Niveau" label="Niveau de la séance" value={level} options={LEVELS} empty="Non renseigné" onChange={setLevel} />
+        </Group>
         {preview.status === 'ok' ? <WorkoutSummary data={preview.data} editing /> : <>
-          <StatGrid stats={['Durée prévue', 'Distance prévue', 'Kcal actives est.', 'Dénivelé équiv.'].map(label => ({ label, value: null, color: '' }))} />
+          <StatGrid stats={['Durée', 'Distance', 'Kcal actives', 'Dénivelé équiv.'].map(label => ({ label, value: null, color: '' }))} />
           {/* Les erreurs de champ s'affichent sous leur champ ; ici, seulement l'état et les erreurs sans champ. */}
           {preview.status === 'error' ? !(preview.issues?.length && preview.issues.every(issue => issue.path.length > 0)) && <>
             <p role="alert" className="mt-3 px-4 text-footnote text-red">{preview.message}</p>
@@ -162,7 +171,8 @@ function EditorForm({ profile, source, proposal }: { profile: string; source?: W
         {source && <p className="mt-1 px-4 text-footnote text-label-2">La version {source.version} sera conservée.</p>}
         {proposal?.base && preview.status === 'ok' && <WorkoutDifferences before={proposal.base} after={preview.data} />}
         {source && <div className="mt-3 px-4">
-          <a aria-disabled={dirty || saving} href={dirty || saving ? undefined : href.coachAdjust(source.id, source.version)} className={dirty || saving ? 'text-subhead text-label-3' : 'inline-flex min-h-11 items-center text-subhead text-accent'}>Ajuster avec ChatGPT</a>
+          <a aria-disabled={dirty || saving} href={dirty || saving ? undefined : href.coachAdjust(source.id, source.version)}
+            className={cx('inline-flex min-h-11 items-center gap-1.5 text-subhead', dirty || saving ? 'text-label-3' : 'text-accent')}><Sparkles size={16} />Ajuster avec ChatGPT</a>
           {dirty && <p className="mt-2 text-footnote text-label-2">Enregistrez vos changements avant de demander un ajustement.</p>}
         </div>}
         {error && <p role="alert" className="mt-4 px-4 text-subhead text-red">{error}</p>}

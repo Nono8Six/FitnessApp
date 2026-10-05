@@ -1,9 +1,9 @@
-import { Archive, ArchiveRestore, ArrowDown, ArrowUp, BookOpen, ChevronRight, List, Search, Square, SquarePen, X } from 'lucide-react'
+import { Archive, ArchiveRestore, ArrowDown, ArrowUp, BookOpen, ChevronRight, List, Square, SquarePen } from 'lucide-react'
 import { useEffect, useLayoutEffect, useRef, useState, type ReactNode } from 'react'
 import Markdown from 'react-markdown'
 import { CoachIcon, LibraryIcon } from '../components/Icons'
 import { Page } from '../components/Shell'
-import { Button, cx, Glyph, Group, Row, Segmented, Sheet } from '../components/ui'
+import { Button, cx, Glyph, Group, Row, SearchField, Segmented, Sheet } from '../components/ui'
 import { errorMessage } from '../lib/api'
 import { readChatGPT, type ChatGPTState } from '../lib/chatgpt'
 import { archiveConversation, createConversation, readConversations, readTurns, sendMessage, stopTurn, type Conversation, type PageData, type Proposal, type Turn } from '../lib/coach'
@@ -215,14 +215,7 @@ export function Coach({ profile, target, conversationId, createWorkout }: { prof
 
   const list = <>
     <div className="grid gap-2.5">
-      <label className="flex h-9 items-center gap-1.5 rounded-[10px] bg-fill-3 px-2 text-label-2 focus-within:text-label">
-        <Search size={17} className="shrink-0" />
-        <input type="search" maxLength={100} value={query} onChange={e => setQuery(e.target.value)} placeholder="Rechercher"
-          aria-label="Rechercher dans les conversations"
-          className="h-full min-w-0 flex-1 bg-transparent text-body text-label outline-none placeholder:text-label-2 focus-visible:outline-none [&::-webkit-search-cancel-button]:hidden" />
-        {query && <button type="button" aria-label="Effacer la recherche" onClick={() => setQuery('')}
-          className="-mr-1 grid size-7 shrink-0 place-items-center rounded-full text-label-2"><span className="grid size-[17px] place-items-center rounded-full bg-label-3 text-bg"><X size={12} strokeWidth={3} /></span></button>}
-      </label>
+      <SearchField value={query} onChange={setQuery} label="Rechercher dans les conversations" maxLength={100} />
       <Segmented label="Conversations affichées" value={archivedView ? 'archived' : 'active'} onChange={v => setArchivedView(v === 'archived')}
         options={[{ value: 'active', label: 'Récentes' }, { value: 'archived', label: 'Archivées' }]} />
     </div>

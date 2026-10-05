@@ -302,6 +302,8 @@ Contrôles de ce complément : build et 46 tests ciblés réussis (calculs, API,
 
 **Limites :** les essais de refus/correction automatique utilisent un transport simulé, contrairement aux créations et à l’ajustement réellement effectués avec ChatGPT. Le viewport téléphone de Chrome ne prouve pas Safari/iPhone ou Android physique. Le catalogue reste utilisable sans ChatGPT ; ses estimations ne garantissent aucune dépense ni perte de poids. L’adaptation en temps réel concerne la préparation, pas l’effort en cours (brique 8). Les principes sont sourcés, les chiffres exacts sont des choix FitnessApp ; ni prescription personnelle ni progression reçue sur plusieurs semaines. Les consignes sont des programmes de conception, sans autorisation de mouvement du tapis.
 
+**Finition de l’interface (5 octobre 2026) :** Découvrir commence par des capsules de réglage (cible, difficulté) et d’objectif, ce qui fait apparaître les formats dès le premier écran du téléphone. L’aperçu présente les réglages en liste groupée, une répartition de l’effort en barre, des segments groupés et un bouton Ajouter toujours visible. Les menus déroulants iOS remplacent les sélecteurs natifs (filtres, éditeur, versions), le détail de séance place l’action principale en tête, et la proposition ChatGPT surligne les seules valeurs modifiées. Aucune modification d’API ni de données. Contrôles : build, Chrome en simulation isolée sur PC et téléphone 375/390 px (Découvrir, cible, aperçu, ajout, Mes séances et filtres, détail, éditeur et menu au clavier). La carte de proposition n’a pas été revue avec une vraie réponse ChatGPT.
+
 **Pas dans cette brique :** Bluetooth, exécution sur le tapis, historique d’activités, planning.
 
 ### Brique 7 · Tapis dans l’app
@@ -324,6 +326,8 @@ Contrôles de ce complément : build et 46 tests ciblés réussis (calculs, API,
 - [x] Build frontend réussi, API et fichiers JS/CSS réellement servis conformes au build ; console Chrome sans erreur pendant le parcours normal. Messages d'indisponibilité et erreurs réseau attendus lors de l'arrêt volontaire du serveur de vérification.
 
 **Livraison logicielle du 5 octobre 2026 :** vérification de simulation sur le port isolé 4331, avec dossier de données extérieur distinct. Serveur habituel 4330 relancé proprement, API et ressources du build vérifiées ; les neuf tables SQLite et le coffre ChatGPT sont identiques avant/après, intégrité et clés étrangères conformes. Aucun accès au Bluetooth réel ni mouvement, aucun script de réception lancé. Profils, séances, versions, conversations, mémoire, coffre ChatGPT et sources du lanceur préservés ; aucune migration. La case globale reste ouverte pour les deux essais physiques ci-dessus. Les capacités simulées restent celles du simulateur du POC (minimum 0,5 km/h), sans les présenter comme une lecture du RUN500.
+
+**Finition de l’interface (5 octobre 2026) :** ligne Réglages avec état coloré, feuille ouverte sur l’appareil (nom, état, lecture seule), capacités avec plages et pas, Déconnecter en ligne de liste. Vérifiée en simulation isolée (recherche, connexion, mesures, déconnexion) ; le contrôleur et l’API ne changent pas.
 
 **Pas dans cette brique :** démarrage de séance.
 

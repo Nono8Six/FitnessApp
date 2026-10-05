@@ -1,5 +1,5 @@
-import { ChevronRight, Minus, Plus } from 'lucide-react'
-import { useEffect, useId, useState, type ButtonHTMLAttributes, type ReactNode } from 'react'
+import { Check, ChevronRight, Minus, Plus, Search, X } from 'lucide-react'
+import { useEffect, useId, useLayoutEffect, useRef, useState, type ButtonHTMLAttributes, type KeyboardEvent as ReactKeyboardEvent, type ReactNode } from 'react'
 import { createPortal } from 'react-dom'
 
 const cx = (...c: (string | false | null | undefined)[]) => c.filter(Boolean).join(' ')
@@ -33,6 +33,199 @@ export function Button({
   )
 }
 
+/* ---------- Chips (filtres en capsule) ---------- */
+
+/** Capsule de filtre : blanche quand elle est choisie, comme les filtres d’Apple Fitness. */
+export function Chip({ selected = false, className, ...rest }: ButtonHTMLAttributes<HTMLButtonElement> & { selected?: boolean }) {
+  return (
+    <button type="button" aria-pressed={selected} {...rest}
+      className={cx('pressable inline-flex h-9 shrink-0 items-center gap-1.5 rounded-full px-4 text-subhead font-semibold whitespace-nowrap',
+        selected ? 'bg-label text-black' : 'bg-fill-3 text-label', 'disabled:text-label-3', className)} />
+  )
+}
+
+/** Rangée de capsules qui défile horizontalement sur téléphone et passe à la ligne sur PC. */
+export function ChipRow({ children, label, className }: { children: ReactNode; label: string; className?: string }) {
+  return (
+    <div role="group" aria-label={label}
+      className={cx('-mx-4 flex gap-2 overflow-x-auto px-4 py-0.5 [scrollbar-width:none] desk:mx-0 desk:flex-wrap desk:overflow-visible desk:px-0 [&::-webkit-scrollbar]:hidden', className)}>
+      {children}
+    </div>
+  )
+}
+
+/* ---------- Pull-down menu ---------- */
+
+export interface MenuItem {
+  label: string
+  icon?: ReactNode
+  /** Défini : l’élément est une option, cochée ou non. */
+  checked?: boolean
+  destructive?: boolean
+  disabled?: boolean
+  onSelect: () => void
+}
+
+/**
+ * Menu déroulant iOS : liste flottante translucide, coche à gauche, icône à droite.
+ * Rendu en position fixe dans le body pour ne jamais être rogné par un conteneur qui défile.
+ */
+export function Menu({ label, button, items, className, align = 'end', disabled }: {
+  label: string
+  button: ReactNode
+  items: (MenuItem | 'separator')[]
+  className?: string
+  align?: 'start' | 'end'
+  disabled?: boolean
+}) {
+  const [open, setOpen] = useState(false)
+  const [pos, setPos] = useState<{ top: number; left: number; origin: string }>()
+  const trigger = useRef<HTMLButtonElement>(null)
+  const list = useRef<HTMLDivElement>(null)
+  const menuId = useId()
+  const options = items.some((i) => i !== 'separator' && i.checked !== undefined)
+  const close = (focus = true) => {
+    setOpen(false)
+    setPos(undefined)
+    if (focus) trigger.current?.focus()
+  }
+  useLayoutEffect(() => {
+    if (!open || !trigger.current || !list.current) return
+    const r = trigger.current.getBoundingClientRect()
+    const w = list.current.offsetWidth, h = list.current.offsetHeight
+    const below = r.bottom + 6 + h <= window.innerHeight - 8 || r.top < h + 14
+    const left = Math.min(Math.max(8, align === 'end' ? r.right - w : r.left), window.innerWidth - w - 8)
+    setPos({ top: below ? r.bottom + 6 : r.top - h - 6, left, origin: `${align === 'end' ? 'right' : 'left'} ${below ? 'top' : 'bottom'}` })
+  }, [open, align])
+  // Le focus attend que la liste soit placée et visible.
+  useEffect(() => {
+    if (!pos || !list.current) return
+    const buttons = [...list.current.querySelectorAll<HTMLButtonElement>('button:not(:disabled)')]
+    ;(buttons.find((b) => b.getAttribute('aria-checked') === 'true') ?? buttons[0])?.focus({ preventScroll: true })
+  }, [pos])
+  useEffect(() => {
+    if (!open) return
+    const outside = (e: PointerEvent) => {
+      if (!list.current?.contains(e.target as Node) && !trigger.current?.contains(e.target as Node)) close(false)
+    }
+    const dismiss = (e: Event) => { if (!list.current?.contains(e.target as Node)) close(false) }
+    document.addEventListener('pointerdown', outside, true)
+    window.addEventListener('scroll', dismiss, true)
+    window.addEventListener('resize', dismiss)
+    return () => {
+      document.removeEventListener('pointerdown', outside, true)
+      window.removeEventListener('scroll', dismiss, true)
+      window.removeEventListener('resize', dismiss)
+    }
+  }, [open])
+  const onKey = (e: ReactKeyboardEvent<HTMLDivElement>) => {
+    const buttons = [...(list.current?.querySelectorAll<HTMLButtonElement>('button:not(:disabled)') ?? [])]
+    const index = buttons.indexOf(document.activeElement as HTMLButtonElement)
+    if (e.key === 'Escape') { e.stopPropagation(); close() }
+    else if (e.key === 'Tab') close(false)
+    else if (e.key === 'ArrowDown') buttons[(index + 1) % buttons.length]?.focus()
+    else if (e.key === 'ArrowUp') buttons[(index - 1 + buttons.length) % buttons.length]?.focus()
+    else if (e.key === 'Home') buttons[0]?.focus()
+    else if (e.key === 'End') buttons.at(-1)?.focus()
+    else return
+    if (e.key !== 'Tab') e.preventDefault()
+  }
+  return (
+    <>
+      <button ref={trigger} type="button" aria-label={label} aria-haspopup="menu" aria-expanded={open} aria-controls={open ? menuId : undefined}
+        disabled={disabled} onClick={() => (open ? close() : setOpen(true))} className={className}>
+        {button}
+      </button>
+      {open && createPortal(
+        <div ref={list} id={menuId} role="menu" aria-label={label} onKeyDown={onKey}
+          className="fixed z-[60] max-h-[min(420px,70dvh)] w-max max-w-[min(320px,calc(100vw-16px))] min-w-[220px] overflow-y-auto rounded-[14px] bg-[#2c2c2e]/95 py-1 shadow-[0_12px_48px_rgba(0,0,0,.6),inset_0_0_0_0.5px_rgb(255_255_255/.1)] backdrop-blur-2xl backdrop-saturate-150"
+          style={pos ? { top: pos.top, left: pos.left, transformOrigin: pos.origin, animation: 'menu-in 220ms var(--ease-ios) both' } : { top: 0, left: 0, visibility: 'hidden' }}>
+          {items.map((item, i) => item === 'separator'
+            ? <div key={i} role="separator" className="h-2 bg-black/30" />
+            : (
+              <button key={i} type="button" role={item.checked === undefined ? 'menuitem' : 'menuitemradio'} aria-checked={item.checked}
+                disabled={item.disabled} onClick={() => { close(); item.onSelect() }}
+                className={cx('flex min-h-11 w-full items-center gap-2.5 px-4 py-2 text-left text-body outline-none hover:bg-white/8 focus-visible:bg-white/12 disabled:text-label-3',
+                  item.destructive ? 'text-red' : 'text-label', '[&+&]:shadow-[inset_0_0.5px_0_var(--color-sep)]')}>
+                {options && <span className="-ml-1 grid w-5 shrink-0 place-items-center">{item.checked && <Check size={17} strokeWidth={2.6} />}</span>}
+                <span className="min-w-0 flex-1">{item.label}</span>
+                {item.icon && <span className="-mr-1 grid w-6 shrink-0 place-items-center">{item.icon}</span>}
+              </button>
+            ))}
+        </div>,
+        document.body,
+      )}
+    </>
+  )
+}
+
+/** Déclencheur de menu en capsule : valeur actuelle et chevrons, comme un bouton « pull-down » d’iOS. */
+export const pillClass = 'pressable inline-flex h-9 shrink-0 items-center gap-1.5 rounded-full bg-fill-3 pr-3 pl-3.5 text-subhead font-semibold whitespace-nowrap disabled:text-label-3'
+
+/* ---------- Search field ---------- */
+
+/** Champ de recherche iOS : loupe, 36 px, effacement rond. */
+export function SearchField({ value, onChange, label, placeholder = 'Rechercher', className, maxLength }: {
+  value: string; onChange: (v: string) => void; label: string; placeholder?: string; className?: string; maxLength?: number
+}) {
+  return (
+    <label className={cx('flex h-9 items-center gap-1.5 rounded-[10px] bg-fill-3 px-2 text-label-2 focus-within:text-label', className)}>
+      <Search size={17} className="shrink-0" />
+      <input type="search" maxLength={maxLength} value={value} onChange={(e) => onChange(e.target.value)} placeholder={placeholder} aria-label={label}
+        onKeyDown={(e) => { if (e.key === 'Escape' && value) { e.stopPropagation(); onChange('') } }}
+        className="h-full min-w-0 flex-1 bg-transparent text-body text-label outline-none placeholder:text-label-2 focus-visible:outline-none [&::-webkit-search-cancel-button]:hidden" />
+      {value && (
+        <button type="button" aria-label="Effacer la recherche" onClick={() => onChange('')}
+          className="-mr-1 grid size-7 shrink-0 place-items-center rounded-full text-label-2">
+          <span className="grid size-[17px] place-items-center rounded-full bg-label-3 text-bg"><X size={12} strokeWidth={3} /></span>
+        </button>
+      )}
+    </label>
+  )
+}
+
+/* ---------- Disclosure ---------- */
+
+/** Détail repliable, avec chevron qui pivote ; fond de liste groupée (plus clair dans une feuille). */
+export function Disclosure({ title, children, className, defaultOpen }: { title: ReactNode; children: ReactNode; className?: string; defaultOpen?: boolean }) {
+  return (
+    <details open={defaultOpen} className={cx('group group-bg overflow-hidden rounded-[12px] bg-surface', className)}>
+      <summary className="flex min-h-11 cursor-pointer list-none items-center justify-between gap-2 px-4 py-2.5 text-body select-none [&::-webkit-details-marker]:hidden">
+        <span className="min-w-0">{title}</span>
+        <ChevronRight size={18} strokeWidth={2.4} className="shrink-0 text-label-3 transition-transform duration-300 ease-ios group-open:rotate-90" />
+      </summary>
+      {children}
+    </details>
+  )
+}
+
+/** Faits en lignes courtes libellé / valeur, séparés en retrait. */
+export function Facts({ rows, className }: { rows: (readonly [ReactNode, ReactNode])[]; className?: string }) {
+  return (
+    <dl className={cx('text-subhead', className)}>
+      {rows.map(([label, value], i) => (
+        <div key={i} className="ml-4 flex min-h-11 items-center justify-between gap-3 py-2 pr-4 shadow-[inset_0_0.5px_0_var(--color-sep)]">
+          <dt className="text-label-2">{label}</dt>
+          <dd className="num text-right text-label">{value}</dd>
+        </div>
+      ))}
+    </dl>
+  )
+}
+
+/* ---------- Status dot ---------- */
+
+/** Pastille d’état : couleur de rôle et libellé, jamais la couleur seule. */
+export function StatusLabel({ tone, children, pulse }: { tone: 'green' | 'orange' | 'red' | 'gray'; children: ReactNode; pulse?: boolean }) {
+  const color = { green: 'var(--color-green)', orange: 'var(--color-orange)', red: 'var(--color-red)', gray: 'var(--color-label-3)' }[tone]
+  return (
+    <span className="inline-flex items-center gap-1.5" style={{ color: tone === 'gray' ? 'var(--color-label-2)' : color }}>
+      <span aria-hidden className={cx('size-2 shrink-0 rounded-full', pulse && 'animate-pulse-dot')} style={{ background: color }} />
+      {children}
+    </span>
+  )
+}
+
 /* ---------- Grouped lists ---------- */
 
 export function SectionHeader({ title, action, href }: { title: string; action?: string; href?: string }) {
@@ -51,8 +244,7 @@ export function SectionHeader({ title, action, href }: { title: string; action?:
 export function Group({ children, className, header, footer }: { children: ReactNode; className?: string; header?: ReactNode; footer?: ReactNode }) {
   return (
     <div className={className}>
-      {header && <h2 className="mb-1.5 px-4 text-footnote font-normal tracking-[0.01em] text-label-2 uppercase">{header}</h2>}
-      <div className="group-bg overflow-hidden rounded-[12px] bg-surface">{children}</div>
+      {header && <h2 className="mb-1.5 px-4 text-footnote font-normal tracking-[0.01em] text-label-2 uppercase">{header}</h2>}      <div className="group-bg overflow-hidden rounded-[12px] bg-surface">{children}</div>
       {footer && <p className="mt-2 px-4 text-footnote text-label-2">{footer}</p>}
     </div>
   )
@@ -211,7 +403,7 @@ export function ControlRow({ title, control, error }: { title: ReactNode; contro
 }
 
 /** Entier borné : boutons − / + de 44 px et valeur saisissable au clavier, validée à la sortie du champ. */
-export function Stepper({ value, min, max, onChange, label, disabled, onInvalid }: {
+export function Stepper({ value, min, max, onChange, label, disabled, onInvalid, step: increment = 1, unit, color }: {
   value: number
   min: number
   max: number
@@ -220,28 +412,37 @@ export function Stepper({ value, min, max, onChange, label, disabled, onInvalid 
   disabled?: boolean
   /** Saisie hors limites : message à afficher, ou undefined une fois corrigée. */
   onInvalid: (message: string | undefined) => void
+  /** Pas des boutons − / + ; la saisie au clavier reste libre dans les bornes. */
+  step?: number
+  unit?: string
+  /** Couleur de rôle de la valeur. */
+  color?: string
 }) {
   const [draft, setDraft] = useState<string | null>(null)
+  const range = `Entre ${min.toLocaleString('fr-FR')} et ${max.toLocaleString('fr-FR')}${unit ? ` ${unit}` : ''}`
   const commit = () => {
     if (draft === null) return
-    const text = draft.trim()
+    const text = draft.trim().replace(/\s/g, '')
     const n = Number(text)
     if (!/^\d+$/.test(text) || n < min || n > max) {
-      onInvalid(`Entre ${min} et ${max}`)
+      onInvalid(range)
       return
     }
     setDraft(null)
     onInvalid(undefined)
     if (n !== value) onChange(n)
   }
+  // Les boutons ramènent d’abord sur un multiple du pas, comme un minuteur.
   const step = (delta: number) => {
     setDraft(null)
     onInvalid(undefined)
-    onChange(Math.min(max, Math.max(min, value + delta)))
+    const next = delta > 0 ? Math.floor(value / increment) * increment + increment : Math.ceil(value / increment) * increment - increment
+    onChange(Math.min(max, Math.max(min, next)))
   }
   const invalid = draft !== null && !(/^\d+$/.test(draft.trim()) && +draft >= min && +draft <= max)
   return (
     <div className="flex items-center gap-1">
+      <span className="flex items-baseline">
       <input
         inputMode="numeric"
         enterKeyHint="done"
@@ -256,9 +457,12 @@ export function Stepper({ value, min, max, onChange, label, disabled, onInvalid 
           if (e.key === 'Enter') e.currentTarget.blur()
           if (e.key === 'Escape') { setDraft(null); onInvalid(undefined) }
         }}
-        className={cx('num h-11 w-11 rounded-[8px] bg-transparent text-center text-body font-semibold outline-none focus:bg-fill-3 disabled:text-label-3',
-          invalid && 'text-red')}
+        className={cx('num h-11 rounded-[8px] bg-transparent text-body font-semibold outline-none focus:bg-fill-3 disabled:text-label-3',
+          max >= 1000 ? 'w-14' : 'w-11', unit ? 'pr-1 text-right' : 'text-center', invalid && 'text-red')}
+        style={invalid || disabled ? undefined : { color }}
       />
+      {unit && <span className="mr-1.5 text-subhead text-label-2">{unit}</span>}
+      </span>
       <div className="flex h-8 items-center rounded-[8px] bg-fill-3">
         <button type="button" aria-label={`Diminuer : ${label}`} disabled={disabled || value <= min} onClick={() => step(-1)}
           className="grid h-11 w-11 place-items-center active:opacity-50 disabled:text-label-3">
@@ -283,6 +487,8 @@ export function Sheet({
   children,
   leading,
   trailing,
+  footer,
+  wide = false,
 }: {
   open: boolean
   onClose: () => void
@@ -290,6 +496,10 @@ export function Sheet({
   children: ReactNode
   leading?: ReactNode
   trailing?: ReactNode
+  /** Action principale toujours visible en bas de la feuille. */
+  footer?: ReactNode
+  /** Feuille de 640 px sur PC, pour un aperçu avec graphique. */
+  wide?: boolean
 }) {
   const id = useId()
   useEffect(() => {
@@ -307,18 +517,24 @@ export function Sheet({
   return createPortal(
     <div className="fixed inset-0 z-50 flex items-end justify-center desk:items-center" role="dialog" aria-modal="true" aria-labelledby={title ? id : undefined}>
       <div className="animate-fade absolute inset-0 bg-black/60" onClick={onClose} />
-      <div className="animate-sheet relative max-h-[92dvh] w-full overflow-y-auto rounded-t-[14px] bg-surface pb-safe desk:max-w-[480px] desk:rounded-[14px] desk:pb-0">
-        <div className="sticky top-0 z-10 bg-surface/90 backdrop-blur-xl">
+      <div className={cx('animate-sheet relative max-h-[92dvh] w-full overflow-y-auto overscroll-contain rounded-t-[14px] bg-surface desk:rounded-[14px]',
+        wide ? 'desk:max-w-[640px]' : 'desk:max-w-[480px]', !footer && 'pb-safe desk:pb-0')}>
+        <div className="sticky top-0 z-10 bg-surface/85 backdrop-blur-xl">
           <div className="mx-auto mt-1.5 h-[5px] w-9 rounded-full bg-label-3 desk:hidden" />
           {(title || leading || trailing) && (
-            <div className="grid h-12 grid-cols-[1fr_auto_1fr] items-center px-4">
+            <div className="grid h-12 grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-2 px-4">
               <div className="justify-self-start">{leading}</div>
-              {title && <h2 id={id} className="text-headline">{title}</h2>}
+              {title && <h2 id={id} className="max-w-[min(60vw,400px)] truncate text-headline">{title}</h2>}
               <div className="justify-self-end">{trailing}</div>
             </div>
           )}
         </div>
-        <div className="px-4 pt-2 pb-6 [&_.group-bg]:bg-surface-2">{children}</div>
+        <div className={cx('px-4 pt-2 [&_.group-bg]:bg-surface-2', footer ? 'pb-4' : 'pb-6')}>{children}</div>
+        {footer && (
+          <div className="sticky bottom-0 z-10 bg-surface/85 px-4 pt-3 pb-[max(env(safe-area-inset-bottom),16px)] shadow-[inset_0_0.5px_0_var(--color-sep)] backdrop-blur-xl">
+            {footer}
+          </div>
+        )}
       </div>
     </div>,
     document.body,
@@ -358,7 +574,7 @@ export function StatGrid({ stats, className, compact = false }: { stats: Stat[];
     <dl className={cx('grid grid-cols-2 gap-px overflow-hidden rounded-[12px] bg-sep-opaque',
       !compact && 'desk:grid-flow-col desk:auto-cols-fr desk:grid-cols-none', className)}>
       {stats.map((s) => (
-        <div key={s.label} className={cx('min-w-0 bg-surface px-3.5 py-3 desk:px-4', s.wide && 'col-span-2 desk:col-span-1')}>
+        <div key={s.label} className={cx('group-bg min-w-0 bg-surface px-3.5 py-3 desk:px-4', s.wide && 'col-span-2 desk:col-span-1')}>
           <dt className="truncate text-subhead text-label">{s.label}</dt>
           <dd className="num mt-0.5 text-[26px] leading-[32px] font-semibold tracking-[-0.01em] whitespace-nowrap"
             style={{ color: s.value === null ? 'var(--color-label-3)' : s.color }}>

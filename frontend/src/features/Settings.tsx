@@ -211,7 +211,7 @@ export function Settings() {
         {/* Une clé par profil : changer de profil abandonne la saisie et les messages du précédent. */}
         {current && <ProfileSettings key={current.id} profile={current} readOnly={readOnly} />}
         {/* Le dernier profil ne peut pas être supprimé : la ligne n’apparaît qu’avec au moins deux profils. */}
-        {current && count > 1 && <DeleteProfile key={current.id} profile={current} readOnly={readOnly} />}
+        {current && count > 1 && <DeleteProfile key={`${current.id}:suppression`} profile={current} readOnly={readOnly} />}
         <TreadmillSettings readOnly={readOnly} />
         <ChatGPTSettings readOnly={readOnly} />
         {health && <ApplicationSettings health={health} />}
