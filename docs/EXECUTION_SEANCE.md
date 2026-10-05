@@ -14,6 +14,14 @@ Le Direct et ses formes réduites lisent le même état. PC : mesures/commandes 
 
 ## Contrôle et limites
 
+### Ajuster pendant l’effort
+
+Dans Direct, les boutons − / + changent la vitesse ou la pente du bloc actuel et de tous les blocs restants, par un décalage commun depuis le programme initial. Exemple : +0,5 km/h et +1 % transforme les blocs 2/0 puis 2,5/1 en 2,5/1 puis 3/2. Les durées, blocs déjà terminés, version enregistrée et échéance d’autorisation restent conservés. Pause/Reprendre conserve ces réglages ; une nouvelle séance repart du programme enregistré.
+
+Seul le propriétaire peut ajuster, en phase « En cours », avec des mesures fraîches et un contrôle valide. Le serveur vérifie tous les blocs restants avant de changer les consignes ; une limite ou un pas incompatible refuse la demande entière. Il publie les bornes communes et le pas aux boutons. Un seul ajustement est traité à la fois, sans file ni répétition automatique. « Ajustement en cours » signifie effet attendu ; le retour à « En cours » exige des mesures fraîches aux nouvelles cibles. Seules les consignes changées sont envoyées.
+
+Pause/STOP restent accessibles pendant cet échange et bloquent immédiatement toute commande suivante. Le décalage demandé figure dans les cibles des courbes, sans réécrire les mesures antérieures ; un repère « Ajustement » indique l’effet observé. Les contrôles sont désactivés sur les écrans observateurs et pendant une pause ou une perte d’observation.
+
 | Sujet | Application | Diagnostic POC |
 |---|---|---|
 | Durée et segments | Validation métier existante : 60 min / 120 segments | 1–3 blocs de 5–60 s |
@@ -40,9 +48,12 @@ Après résultat inconnu : STOP physique → déconnexion/reconnexion passive da
 - `POST /api/execution/prepare` : profil, séance et version ; compatibilité/préconditions.
 - `POST /start` : mêmes champs, identifiant client, deux booléens stricts vrais.
 - `POST /resume` : propriétaire, identifiant de séance, deux nouvelles confirmations.
+- `POST /adjust` : propriétaire, identifiant de séance, `speed_offset` et `incline_offset` numériques stricts, finis ; décalages absolus depuis le programme initial. Snapshot : `targets`, `offsets`, `adjustment_bounds` ; phase `adjusting` jusqu’à l’effet observé.
 - `POST /pause`, `/stop`, `/release`, `/recover` : identifiants client et séance ; une ancienne séance ne peut pas agir sur la suivante.
 - `GET /state`, `WS /events?client_id=…` : état, instance et séquence, mesures avec qualité/âge, échantillons incrémentaux ; première lecture/reconnexion = snapshot borné. Le WebSocket accepte uniquement le heartbeat et ne commande aucun mouvement. Origine HTTP/WS contrôlée par les protections de l’application.
 
 Vérifications logicielles : 52 tests ciblés (16 moteur/API, 9 tapis, 20 POC, 7 serveur) et `npm run build` réussis. Le faux transport Bleak teste la branche réelle, ses notifications et réponses, les refus, la sérialisation de STOP, le timeout, le STOP accepté sans zéro et la récupération passive. La simulation utilise des données extérieures distinctes sur le port 4331. `scripts/verify_execution_simulation.py` observe passivement une séance de 30 min, exige deux pauses et 1 800 s actives sans accélération ; il ne fournit aucun heartbeat propriétaire.
 
 Les résultats de l’essai long et des parcours Chrome sont consignés dans la brique 8 du [plan](../PLAN_V1_FITNESS_APP.md). Aucun Bluetooth réel, appel Coach, modification de schéma ou source du lanceur n’est nécessaire à ces vérifications.
+
+Complément des ajustements : 29 tests moteur/API/tapis, build et parcours Chrome réussis. Conservation après pause, transition, retour au programme et nouveau départ ; refus atomique de borne/pas/propriétaire, STOP pendant le premier échange de deux consignes, refus FTMS et réponse inconnue sans retry. Les valeurs 2,5, 16,0 et l’allure 60′00″ sont vérifiées sans débordement sur les formats téléphone et PC. Réception physique des ajustements encore ouverte.

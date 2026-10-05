@@ -21,6 +21,7 @@ Référence fonctionnelle des écrans, à appliquer brique par brique ([plan](..
 | Démarrer | Commencer → « Avant de démarrer » : tapis connecté, clé, bande libre | Feuille centrée | Démarrer désactivé sans les deux confirmations ; compte à rebours 3 s annulable | 8 |
 | Suivre | Direct plein écran : durée, vitesse, cible, distance, pente, allure, bloc, suite, profil réalisé, courbes | Mesures à gauche, bloc et courbes à droite | Toucher la vitesse bascule km/h ↔ min/km | 8 |
 | Quitter le Direct | Chevron ; capsule d’activité au-dessus des onglets | Carte dans la barre latérale | Pause et Reprendre depuis la capsule | 8 |
+| Ajuster pendant l’effort | − / + vitesse et pente dans le bloc actuel | Identique | Décalage sur les blocs restants ; propriétaire seul, limites et pas vérifiés ; Pause/STOP accessibles pendant l’application | 8 |
 | Pause | Bouton jaune, demande immédiate ; « Pause demandée » puis « En pause » | Identique | Durée active figée dès la demande ; pause confirmée après réponse et mesure de zéro stabilisée | 8 |
 | Reprendre | Bouton vert, puis clé et bande libre | Identique | Réservé au propriétaire, mêmes confirmations et préconditions qu’au démarrage, point conservé | 8 |
 | Arrêter | Bouton rouge ; « Arrêt demandé » puis « Arrêt confirmé · 0,0 km/h » | Identique | Une demande n’est jamais un arrêt confirmé | 8 |

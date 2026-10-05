@@ -310,6 +310,109 @@ class ExecutionTests(unittest.IsolatedAsyncioTestCase):
         await self.wait("stopped")
         self.assertIn("expirée", self.e.reason)
 
+    async def test_adjustment_changes_current_and_future_targets_not_saved_workout(self):
+        await self.start_running()
+        deadline, owner_seen = self.e.deadline, self.e.owner_seen
+        self.e.adjust(OWNER, .5, 1)
+        self.assertEqual(self.e.phase, "adjusting")
+        self.assertEqual(self.e.deadline, deadline)
+        self.assertEqual(self.e.owner_seen, owner_seen)
+        await self.wait("running")
+        self.assertEqual(self.c.telemetry["speed_kmh"], 2.5)
+        self.assertEqual(self.c.telemetry["incline_pct"], 1)
+        self.e._sample(final=True)
+        self.assertEqual(self.e.samples[-1]["target"], 2.5)
+        self.assertEqual(self.e.samples[-1]["target_incline"], 1)
+        self.e.active_since -= 31
+        await asyncio.sleep(.5)
+        self.assertEqual(self.e.block, 1)
+        self.assertEqual(self.c.telemetry["speed_kmh"], 3)
+        self.assertEqual(self.c.telemetry["incline_pct"], 2)
+        self.e.request_halt(pause=True)
+        await self.wait("paused")
+        await self.e.resume(OWNER)
+        await self.wait("running")
+        self.assertEqual(self.c.telemetry["speed_kmh"], 3)
+        self.assertEqual(self.c.telemetry["incline_pct"], 2)
+        self.e.adjust(OWNER, 0, 0)
+        await self.wait("running")
+        self.assertEqual(self.c.telemetry["speed_kmh"], 2.5)
+        self.assertEqual(self.e.targets[0], {"speed": 2.5, "incline": 1})
+        self.assertEqual(self.e.workout["blocks"][0]["speed"], 2)
+        self.assertEqual(self.e.prepare("arnaud", self.workout["id"], 1)["workout"], self.workout)
+        self.e.adjust(OWNER, .2, .5)
+        await self.wait("running")
+        self.e.request_halt()
+        await self.wait("stopped")
+        await self.e.task
+        await self.start_running()
+        self.assertEqual(self.e.offsets, {"speed": 0, "incline": 0})
+        self.assertEqual(self.c.telemetry["speed_kmh"], 2)
+
+    async def test_adjustment_all_remaining_limits_steps_and_owner_are_atomic(self):
+        await self.real()
+        await self.start_running()
+        original = self.e.snapshot()["targets"]
+        writes = len(self.client.writes)
+        self.assertEqual(self.e.adjustment_bounds()["speed"]["max"], 0)
+        for viewer, speed, incline in [(OBSERVER, 0, 0), (OWNER, .1, 0), (OWNER, 0, .5),
+                                       (OWNER, -.1, .2), (OWNER, -1.5, 0), (OWNER, float("nan"), 0)]:
+            with self.assertRaises(ControllerError):
+                self.e.adjust(viewer, speed, incline)
+            self.assertEqual(self.e.phase, "running")
+            self.assertEqual(self.e.snapshot()["targets"], original)
+            self.assertEqual(len(self.client.writes), writes)
+        self.e.adjust(OWNER, -.1, 0)
+        with self.assertRaisesRegex(ControllerError, "Attendez"):
+            self.e.adjust(OWNER, -.2, 0)
+        await self.wait("running")
+        self.assertEqual(self.client.writes[writes:], [ftms.encode_command("speed", 1.9)])
+        self.assertEqual(self.c.telemetry["speed_kmh"], 1.9)
+        self.e.request_halt(pause=True)
+        await self.wait("paused")
+        with self.assertRaises(ControllerError):
+            self.e.adjust(OWNER, 0, 0)
+
+    async def test_stop_during_real_adjustment_blocks_second_command_without_retry(self):
+        await self.real()
+        with self.app.state.database.write() as s:
+            self.workout = create_workout(s, "arnaud", WorkoutInput(name="Pente", items=[
+                {"kind": "steady", "sec": 60, "speed": 2, "incline": .5}]))
+        await self.start_running()
+        self.client.delay = .3
+        writes = len(self.client.writes)
+        self.e.adjust(OWNER, -.1, -.5)
+        end = time.monotonic() + 2
+        while not self.c.command_lock.locked():
+            self.assertLess(time.monotonic(), end)
+            await asyncio.sleep(.01)
+        with self.assertRaises(ControllerError):
+            await self.device.perform("disconnect")
+        self.e.request_halt()
+        await self.wait("stopped")
+        self.assertEqual(self.client.writes[writes:], [ftms.encode_command("incline", 0), b"\x08\x01"])
+        self.assertTrue(self.e.stop_confirmed)
+        self.assertFalse(self.c.desynchronized)
+
+    async def test_real_adjustment_refusal_stops_and_unknown_response_never_retries(self):
+        await self.real()
+        await self.start_running()
+        self.client.refused_actions.add(2)
+        writes = len(self.client.writes)
+        self.e.adjust(OWNER, -.1, 0)
+        await self.wait("stopped")
+        self.assertEqual(self.client.writes[writes:], [ftms.encode_command("speed", 1.9), b"\x08\x01"])
+        self.assertIsNotNone(self.e.error)
+        self.client.refused_actions.clear()
+        await self.start_running()
+        self.client.answer = False
+        writes = len(self.client.writes)
+        with patch("backend.device.controller.COMMAND_TIMEOUT", .1):
+            self.e.adjust(OWNER, -.1, 0)
+            await self.wait("unknown")
+        self.assertEqual(self.client.writes[writes:], [ftms.encode_command("speed", 1.9)])
+        self.assertFalse(self.e.stop_confirmed)
+
 
 class ExecutionApiTests(unittest.TestCase):
     def test_fabricated_confirmation_origins_and_session_actions(self):
@@ -331,9 +434,25 @@ class ExecutionApiTests(unittest.TestCase):
                 self.assertEqual(r.status_code, 200, r.text)
                 session = r.json()["session"]
                 self.assertEqual(session["phase"], "countdown")
+                adjust = {"client_id": OWNER, "session_id": session["id"], "speed_offset": .5, "incline_offset": .5}
+                self.assertEqual(client.post("/api/execution/adjust", json={**adjust, "speed_offset": "0.5"}).status_code, 422)
+                self.assertEqual(client.post("/api/execution/adjust", json={**adjust, "speed_offset": True}).status_code, 422)
+                self.assertEqual(client.post("/api/execution/adjust", json={**adjust, "session_id": "f" * 32}).status_code, 409)
+                self.assertEqual(client.post("/api/execution/adjust", json=adjust).status_code, 409)
+                app.state.execution.countdown_until = time.monotonic() - 1
+                with client.websocket_connect(f"ws://127.0.0.1:4331/api/execution/events?client_id={OWNER}", headers={"origin": "http://127.0.0.1:4331"}) as ws:
+                    for _ in range(10):
+                        ws.send_json({"type": "heartbeat"})
+                        if ws.receive_json()["session"]["phase"] == "running":
+                            break
+                    self.assertEqual(app.state.execution.phase, "running")
+                    self.assertEqual(client.post("/api/execution/adjust", json={**adjust, "client_id": OBSERVER}).status_code, 409)
+                    response = client.post("/api/execution/adjust", json=adjust)
+                    self.assertEqual(response.status_code, 200, response.text)
+                    self.assertEqual(response.json()["session"]["offsets"], {"speed": .5, "incline": .5})
                 self.assertEqual(client.post("/api/execution/stop", json={"client_id": OBSERVER, "session_id": "f" * 32}).status_code, 409)
                 self.assertEqual(client.post("/api/execution/stop", json={"client_id": OBSERVER, "session_id": session["id"]}).status_code, 200)
-                self.assertTrue(app.state.device.controller.read_only)
+                self.assertEqual(app.state.device.controller.armed_until, 0)
 
 
 if __name__ == "__main__":

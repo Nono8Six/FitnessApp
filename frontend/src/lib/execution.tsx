@@ -5,9 +5,10 @@ import { isWorkout, randomId, type Workout } from './workouts'
 import { href, navigate } from './router'
 import type { Sample } from './types'
 
-export type Phase = 'idle' | 'countdown' | 'starting' | 'running' | 'transitioning' | 'pausing' | 'paused' | 'stopping' | 'stopped' | 'completed' | 'cancelled' | 'unknown'
+export type Phase = 'idle' | 'countdown' | 'starting' | 'running' | 'transitioning' | 'adjusting' | 'pausing' | 'paused' | 'stopping' | 'stopped' | 'completed' | 'cancelled' | 'unknown'
 export const phaseLabel: Record<Phase, string> = {
   idle: 'Aucune séance', countdown: 'Prêt à démarrer', starting: 'Démarrage en cours', running: 'En cours', transitioning: 'Nouvelle consigne',
+  adjusting: 'Ajustement en cours',
   pausing: 'Pause demandée', paused: 'En pause', stopping: 'Arrêt demandé', stopped: 'Séance arrêtée', completed: 'Programme terminé', cancelled: 'Démarrage annulé', unknown: 'État de la bande inconnu',
 }
 export const inProgress = (phase?: Phase) => !!phase && !['idle', 'stopped', 'completed', 'cancelled'].includes(phase)
@@ -15,12 +16,15 @@ export interface LiveSample extends Sample { seq: number; active_s: number; targ
 export interface Session {
   id: string | null; phase: Phase; mode: 'simulation' | 'reel'; owned_by_me: boolean
   profile: { id: string; name: string } | null; workout: Workout | null
+  targets: { speed: number; incline: number }[]; offsets: { speed: number; incline: number }
+  adjustment_bounds: { speed: AdjustmentRange; incline: AdjustmentRange } | null
   block_index: number; active_s: number; pause_s: number; wall_s: number; started_at: string | null
   countdown: number | null; reason: string | null; error: string | null; stop_confirmed: boolean
   restart_delay_s: number; authorization_remaining_s: number; limits: { speed: number; incline: number }
   command: { action: string; value: number | null; status: 'sent' | 'accepted' | 'observed' | 'refused' | 'unknown' } | null
   distance_m: number | null; distance_quality: 'fresh' | 'stale' | 'absent' | 'partial'
 }
+interface AdjustmentRange { min: number; max: number; step: number }
 interface Feed { type: 'snapshot' | 'state'; instance_id: string; sequence: number; session: Session; device: DeviceState; samples: LiveSample[]; markers: { t: number; label: string }[] }
 export interface Preparation { workout: Workout; profile: { id: string; name: string }; ready: boolean; issue: string | null; mode: 'simulation' | 'reel'; limits: { speed: number; incline: number } }
 const finite = (v: unknown): v is number => typeof v === 'number' && Number.isFinite(v)
@@ -29,12 +33,15 @@ const nullableString = (v: unknown) => v === null || typeof v === 'string'
 const isPhase = (v: unknown): v is Phase => typeof v === 'string' && Object.hasOwn(phaseLabel, v)
 const isProfile = (v: unknown) => isRecord(v) && typeof v.id === 'string' && typeof v.name === 'string'
 const isLimits = (v: unknown) => isRecord(v) && finite(v.speed) && finite(v.incline)
+const isAdjustmentRange = (v: unknown) => isRecord(v) && finite(v.min) && finite(v.max) && finite(v.step) && v.step > 0 && v.min <= v.max
 function isFeed(v: unknown): v is Feed {
   if (!isRecord(v) || !['snapshot', 'state'].includes(String(v.type)) || typeof v.instance_id !== 'string'
     || !Number.isSafeInteger(v.sequence) || !isDeviceState(v.device) || !isRecord(v.session) || !Array.isArray(v.samples) || !Array.isArray(v.markers)) return false
   const s = v.session
   if (s.id !== null && (!isWorkout(s.workout) || !isProfile(s.profile)
     || !Number.isSafeInteger(s.block_index) || Number(s.block_index) < 0 || Number(s.block_index) >= s.workout.blocks.length)) return false
+  if (!Array.isArray(s.targets) || !s.targets.every(isLimits) || s.targets.length !== (isWorkout(s.workout) ? s.workout.blocks.length : 0)
+    || !isLimits(s.offsets) || !(s.adjustment_bounds === null || (isRecord(s.adjustment_bounds) && isAdjustmentRange(s.adjustment_bounds.speed) && isAdjustmentRange(s.adjustment_bounds.incline)))) return false
   return nullableString(s.id) && isPhase(s.phase) && ['simulation', 'reel'].includes(String(s.mode)) && typeof s.owned_by_me === 'boolean'
     && (s.profile === null || isProfile(s.profile)) && (s.workout === null || isWorkout(s.workout))
     && ['block_index', 'active_s', 'pause_s', 'wall_s', 'restart_delay_s', 'authorization_remaining_s'].every(k => finite(s[k]) && Number(s[k]) >= 0)
@@ -58,7 +65,7 @@ interface State {
   selected?: Selected; preparing: boolean; confirmingResume: boolean
   select: (profile: string, workout: Workout) => void; setPreparing: (value: boolean) => void; clearSelected: () => void
   setConfirmingResume: (value: boolean) => void
-  act: (action: 'start' | 'pause' | 'stop' | 'resume' | 'recover', confirmation?: boolean) => Promise<boolean>
+  act: (action: 'start' | 'pause' | 'stop' | 'resume' | 'recover' | 'adjust', confirmation?: boolean, offsets?: Session['offsets']) => Promise<boolean>
 }
 const Context = createContext<State | null>(null)
 
@@ -76,6 +83,7 @@ export function ExecutionProvider({ children }: { children: ReactNode }) {
   const last = useRef<Feed | undefined>(undefined)
   const cursor = useRef<{ instance: string; sequence: number } | undefined>(undefined)
   const starting = useRef(false)
+  const requestNumber = useRef(0)
   const mounted = useRef(false)
   const accept = useCallback((next: Feed) => {
     if (cursor.current?.instance === next.instance_id && cursor.current.sequence > next.sequence) return
@@ -131,14 +139,17 @@ export function ExecutionProvider({ children }: { children: ReactNode }) {
       window.removeEventListener('pagehide', release); socket.close()
     }
   }, [accept, client])
-  const act: State['act'] = async (action, confirmation = false) => {
-    if ((action === 'start' || action === 'resume') && starting.current) return false
-    if (action === 'start' || action === 'resume') starting.current = true
+  const act: State['act'] = async (action, confirmation = false, offsets) => {
+    const movement = ['start', 'resume', 'adjust'].includes(action)
+    if (movement && starting.current) return false
+    if (movement) starting.current = true
+    const number = ++requestNumber.current
     setPending(action); setError(undefined)
     const body = action === 'start' && selected ? {
       client_id: client, profile_id: selected.profile, workout_id: selected.workout.id, version: selected.workout.version,
       safety_key: confirmation, belt_clear: confirmation,
-    } : { client_id: client, session_id: last.current?.session.id, ...(action === 'resume' ? { safety_key: confirmation, belt_clear: confirmation } : {}) }
+    } : { client_id: client, session_id: last.current?.session.id, ...(action === 'resume' ? { safety_key: confirmation, belt_clear: confirmation } : {}),
+      ...(action === 'adjust' ? { speed_offset: offsets?.speed, incline_offset: offsets?.incline } : {}) }
     try {
       const next = await api(`/api/execution/${action}`, { method: 'POST', body, validate: isFeed, timeout: 8000 })
       if (mounted.current) {
@@ -148,10 +159,13 @@ export function ExecutionProvider({ children }: { children: ReactNode }) {
       return true
     } catch (e) {
       console.warn(`Fitness : demande ${action} impossible`, e)
-      if (mounted.current) setError(e instanceof ApiError && e.kind === 'network'
+      if (mounted.current && requestNumber.current === number) setError(e instanceof ApiError && e.kind === 'network'
         ? 'Réponse du PC non reçue. Vérifiez l’état dans Direct ; aucune demande ne sera répétée.' : errorMessage(e))
       return false
-    } finally { starting.current = false; if (mounted.current) setPending(undefined) }
+    } finally {
+      if (movement) starting.current = false
+      if (mounted.current && requestNumber.current === number) setPending(undefined)
+    }
   }
   return <Context value={{ feed, receivedAt, now, status, error, pending, selected, preparing, confirmingResume,
     select: (profile, workout) => { if (inProgress(last.current?.session.phase)) navigate(href.direct)

@@ -48,7 +48,7 @@ class DeviceRuntime:
         return copy.deepcopy({
             "mode": "simulation" if controller.simulation else "reel", "read_only": controller.read_only,
             "control_active": bool(self.execution and self.execution.phase in
-                                   ("starting", "running", "transitioning", "pausing", "paused", "stopping")),
+                                   ("starting", "running", "transitioning", "adjusting", "pausing", "paused", "stopping")),
             "phase": phase, "device_name": controller.device_name,
             "devices": [row for row in controller.device_rows if row["candidate"]],
             "capabilities": controller.capabilities, "capability_errors": controller.capability_errors,
@@ -78,7 +78,7 @@ class DeviceRuntime:
             self.publish()
 
     async def perform(self, operation: str, address: str | None = None):
-        if self.execution and self.execution.phase in ("countdown", "starting", "running", "transitioning", "pausing", "paused", "stopping"):
+        if self.execution and self.execution.phase in ("countdown", "starting", "running", "transitioning", "adjusting", "pausing", "paused", "stopping"):
             raise ControllerError("Une séance est en cours. Demandez son arrêt dans Direct avant de déconnecter le tapis.")
         if self.operation_lock.locked():
             raise ControllerError("Une opération est déjà en cours. Attendre sa fin.")

@@ -1,4 +1,4 @@
-import { Bluetooth, Check, ChevronDown, Pause, Play, Square, X } from 'lucide-react'
+import { Bluetooth, Check, ChevronDown, Minus, Pause, Play, Plus, Square, X } from 'lucide-react'
 import { memo, useEffect, useMemo, useState } from 'react'
 import { nearest, ProgrammeMini, TimeChart, type Series } from '../components/charts'
 import { Button, cx, Disclosure, Facts, Group, Sheet } from '../components/ui'
@@ -93,7 +93,7 @@ export function Activity({ desktop = false }: { desktop?: boolean }) {
   const speed = currentMeasurement(e, 'speed_kmh'), block = s.workout.blocks[s.block_index]
   const paused = s.phase === 'paused'
   const live = e.status === 'live' && e.now - e.receivedAt < 5000
-  const canPause = live && ['running', 'transitioning'].includes(s.phase)
+  const canPause = live && ['running', 'transitioning', 'adjusting'].includes(s.phase)
   return <div className={desktop ? 'live-activity-desktop' : 'live-activity-mobile'}>
     <a href={href.direct} className="min-w-0 flex-1 py-2 pl-4">
       <span className="flex items-center gap-1.5 text-footnote font-semibold"><span className={cx('size-1.5 rounded-full', paused ? 'bg-yellow' : s.phase === 'unknown' ? 'bg-red' : 'bg-green')} />
@@ -101,7 +101,7 @@ export function Activity({ desktop = false }: { desktop?: boolean }) {
       <p className="truncate text-subhead font-semibold">{block.label}</p>
       <p className="num text-footnote text-label-2"><span className="text-time">{clock(Math.floor(s.active_s))}</span> · <span className={speed === null ? 'text-label-3' : 'text-speed'}>{speed === null ? '--' : dec1(speed)}</span> km/h</p>
     </a>
-    <button type="button" disabled={!(paused ? s.owned_by_me && live : canPause) || !!e.pending}
+    <button type="button" disabled={!(paused ? s.owned_by_me && live && !e.pending : canPause)}
       aria-label={paused ? 'Reprendre la séance' : 'Mettre la séance en pause'}
       onClick={() => paused ? e.setConfirmingResume(true) : void e.act('pause')}
       className={cx('pressable mr-3 grid size-11 shrink-0 place-items-center rounded-full bg-fill-3 disabled:text-label-3', paused ? 'text-green' : 'text-yellow')}>
@@ -165,13 +165,47 @@ function Progress({ blocks, active }: { blocks: Block[]; active: number }) {
   </div>
 }
 
+function LiveAdjustments() {
+  const e = useExecution(), s = e.feed!.session
+  const enabled = s.owned_by_me && s.phase === 'running' && !e.pending && e.status === 'live'
+    && e.now - e.receivedAt < 5000 && currentMeasurement(e, 'speed_kmh') !== null && currentMeasurement(e, 'incline_pct') !== null
+  const target = s.targets[s.block_index]
+  const signed = (v: number) => `${v > 0 ? '+' : ''}${dec1(v)}`
+  const adjusted = s.offsets.speed !== 0 || s.offsets.incline !== 0
+  const offsetLabel = [s.offsets.speed ? `${signed(s.offsets.speed)} km/h` : '', s.offsets.incline ? `${signed(s.offsets.incline)} %` : ''].filter(Boolean).join(' · ')
+  const limited = (['speed', 'incline'] as const).filter(action => s.adjustment_bounds && s.offsets[action] + s.adjustment_bounds[action].step > s.adjustment_bounds[action].max + 1e-6)
+  const limitHint = limited.length === 2 ? 'Limites atteintes dans les blocs restants' : limited.length ? `Un bloc restant limite la ${limited[0] === 'speed' ? 'vitesse' : 'pente'}` : undefined
+  return <div className="live-adjustments" role="group" aria-label="Consignes pour le reste de la séance">
+    {(['speed', 'incline'] as const).map(action => {
+      const label = action === 'speed' ? 'Vitesse' : 'Pente', unit = action === 'speed' ? 'km/h' : '%'
+      const range = s.adjustment_bounds?.[action]
+      const change = (direction: number) => {
+        if (!range) return
+        const offsets = { ...s.offsets, [action]: Math.round((s.offsets[action] + direction * range.step) * 1e6) / 1e6 }
+        void e.act('adjust', false, offsets)
+      }
+      return <div className="live-adjust-row" key={action}>
+        <span className="text-subhead text-label-2">{label}</span>
+        <div className="live-adjust-stepper">
+          <button type="button" aria-label={`Diminuer la ${label.toLowerCase()} pour le reste de la séance`} disabled={!enabled || !range || s.offsets[action] - range.step < range.min - 1e-6} onClick={() => change(-1)}><Minus size={20} /></button>
+          <span className={cx('live-adjust-value num', action === 'speed' ? 'text-speed' : 'text-incline')}>{dec1(target[action])}<small>{unit}</small></span>
+          <button type="button" aria-label={`Augmenter la ${label.toLowerCase()} pour le reste de la séance`} disabled={!enabled || !range || s.offsets[action] + range.step > range.max + 1e-6} onClick={() => change(1)}><Plus size={20} /></button>
+        </div>
+      </div>
+    })}
+    <p className="live-adjust-hint" role="status">{s.phase === 'adjusting' ? 'Consignes envoyées · effet attendu' : !s.owned_by_me && inProgress(s.phase) ? 'Réglages sur l’écran qui a démarré la séance'
+      : adjusted ? `Blocs restants : ${offsetLabel}` : limitHint ?? 'Les réglages s’appliquent aux blocs restants'}</p>
+  </div>
+}
+
 export function Direct() {
   const e = useExecution(), s = e.feed?.session, profile = useCurrentProfile()
   const [showPace, setShowPace] = useState(profile?.speed_unit === 'pace')
   useEffect(() => { window.scrollTo(0, 0) }, [])
   const speed = currentMeasurement(e, 'speed_kmh'), incline = currentMeasurement(e, 'incline_pct')
   const available = e.status === 'live' && (e.now - e.receivedAt) < 5000
-  const block = s?.workout?.blocks[s.block_index], next = s?.workout?.blocks[(s?.block_index ?? 0) + 1]
+  const blocks = useMemo(() => s?.workout?.blocks.map((b, i) => ({ ...b, ...s.targets[i] })) ?? [], [s?.workout, s?.targets])
+  const block = blocks[s?.block_index ?? 0], next = blocks[(s?.block_index ?? 0) + 1]
   const total = s?.workout?.summary.sec ?? 0
   const finished = s && ['stopped', 'completed', 'cancelled'].includes(s.phase)
   const paused = s?.phase === 'paused'
@@ -184,7 +218,7 @@ export function Direct() {
   const error = !available ? 'Observation interrompue. Le PC surveille l’écran propriétaire ; l’état de la bande reste à vérifier.'
     : s.phase === 'unknown' ? s.error ?? 'État de la bande inconnu. Utilisez le STOP physique, puis reconnectez.'
     : e.error ?? s.error ?? (speed === null || incline === null ? 'Mesures anciennes ou absentes. Les valeurs actuelles sont indisponibles.' : undefined)
-  const canPause = available && ['running', 'transitioning'].includes(s.phase)
+  const canPause = available && ['running', 'transitioning', 'adjusting'].includes(s.phase)
   const canResume = available && paused && s.owned_by_me && s.restart_delay_s === 0 && speed === 0
   const canStop = available && !finished && s.phase !== 'unknown' && s.phase !== 'stopping'
   return <div className="live-screen">
@@ -203,7 +237,7 @@ export function Direct() {
         <div className="live-glance">
           <p role="status" className={cx('live-status', statusTone)}><span className="size-2 rounded-full bg-current" />{available ? phaseLabel[s.phase] : 'Observation interrompue'}</p>
           <button type="button" className={cx('live-speed num', showPace && 'is-pace')} onClick={() => setShowPace(v => !v)} aria-label={showPace ? 'Afficher la vitesse en km/h' : 'Afficher l’allure par kilomètre'}>
-            <span className={speed === null || (showPace && speed === 0) ? 'text-label-3' : 'text-speed'}>{speed === null ? '--' : showPace ? pace(speed) : dec1(speed)}</span>
+            <span className={cx('live-speed-value', speed === null || (showPace && speed === 0) ? 'text-label-3' : 'text-speed')}>{speed === null ? '--' : showPace ? pace(speed) : dec1(speed)}</span>
             <span className="live-speed-unit text-label-2">{showPace ? '/ KM' : 'KM/H'}</span>
           </button>
           <p className="live-measure-label">{showPace ? 'Allure mesurée' : 'Vitesse mesurée'}</p>
@@ -222,7 +256,7 @@ export function Direct() {
             <p role="status" className="text-subhead text-green">{s.stop_confirmed ? 'Arrêt confirmé · 0,0 km/h' : s.phase === 'cancelled' ? 'Aucun mouvement demandé' : s.reason}</p>
             <Button className="mt-3 w-full" variant="gray" onClick={reduce}>Terminer</Button>
           </div> : <div className="live-controls">
-            <button type="button" className={cx('live-control', paused ? 'resume' : 'pause')} disabled={!!e.pending || !(paused ? canResume : canPause)}
+            <button type="button" className={cx('live-control', paused ? 'resume' : 'pause')} disabled={!(paused ? canResume && !e.pending : canPause)}
               onClick={() => paused ? e.setConfirmingResume(true) : void e.act('pause')}>
               <span>{paused ? <Play size={28} fill="currentColor" /> : <Pause size={28} fill="currentColor" />}</span><b>{paused ? 'Reprendre' : 'Pause'}</b>
             </button>
@@ -236,11 +270,11 @@ export function Direct() {
         <section className="live-block" aria-label="Bloc et consignes">
           <div className="flex items-baseline justify-between gap-3"><p className="text-footnote text-label-2">Bloc {(s.block_index + 1)} / {s.workout.blocks.length}</p><span className="num text-footnote text-time">{clock(Math.ceil(Math.max(0, (block?.end ?? 0) - s.active_s)))} restantes</span></div>
           <h2 className="mt-1.5 text-title1">{block?.label}</h2>
-          <p className="live-target num"><span className="text-label-2">Cible</span> <b>{dec1(block?.speed ?? 0)} <small>KM/H</small></b><span className="text-incline">{dec1(block?.incline ?? 0)} <small>%</small></span></p>
+          <LiveAdjustments />
           <div className="live-block-progress" role="progressbar" aria-label="Progression du bloc" aria-valuemin={0} aria-valuemax={block?.sec ?? 1} aria-valuenow={Math.round(Math.max(0, Math.min(block?.sec ?? 0, s.active_s - (block?.start ?? 0))))}><span style={{width: `${Math.max(0, Math.min(100, (s.active_s - (block?.start ?? 0)) / (block?.sec ?? 1) * 100))}%`}} /></div>
-          <p className="live-next text-subhead text-label-2">{next ? <>Ensuite <span className="text-label">{next.label}</span> · {dec1(next.speed)} km/h · {clock(next.sec)}</> : 'Ensuite · fin du programme et arrêt demandé'}</p>
+          <p className="live-next text-subhead text-label-2">{next ? <>Ensuite <span className="text-label">{next.label}</span> · {dec1(next.speed)} km/h · {dec1(next.incline)} % · {clock(next.sec)}</> : 'Ensuite · fin du programme et arrêt demandé'}</p>
         </section>
-        <section className="live-programme" aria-label="Progression du programme"><div className="mb-2 flex justify-between gap-2 text-footnote text-label-2"><span>Programme</span><span className="num">{clock(Math.floor(s.active_s))} / {clock(total)}</span></div><Progress blocks={s.workout.blocks} active={s.active_s} /></section>
+        <section className="live-programme" aria-label="Progression du programme"><div className="mb-2 flex justify-between gap-2 text-footnote text-label-2"><span>Programme</span><span className="num">{clock(Math.floor(s.active_s))} / {clock(total)}</span></div><Progress blocks={blocks} active={s.active_s} /></section>
         <LiveCurves samples={e.feed?.samples ?? []} markers={e.feed?.markers ?? []} wall={s.wall_s} startedAt={s.started_at} live={available && canPause} />
         <Disclosure title="État du tapis et des mesures" className="mt-5">
           <Facts rows={[

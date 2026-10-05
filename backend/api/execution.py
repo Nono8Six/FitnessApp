@@ -41,6 +41,11 @@ class ResumeRequest(ClientRequest):
     belt_clear: bool = Field(strict=True)
 
 
+class AdjustRequest(ClientRequest):
+    speed_offset: float = Field(strict=True, allow_inf_nan=False, ge=-16, le=16)
+    incline_offset: float = Field(strict=True, allow_inf_nan=False, ge=-10, le=10)
+
+
 def confirmed(body):
     if not body.safety_key or not body.belt_clear:
         raise ControllerError("Confirmez la clé de sécurité et la bande libre avant tout démarrage.")
@@ -103,6 +108,18 @@ async def resume(body: ResumeRequest, request: Request):
         engine = request.app.state.execution
         current(engine, body)
         await engine.resume(body.client_id)
+        request.app.state.device.publish()
+        return event(request, body.client_id)
+    except ControllerError as exc:
+        raise conflict(exc) from exc
+
+
+@router.post("/adjust")
+async def adjust(body: AdjustRequest, request: Request):
+    try:
+        engine = request.app.state.execution
+        current(engine, body)
+        engine.adjust(body.client_id, body.speed_offset, body.incline_offset)
         request.app.state.device.publish()
         return event(request, body.client_id)
     except ControllerError as exc:
