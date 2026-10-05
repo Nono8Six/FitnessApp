@@ -318,6 +318,27 @@ class ProposalTests(unittest.TestCase):
             await runtime.close()
         asyncio.run(check())
 
+    def test_follow_up_sees_previous_proposal_card(self):
+        p = self.proposal()
+        async def check():
+            runtime = Runtime(self.db, Connected())
+            requests = []
+            async def transport(token, payload):
+                requests.append(payload)
+                yield {'type': 'response.output_text.delta', 'delta': 'Ce rythme sert la régularité.'}
+                yield completed()
+            runtime.transport = transport
+            turn, fresh = await runtime.start('arnaud', self.conversation, store.Send(request_id=uuid4().hex, text='Pourquoi ce rythme ?'))
+            [frame async for frame in runtime.stream('arnaud', turn, fresh)]
+            await runtime.close()
+            return requests[0]['input']
+        history = asyncio.run(check())
+        recalled = next(m['content'] for m in history if m.get('role') == 'assistant')
+        self.assertIn(p['id'], recalled)
+        self.assertIn(json.dumps(p['workout']['items'], ensure_ascii=False, separators=(',', ':')), recalled)
+        read = tools.execute(self.db, 'arnaud', 'read_conversation', json.dumps({'conversation_id': self.conversation}), user_text='')
+        self.assertEqual(read['items'][0]['workout_proposals'][0]['items'], p['workout']['items'])
+
     def test_adjustment_accepts_once_and_rejects_forged_target(self):
         with self.db.write() as s:
             first = workouts.create_workout(s, 'arnaud', catalog.variants()[0][2])

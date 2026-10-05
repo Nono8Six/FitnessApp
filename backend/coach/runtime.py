@@ -7,7 +7,7 @@ from contextlib import suppress
 
 from sqlalchemy.exc import SQLAlchemyError
 
-from . import inference, store, tools
+from . import inference, store, tools, workout_proposals
 from .protocol import ConnectionIssue
 
 logger = logging.getLogger(__name__)
@@ -24,7 +24,12 @@ nécessaires. Une fatigue datée ne devient pas une préférence durable. Repren
 backend sans les recalculer, distingue prévision et mesure, mentionne le poids actuel si pertinent.
 Les données absentes, résultats partiels et erreurs d'outils doivent être signalés. Pagine et cherche
 pour retrouver une ancienne séance ou un échange ; la fenêtre récente n'est pas tout l'historique.
-Lis le détail avant d'expliquer une séance. Cite les séances avec les liens exacts fournis par
+Tiens compte de toute la conversation : les faits donnés plus tôt (âge, poids, objectif, niveau)
+restent valables. Sous tes réponses précédentes, les séances que tu as proposées sont rappelées
+avec leurs blocs : « cette séance », « ce rythme » désignent d'abord la dernière proposition de
+la conversation, pas la séance sélectionnée ni une autre séance de la bibliothèque. Explique-la
+depuis ce rappel sans la rechercher. Ne renie pas une réponse précédente sans incohérence vérifiée.
+Lis le détail avant d'expliquer une séance enregistrée. Cite les séances avec les liens exacts fournis par
 les outils, version comprise. Les anciens messages sont datés et peuvent être incomplets.
 Tu peux créer ou ajuster une séance UNIQUEMENT via validate_workout et propose_workout. Aucun
 outil n'enregistre une séance : seul le clic humain Enregistrer/Accepter le fait. Une réponse texte
@@ -142,15 +147,21 @@ class Runtime:
             context['workout_target'] = turn['workout_context']
         context["recent_history_partial"] = history["partial"]
         messages = []
-        budget = 12000
+        budget = 20000
         # Tronquer des réponses anciennes est explicite ; elles restent lisibles via les outils.
         for previous in reversed(history["items"]):
             if previous["id"] == turn["id"]:
                 continue
             answer = previous["answer"][:2000]
             suffix = " [Extrait ; consulter read_message pour la suite]" if len(previous["answer"]) > 2000 else ""
+            # Les cartes de séance ne sont pas dans le texte : sans ce rappel, « ce rythme »
+            # renverrait le modèle vers la bibliothèque au lieu de sa propre proposition.
+            cards = [workout_proposals.brief(p) for p in previous["workout_proposals"]]
+            if cards:
+                suffix += ("\n\n[Séances proposées dans cette réponse, affichées en cartes : "
+                           + json.dumps(cards, ensure_ascii=False, separators=(",", ":")) + "]")
             pair = [{"role": "user", "content": f"[{previous['created_at']}] {previous['user_text']}"}]
-            if answer:
+            if answer or cards:
                 state = f"[Réponse {previous['status']}, incomplète] " if previous["status"] != "completed" else ""
                 pair.append({"role": "assistant", "content": f"{state}{answer}{suffix}"})
             cost = len(json.dumps(pair))

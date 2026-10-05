@@ -54,7 +54,7 @@ DEFINITIONS = {
     "get_workout": (Detail, "Lire une séance ou une version précise : tous les blocs, origine, dates, estimations officielles."),
     "list_versions": (Versions, "Lister les versions datées d'une séance du profil, avec pagination."),
     "search_conversations": (Search, "Retrouver les conversations par leur titre ou le contenu de tous leurs échanges, même anciens."),
-    "read_conversation": (History, "Lire les échanges précédents, datés, du plus récent vers les pages plus anciennes. Réponses incomplètes signalées."),
+    "read_conversation": (History, "Lire les échanges précédents, datés, du plus récent vers les pages plus anciennes, avec les séances proposées. Réponses incomplètes signalées."),
     "read_message": (MessageDetail, "Lire le texte complet d'une ancienne réponse par extraits paginés, après read_conversation."),
     "search_memories": (Search, "Lire les préférences durables explicitement enregistrées par l'utilisateur, avec dates."),
     "propose_memory": (Proposal, "Proposer une préférence durable UNIQUEMENT sur demande explicite de la retenir. Citer exactement le message actuel. N'enregistre rien : l'utilisateur doit confirmer dans l'interface."),
@@ -125,7 +125,8 @@ def execute(database, profile, name, arguments, *, user_text, simulation=False, 
             if name == "read_conversation":
                 result = store.turns(session, profile, payload.conversation_id, payload.offset, payload.limit)
                 result["items"] = [{k: t[k] for k in ("id", "user_text", "status", "created_at")} |
-                    {"answer": t["answer"][:1500], "answer_partial": len(t["answer"]) > 1500} for t in result["items"]]
+                    {"answer": t["answer"][:1500], "answer_partial": len(t["answer"]) > 1500,
+                     "workout_proposals": [workout_proposals.brief(p) for p in t["workout_proposals"]]} for t in result["items"]]
                 return result
             if name == "read_message":
                 row = store.owned(session, store.CoachTurn, profile, payload.turn_id)

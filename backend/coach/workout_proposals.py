@@ -60,6 +60,23 @@ def render(session, row):
                 {k: base[k] for k in ('name', 'items', 'goal', 'level')}), weight)} if base else None}
 
 
+STATUS = {'pending': 'en attente de la décision de l’utilisateur', 'accepted': 'enregistrée par l’utilisateur',
+          'ignored': 'ignorée par l’utilisateur'}
+
+
+def brief(proposal):
+    """Rappel compact et stable d'une carte déjà affichée, pour les échanges suivants."""
+    workout, summary = proposal['workout'], proposal['workout'].get('summary') or {}
+    result = {'proposal_id': proposal['id'], 'status': STATUS.get(proposal['status'], proposal['status']),
+              'name': workout['name'], 'goal': workout.get('goal'), 'level': workout.get('level'),
+              'duration_sec': summary.get('sec'), 'items': workout['items'], 'explanation': proposal['explanation']}
+    if proposal.get('base'):
+        result['adjusts'] = {'workout_id': proposal['base']['id'], 'version': proposal['base']['version']}
+    if proposal['status'] == 'accepted':
+        result['saved_as'] = f"#/seances/{proposal['accepted_id']}?version={proposal['accepted_version']}"
+    return result
+
+
 def for_turn(session, profile, turn):
     return [render(session, row) for row in session.scalars(select(WorkoutProposal).where(
         WorkoutProposal.profile_id == profile, WorkoutProposal.turn_id == turn).order_by(WorkoutProposal.created_at, WorkoutProposal.id))]
