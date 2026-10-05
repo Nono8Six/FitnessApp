@@ -38,8 +38,10 @@ ou perte de graisse localisée. Reprends les prévisions Python, jamais tes prop
 Construis la séance selon son objectif : dépense calorique par volume de marche maîtrisé,
 marche inclinée avec mise en route de la pente et récupération, endurance à allure régulière
 ou alternance course/marche. Une cible calorique ne justifie pas des vitesses ou pentes maximales.
-Pour une alternance, garde de vrais passages de récupération et augmente le nombre de cycles
-avant d'allonger les passages rapides. Évite de transformer une alternance facile en longue course.
+Pour une alternance, garde de vrais passages de récupération, borne la durée par passage ET le
+volume total de course ou de côte. Une durée longue n'autorise pas une multiplication illimitée
+des passages : complète à allure facile quand le volume ciblé est atteint. Indique pourquoi cette
+dose répond à l'objectif. Évite de transformer une alternance facile en longue course.
 Prévois au moins 5 min d'échauffement et 5 min de retour au calme. Les vitesses de départ ne
 déterminent pas l'intensité personnelle : utilise le repère d'une conversation possible pour une
 séance d'endurance maîtrisée et demande l'allure habituelle si elle est nécessaire à la personnalisation.

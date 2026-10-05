@@ -1,19 +1,20 @@
-"""Six formats éditoriaux, trois variantes explicites ; aucune génération IA.
+"""Catalogue déterministe : objectif, dose de travail, récupération et volume borné.
 
-Les niveaux décrivent les consignes, pas l'aptitude d'une personne. Toutes les
-variantes utilisent la validation et l'estimation des séances personnelles.
+Les niveaux décrivent les programmes, pas les aptitudes personnelles. Les règles
+exactes sont des choix FitnessApp documentés dans CONSTRUCTION_PROGRAMMES.md.
 """
+from dataclasses import dataclass, asdict
+from math import ceil
 from typing import Literal
-from math import ceil, floor
 
 from pydantic import Field, model_validator
 
-from .workouts import Input, Repeat, WorkoutInput, WorkoutNotFound, create_workout, preview
+from .workouts import Input, WorkoutInput, WorkoutNotFound, create_workout, preview
 from .profiles import get_profile
 
 GOALS = {'calories': 'Dépense calorique', 'incline': 'Jambes et fessiers — marche inclinée', 'endurance': 'Endurance'}
 LEVELS = {'easy': 'Facile', 'intermediate': 'Intermédiaire', 'hard': 'Soutenu'}
-CATALOG_REVISION = '2026-10-05-method-1'
+CATALOG_REVISION = '2026-10-05-dose-2'
 SOURCES = {
     'aha': {'title': 'AHA · Échauffement et retour au calme',
             'url': 'https://www.heart.org/en/healthy-living/exercise-and-physical-activity/fitness-basics/warm-up-cool-down'},
@@ -25,78 +26,150 @@ SOURCES = {
                 'url': 'https://pmc.ncbi.nlm.nih.gov/articles/PMC4504736/'},
 }
 METHODS = {
-    'brisk-walk': ('Accumuler un effort de marche régulier pour viser une dépense énergétique.',
-                   'Une allure constante et une pente légère : la durée apporte le volume de travail.'),
-    'walk-intervals': ('Répartir la marche active en passages séparés par de vraies récupérations.',
-                        'Alterner marche active et marche plus lente à plat ; récupérer avant le passage suivant.'),
-    'hill-plateau': ('Travailler la marche en montée et la sollicitation des jambes.',
-                      'Pente de mise en route, plateau plus incliné, puis pente réduite avant le retour au calme.'),
-    'hill-waves': ('Répéter des montées en marche avec des récupérations à plat.',
-                    'La pente apporte la difficulté ; les passages à plat permettent de récupérer entre les côtes.'),
-    'steady-endurance': ('Accumuler du temps à une allure régulière pour travailler l’endurance aérobie.',
-                          'Un effort continu en marche ou en course, sans accélérations ni sprint.'),
-    'run-walk': ('Travailler l’endurance avec des passages de course interrompus par de la marche.',
-                  'Alterner course et marche ; au niveau facile, le repère est 1 min de course pour 1 min 30 de marche.'),
+    'brisk-walk': ('Accumuler du temps de marche active à une allure régulière.',
+                   'Montée progressive de l’allure, marche avec pente légère, puis ralentissement.'),
+    'walk-intervals': ('Soutenir plusieurs passages de marche active sans supprimer la récupération.',
+                        'Passages actifs et marche plus lente à plat ; davantage de cycles avant de compléter à allure facile.'),
+    'hill-plateau': ('Maintenir une marche en montée pour solliciter les jambes.',
+                      'Pente de préparation, plateau de travail, pente réduite, puis marche facile à plat.'),
+    'hill-waves': ('Répéter un travail en côte avec une récupération entre les montées.',
+                    'Montées à vitesse stable et récupérations plus lentes à plat ; le volume de côte est plafonné.'),
+    'steady-endurance': ('Accumuler du temps régulier pour travailler l’endurance aérobie.',
+                          'Marche au niveau facile, course aux niveaux suivants ; aucune accélération pour finir.'),
+    'run-walk': ('Accumuler de la course par passages maîtrisés, entrecoupés de marche.',
+                  'Course et marche alternées ; passages de course et volume total de course plafonnés.'),
 }
 
 
-def methodology(identifier, data):
-    purpose, structure = METHODS[identifier]
-    intervals = any(isinstance(i, Repeat) for i in data.items)
-    sources = ['aha', 'cdc']
-    if data.goal == 'incline':
-        sources.append('incline')
-    if identifier == 'run-walk':
-        sources.append('nhs')
-    return {'purpose': purpose, 'structure': structure,
-            'adaptation': ('Une séance plus longue ajoute des cycles. Les passages ne dépassent pas les durées du modèle ; '
-                           'le rapport effort/récupération est conservé à l’arrondi près.' if intervals else
-                           'La durée du travail central change ; l’allure et les phases de pente sont conservées.'),
-            'effort': 'Cherchez une allure maîtrisée, avec une conversation possible. Si ce repère ne tient pas, réduisez les consignes dans votre copie.',
-            'limits': 'Principes sourcés, paramètres FitnessApp : ces vitesses ne mesurent pas votre niveau personnel. '
-                      'Ce programme n’est pas une prescription individualisée.' +
-                      (' La marche inclinée ne garantit ni gain musculaire ni perte de graisse localisée.' if data.goal == 'incline' else ''),
-            'sources': [SOURCES[k] for k in sources]}
+@dataclass(frozen=True)
+class Recipe:
+    identifier: str
+    name: str
+    goal: str
+    level: str
+    description: str
+    style: str
+    speed: float
+    incline: float
+    default_sec: int
+    # Durée d'un passage, récupération entre passages et nombre maximal de cycles.
+    effort_sec: int = 0
+    recovery_sec: int = 0
+    max_cycles: int = 0
+    # Temps central maximal pour le continu/la pyramide ; 0 = jusqu'à 60 min totales.
+    work_limit_sec: int = 0
+
+
+@dataclass(frozen=True)
+class Dose:
+    work_sec: int
+    recovery_sec: int
+    easy_sec: int
+    cycles: int
+    work_limit_sec: int
+
+
+@dataclass(frozen=True)
+class Programme:
+    workout: WorkoutInput
+    dose: Dose
+
+
+def recipes():
+    result = []
+    for i, level in enumerate(LEVELS):
+        # La difficulté change la structure et la dose, jamais un multiplicateur global.
+        result.extend([
+            Recipe('brisk-walk', 'Marche active', 'calories', level,
+                   'Du volume de marche régulier, sans passages rapides.', 'continuous',
+                   [4.5, 5., 5.5][i], [1., 2., 3.][i], [1200, 1800, 2400][i]),
+            Recipe('walk-intervals', 'Marche en alternance', 'calories', level,
+                   'Marche active et récupération à plat, avec un volume actif borné.', 'intervals',
+                   [4.8, 5.3, 5.8][i], [1., 2., 3.][i], [1800, 2100, 2400][i],
+                   [120, 180, 180][i], [120, 120, 90][i], [6, 8, 10][i]),
+            Recipe('hill-plateau', 'Marche en côte', 'incline', level,
+                   'Une montée préparée, un plateau, puis une réduction de la pente.', 'pyramid',
+                   [4., 4.3, 4.6][i], [3., 5., 7.][i], [1500, 2100, 2700][i],
+                   work_limit_sec=[900, 1500, 2100][i]),
+            Recipe('hill-waves', 'Vagues de pente', 'incline', level,
+                   'Des côtes séparées par une vraie marche de récupération.', 'intervals',
+                   [4., 4.3, 4.6][i], [3., 5., 7.][i], [1800, 2100, 2700][i],
+                   [120, 180, 240][i], [120, 120, 120][i], [4, 6, 6][i]),
+            Recipe('steady-endurance', 'Allure régulière', 'endurance', level,
+                   'Endurance continue en marche ou en course, avec une fin facile.', 'continuous',
+                   [4.8, 8.5, 10.][i], [0., 0., 0.][i], [1500, 2100, 2700][i],
+                   work_limit_sec=[0, 1800, 2400][i]),
+            Recipe('run-walk', 'Course et marche', 'endurance', level,
+                   'Course par passages courts ; le temps supplémentaire reste en marche.', 'intervals',
+                   [7.5, 8.5, 10.][i], 0., [1800, 2100, 2700][i],
+                   [60, 180, 240][i], [90, 120, 90][i], [8, 6, 6][i]),
+        ])
+    return result
 
 
 def step(kind, minutes, speed, incline=0):
-    return {'kind': kind, 'sec': int(minutes * 60), 'speed': float(speed), 'incline': float(incline)}
+    return {'kind': kind, 'sec': round(minutes * 60), 'speed': float(speed), 'incline': float(incline)}
 
 
-def programme(name, goal, level, middle):
-    # Cinq minutes de marche de chaque côté, sans multiplier les consignes.
-    # Principe général de mise en route/retour au calme : NHS Couch to 5K.
-    # https://www.nhs.uk/better-health/get-active/get-running-with-couch-to-5k/couch-to-5k-running-plan/
-    # Les variantes sont des choix éditoriaux FitnessApp, pas un programme médical NHS.
-    return WorkoutInput(name=name, goal=goal, level=level,
-        items=[step('warmup', 5, 3.5), *middle, step('cooldown', 5, 3.)])
+def spread(seconds, count):
+    """Répartir un total entier entre passages égaux, à une seconde près."""
+    base, remainder = divmod(seconds, count)
+    return [base + (i < remainder) for i in range(count)]
+
+
+def resize(recipe: Recipe, seconds: int) -> Programme:
+    """Construire une dose exacte, sans étirer les efforts au-delà de leurs plafonds.
+
+    Le rapport global effort/récupération est réparti entre cycles. Au plafond,
+    chaque seconde supplémentaire devient de la marche facile. Cela conserve
+    une dépense croissante, nécessaire à la recherche d'une cible calorique.
+    """
+    if not 900 <= seconds <= 3600:
+        raise CatalogTargetError('Choisissez une durée entre 15 et 60 min.')
+    i = list(LEVELS).index(recipe.level)
+    easy_speed = [3.8, 4., 4.2][i]
+    kind = 'run' if recipe.speed > 6 else 'steady'
+    items = [step('warmup', 2, 3.), step('warmup', 3, easy_speed)]
+    core = seconds - 600
+    cycles = recovery = 0
+    if recipe.style == 'intervals':
+        cycle_sec = recipe.effort_sec + recipe.recovery_sec
+        window = min(core, recipe.max_cycles * cycle_sec)
+        cycles = ceil(window / cycle_sec)
+        work = window * recipe.effort_sec // cycle_sec
+        recovery = window - work
+        for active_sec, rest_sec in zip(spread(work, cycles), spread(recovery, cycles)):
+            items.extend([step(kind, active_sec / 60, recipe.speed, recipe.incline),
+                          step('recover', rest_sec / 60, easy_speed)])
+        extra = core - window
+        if 0 < extra < 30:
+            # Pas de segment illégal de 1–29 s : compléter la récupération finale.
+            items[-1]['sec'] += extra
+        elif extra:
+            items.append(step('recover', extra / 60, easy_speed))
+        limit = recipe.effort_sec * recipe.max_cycles
+    else:
+        # Une minute facile à plat termine le travail central avant le retour au calme.
+        work = min(core - 60, recipe.work_limit_sec or 2940)
+        extra = core - work
+        if recipe.style == 'pyramid':
+            shoulder = work // 5
+            items.extend([
+                step('steady', shoulder / 60, recipe.speed, [1., 2., 3.][i]),
+                step('steady', (work - 2 * shoulder) / 60, recipe.speed, recipe.incline),
+                step('steady', shoulder / 60, recipe.speed, [1., 2., 2.][i]),
+            ])
+        else:
+            items.append(step(kind, work / 60, recipe.speed, recipe.incline))
+        items.append(step('recover', extra / 60, easy_speed))
+        limit = recipe.work_limit_sec or 2940
+    items.extend([step('cooldown', 2, easy_speed), step('cooldown', 3, 3.)])
+    data = WorkoutInput(name=recipe.name, goal=recipe.goal, level=recipe.level, items=items)
+    return Programme(data, Dose(work, recovery, extra, cycles, limit))
 
 
 def variants():
-    result = []
-    for index, level in enumerate(LEVELS):
-        specs = [
-            ('brisk-walk', 'Marche active', 'calories', 'Une marche régulière avec une inclinaison légère.',
-             [step('steady', [10, 18, 25][index], [4.5, 5.2, 5.8][index], [1, 2, 3][index])]),
-            ('walk-intervals', 'Marche en alternance', 'calories', 'Des passages actifs séparés par une marche de récupération.',
-             [{'repeat': [4, 5, 6][index], 'steps': [step('steady', [2, 3, 3][index], [4.8, 5.3, 5.8][index], [1, 3, 4][index]),
-                 step('recover', [2, 2, 1.5][index], [3.8, 4, 4.2][index])]}]),
-            ('hill-plateau', 'Marche en côte', 'incline', 'Une montée régulière, puis une descente progressive de la pente.',
-             [step('steady', [4, 6, 8][index], [4, 4.3, 4.5][index], [2, 3, 4][index]),
-              step('steady', [6, 10, 14][index], [4, 4.5, 4.8][index], [3, 5, 7][index]),
-              step('steady', [3, 4, 5][index], [3.8, 4, 4.2][index], [1, 2, 3][index])]),
-            ('hill-waves', 'Vagues de pente', 'incline', 'Des côtes en marche, avec des passages à plat entre les montées.',
-             [{'repeat': [3, 4, 5][index], 'steps': [step('steady', [2, 3, 4][index], [4, 4.4, 4.8][index], [3, 5, 8][index]),
-                 step('recover', 2, [3.5, 3.8, 4][index])]}]),
-            ('steady-endurance', 'Allure régulière', 'endurance', 'Un effort continu : marche au niveau facile, course aux niveaux suivants.',
-             [step(['steady', 'run', 'run'][index], [15, 22, 30][index], [5, 8.5, 10][index], [0, 0.5, 1][index])]),
-            ('run-walk', 'Course et marche', 'endurance', 'Des passages de course courts et bornés, avec récupération en marche.',
-             [{'repeat': [4, 5, 6][index], 'steps': [step('run', [1, 3, 4][index], [8.1, 9, 10.5][index], [0, 0.5, 1][index]),
-                 step('recover', [1.5, 2, 1.5][index], [3.8, 4.2, 4.5][index])]}]),
-        ]
-        for identifier, name, goal, description, middle in specs:
-            result.append((identifier, description, programme(name, goal, level, middle)))
-    return result
+    return [(r.identifier, r.description, resize(r, r.default_sec).workout) for r in recipes()]
 
 
 class CatalogTarget(Input):
@@ -120,63 +193,20 @@ class CatalogTargetError(Exception):
     pass
 
 
-def resize(data: WorkoutInput, seconds: int) -> WorkoutInput:
-    """Répartir des secondes entières, avec 30 s minimum par segment.
-
-    Conserver les vitesses, pentes et rapport effort/récupération. Pour les
-    alternances, augmenter le nombre de cycles plutôt que dépasser leurs durées.
-    Échauffement et retour au calme restent à 5 min.
-    """
-    blocks = preview(data)['blocks']
-    middle = blocks[1:-1]
-    remaining = seconds - 600
-    if len(data.items) == 3 and isinstance(data.items[1], Repeat):
-        pattern = data.items[1].steps
-        cycles = ceil(remaining / sum(s.sec for s in pattern))
-        middle = [s.model_dump() for _ in range(cycles) for s in pattern]
-    if remaining < 30 * len(middle):
-        raise CatalogTargetError(f'Ce format nécessite au moins {(600 + 30 * len(middle)) / 60:g} min.')
-    pending = list(range(len(middle)))
-    durations = [30] * len(middle)
-    while pending:
-        weight = sum(middle[i]['sec'] for i in pending)
-        minimum = [i for i in pending if remaining * middle[i]['sec'] / weight < 30]
-        if not minimum:
-            exact = {i: remaining * middle[i]['sec'] / weight for i in pending}
-            for i in pending:
-                durations[i] = floor(exact[i])
-            missing = remaining - sum(durations[i] for i in pending)
-            for i in sorted(pending, key=lambda i: exact[i] - durations[i], reverse=True)[:missing]:
-                durations[i] += 1
-            break
-        for i in minimum:
-            pending.remove(i)
-            remaining -= 30
-    items = [data.items[0].model_dump(), *[
-        {k: b[k] for k in ('kind', 'speed', 'incline')} | {'sec': durations[i]}
-        for i, b in enumerate(middle)], data.items[-1].model_dump()]
-    return WorkoutInput(**(data.model_dump() | {'items': items}))
-
-
-def adapt(data, target, weight):
-    if target.duration_sec is not None:
-        return resize(data, target.duration_sec)
+def adapt(recipe, target, weight):
     if target.active_kcal is None:
-        return data
+        return resize(recipe, target.duration_sec or recipe.default_sec)
     if weight is None:
         raise CatalogTargetError('Renseignez votre poids dans Réglages pour choisir un objectif de calories.')
-    low = 900
-    high = 3600
+    low, high = 900, 3600
 
     def kcal(seconds):
-        return preview(resize(data, seconds), weight)['summary']['energy']['active_kcal']
+        return preview(resize(recipe, seconds).workout, weight)['summary']['energy']['active_kcal']
 
     lower, upper = kcal(low), kcal(high)
     if not lower <= target.active_kcal <= upper:
         lower_text, upper_text = (f'{v:g}'.replace('.', ',') for v in (lower, upper))
-        raise CatalogTargetError(f'À ce niveau, choisissez entre {lower_text} et {upper_text} kcal actives estimées ({low / 60:g} à 60 min).')
-    # Chercher la durée puis choisir la seconde voisine la plus proche. Le calcul
-    # partagé reste l'autorité ; aucune hausse de vitesse/pente pour forcer le but.
+        raise CatalogTargetError(f'À ce niveau, choisissez entre {lower_text} et {upper_text} kcal actives estimées (15 à 60 min).')
     while high - low > 1:
         mid = (low + high) // 2
         if kcal(mid) < target.active_kcal:
@@ -184,22 +214,45 @@ def adapt(data, target, weight):
         else:
             high = mid
     seconds = min((low, high), key=lambda s: abs(kcal(s) - target.active_kcal))
-    return resize(data, seconds)
+    return resize(recipe, seconds)
+
+
+def methodology(recipe, programme):
+    purpose, structure = METHODS[recipe.identifier]
+    sources = ['aha', 'cdc']
+    if recipe.goal == 'incline':
+        sources.append('incline')
+    if recipe.identifier == 'run-walk':
+        sources.append('nhs')
+    adaptation = ('La durée ajuste les cycles et leur répartition effort/récupération, sans dépasser '
+                  'le plafond par passage ni le volume ciblé.' if recipe.style == 'intervals' else
+                  'La durée ajuste le travail central, sans augmenter l’allure ou la pente.')
+    if programme and programme.dose.easy_sec:
+        adaptation += ' Le temps restant est complété par de la marche facile à plat.'
+    return {'purpose': purpose, 'structure': structure, 'adaptation': adaptation,
+            'effort': 'L’effort doit rester maîtrisé : une conversation possible est le repère pour l’endurance. '
+                      'La récupération doit vous permettre de reprendre le passage suivant ; réduisez les consignes sinon.',
+            'limits': 'Séance générale : les vitesses et plafonds FitnessApp ne mesurent pas votre capacité personnelle. '
+                      'Le niveau Soutenu ne constitue pas une prescription pour athlète de haut niveau.' +
+                      (' La pente ne garantit ni gain musculaire ni perte de graisse localisée.' if recipe.goal == 'incline' else ''),
+            'sources': [SOURCES[k] for k in sources],
+            'dose': asdict(programme.dose) if programme else None}
 
 
 def preview_catalog(session, profile, target):
     weight = get_profile(session, profile).weight_kg
     result = []
-    for identifier, description, data in variants():
-        entry = {'template_id': identifier, 'name': data.name, 'description': description,
-                 'goal': data.goal, 'level': data.level, 'weight_kg': weight,
-                 'method': methodology(identifier, data), 'workout': None, 'message': None}
+    for recipe in recipes():
+        entry = {'template_id': recipe.identifier, 'name': recipe.name, 'description': recipe.description,
+                 'goal': recipe.goal, 'level': recipe.level, 'weight_kg': weight, 'workout': None, 'message': None}
+        programme = None
         try:
-            adjusted = adapt(data, target, weight)
-            entry['workout'] = {'template_id': identifier, 'description': description,
-                               **adjusted.model_dump(), **preview(adjusted, weight)}
+            programme = adapt(recipe, target, weight)
+            entry['workout'] = {'template_id': recipe.identifier, 'description': recipe.description,
+                               **programme.workout.model_dump(), **preview(programme.workout, weight)}
         except CatalogTargetError as exc:
             entry['message'] = str(exc)
+        entry['method'] = methodology(recipe, programme)
         result.append(entry)
     return result
 
@@ -212,11 +265,11 @@ def list_catalog(session, profile):
 
 def add_catalog(session, profile, payload):
     weight = get_profile(session, profile).weight_kg
-    for identifier, _, data in variants():
-        if identifier == payload.template_id and data.level == payload.level:
-            data = adapt(data, payload.target, weight)
-            return create_workout(session, profile, data,
-                origin={'kind': 'catalog', 'template_id': identifier, 'level': data.level,
+    for recipe in recipes():
+        if recipe.identifier == payload.template_id and recipe.level == payload.level:
+            programme = adapt(recipe, payload.target, weight)
+            return create_workout(session, profile, programme.workout,
+                origin={'kind': 'catalog', 'template_id': recipe.identifier, 'level': recipe.level,
                         'catalog_revision': CATALOG_REVISION,
                         'target': payload.target.model_dump(exclude_none=True)})
     raise WorkoutNotFound()

@@ -93,52 +93,74 @@ class ProposalTests(unittest.TestCase):
         self.assertIn('Durée totale incohérente', duration['issues'][0]['message'])
 
     def test_catalog_duration_exact_and_structure_preserved(self):
-        for _, _, data in catalog.variants():
-            original = workouts.preview(data)['blocks']
-            for seconds in (900, 960, 1200, 1800, 3599, 3600):
-                resized = catalog.adapt(data, catalog.CatalogTarget(duration_sec=seconds), None)
-                result = workouts.preview(resized)['blocks']
+        for recipe in catalog.recipes():
+            cap = (recipe.max_cycles * (recipe.effort_sec + recipe.recovery_sec) + 600
+                   if recipe.style == 'intervals' else recipe.work_limit_sec + 660)
+            seconds_to_check = {900, 960, 1200, 1800, 3599, 3600}
+            seconds_to_check.update(s for s in (cap - 1, cap, cap + 1, cap + 29, cap + 30)
+                                    if 900 <= s <= 3600)
+            for seconds in seconds_to_check:
+                programme = catalog.adapt(recipe, catalog.CatalogTarget(duration_sec=seconds), None)
+                result = workouts.preview(programme.workout)['blocks']
+                dose = programme.dose
                 self.assertEqual(sum(b['sec'] for b in result), seconds)
-                self.assertEqual(result[0]['sec'], 300)
-                self.assertEqual(result[-1]['sec'], 300)
+                self.assertEqual(sum(b['sec'] for b in result if b['kind'] == 'warmup'), 300)
+                self.assertEqual(sum(b['sec'] for b in result if b['kind'] == 'cooldown'), 300)
+                self.assertLess(result[0]['speed'], result[1]['speed'])
+                self.assertGreater(result[-2]['speed'], result[-1]['speed'])
                 self.assertTrue(all(b['sec'] >= 30 for b in result))
-                if isinstance(data.items[1], workouts.Repeat):
-                    active, recover = data.items[1].steps
-                    middle = result[1:-1]
-                    self.assertEqual(len(middle) % 2, 0)
-                    for effort, rest in zip(middle[::2], middle[1::2]):
-                        self.assertEqual((effort['kind'], effort['speed'], effort['incline']),
-                                         (active.kind, active.speed, active.incline))
-                        self.assertEqual((rest['kind'], rest['speed'], rest['incline']),
-                                         (recover.kind, recover.speed, recover.incline))
-                        self.assertLessEqual(effort['sec'], active.sec)
-                        self.assertLessEqual(rest['sec'], recover.sec)
-                        self.assertLessEqual(abs(effort['sec'] / active.sec - rest['sec'] / recover.sec), .04)
-                    self.assertLessEqual(len(result), 120)
-                else:
-                    self.assertEqual([(b['kind'], b['speed'], b['incline']) for b in result],
-                                     [(b['kind'], b['speed'], b['incline']) for b in original])
-                self.assertEqual(data.model_dump(), catalog.adapt(data, catalog.CatalogTarget(), None).model_dump())
+                self.assertLessEqual(len(result), 120)
+                middle = result[2:-2]
+                work = [b for b in middle if b['kind'] != 'recover']
+                self.assertEqual(sum(b['sec'] for b in work), dose.work_sec)
+                self.assertLessEqual(dose.work_sec, dose.work_limit_sec)
+                self.assertEqual(dose.work_sec + dose.recovery_sec + dose.easy_sec, seconds - 600)
+                if recipe.style == 'intervals':
+                    self.assertLessEqual(dose.cycles, recipe.max_cycles)
+                    for effort, rest in zip(middle[:dose.cycles * 2:2], middle[1:dose.cycles * 2:2]):
+                        self.assertEqual((effort['speed'], effort['incline']), (recipe.speed, recipe.incline))
+                        self.assertEqual((rest['kind'], rest['incline']), ('recover', 0))
+                        self.assertLess(rest['speed'], effort['speed'])
+                        self.assertLessEqual(effort['sec'], recipe.effort_sec)
+                    self.assertLess(abs(dose.work_sec - (dose.work_sec + dose.recovery_sec)
+                                        * recipe.effort_sec / (recipe.effort_sec + recipe.recovery_sec)), 1)
+                elif recipe.style == 'pyramid':
+                    self.assertEqual(len(work), 3)
+                    self.assertGreater(work[1]['incline'], work[0]['incline'])
+                    self.assertGreater(work[1]['incline'], work[2]['incline'])
+                self.assertEqual(catalog.adapt(recipe, catalog.CatalogTarget(), None).workout,
+                                 catalog.resize(recipe, recipe.default_sec).workout)
 
     def test_catalog_calorie_solver_weight_and_bounds(self):
-        for _, _, data in catalog.variants():
-            minimum = 900
-            lower = workouts.preview(catalog.resize(data, minimum), 80)['summary']['energy']['active_kcal']
-            upper = workouts.preview(catalog.resize(data, 3600), 80)['summary']['energy']['active_kcal']
+        for recipe in catalog.recipes():
+            lower = workouts.preview(catalog.resize(recipe, 900).workout, 80)['summary']['energy']['active_kcal']
+            upper = workouts.preview(catalog.resize(recipe, 3600).workout, 80)['summary']['energy']['active_kcal']
             for calories in (lower, (lower + upper) / 2, upper):
-                result = catalog.adapt(data, catalog.CatalogTarget(active_kcal=calories), 80)
-                estimate = workouts.preview(result, 80)['summary']
+                result = catalog.adapt(recipe, catalog.CatalogTarget(active_kcal=calories), 80)
+                estimate = workouts.preview(result.workout, 80)['summary']
                 self.assertLessEqual(abs(estimate['energy']['active_kcal'] - calories), .4)
                 self.assertLessEqual(estimate['sec'], 3600)
+                self.assertLessEqual(result.dose.work_sec, result.dose.work_limit_sec)
             for calories in (lower - .1, upper + .1):
                 with self.assertRaises(catalog.CatalogTargetError):
-                    catalog.adapt(data, catalog.CatalogTarget(active_kcal=calories), 80)
-        walk = catalog.variants()[0][2]
-        a = workouts.preview(catalog.adapt(walk, catalog.CatalogTarget(active_kcal=150), 80))
-        b = workouts.preview(catalog.adapt(walk, catalog.CatalogTarget(active_kcal=150), 100))
+                    catalog.adapt(recipe, catalog.CatalogTarget(active_kcal=calories), 80)
+        walk = catalog.recipes()[0]
+        a = workouts.preview(catalog.adapt(walk, catalog.CatalogTarget(active_kcal=150), 80).workout)
+        b = workouts.preview(catalog.adapt(walk, catalog.CatalogTarget(active_kcal=150), 100).workout)
         self.assertLess(b['summary']['sec'], a['summary']['sec'])
         with self.assertRaises(catalog.CatalogTargetError):
             catalog.adapt(walk, catalog.CatalogTarget(active_kcal=150), None)
+
+    def test_catalog_calories_monotonic_at_every_second(self):
+        # La dichotomie dépend de cette propriété, notamment aux changements de cycles,
+        # aux plafonds et à la fusion des petits compléments de marche de 1–29 s.
+        for recipe in catalog.recipes():
+            previous = 0
+            for seconds in range(900, 3601):
+                programme = catalog.resize(recipe, seconds)
+                energy = workouts.preview(programme.workout, 80)['summary']['energy']['active_kcal']
+                self.assertGreaterEqual(energy, previous, (recipe.identifier, recipe.level, seconds))
+                previous = energy
 
     def test_catalog_target_api_preview_copy_and_validation(self):
         url = self.url + '/workouts/catalog'
@@ -181,12 +203,13 @@ class ProposalTests(unittest.TestCase):
         self.assertEqual([w['items'] for w in original], [w['items'] for w in updated])
 
     def test_run_walk_long_session_keeps_short_efforts_and_saved_versions(self):
-        data = next(data for identifier, _, data in catalog.variants() if identifier == 'run-walk' and data.level == 'easy')
-        short = workouts.preview(catalog.resize(data, 1800))
-        long = workouts.preview(catalog.resize(data, 3600))
-        self.assertEqual([b['sec'] for b in short['blocks'][1:-1]], [60, 90] * 8)
-        self.assertEqual([b['sec'] for b in long['blocks'][1:-1]], [60, 90] * 20)
-        # Les copies sont des versions figées : un changement du catalogue ne les réécrit pas.
+        recipe = next(r for r in catalog.recipes() if r.identifier == 'run-walk' and r.level == 'easy')
+        short = catalog.resize(recipe, 1800)
+        long = catalog.resize(recipe, 3600)
+        self.assertEqual([b['sec'] for b in workouts.preview(short.workout)['blocks'][2:-2]], [60, 90] * 8)
+        self.assertEqual((short.dose.work_sec, long.dose.work_sec), (480, 480))
+        self.assertEqual(long.dose.easy_sec, 1800)
+        # Remplacer le catalogue ne réécrit pas les versions personnelles existantes.
         saved = self.client.post(self.url + '/workouts', json={
             'name': 'Ancienne alternance', 'goal': 'endurance', 'level': 'easy',
             'items': [catalog.step('warmup', 5, 3.5), catalog.step('run', 10, 8.1), catalog.step('cooldown', 5, 3)]}).json()

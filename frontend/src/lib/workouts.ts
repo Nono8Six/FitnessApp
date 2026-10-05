@@ -23,6 +23,7 @@ export interface CatalogTarget { duration_sec?: number; active_kcal?: number }
 export interface CatalogMethod {
   purpose: string; structure: string; adaptation: string; effort: string; limits: string
   sources: { title: string; url: string }[]
+  dose: { work_sec: number; recovery_sec: number; easy_sec: number; cycles: number; work_limit_sec: number } | null
 }
 export interface CatalogOption {
   template_id: string; name: string; description: string; goal: Goal; level: Level
@@ -55,8 +56,11 @@ export const isWorkout = (v: unknown): v is Workout => isPreview(v) && isRecord(
 const isLibrary = (v: unknown): v is LibraryData => isRecord(v) && Array.isArray(v.workouts)
   && v.workouts.every(isWorkout) && (v.selected_id === null || typeof v.selected_id === 'string')
 const isSelection = (v: unknown): v is { selected_id: string | null } => isRecord(v) && (v.selected_id === null || typeof v.selected_id === 'string')
+const isDose = (v: unknown): v is NonNullable<CatalogMethod['dose']> => isRecord(v)
+  && ['work_sec', 'recovery_sec', 'easy_sec', 'cycles', 'work_limit_sec'].every(k => Number.isInteger(v[k]) && Number(v[k]) >= 0)
 const isCatalogMethod = (v: unknown): v is CatalogMethod => isRecord(v)
   && ['purpose', 'structure', 'adaptation', 'effort', 'limits'].every(k => typeof v[k] === 'string')
+  && (v.dose === null || isDose(v.dose))
   && Array.isArray(v.sources) && v.sources.length > 0 && v.sources.every(s => isRecord(s)
     && typeof s.title === 'string' && typeof s.url === 'string' && /^https:\/\//.test(s.url))
 export const isWorkoutInput = (v: unknown): v is WorkoutInput => isRecord(v) && typeof v.name === 'string'
@@ -71,8 +75,10 @@ export const previewCatalog = (profile: string, target: CatalogTarget) => api(`$
     && Object.hasOwn(GOALS, String(w.goal)) && Object.hasOwn(LEVELS, String(w.level))
     && isCatalogMethod(w.method)
     && (w.weight_kg === null || finite(w.weight_kg))
-    && ((w.workout === null && typeof w.message === 'string')
+    && ((w.workout === null && w.method.dose === null && typeof w.message === 'string')
       || (isPreview(w.workout) && isWorkoutInput(w.workout) && isRecord(w.workout)
+        && w.method.dose !== null && w.method.dose.work_sec <= w.method.dose.work_limit_sec
+        && w.method.dose.work_sec + w.method.dose.recovery_sec + w.method.dose.easy_sec + 600 === w.workout.summary.sec
         && w.workout.template_id === w.template_id && w.workout.level === w.level && w.workout.goal === w.goal
         && w.workout.description === w.description && w.message === null))),
 })

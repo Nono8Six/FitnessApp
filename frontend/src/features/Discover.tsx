@@ -5,6 +5,7 @@ import { WorkoutBlocks } from '../components/WorkoutBlocks'
 import { WeightLink, WorkoutError, WorkoutLoading, WorkoutSummary } from '../components/WorkoutSummary'
 import { errorMessage } from '../lib/api'
 import { href, navigate } from '../lib/router'
+import { clock } from '../lib/format'
 import { addCatalog, GOALS, LEVELS, previewCatalog, type CatalogOption, type CatalogTarget, type Goal, type Level, type LoadState } from '../lib/workouts'
 
 function TargetControls({ mode, duration, calories, disabled, onMode, onDuration, onCalories }: {
@@ -112,7 +113,22 @@ export function Discover({ profile }: { profile: string }) {
         </li>)}</ul>
       </details>}
       {shown && <>
-        <div className="mt-4"><WorkoutLabels data={shown} /><WorkoutSummary data={shown} compact /></div>
+        <div className="mt-4"><WorkoutLabels data={shown} /></div>
+        {selected?.method.dose && <div className="my-4 px-1">
+          <h3 className="text-subhead font-semibold">Répartition de l’effort</h3>
+          <dl className="mt-2 flex flex-wrap gap-x-6 gap-y-2 text-footnote">
+            {([['Travail ciblé', selected.method.dose.work_sec],
+              ['Récupération', selected.method.dose.recovery_sec],
+              ['Marche facile', selected.method.dose.easy_sec]] as const).filter(([, sec]) => sec > 0).map(([label, sec]) => <div key={label}>
+              <dt className="text-label-2">{label}</dt><dd className="num mt-1 text-body">{clock(sec)}</dd>
+            </div>)}
+          </dl>
+          <p className="mt-2 text-footnote text-label-2">
+            {selected.method.dose.cycles > 0 && `${selected.method.dose.cycles} passages · `}
+            Plafond de travail : {clock(selected.method.dose.work_limit_sec)}. Échauffement et retour au calme : 5 min chacun.
+          </p>
+        </div>}
+        <WorkoutSummary data={shown} compact />
         <WorkoutBlocks data={shown} />
         <p className="mt-4 text-footnote text-label-2">Le niveau décrit ces consignes, pas votre capacité physique. Vous pourrez les modifier.</p>
         {error && <p role="alert" className="mt-3 text-subhead text-red">{error}</p>}
