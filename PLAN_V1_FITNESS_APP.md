@@ -10,7 +10,7 @@ Une seule brique en cours dans le périmètre demandé. Les cases indiquent les 
 - [x] **Brique 1 · Socle** : l’app s’ouvre sur le PC et le téléphone, servie par le PC, sans donnée de démonstration.
 - [x] **Brique 2 · Profils** : base SQLite, profils créés, renommés et supprimés, choix du profil.
 - [x] **Brique 3 · Séances manuelles** : créer, modifier, dupliquer, supprimer et retrouver ses séances ; choix pour Aujourd’hui par profil.
-- [ ] **Brique 4 · Connexion ChatGPT** : Sign in with ChatGPT sur le PC, compte et forfait vérifiés.
+- [x] **Brique 4 · Connexion ChatGPT** : connexion sur le PC, compte et permission du forfait vérifiés, modèles du compte, coffre Windows et reprise de session. Limites des essais détaillées ci-dessous.
 - [ ] **Brique 5 · Coach** : conversation réelle avec ChatGPT, en streaming, enregistrée par profil.
 - [ ] **Brique 6 · Séances par ChatGPT** : ChatGPT conçoit ou ajuste une séance, validée et enregistrée dans la bibliothèque.
 - [ ] **Brique 7 · Tapis dans l’app** : contrôleur du POC intégré, connexion et état du tapis en direct (simulation d’abord).
@@ -104,13 +104,14 @@ poc/             console de diagnostic (inchangée)
 
 ## 4. ChatGPT : ce qui est vérifié
 
-Documentation officielle relue le 4 octobre 2026 : [présentation](https://developers.openai.com/siwc/token-sharing-open-source), [connexion](https://developers.openai.com/siwc/token-sharing-open-source/sign-in), [modèles et requêtes](https://developers.openai.com/siwc/token-sharing-open-source/models-and-inference), [limitations](https://developers.openai.com/siwc/token-sharing-open-source/preview-limitations).
+Documentation officielle relue le 4 octobre 2026 : [présentation](https://developers.openai.com/siwc/token-sharing-open-source), [éligibilité](https://developers.openai.com/siwc/quickstart), [connexion](https://developers.openai.com/siwc/token-sharing-open-source/sign-in), [comptes et sessions](https://developers.openai.com/siwc/token-sharing-open-source/profiles-and-sessions), [modèles et requêtes](https://developers.openai.com/siwc/token-sharing-open-source/models-and-inference), [erreurs](https://developers.openai.com/siwc/token-sharing-open-source/errors-and-recovery), [interface](https://developers.openai.com/siwc/ui-ux-guidelines), [limitations](https://developers.openai.com/siwc/token-sharing-open-source/preview-limitations).
 
-- **Éligibilité.** Les applications open source et hébergées localement peuvent l’utiliser directement. Les applications payantes ou hébergées à distance passent par un formulaire. L’utilisateur doit avoir un forfait ChatGPT actif. Fonction en préversion.
-- **Connexion.** OAuth 2.0 avec PKCE, dans le navigateur du PC. Le retour se fait uniquement sur `http://127.0.0.1:<port>/callback`. **La connexion se fait donc depuis le PC.** Les téléphones utilisent ensuite le coach à travers le serveur du PC ; les jetons ne quittent jamais le PC.
+- **Éligibilité.** Le flux documenté couvre les applications open source et hébergées localement ; FitnessApp est hébergée sur le PC. Les applications payantes ou hébergées à distance passent par un formulaire. La documentation cite les comptes Plus et Pro éligibles, sous réserve du compte, de l’espace et des politiques applicables : un abonnement actif seul ne garantit pas l’accès. Préversion. Le parcours réel FitnessApp a atteint le consentement OpenAI, puis reçu une identité validée, les permissions du forfait et le catalogue du compte. Aucun appel d’inférence n’a été exécuté dans la brique 4.
+- **Connexion.** OAuth avec PKCE S256, dans le navigateur système du PC. Émetteur et endpoints chargés depuis la découverte officielle OpenAI et limités à son domaine HTTPS. Retour FitnessApp sur `http://127.0.0.1:<port>/callback` ; seul le port peut changer entre tentatives, pas le chemin. **La connexion initiale se fait depuis le PC, via l’adresse locale de FitnessApp.** Les téléphones passent par le serveur du PC ; aucun jeton ne leur est envoyé.
 - **Enregistrement.** La première connexion utilise `client_id=dynamic_agent_client` avec `agent_name_hint` et `ext_agent_host_id`, un identifiant opaque et stable du PC, choisi avant la première connexion. L’app conserve ensuite le `client_id` attribué (`oaiapp_…`).
 - **Portées.** `openid profile email offline_access resource.invoke chatgpt.tokens.use.direct`, ressource `https://api.openai.com/v1`. Sans `chatgpt.tokens.use.direct` accordée, le forfait n’est pas utilisable.
-- **Jetons.** Jeton d’identité validé (signature JWKS, émetteur `https://auth.openai.com`, audience, expiration, nonce). Jetons stockés sur le PC uniquement, avec accès réservé à l’utilisateur Windows, écriture atomique, jamais dans Git, les journaux, les exports ni le navigateur. Rafraîchissement géré par l’app.
+- **Jetons.** PyJWT vérifie la signature RS256/JWKS, l’émetteur, l’audience, les dates, le sujet, le nonce et `azp`/`at_hash` lorsqu’ils sont présents. Le coffre `chatgpt/connection.dpapi`, hors du dépôt et de SQLite, est chiffré par DPAPI pour l’utilisateur Windows, protégé par ACL et remplacé atomiquement. Aucun jeton dans Git, les journaux, les exports ou les réponses au frontend. Seul le `id_token_hint` prévu par OpenAI peut être transmis directement au navigateur système pour une réautorisation ; aucune URL d’autorisation n’est renvoyée à l’interface. Rafraîchissements sérialisés, verrou entre processus, conservation des jetons sur panne temporaire et retrait sur erreur terminale.
+- **Déconnexion.** Révocation du renouvellement via l’endpoint de découverte, puis effacement des trois jetons. Un échec de révocation distante est affiché même après la déconnexion locale. Le client attribué et l’identifiant d’installation restent disponibles ; les inscriptions de comptes/espaces sont séparées même avec le même e-mail. Un refus du partage du forfait conserve l’identité, avec une action explicite pour redemander cette permission (`prompt=consent`, sans paramètre expérimental).
 - **Modèles.** `GET /v1/models` ; afficher `display_name` pour `visibility: "list"`, envoyer le `slug`. Aucun modèle codé en dur.
 - **Requêtes.** `POST /v1/responses` avec `store: false` et `stream: true`. Le contexte complet est renvoyé à chaque requête depuis la base locale. Une réponse n’est valide qu’après `response.completed`.
 - **Outils.** Fonctions personnalisées regroupées dans un espace de noms (`fitness`), et recherche web selon le compte. Non disponibles : MCP hébergé, recherche de fichiers, Code Interpreter, génération d’images.
@@ -215,19 +216,27 @@ Contrôles de ce complément : build et 46 tests ciblés réussis (calculs, API,
 
 ### Brique 4 · Connexion ChatGPT
 
-**Livré :** dans Réglages, « Se connecter avec ChatGPT » ouvre le navigateur du PC ; après accord, l’app affiche le compte connecté et les modèles disponibles.
+**État :** livrée le 4 octobre 2026. Service `backend/coach`, API `/api/chatgpt`, section ChatGPT des Réglages. Aucun changement de schéma, de profil, de séance, de version, de sélection sportive ou de lanceur Windows.
+
+**Livré :** « Continuer avec ChatGPT » ouvre le navigateur système du PC. Après accord, les Réglages affichent le compte et son catalogue réel, permettent de choisir un modèle, d’actualiser la liste, de retrouver une inscription et de se déconnecter. Aucun modèle imposé. Le téléphone affiche le compte et les modèles ; la gestion de la connexion reste sur le PC.
 
 **Travail :**
 1. Générer et conserver `ext_agent_host_id` avant toute connexion.
 2. Flux PKCE complet (§ 4) : serveur de retour sur `127.0.0.1`, `state` et `nonce`, échange du code, validation du jeton d’identité, vérification de `chatgpt.tokens.use.direct`.
 3. Stockage protégé des jetons, rafraîchissement, déconnexion.
 4. Réglages > ChatGPT : e-mail, état, modèle choisi (liste de `/v1/models`), Se déconnecter. Sur le téléphone : « Connexion depuis le PC ».
-5. États visibles : refus, portée manquante, expiration, révocation, réseau.
+5. États visibles : chargement, connexion en cours et annulable, refus, permission manquante, expiration, révocation, réseau, catalogue vide et coffre indisponible. Une tentative dure cinq minutes ; doublons, mauvais retours et rejeux ne peuvent pas remplacer une connexion valide.
 
 **Fait quand :**
-- [ ] Connexion réussie avec le vrai compte d’Arnaud ; client attribué conservé ; reconnexion sans resélectionner le compte.
-- [ ] Les jetons n’apparaissent dans aucun journal, export, réponse HTTP ni dans Git (test).
-- [ ] Après redémarrage du PC, la session est rétablie par rafraîchissement.
+- [x] Connexion réussie avec le vrai compte d’Arnaud ; identité et permissions vérifiées ; client attribué conservé ; cinq modèles reçus d’OpenAI.
+- [x] Aucune exposition des jetons au frontend ni aux journaux applicatifs ; fichiers locaux chiffrés, indépendants des données exportables et absents de Git (tests et contrôle du diff).
+- [x] Reprise sans sélection de compte après relance de l’application ; rafraîchissement réel réussi avec remplacement du jeton de renouvellement et nouvelle lecture du catalogue. Le redémarrage complet de Windows n’a pas été essayé.
+
+**Contrôles automatiques :** build frontend ; 22 tests ciblés SIWC avec signatures RSA, coffre DPAPI réel et fournisseur de test (PKCE/state/nonce, claims et signature, callback local, refus, expiration, rejeu, client/identité échangés, permissions, plusieurs inscriptions, verrou, rotation après relance, révocation, panne réseau, absence de répétition sur refus durable, catalogue vide, écriture atomique et absence de fuite). Les 46 contrôles existants backend/profils/séances/énergie ont également passé. Aucun faux fournisseur ni modèle de test dans l’application.
+
+**Contrôles réels :** Chrome via MCP, compte connecté, catalogue du compte, format PC et viewport téléphone de 390 px via l’IP réseau ; reprise visible sur le serveur habituel 4330 après relance. Aucune erreur console pendant ces parcours ; l’arrêt volontaire de l’instance de contrôle a produit l’avertissement réseau attendu. Empreinte logique SQLite identique avant/après, intégrité `ok`. La session créée lors du contrôle a été transférée uniquement entre les coffres de cette même installation FitnessApp ; la copie temporaire a été retirée.
+
+**Limites :** pas d’essai sur téléphone physique ni de redémarrage complet de Windows. Déconnexion/révocation, refus et incidents couverts automatiquement ; le compte réel est laissé connecté. Les hints de réautorisation sont vérifiés par tests, sans nouvel essai interactif après déconnexion. Aucun appel Responses, aucune consommation d’inférence, aucune action sur le tapis. L’application habituelle a été relancée et la session retrouvée ; une nouvelle relance depuis le lanceur reste nécessaire pour charger le dernier correctif qui suspend les répétitions sur refus durable d’OpenAI.
 
 **Pas dans cette brique :** conversation.
 

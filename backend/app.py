@@ -19,6 +19,8 @@ from poc.server import local_addresses, phone_addresses
 from . import __version__
 from .api import profiles as profiles_api
 from .api import workouts as workouts_api
+from .api import chatgpt as chatgpt_api
+from .coach.connection import Connection
 from .config import data_dir as resolve_data_dir
 from .storage import StorageError, open_database
 from .training.profiles import ensure_default_profiles
@@ -77,10 +79,12 @@ def create_app(*, simulation: bool = False, data_root: Path | None = None, dist:
     async def lifespan(_app):
         control = getattr(_app.state, "launcher_control", None)
         try:
+            _app.state.chatgpt.start()
             if control:
                 control.publish()
             yield
         finally:
+            _app.state.chatgpt.close()
             if control:
                 control.close()
             database.close()
@@ -90,6 +94,7 @@ def create_app(*, simulation: bool = False, data_root: Path | None = None, dist:
     app.state.database = database
     app.state.phone_addresses = addresses
     app.state.instance_id = instance_id
+    app.state.chatgpt = Connection(data / "chatgpt")
     app.add_middleware(TrustedHostMiddleware, allowed_hosts=["localhost", "127.0.0.1", "[::1]", *local_addresses()])
     app.add_middleware(GZipMiddleware, minimum_size=1000)
 
@@ -144,6 +149,7 @@ def create_app(*, simulation: bool = False, data_root: Path | None = None, dist:
 
     app.include_router(profiles_api.router)
     app.include_router(workouts_api.router)
+    app.include_router(chatgpt_api.router)
 
     @app.api_route("/api/{_path:path}", methods=["GET", "POST", "PUT", "PATCH", "DELETE"])
     async def unknown_api(_path: str):
