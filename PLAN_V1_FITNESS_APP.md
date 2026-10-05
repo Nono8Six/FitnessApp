@@ -13,7 +13,7 @@ Une seule brique en cours dans le périmètre demandé. Les cases indiquent les 
 - [x] **Brique 4 · Connexion ChatGPT** : connexion sur le PC, compte et permission du forfait vérifiés, modèles du compte, coffre Windows et reprise de session. Limites des essais détaillées ci-dessous.
 - [x] **Brique 5 · Coach** : conversations persistantes, lecture des données existantes et mémoire contrôlée ; réponses réelles vérifiées, cache automatique préparé sans gain observé lors des essais courts.
 - [x] **Brique 6 · Catalogue et séances personnalisées** : six formats, trois niveaux, copies personnelles ; création et ajustement ChatGPT validés, persistants et acceptés explicitement.
-- [ ] **Brique 7 · Tapis dans l’app** : contrôleur du POC intégré, connexion et état du tapis en direct (simulation d’abord).
+- [ ] **Brique 7 · Tapis dans l’app** : logiciel livré, connexion en lecture seule et état en direct vérifiés en simulation ; essai RUN500 et téléphone physique restant à faire.
 - [ ] **Brique 8 · Exécuter une séance** : démarrer, suivre, mettre en pause, reprendre, arrêter (simulation).
 - [ ] **Brique 9 · Enregistrer et revoir** : mesures conservées, bilan réel, ressenti.
 - [ ] **Brique 10 · RUN500 réel** : réception matérielle progressive du parcours et des pertes.
@@ -309,16 +309,21 @@ Contrôles de ce complément : build et 46 tests ciblés réussis (calculs, API,
 **Livré :** Réglages > Tapis permet de rechercher, connecter et voir l’état du RUN500 (ou du simulateur), avec capacités et mesures en direct.
 
 **Travail :**
-1. Déplacer `controller.py` et `ftms.py` dans `backend/device/` sans réécrire le protocole ; le POC continue de les utiliser ou garde sa copie.
-2. Un seul propriétaire du Bluetooth dans le processus ; boucle asynchrone persistante.
-3. WebSocket de l’état du tapis : connexion, capacités, mesures avec âge.
-4. Simulation signalée en permanence, base de simulation séparée.
-5. Reprendre les 20 tests critiques du POC sur le code déplacé.
+1. `controller.py` et `ftms.py` déplacés dans `backend/device/`, avec imports de compatibilité du POC : une seule implémentation et protections de diagnostic conservées.
+2. Un contrôleur en lecture seule par serveur, sur sa boucle asynchrone persistante, fermé à l'arrêt. Verrou système partagé avec le POC et les autres instances réelles ; une fermeture Bluetooth non confirmée conserve le verrou.
+3. API `/api/device/scan`, `/connect`, `/disconnect`, `/state` et WebSocket `/events` : état complet initial, identifiant du serveur et événements numérotés, capacités et mesures avec âge individuel. Opérations concurrentes refusées ; pertes et lectures partielles explicites. Reconnexion de l'observation uniquement, jamais du tapis.
+4. Réglages > Tapis réutilise la feuille, les listes et les mesures existantes. Recherche, connexion, déconnexion, indisponibilité et ancienneté visibles ; cardio 0/255 ou absent affiché `--`. Simulation dans le titre fixe de la feuille, données et journaux séparés du réel.
+5. Aucune écriture de commande FTMS ni abonnement au Control Point en lecture seule ; activation, commandes et programmes bloqués dans le contrôleur. Aucune route du POC exposée dans l'application, aucun outil tapis ajouté au Coach. `websockets` déclaré pour le transport d'Uvicorn ; aucune dépendance frontend ajoutée.
 
 **Fait quand :**
-- [ ] En simulation : connexion, mesures en direct sur le téléphone, déconnexion visible.
+- [x] En simulation : recherche, connexion, capacités, événements WebSocket renouvelés et déconnexion vérifiés dans Chrome sur PC et viewport téléphone 390 × 844 ; absence de débordement horizontal.
+- [x] Rechargement de l'écran connecté : état courant retrouvé sans nouvelle connexion au tapis. Arrêt/redémarrage propre du serveur de simulation : mesures indisponibles, puis état retrouvé sans reconnexion automatique du simulateur.
 - [ ] Sur le vrai RUN500, en lecture seule : connexion et capacités lues, aucun mouvement.
-- [ ] Les 20 tests passent.
+- [ ] Parcours sur téléphone physique : non essayé pendant cette brique.
+- [x] Inventaire actuel : 20 tests critiques du POC réussis sur le contrôleur partagé ; 9 tests brique 7 (zéro commande, fermeture/annulation, fermeture incertaine après échec de connexion, capacités partielles, concurrence, fraîcheur/cardio, exclusion interprocessus, état WebSocket et refus d'entrées/origines/routes), plus 7 tests du serveur réussis.
+- [x] Build frontend réussi, API et fichiers JS/CSS réellement servis conformes au build ; console Chrome sans erreur pendant le parcours normal. Messages d'indisponibilité et erreurs réseau attendus lors de l'arrêt volontaire du serveur de vérification.
+
+**Livraison logicielle du 5 octobre 2026 :** vérification de simulation sur le port isolé 4331, avec dossier de données extérieur distinct. Serveur habituel 4330 relancé proprement, API et ressources du build vérifiées ; les neuf tables SQLite et le coffre ChatGPT sont identiques avant/après, intégrité et clés étrangères conformes. Aucun accès au Bluetooth réel ni mouvement, aucun script de réception lancé. Profils, séances, versions, conversations, mémoire, coffre ChatGPT et sources du lanceur préservés ; aucune migration. La case globale reste ouverte pour les deux essais physiques ci-dessus. Les capacités simulées restent celles du simulateur du POC (minimum 0,5 km/h), sans les présenter comme une lecture du RUN500.
 
 **Pas dans cette brique :** démarrage de séance.
 

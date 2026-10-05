@@ -8,8 +8,8 @@ import unittest
 from pathlib import Path
 from unittest.mock import patch
 
-from poc import ftms
-from poc.controller import Controller, ControllerError
+from backend.device import ftms
+from backend.device.controller import Controller, ControllerError
 
 
 class ProtocolTests(unittest.TestCase):
@@ -128,7 +128,7 @@ class ControllerTests(unittest.IsolatedAsyncioTestCase):
                 controller._control_notification(None, bytes([0x80, payload[0], 1]))
 
             async def disconnect(self):
-                pass
+                self.is_connected = False
 
         controller.simulation = False
         controller.client = StoppingClient()
@@ -149,11 +149,11 @@ class ControllerTests(unittest.IsolatedAsyncioTestCase):
                 controller._control_notification(None, bytes([0x80, payload[0], 1]))
 
             async def disconnect(self):
-                pass
+                self.is_connected = False
 
         controller.simulation = False
         controller.client = UnmovingClient()
-        with patch("poc.controller.START_OBSERVE_SECONDS", .03), self.assertRaisesRegex(ControllerError, "pas été observé"):
+        with patch("backend.device.controller.START_OBSERVE_SECONDS", .03), self.assertRaisesRegex(ControllerError, "pas été observé"):
             await controller.command("owner-1", "start", 2)
         self.assertEqual(opcodes, [2, 7, 8])
         self.assertIsNone(controller.owner)
@@ -196,7 +196,7 @@ class ControllerTests(unittest.IsolatedAsyncioTestCase):
         controller._status_notification(None, bytes.fromhex("0201"))
         self.assertGreaterEqual(controller.restart_after, previous_deadline)
         ready_time = controller.restart_after + .1
-        with patch("poc.controller.time.monotonic", return_value=ready_time):
+        with patch("backend.device.controller.time.monotonic", return_value=ready_time):
             # The pre-status zero measurement does not establish a completed stop.
             with self.assertRaisesRegex(ControllerError, "nouvelle mesure"):
                 await controller.arm("owner-1")
@@ -226,7 +226,7 @@ class ControllerTests(unittest.IsolatedAsyncioTestCase):
                 controller._control_notification(None, bytes([0x80, payload[0], 1]))
 
             async def disconnect(self):
-                pass
+                self.is_connected = False
 
         controller.simulation = False
         controller.client = DelayedClient()
@@ -248,11 +248,11 @@ class ControllerTests(unittest.IsolatedAsyncioTestCase):
                 pass
 
             async def disconnect(self):
-                pass
+                self.is_connected = False
 
         controller.simulation = False
         controller.client = SilentClient()
-        with patch("poc.controller.COMMAND_TIMEOUT", .03), self.assertRaises(ControllerError):
+        with patch("backend.device.controller.COMMAND_TIMEOUT", .03), self.assertRaises(ControllerError):
             await controller._exchange("speed", 2)
         controller._control_notification(None, bytes.fromhex("800201"))
         self.assertTrue(controller.desynchronized)
@@ -269,11 +269,11 @@ class ControllerTests(unittest.IsolatedAsyncioTestCase):
                 controller._control_notification(None, bytes.fromhex("800301"))
 
             async def disconnect(self):
-                pass
+                self.is_connected = False
 
         controller.simulation = False
         controller.client = WrongClient()
-        with patch("poc.controller.COMMAND_TIMEOUT", .03), self.assertRaises(ControllerError):
+        with patch("backend.device.controller.COMMAND_TIMEOUT", .03), self.assertRaises(ControllerError):
             await controller._exchange("speed", 2)
         self.assertTrue(controller.desynchronized)
 

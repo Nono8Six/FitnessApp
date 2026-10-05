@@ -14,6 +14,7 @@ export default defineConfig({
       '/api': {
         target: API,
         changeOrigin: true,
+        ws: true,
         // Le serveur refuse une origine différente de son hôte : en développement, l'origine devient celle du serveur.
         headers: { origin: API },
       },

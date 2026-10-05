@@ -21,10 +21,13 @@ from .api import profiles as profiles_api
 from .api import workouts as workouts_api
 from .api import chatgpt as chatgpt_api
 from .api import coach as coach_api
+from .api import device as device_api
+from .device.runtime import DeviceRuntime
 from .coach.connection import Connection
 from .coach.runtime import Runtime
 from .coach.store import recover as recover_coach
 from .config import data_dir as resolve_data_dir
+from .config import StartupError
 from .storage import StorageError, open_database
 from .training.profiles import ensure_default_profiles
 
@@ -83,16 +86,20 @@ def create_app(*, simulation: bool = False, data_root: Path | None = None, dist:
     async def lifespan(_app):
         control = getattr(_app.state, "launcher_control", None)
         try:
+            await _app.state.device.start()
             _app.state.chatgpt.start()
             if control:
                 control.publish()
             yield
         finally:
-            await _app.state.coach.close()
-            _app.state.chatgpt.close()
-            if control:
-                control.close()
-            database.close()
+            try:
+                await _app.state.device.close()
+            finally:
+                await _app.state.coach.close()
+                _app.state.chatgpt.close()
+                if control:
+                    control.close()
+                database.close()
 
     app = FastAPI(title="Fitness", docs_url=None, redoc_url=None, openapi_url=None, lifespan=lifespan)
     app.state.data_dir = data
@@ -101,6 +108,11 @@ def create_app(*, simulation: bool = False, data_root: Path | None = None, dist:
     app.state.instance_id = instance_id
     app.state.chatgpt = Connection(data / "chatgpt")
     app.state.coach = Runtime(database, app.state.chatgpt, simulation)
+    try:
+        app.state.device = DeviceRuntime(data, simulation, instance_id)
+    except OSError as exc:
+        database.close()
+        raise StartupError(f"Journal du tapis impossible à créer dans {data / 'device'} : {exc}") from exc
     app.add_middleware(TrustedHostMiddleware, allowed_hosts=["localhost", "127.0.0.1", "[::1]", *local_addresses()])
     app.add_middleware(GZipMiddleware, minimum_size=1000)
 
@@ -158,6 +170,7 @@ def create_app(*, simulation: bool = False, data_root: Path | None = None, dist:
     app.include_router(workouts_api.router)
     app.include_router(chatgpt_api.router)
     app.include_router(coach_api.router)
+    app.include_router(device_api.router)
 
     @app.api_route("/api/{_path:path}", methods=["GET", "POST", "PUT", "PATCH", "DELETE"])
     async def unknown_api(_path: str):
