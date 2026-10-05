@@ -74,6 +74,7 @@ class Connection:
         self.models_loaded = False
         self.next_check = 0.0
         self.retry_seconds = 15
+        self.generation = 0  # Invalide les flux lors d'un changement de compte ou d'une déconnexion.
 
     def start(self, *, background=True):
         with self.lock:
@@ -368,6 +369,7 @@ class Connection:
             if self.account(account_id) is None:
                 raise ConnectionIssue("invalid_response")
             self.saved.active_id = account_id
+            self.generation += 1
             self.models, self.models_loaded = [], False
             self.issue = None
             self.next_check = 0
@@ -395,6 +397,7 @@ class Connection:
     def disconnect(self):
         with self.lock:
             self._require_ready()
+            self.generation += 1
             self.pending = None
             self.retry_client_id = None
             self._close_listener()
@@ -418,6 +421,31 @@ class Connection:
                 self._save()
             self.models, self.models_loaded = [], False
             self.issue = None if confirmed else "remote_revocation_unconfirmed"
+
+    def inference_credentials(self, *, refresh=False, expected=None):
+        """Secret interne, jamais sérialisé. Aucun verrou tenu pendant le streaming."""
+        with self.lock:
+            self._require_ready()
+            account = self.account()
+            if not account or not account.tokens:
+                raise ConnectionIssue(account.needs_login if account and account.needs_login else "disconnected")
+            identity = (self.generation, account.id)
+            if expected is not None and identity != expected:
+                raise ConnectionIssue("disconnected")
+            if refresh or account.tokens.expires_at <= time.time() + 60:
+                self._refresh(account)
+            if not PLAN_SCOPES.issubset(account.tokens.scopes):
+                raise ConnectionIssue("permission_missing")
+            if not self.models_loaded:
+                self._load_models(account)
+            if not account.model or account.model not in {m["id"] for m in self.models}:
+                raise ConnectionIssue("model_unavailable")
+            return account.tokens.access, account.model, identity
+
+    def inference_valid(self, identity):
+        with self.lock:
+            account = self.account()
+            return bool(account and account.tokens and identity == (self.generation, account.id))
 
 
 def callback_server(connection):

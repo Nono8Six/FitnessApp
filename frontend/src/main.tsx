@@ -1,4 +1,4 @@
-import { StrictMode, useEffect, useRef } from 'react'
+import { lazy, StrictMode, Suspense, useEffect, useRef } from 'react'
 import { createRoot } from 'react-dom/client'
 import { Shell } from './components/Shell'
 import { Settings } from './features/Settings'
@@ -10,6 +10,8 @@ import { useCurrentProfile } from './lib/profiles'
 import { Page } from './components/Shell'
 import { href, navigate, useRoute } from './lib/router'
 import './styles/index.css'
+
+const Coach = lazy(() => import('./features/Coach').then(module => ({ default: module.Coach })))
 
 function App() {
   const route = useRoute()
@@ -23,11 +25,12 @@ function App() {
   }, [profile?.id, route.name])
   return (
     <Shell route={route}>
-      <div key={`${profile?.id}:${route.name}:${'id' in route ? route.id ?? '' : ''}`}>
+      <div key={`${profile?.id}:${route.name}:${'id' in route ? route.id ?? '' : ''}:${route.name === 'workout' ? route.version ?? '' : ''}`}>
         {route.name === 'settings' ? <Settings /> : !profile ? <Page title="Fitness"><p className="text-label-2" role="status">Chargement du profil…</p></Page>
           : route.name === 'library' ? <Library profile={profile.id} />
           : route.name === 'editor' ? <Editor profile={profile.id} id={route.id} />
-          : route.name === 'workout' ? <Workout profile={profile.id} id={route.id} />
+          : route.name === 'workout' ? <Workout profile={profile.id} id={route.id} requestedVersion={route.version} />
+          : route.name === 'coach' ? <Suspense fallback={<Page title="Coach"><p role="status" className="text-label-2">Chargement…</p></Page>}><Coach profile={profile.id} /></Suspense>
           : <Today profile={profile.id} />}
       </div>
     </Shell>

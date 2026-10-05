@@ -1,6 +1,6 @@
 """Modèles SQLAlchemy. Toute évolution passe par une migration dans versions/."""
 
-from sqlalchemy import CheckConstraint, Float, ForeignKey, ForeignKeyConstraint, Index, JSON, MetaData, String, UniqueConstraint, text
+from sqlalchemy import CheckConstraint, Float, ForeignKey, ForeignKeyConstraint, Index, JSON, MetaData, String, Text, UniqueConstraint, text
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 
 # Noms de contraintes stables : les migrations SQLite par recopie de table (batch) en dépendent.
@@ -73,3 +73,52 @@ class WorkoutSelection(Base):
 
     profile_id: Mapped[str] = mapped_column(ForeignKey("profiles.id", ondelete="CASCADE"), primary_key=True)
     workout_id: Mapped[str] = mapped_column(String(32))
+
+
+class Conversation(Base):
+    __tablename__ = "coach_conversations"
+    __table_args__ = (UniqueConstraint("profile_id", "id"),)
+    id: Mapped[str] = mapped_column(String(32), primary_key=True)
+    profile_id: Mapped[str] = mapped_column(ForeignKey("profiles.id", ondelete="CASCADE"), index=True)
+    title: Mapped[str] = mapped_column(String(100))
+    created_at: Mapped[str] = mapped_column(String(40))
+    updated_at: Mapped[str] = mapped_column(String(40))
+
+
+class CoachTurn(Base):
+    """Une demande idempotente et sa réponse, même partielle, conservées ensemble."""
+    __tablename__ = "coach_turns"
+    __table_args__ = (
+        ForeignKeyConstraint(["profile_id", "conversation_id"],
+                             ["coach_conversations.profile_id", "coach_conversations.id"], ondelete="CASCADE"),
+        UniqueConstraint("profile_id", "request_id"),
+        CheckConstraint("status IN ('running', 'completed', 'interrupted', 'failed')", name="status"),
+        Index("uq_coach_running_profile", "profile_id", unique=True, sqlite_where=text("status = 'running'")),
+        Index("ix_coach_turns_conversation", "conversation_id", "created_at", "id"),
+    )
+    id: Mapped[str] = mapped_column(String(32), primary_key=True)
+    profile_id: Mapped[str] = mapped_column(String(32))
+    conversation_id: Mapped[str] = mapped_column(String(32))
+    request_id: Mapped[str] = mapped_column(String(36))
+    user_text: Mapped[str] = mapped_column(Text)
+    answer: Mapped[str] = mapped_column(Text)
+    status: Mapped[str] = mapped_column(String(16))
+    error: Mapped[str | None] = mapped_column(String(64))
+    model: Mapped[str | None] = mapped_column(String(200))
+    sources: Mapped[list] = mapped_column(JSON)
+    proposals: Mapped[list] = mapped_column(JSON)
+    usage: Mapped[dict] = mapped_column(JSON)
+    created_at: Mapped[str] = mapped_column(String(40))
+    updated_at: Mapped[str] = mapped_column(String(40))
+
+
+class CoachMemory(Base):
+    __tablename__ = "coach_memories"
+    __table_args__ = (UniqueConstraint("profile_id", "source_turn_id", "proposal_index"),)
+    id: Mapped[str] = mapped_column(String(32), primary_key=True)
+    profile_id: Mapped[str] = mapped_column(ForeignKey("profiles.id", ondelete="CASCADE"), index=True)
+    content: Mapped[str] = mapped_column(String(500))
+    source_turn_id: Mapped[str | None] = mapped_column(ForeignKey("coach_turns.id", ondelete="SET NULL"))
+    proposal_index: Mapped[int | None]
+    created_at: Mapped[str] = mapped_column(String(40))
+    updated_at: Mapped[str] = mapped_column(String(40))

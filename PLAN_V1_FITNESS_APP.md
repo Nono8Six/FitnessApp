@@ -11,7 +11,7 @@ Une seule brique en cours dans le périmètre demandé. Les cases indiquent les 
 - [x] **Brique 2 · Profils** : base SQLite, profils créés, renommés et supprimés, choix du profil.
 - [x] **Brique 3 · Séances manuelles** : créer, modifier, dupliquer, supprimer et retrouver ses séances ; choix pour Aujourd’hui par profil.
 - [x] **Brique 4 · Connexion ChatGPT** : connexion sur le PC, compte et permission du forfait vérifiés, modèles du compte, coffre Windows et reprise de session. Limites des essais détaillées ci-dessous.
-- [ ] **Brique 5 · Coach** : conversation réelle avec ChatGPT, en streaming, enregistrée par profil.
+- [x] **Brique 5 · Coach** : conversations persistantes, lecture des données existantes et mémoire contrôlée ; réponses réelles vérifiées, cache automatique préparé sans gain observé lors des essais courts.
 - [ ] **Brique 6 · Séances par ChatGPT** : ChatGPT conçoit ou ajuste une séance, validée et enregistrée dans la bibliothèque.
 - [ ] **Brique 7 · Tapis dans l’app** : contrôleur du POC intégré, connexion et état du tapis en direct (simulation d’abord).
 - [ ] **Brique 8 · Exécuter une séance** : démarrer, suivre, mettre en pause, reprendre, arrêter (simulation).
@@ -113,7 +113,7 @@ Documentation officielle relue le 4 octobre 2026 : [présentation](https://devel
 - **Jetons.** PyJWT vérifie la signature RS256/JWKS, l’émetteur, l’audience, les dates, le sujet, le nonce et `azp`/`at_hash` lorsqu’ils sont présents. Le coffre `chatgpt/connection.dpapi`, hors du dépôt et de SQLite, est chiffré par DPAPI pour l’utilisateur Windows, protégé par ACL et remplacé atomiquement. Aucun jeton dans Git, les journaux, les exports ou les réponses au frontend. Seul le `id_token_hint` prévu par OpenAI peut être transmis directement au navigateur système pour une réautorisation ; aucune URL d’autorisation n’est renvoyée à l’interface. Rafraîchissements sérialisés, verrou entre processus, conservation des jetons sur panne temporaire et retrait sur erreur terminale.
 - **Déconnexion.** Révocation du renouvellement via l’endpoint de découverte, puis effacement des trois jetons. Un échec de révocation distante est affiché même après la déconnexion locale. Le client attribué et l’identifiant d’installation restent disponibles ; les inscriptions de comptes/espaces sont séparées même avec le même e-mail. Un refus du partage du forfait conserve l’identité, avec une action explicite pour redemander cette permission (`prompt=consent`, sans paramètre expérimental).
 - **Modèles.** `GET /v1/models` ; afficher `display_name` pour `visibility: "list"`, envoyer le `slug`. Aucun modèle codé en dur.
-- **Requêtes.** `POST /v1/responses` avec `store: false` et `stream: true`. Le contexte complet est renvoyé à chaque requête depuis la base locale. Une réponse n’est valide qu’après `response.completed`.
+- **Requêtes.** `POST /v1/responses` avec `store: false` et `stream: true`. Le contexte utile est reconstruit depuis la base locale ; historique récent borné, échanges anciens accessibles par recherche et pagination. Aucun `previous_response_id` HTTP. Une réponse n’est complète qu’après `response.completed`.
 - **Outils.** Fonctions personnalisées regroupées dans un espace de noms (`fitness`), et recherche web selon le compte. Non disponibles : MCP hébergé, recherche de fichiers, Code Interpreter, génération d’images.
 - **Paramètres interdits.** `temperature`, `top_p`, `max_output_tokens`, `metadata`, `user`, `truncation`, `background`, `conversation` et les autres listés dans les limitations.
 - **Erreurs à afficher.** `subscription_sharing_usage_limit_exceeded`, `subscription_sharing_usage_unavailable`, refus de consentement, expiration et révocation. Aucune bascule silencieuse vers une facturation API.
@@ -242,28 +242,39 @@ Contrôles de ce complément : build et 46 tests ciblés réussis (calculs, API,
 
 ### Brique 5 · Coach
 
-**Livré :** l’onglet Coach permet de discuter avec ChatGPT ; les réponses arrivent en direct et la conversation est conservée par profil.
+**Périmètre réconcilié le 5 octobre 2026 :** la lecture de toutes les données utiles déjà présentes et la continuité des échanges font partie de cette brique. La génération/modification structurée des séances reste en brique 6 ; l'exploitation des activités réalisées reste en brique 12.
 
-**Travail :**
-1. Conversations et messages en base, par profil.
-2. Requête Responses en streaming relayée au navigateur ; contexte reconstruit depuis la base à chaque message.
-3. Instructions système du coach : rôle, profil actif, unités, règles de sécurité (§ 4).
-4. Contexte initial : profil et liste des séances de la bibliothèque.
-5. Erreurs affichées dans l’écran : limite d’usage, indisponible, non connecté, réponse interrompue (marquée incomplète, jamais présentée comme finale).
+**Fonctions implémentées :** entrée Coach, création/recherche/reprise de conversations par profil, réponse progressive, interruption explicite, conservation des réponses échouées ou incomplètes, saisie conservée, mémoire consultable/modifiable/supprimable et préférences proposées soumises au bouton Mémoriser. Les séances consultées ouvrent leur version exacte.
+
+**Données réellement accessibles :** profil actif (nom, objectif hebdomadaire, poids, unité, dates), mode réel/simulation et unités communes, séance choisie pour Aujourd'hui, bibliothèque complète et versions datées avec origine/auteur, blocs et répétitions, estimations du service métier avec le poids actuel, anciennes conversations et mémoire confirmée. La date locale est fournie. Fatigue, résultats, progression et activités réalisées ne sont jamais déduits d'une séance préparée. Aucun historique réel n'existe encore.
+
+**Outils serveur :** `get_profile`, `list_workouts`, `get_workout`, `list_versions`, `search_conversations`, `read_conversation`, `read_message`, `search_memories`. Recherche textuelle, pages bornées, total et suite explicites ; les longs échanges se consultent par extraits. `propose_memory` ne modifie aucune préférence : citation exacte du message actuel et confirmation humaine obligatoire. Le profil choisi dans l'interface est validé et figé côté serveur pour le flux ; aucun argument de profil n'est accepté du modèle. Comme les autres écrans du projet, le choix de profil sur un appareil n'est pas une authentification entre personnes.
+
+**Persistance et erreurs :** migration additive `0005`, conversations et paires message/réponse avec états `running`, `completed`, `interrupted`, `failed`. Clé d'envoi idempotente et une seule réponse en cours par profil, y compris entre écrans. Enregistrement du texte avant affichage ; après redémarrage, les flux restés ouverts sont marqués interrompus. Changement de profil ou fermeture du parcours : abandon du flux propriétaire ; changement de compte/déconnexion ChatGPT : arrêt des flux. Réseau et inférence asynchrones, aucun verrou du coffre pendant le streaming. Aucun modèle de remplacement, API payante de secours, commande sportive ou accès arbitraire. Le HTML et les images du modèle ne sont pas exécutés/chargés ; seuls les liens de séances effectivement lus par le serveur sont activés.
+
+**Quota et cache :** documentation officielle [SIWC modèles/inférence](https://developers.openai.com/siwc/token-sharing-open-source/models-and-inference), [erreurs](https://developers.openai.com/siwc/token-sharing-open-source/errors-and-recovery), [limitations](https://developers.openai.com/siwc/token-sharing-open-source/preview-limitations) et [cache](https://developers.openai.com/api/docs/guides/prompt-caching) relue le 5 octobre. Instructions et outils stables, clé de cache opaque par profil, cache automatique du fournisseur. Dates des messages identiques dès le premier envoi et lors de leur reprise pour préserver le préfixe. Pas de `prompt_cache_retention` (non accepté par SIWC), ni de `prompt_cache_options` ou `prompt_cache_breakpoint` : ces deux options de l’API générale ont été rejetées réellement avec HTTP 400 `invalid_parameter` le 5 octobre. Aucun nouvel essai automatique pour contourner un refus. Au plus six échanges modèle/outils par demande, contexte récent limité à six réponses et 12 000 caractères sérialisés, détails sans doubler les blocs par leur expansion, recherches ciblées et réponses courtes. Aucune inférence de fond ni répétition automatique après ouverture du flux ; seul un rejet d'identité avant le premier événement peut déclencher un unique renouvellement puis nouvel essai. L'interface affiche requêtes, tokens d'entrée/sortie et tokens réellement en cache tels que rapportés par OpenAI. Une mesure manquante reste inconnue. Ces compteurs ne prouvent ni le quota restant ni une économie chiffrée sur le forfait ChatGPT.
 
 **Fait quand :**
-- [ ] Une vraie réponse s’affiche progressivement sur le téléphone.
-- [ ] Changer de profil ouvre une autre conversation ; aucun message ne passe d’un profil à l’autre (test).
-- [ ] Un flux coupé est marqué incomplet.
+- [x] Conversations, réponses partielles et mémoire persistent localement par profil ; migration et reprise après interruption couvertes automatiquement.
+- [x] Outils de lecture détaillée, versions, recherche et pagination ; chiffres identiques au service de séances ; aucun outil d'écriture sportive.
+- [x] Isolation profil, envoi concurrent/idempotent, arrêt, déconnexion, erreurs après début de flux, absence de secrets et cache couverts par tests ciblés.
+- [x] Réponse réelle fondée sur les données et détail de séance vérifiés avec le compte connecté, puis reprise dans Chrome.
+- [x] Streaming réel au viewport téléphone vérifié (distinct d'un téléphone physique).
 
-**Pas dans cette brique :** création de séance, lecture de l’historique.
+**Contrôles automatiques :** build frontend avec TypeScript ; 83 tests ciblés (19 coach, 22 connexion, 42 backend/profils/séances), sans appel OpenAI dans ces tests. Isolation, mémoire contrôlée, migrations, données conservées, doublons/concurrence, interruptions, déconnexion, erreurs de flux, secrets et préfixe stable couverts. Le flux collecte aussi les éléments `response.output_item.done` : le terminal SIWC peut donner les compteurs sans répéter les appels d’outils.
+
+**Contrôles réels, 5 octobre 2026 :** serveur habituel 4330 relancé par Arnaud, schéma `0005`, code backend chargé et build réellement servi vérifiés. GPT-5.6-Luna choisi par Arnaud, compte existant conservé. Deux réponses réussies dans Chrome via MCP : détail de « Test » (six blocs, 17 min, 1,733 km, 116,2 kcal actives / 142,7 totales au poids actuel), valeurs comparées à l’API ; lien ouvrant exactement la version 1 ; reconnaissance explicite de l’absence d’activités réalisées. Réponse partielle observée en cours puis état terminé. Reprise de la même conversation via l’adresse réseau et réponse courte à un second message, sans nouvelle lecture de bibliothèque. Format PC et viewport 390 × 844, aucun débordement horizontal. Changement de profil : échange et brouillon d’Arnaud absents chez Ophélie puis retrouvés au retour ; mémoire d’Ophélie vide, isolation d’une mémoire remplie couverte automatiquement. Aucune erreur console pendant les parcours réussis ; seuls avertissements réseau lors des arrêts volontaires du serveur. Aucun essai sur téléphone physique.
+
+**Usage réellement mesuré :** sept tentatives HTTP au total, dont deux refus sur les options de cache incompatibles, un premier flux ayant révélé la collecte manquante des outils, puis quatre requêtes pour les deux réponses réussies (trois pour chercher/lire/expliquer la séance, une pour poursuivre). Cinq retours de compteurs : 10 602 tokens d’entrée et 494 de sortie ; compteurs inconnus pour les deux refus. OpenAI a signalé **0 token en cache** sur ces essais : aucun gain effectif de cache ni économie de forfait n’est revendiqué. Préfixe stable, contexte borné, lectures ciblées et absence de répétition restent actifs ; aucun remplissage artificiel du prompt ni inférence de chauffe. Les essais échoués restent clairement marqués dans la conversation locale. La dernière correction backend a été chargée ; aucun redémarrage supplémentaire nécessaire à cette livraison. Le design concurrent publié dans `d9cd073` a été intégré sans écraser ses changements : bouton Mémoire et saisie adaptés à la capsule commune, build puis liens de version et affichage Chrome revérifiés, sans nouvel appel OpenAI.
+
+**Pas dans cette brique :** génération ou modification de séance, enregistrement d'une séance proposée, planning, notifications, tâche autonome, historique d'activités et commandes au tapis.
 
 ### Brique 6 · Séances par ChatGPT
 
 **Livré :** « Crée-moi une séance de 30 minutes avec des côtes » produit une carte de séance. Enregistrer l’ajoute à la bibliothèque. Depuis l’Éditeur, « Ajuster avec ChatGPT » propose une nouvelle version, affichée en différences.
 
 **Travail :**
-1. Outils `fitness` : `list_workouts`, `get_workout`, `validate_workout`, `propose_workout`.
+1. Réutiliser `list_workouts` et `get_workout` livrés en brique 5 ; ajouter uniquement les outils `validate_workout` et `propose_workout`.
 2. `propose_workout` passe par la validation de la brique 3. En cas d’erreur, ChatGPT reçoit les erreurs exactes et corrige.
 3. Carte de proposition (design existant) : profil, durée, distance, blocs ; Enregistrer, Modifier, Ignorer.
 4. Enregistrement idempotent : un double clic ne crée pas deux séances. Auteur « ChatGPT », lien vers la conversation.
@@ -358,7 +369,7 @@ Contrôles de ce complément : build et 46 tests ciblés réussis (calculs, API,
 
 **Livré :** ChatGPT analyse l’historique du profil (« Est-ce que je progresse sur ce programme ? ») et cite les séances utilisées, ouvrables d’un toucher.
 
-**Travail :** outils `list_sessions`, `get_session`, `get_session_samples` (par tranches), `get_feedback`, `get_progress`, `compare_sessions`, avec pagination, couverture et troncature signalée ; mêmes calculs que le bilan.
+**Travail :** compléter les lectures déjà livrées en brique 5 par les activités réellement enregistrées : outils `list_sessions`, `get_session`, `get_session_samples` (par tranches), `get_feedback`, `get_progress`, `compare_sessions`, avec pagination, couverture et troncature signalée ; mêmes calculs que le bilan. Ne pas reconstruire les conversations, la mémoire et les lectures de bibliothèque.
 
 **Fait quand :**
 - [ ] Le coach retrouve une séance ancienne et cite des valeurs identiques au bilan.

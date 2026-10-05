@@ -34,6 +34,8 @@ MESSAGES = {
     "busy": "Une connexion est déjà en cours. Terminez-la ou annulez-la.",
     "remote_revocation_unconfirmed": "Déconnecté sur ce PC. La révocation distante n’a pas été confirmée ; retirez FitnessApp dans les réglages ChatGPT.",
     "storage": "Le coffre ChatGPT est indisponible. Les données existantes ont été conservées.",
+    "disconnected": "Connectez ChatGPT depuis les Réglages sur le PC.",
+    "model_unavailable": "Choisissez un modèle disponible dans les Réglages ChatGPT.",
 }
 
 

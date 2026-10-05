@@ -1,4 +1,5 @@
 """L'interface ne reçoit ni jeton, ni URL d'autorisation, ni code OAuth."""
+import asyncio
 from fastapi import APIRouter, HTTPException, Request
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -53,8 +54,22 @@ def cancel(request: Request):
 
 
 @router.post("/disconnect")
-def disconnect(request: Request):
-    return perform(request, request.app.state.chatgpt.disconnect, local=True)
+async def disconnect(request: Request):
+    return await change_connection(request, request.app.state.chatgpt.disconnect)
+
+
+async def change_connection(request, operation):
+    if not is_local(request):
+        raise HTTPException(403, "Effectuez cette action depuis le PC, à l’adresse locale de FitnessApp.")
+    runtime = request.app.state.coach
+    if runtime.connection_changing:
+        raise HTTPException(409, "La connexion ChatGPT change déjà.")
+    runtime.connection_changing = True
+    try:
+        await runtime.close()
+        return await asyncio.to_thread(perform, request, operation, local=True)
+    finally:
+        runtime.connection_changing = False
 
 
 @router.post("/refresh")
@@ -63,8 +78,8 @@ def refresh(request: Request):
 
 
 @router.post("/account")
-def account(payload: Selection, request: Request):
-    return perform(request, lambda: request.app.state.chatgpt.select_account(payload.id), local=True)
+async def account(payload: Selection, request: Request):
+    return await change_connection(request, lambda: request.app.state.chatgpt.select_account(payload.id))
 
 
 @router.post("/model")

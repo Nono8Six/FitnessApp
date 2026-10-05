@@ -4,13 +4,14 @@ import { errorMessage } from '../lib/api'
 import { chooseProfile, createProfile, loadProfiles, NAME_MAX, useCurrentProfile, useProfiles, type Profile } from '../lib/profiles'
 import { checkServer, useServer } from '../lib/server'
 import { href, navigate, type Route } from '../lib/router'
-import { LibraryIcon, TodayIcon } from './Icons'
+import { CoachIcon, LibraryIcon, TodayIcon } from './Icons'
 import { Avatar, cx, Group, Row, Sheet, Tile } from './ui'
 
 /** Destinations réellement construites. Chaque brique ajoute la sienne. */
 const TABS = [
   { key: 'today', label: 'Aujourd’hui', href: href.today, Icon: TodayIcon, match: ['today'] },
   { key: 'library', label: 'Séances', href: href.library, Icon: LibraryIcon, match: ['library', 'workout', 'editor'] },
+  { key: 'coach', label: 'Coach', href: href.coach, Icon: CoachIcon, match: ['coach'] },
 ] as const
 
 /** iOS n’affiche pas de barre d’onglets pour une seule destination. */

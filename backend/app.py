@@ -20,7 +20,10 @@ from . import __version__
 from .api import profiles as profiles_api
 from .api import workouts as workouts_api
 from .api import chatgpt as chatgpt_api
+from .api import coach as coach_api
 from .coach.connection import Connection
+from .coach.runtime import Runtime
+from .coach.store import recover as recover_coach
 from .config import data_dir as resolve_data_dir
 from .storage import StorageError, open_database
 from .training.profiles import ensure_default_profiles
@@ -71,6 +74,7 @@ def create_app(*, simulation: bool = False, data_root: Path | None = None, dist:
     try:
         with database.write() as session:
             ensure_default_profiles(session)
+            recover_coach(session)
     except Exception as exc:
         database.close()
         raise StorageError(f"Base de données {database.path} : profils par défaut impossibles à créer ({exc}).") from exc
@@ -84,6 +88,7 @@ def create_app(*, simulation: bool = False, data_root: Path | None = None, dist:
                 control.publish()
             yield
         finally:
+            await _app.state.coach.close()
             _app.state.chatgpt.close()
             if control:
                 control.close()
@@ -95,6 +100,7 @@ def create_app(*, simulation: bool = False, data_root: Path | None = None, dist:
     app.state.phone_addresses = addresses
     app.state.instance_id = instance_id
     app.state.chatgpt = Connection(data / "chatgpt")
+    app.state.coach = Runtime(database, app.state.chatgpt, simulation)
     app.add_middleware(TrustedHostMiddleware, allowed_hosts=["localhost", "127.0.0.1", "[::1]", *local_addresses()])
     app.add_middleware(GZipMiddleware, minimum_size=1000)
 
@@ -150,6 +156,7 @@ def create_app(*, simulation: bool = False, data_root: Path | None = None, dist:
     app.include_router(profiles_api.router)
     app.include_router(workouts_api.router)
     app.include_router(chatgpt_api.router)
+    app.include_router(coach_api.router)
 
     @app.api_route("/api/{_path:path}", methods=["GET", "POST", "PUT", "PATCH", "DELETE"])
     async def unknown_api(_path: str):

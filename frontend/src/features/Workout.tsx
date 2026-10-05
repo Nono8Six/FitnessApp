@@ -8,15 +8,28 @@ import { clock, dec1 } from '../lib/format'
 import { href, navigate } from '../lib/router'
 import { deleteWorkout, duplicateWorkout, isRepeat, KIND_LABEL, readVersions, selectWorkout, useLibrary, type Workout as WorkoutData } from '../lib/workouts'
 
-export function Workout({ profile, id }: { profile: string; id: string }) {
+export function Workout({ profile, id, requestedVersion }: { profile: string; id: string; requestedVersion?: number }) {
   const { state, reload } = useLibrary(profile)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
   const [confirmDelete, setConfirmDelete] = useState(false)
   const [history, setHistory] = useState<WorkoutData[] | null>(null)
   const [version, setVersion] = useState<number | null>(null)
+  const [versionReload, setVersionReload] = useState(0)
   const mounted = useRef(true)
   useEffect(() => { mounted.current = true; return () => { mounted.current = false } }, [])
+  useEffect(() => {
+    if (!requestedVersion) return
+    let active = true
+    setBusy(true); setError('')
+    readVersions(profile, id).then(rows => {
+      if (!active) return
+      setHistory(rows)
+      if (rows.some(row => row.version === requestedVersion)) setVersion(requestedVersion)
+      else setError('Cette version n’existe plus.')
+    }).catch(e => { if (active) setError(errorMessage(e)) }).finally(() => { if (active) setBusy(false) })
+    return () => { active = false }
+  }, [profile, id, requestedVersion, versionReload])
   const go = (to: string) => { if (mounted.current) navigate(to) }
   const source = state.status === 'ok' ? state.data.workouts.find(w => w.id === id) : undefined
   const selected = state.status === 'ok' && state.data.selected_id === id
@@ -33,6 +46,8 @@ export function Workout({ profile, id }: { profile: string; id: string }) {
   return <Page title={shown?.name ?? 'Séance'} back={{ label: 'Séances', href: href.library }}
     subtitle={shown && `Version ${shown.version} · ${shown.author === 'human' ? shown.author_name : 'ChatGPT'} · ${date}`}>
     {state.status === 'loading' ? <WorkoutLoading /> : state.status === 'error' ? <WorkoutError message={state.message} retry={reload} />
+      : requestedVersion && (!history || !history.some(w => w.version === requestedVersion))
+        ? error ? <WorkoutError message={error} retry={() => setVersionReload(v => v + 1)} /> : <WorkoutLoading />
       : !source || !shown ? <WorkoutError message="Cette séance n’existe plus dans ce profil." retry={reload} /> : <>
         <div className="grid gap-7 desk:grid-cols-[minmax(0,1fr)_minmax(280px,360px)] desk:items-start">
           <section className="min-w-0" aria-label="Détails de la séance">
