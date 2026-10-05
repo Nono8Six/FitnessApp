@@ -216,6 +216,41 @@ class ProposalTests(unittest.TestCase):
         self.client.post(self.url + '/workouts/catalog/preview', json={'duration_sec': 3600})
         self.assertEqual(self.client.get(self.url + '/workouts/' + saved['id']).json(), saved)
 
+    def test_hard_cardio_and_endurance_keep_running_without_walk_filler(self):
+        recipes = [r for r in catalog.recipes() if r.level == 'hard' and r.goal != 'incline']
+        self.assertEqual(len(recipes), 4)
+        for recipe in recipes:
+            for seconds in (900, 1800, 3600):
+                programme = catalog.resize(recipe, seconds)
+                middle = workouts.preview(programme.workout)['blocks'][2:-2]
+                self.assertEqual(programme.dose.easy_sec, 0)
+                self.assertTrue(any(b['kind'] == 'run' for b in middle))
+                if recipe.style == 'continuous':
+                    self.assertEqual(len(middle), 1)
+                    self.assertEqual(middle[0]['sec'], seconds - 600)
+                    self.assertEqual(middle[0]['kind'], 'run')
+                elif recipe.identifier == 'walk-intervals':
+                    # Récupération en footing : tout le travail central reste couru.
+                    self.assertTrue(all(b['speed'] >= 8.1 for b in middle))
+                else:
+                    self.assertEqual(sum(b['sec'] for b in middle if b['kind'] == 'recover'), programme.dose.recovery_sec)
+        # Une cible calorique applique aussi la construction course, et la copie
+        # conserve ces blocs plutôt qu'une ancienne variante de marche.
+        self.client.patch(self.url, json={'weight_kg': 80})
+        for target in ({'duration_sec': 3600}, {'active_kcal': 400}):
+            options = self.client.post(self.url + '/workouts/catalog/preview', json=target).json()
+            for identifier in ('brisk-walk', 'walk-intervals', 'steady-endurance', 'run-walk'):
+                expected = next(w for w in options if w['template_id'] == identifier and w['level'] == 'hard')
+                self.assertIsNotNone(expected['workout'])
+                self.assertEqual(expected['method']['dose']['easy_sec'], 0)
+                response = self.client.post(self.url + '/workouts/catalog', json={
+                    'template_id': identifier, 'level': 'hard', 'target': target})
+                self.assertEqual(response.status_code, 201, response.json())
+                self.assertEqual(response.json()['items'], expected['workout']['items'])
+        for recipe in catalog.recipes():
+            if recipe.goal == 'incline':
+                self.assertTrue(all(b['speed'] <= 6 for b in workouts.preview(catalog.resize(recipe, 3600).workout)['blocks']))
+
     def test_concurrent_idempotent_acceptance_and_deleted_result(self):
         p = self.proposal()
         def accept(_):

@@ -1,6 +1,6 @@
 # Construction des programmes du catalogue
 
-Révision `2026-10-05-dose-2`, 5 octobre 2026. Principes vérifiés et règles appliquées dans `backend/training/catalog.py`. Aucun tirage aléatoire, aucune génération IA du catalogue.
+Révision `2026-10-05-running-3`, 5 octobre 2026. Principes vérifiés et règles appliquées dans `backend/training/catalog.py`. Aucun tirage aléatoire, aucune génération IA du catalogue.
 
 ## Ce que les sources établissent
 
@@ -17,22 +17,22 @@ Les règles sont des choix FitnessApp inspirés des principes ci-dessus. Les vit
 
 | Format | Ce qui répond à l’objectif | Différences entre Facile / Intermédiaire / Soutenu |
 |---|---|---|
-| Marche active | Accumuler du volume sans pic de vitesse ; pente légère et effort continu | 4,5 / 5 / 5,5 km/h et 1 / 2 / 3 % ; jusqu’à 49 min centrales, puis une minute facile |
-| Marche en alternance | Découper la marche active pour ménager des récupérations à plat | Passage actif de 2 / 3 / 3 min ; récupération de 2 / 2 / 1 min 30 ; au plus 6 / 8 / 10 cycles |
+| Cardio continu | Accumuler du volume régulier, adapté au niveau du programme | Marche à 4,5 km/h et 1 % / marche à 5 km/h et 2 % / course à 9 km/h à plat ; tout le temps central |
+| Cardio en alternance | Découper l’effort actif et conserver la récupération | Marche active aux premiers niveaux ; Soutenu : course à 10 km/h et footing à 8,1 km/h ; passages de 3 min / 1 min 30 maximum, jusqu’à 12 cycles |
 | Marche en côte | Préparer la montée, maintenir un plateau, diminuer la pente avant la fin | Vitesse constante de 4 / 4,3 / 4,6 km/h ; pic de 3 / 5 / 7 % ; travail en pente au plus 15 / 25 / 35 min |
 | Vagues de pente | Répéter des côtes avec récupération plus lente à plat | Côte de 2 / 3 / 4 min ; récupération de 2 min ; au plus 4 / 6 / 6 cycles ; pic de 3 / 5 / 7 % |
-| Allure régulière | Construire du temps d’endurance sans accélération finale | Marche à 4,8 km/h / course à 8,5 / 10 km/h ; course continue plafonnée à 30 / 40 min |
-| Course et marche | Limiter la durée des courses et séparer les passages par de la marche | Course de 1 / 3 / 4 min ; marche de 1 min 30 / 2 min / 1 min 30 ; au plus 8 / 6 / 6 cycles |
+| Allure régulière | Construire du temps d’endurance sans accélération finale | Marche à 4,8 km/h / course à 8,5 km/h plafonnée à 30 min / course à 10 km/h sur tout le temps central |
+| Course et marche | Limiter la durée des courses et séparer les passages par de la marche | Course de 1 / 3 / 4 min ; marche de 1 min 30 / 2 min / 1 min 30 ; au plus 8 / 6 / 10 cycles |
 
-Le plafond de huit minutes de course facile reprend le volume de course du premier entraînement NHS comme repère de construction, sans reproduire son dernier passage ni son plan sur neuf semaines. Les autres plafonds sont des limites de volume éditoriales : ils évitent de transformer une durée ou une cible calorique en multiplication illimitée des efforts. Ils ne prouvent pas une tolérance individuelle.
+Le plafond de huit minutes de course facile reprend le volume de course du premier entraînement NHS comme repère de construction, sans reproduire son dernier passage ni son plan sur neuf semaines. Les autres plafonds sont des limites de volume éditoriales ; ils ne prouvent pas une tolérance individuelle. En cardio/endurance Soutenu, la dose permet de couvrir les 50 minutes centrales d’une séance de 60 minutes : la durée demandée n’est plus remplie par un complément de marche. Les deux formats de marche inclinée conservent leur objectif de marche, même au niveau Soutenu.
 
 ### Adapter sans dénaturer
 
 - **Début et fin :** 2 min à 3 km/h puis 3 min de marche plus active au début ; 2 min de marche facile puis 3 min à 3 km/h à la fin. Ces dix minutes sont incluses dans la durée choisie. Aucun sprint, même au niveau Soutenu.
-- **Continu :** la durée change le temps de travail ; une minute facile à plat prépare le retour au calme. Si le plafond est atteint, le supplément reste en marche facile.
+- **Continu :** la durée change le temps de travail. Au niveau Soutenu, Cardio continu et Allure régulière courent pendant tout le temps central, puis passent au retour au calme. L’endurance Intermédiaire conserve un plafond de 30 minutes de course et une transition facile ; son éventuel supplément reste en marche.
 - **Pyramide de pente :** 20 % de mise en route, 60 % de plateau et 20 % de réduction de pente, à la seconde près. La vitesse reste constante ; une durée longue n’ajoute pas de pente.
 - **Alternances :** le nombre de cycles couvre la fenêtre de travail, au plus jusqu’au plafond. Le budget global effort/récupération garde son rapport à une seconde près, réparti entre des passages égaux à une seconde près. Le temps de course ou de côte par passage ne dépasse jamais le modèle. Une cible courte raccourcit les passages, pas l’échauffement.
-- **Temps restant :** après le plafond, marche facile à plat. Un supplément de 1 à 29 s complète la dernière récupération ; à partir de 30 s, il constitue un segment distinct. Tous les segments satisfont les bornes métier.
+- **Temps restant aux niveaux/format plafonnés :** après le plafond, marche facile à plat. Un supplément de 1 à 29 s complète la dernière récupération ; à partir de 30 s, il constitue un segment distinct. Les programmes cardio/endurance Soutenu n’ont aucun tel complément. Tous les segments satisfont les bornes métier.
 
 Exemple **Course et marche · Facile** :
 
@@ -41,6 +41,8 @@ Exemple **Course et marche · Facile** :
 | 15 min | 2 × 1 min = 2 min | 2 × 1 min 30 = 3 min | 0 | 10 min |
 | 30 min | 8 × 1 min = 8 min | 8 × 1 min 30 = 12 min | 0 | 10 min |
 | 60 min | 8 × 1 min = 8 min | 8 × 1 min 30 = 12 min | 30 min | 10 min |
+
+Exemple **Allure régulière · Soutenu** : 30 minutes donnent 5 minutes d’échauffement, 20 minutes de course à 10 km/h puis 5 minutes de retour au calme ; 60 minutes donnent 50 minutes de course centrale. **Cardio en alternance · Soutenu** conserve de la course entre les efforts, avec récupération en footing. **Course et marche · Soutenu** conserve uniquement la marche prévue dans ses cycles, sans ajout final : à 60 minutes, environ 36 min 21 de course et 13 min 39 de récupération, en plus des dix minutes de début/fin.
 
 La cible calorique cherche une durée entre 15 et 60 min avec le calcul partagé de [l’estimation des calories](ESTIMATION_CALORIES.md). Elle utilise exactement les mêmes plafonds et récupérations. Elle ne hausse jamais vitesse ou pente pour forcer le résultat. Poids absent ou cible hors plage : explication et ajout bloqué, sans remplacer l’inconnu par zéro.
 

@@ -45,6 +45,10 @@ dose répond à l'objectif. Évite de transformer une alternance facile en longu
 Prévois au moins 5 min d'échauffement et 5 min de retour au calme. Les vitesses de départ ne
 déterminent pas l'intensité personnelle : utilise le repère d'une conversation possible pour une
 séance d'endurance maîtrisée et demande l'allure habituelle si elle est nécessaire à la personnalisation.
+Respecte la demande de course : pour une séance cardio/endurance Soutenu, propose de la course
+et des récupérations adaptées, sans remplir une longue durée par une marche supplémentaire
+non demandée. Distingue course continue, alternance course/marche et marche inclinée ; cette
+dernière reste un objectif de marche, même au niveau Soutenu.
 N'invente ni adaptation physiologique garantie ni validation scientifique du programme proposé.
 Transmets duration_sec avec la durée totale demandée, échauffement et retour au calme compris.
 Le serveur vérifie la somme exacte des blocs et répétitions. N'annonce pas un total différent.

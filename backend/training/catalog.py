@@ -14,7 +14,7 @@ from .profiles import get_profile
 
 GOALS = {'calories': 'Dépense calorique', 'incline': 'Jambes et fessiers — marche inclinée', 'endurance': 'Endurance'}
 LEVELS = {'easy': 'Facile', 'intermediate': 'Intermédiaire', 'hard': 'Soutenu'}
-CATALOG_REVISION = '2026-10-05-dose-2'
+CATALOG_REVISION = '2026-10-05-running-3'
 SOURCES = {
     'aha': {'title': 'AHA · Échauffement et retour au calme',
             'url': 'https://www.heart.org/en/healthy-living/exercise-and-physical-activity/fitness-basics/warm-up-cool-down'},
@@ -26,10 +26,10 @@ SOURCES = {
                 'url': 'https://pmc.ncbi.nlm.nih.gov/articles/PMC4504736/'},
 }
 METHODS = {
-    'brisk-walk': ('Accumuler du temps de marche active à une allure régulière.',
-                   'Montée progressive de l’allure, marche avec pente légère, puis ralentissement.'),
-    'walk-intervals': ('Soutenir plusieurs passages de marche active sans supprimer la récupération.',
-                        'Passages actifs et marche plus lente à plat ; davantage de cycles avant de compléter à allure facile.'),
+    'brisk-walk': ('Accumuler du temps de cardio régulier pour viser une dépense énergétique.',
+                   'Marche active aux niveaux Facile et Intermédiaire, course continue au niveau Soutenu.'),
+    'walk-intervals': ('Répéter des passages actifs en conservant une récupération entre eux.',
+                        'Marche active et marche lente aux premiers niveaux ; course et footing de récupération au niveau Soutenu.'),
     'hill-plateau': ('Maintenir une marche en montée pour solliciter les jambes.',
                       'Pente de préparation, plateau de travail, pente réduite, puis marche facile à plat.'),
     'hill-waves': ('Répéter un travail en côte avec une récupération entre les montées.',
@@ -37,7 +37,7 @@ METHODS = {
     'steady-endurance': ('Accumuler du temps régulier pour travailler l’endurance aérobie.',
                           'Marche au niveau facile, course aux niveaux suivants ; aucune accélération pour finir.'),
     'run-walk': ('Accumuler de la course par passages maîtrisés, entrecoupés de marche.',
-                  'Course et marche alternées ; passages de course et volume total de course plafonnés.'),
+                  'Course et marche alternées ; au niveau Soutenu, les cycles couvrent tout le temps central demandé.'),
 }
 
 
@@ -58,6 +58,8 @@ class Recipe:
     max_cycles: int = 0
     # Temps central maximal pour le continu/la pyramide ; 0 = jusqu'à 60 min totales.
     work_limit_sec: int = 0
+    # Allure de récupération spécifique ; sinon marche facile selon le niveau.
+    recovery_speed: float | None = None
 
 
 @dataclass(frozen=True)
@@ -80,13 +82,18 @@ def recipes():
     for i, level in enumerate(LEVELS):
         # La difficulté change la structure et la dose, jamais un multiplicateur global.
         result.extend([
-            Recipe('brisk-walk', 'Marche active', 'calories', level,
-                   'Du volume de marche régulier, sans passages rapides.', 'continuous',
-                   [4.5, 5., 5.5][i], [1., 2., 3.][i], [1200, 1800, 2400][i]),
-            Recipe('walk-intervals', 'Marche en alternance', 'calories', level,
-                   'Marche active et récupération à plat, avec un volume actif borné.', 'intervals',
-                   [4.8, 5.3, 5.8][i], [1., 2., 3.][i], [1800, 2100, 2400][i],
-                   [120, 180, 180][i], [120, 120, 90][i], [6, 8, 10][i]),
+            Recipe('brisk-walk', 'Cardio continu', 'calories', level,
+                   ['Marche active régulière, avec une pente légère.',
+                    'Marche active plus soutenue, avec une pente légère.',
+                    'Course continue à 9 km/h pendant tout le travail central.'][i], 'continuous',
+                   [4.5, 5., 9.][i], [1., 2., 0.][i], [1200, 1800, 2400][i]),
+            Recipe('walk-intervals', 'Cardio en alternance', 'calories', level,
+                   ['Marche active et récupération plus lente à plat.',
+                    'Passages de marche active plus longs, avec récupération à plat.',
+                    'Course à 10 km/h, récupération en footing à 8,1 km/h.'][i], 'intervals',
+                   [4.8, 5.3, 10.][i], [1., 2., 0.][i], [1800, 2100, 2400][i],
+                   [120, 180, 180][i], [120, 120, 90][i], [6, 8, 12][i],
+                   recovery_speed=8.1 if level == 'hard' else None),
             Recipe('hill-plateau', 'Marche en côte', 'incline', level,
                    'Une montée préparée, un plateau, puis une réduction de la pente.', 'pyramid',
                    [4., 4.3, 4.6][i], [3., 5., 7.][i], [1500, 2100, 2700][i],
@@ -96,13 +103,16 @@ def recipes():
                    [4., 4.3, 4.6][i], [3., 5., 7.][i], [1800, 2100, 2700][i],
                    [120, 180, 240][i], [120, 120, 120][i], [4, 6, 6][i]),
             Recipe('steady-endurance', 'Allure régulière', 'endurance', level,
-                   'Endurance continue en marche ou en course, avec une fin facile.', 'continuous',
+                   ['Endurance continue en marche.', 'Course régulière avec un volume progressif.',
+                    'Course continue à 10 km/h pendant tout le travail central.'][i], 'continuous',
                    [4.8, 8.5, 10.][i], [0., 0., 0.][i], [1500, 2100, 2700][i],
-                   work_limit_sec=[0, 1800, 2400][i]),
+                   work_limit_sec=[0, 1800, 0][i]),
             Recipe('run-walk', 'Course et marche', 'endurance', level,
-                   'Course par passages courts ; le temps supplémentaire reste en marche.', 'intervals',
+                   ['Course par passages courts, volume limité et récupération en marche.',
+                    'Passages de course plus longs, avec récupération en marche.',
+                    'Alternance course et marche sur toute la durée centrale choisie.'][i], 'intervals',
                    [7.5, 8.5, 10.][i], 0., [1800, 2100, 2700][i],
-                   [60, 180, 240][i], [90, 120, 90][i], [8, 6, 6][i]),
+                   [60, 180, 240][i], [90, 120, 90][i], [8, 6, 10][i]),
         ])
     return result
 
@@ -138,9 +148,10 @@ def resize(recipe: Recipe, seconds: int) -> Programme:
         cycles = ceil(window / cycle_sec)
         work = window * recipe.effort_sec // cycle_sec
         recovery = window - work
+        recovery_speed = recipe.recovery_speed or easy_speed
         for active_sec, rest_sec in zip(spread(work, cycles), spread(recovery, cycles)):
             items.extend([step(kind, active_sec / 60, recipe.speed, recipe.incline),
-                          step('recover', rest_sec / 60, easy_speed)])
+                          step('recover', rest_sec / 60, recovery_speed)])
         extra = core - window
         if 0 < extra < 30:
             # Pas de segment illégal de 1–29 s : compléter la récupération finale.
@@ -149,8 +160,10 @@ def resize(recipe: Recipe, seconds: int) -> Programme:
             items.append(step('recover', extra / 60, easy_speed))
         limit = recipe.effort_sec * recipe.max_cycles
     else:
-        # Une minute facile à plat termine le travail central avant le retour au calme.
-        work = min(core - 60, recipe.work_limit_sec or 2940)
+        # La pyramide finit par une transition à plat. En continu, le retour au
+        # calme suffit : aucune minute de marche ajoutée au temps de course.
+        transition = 60 if recipe.style == 'pyramid' or recipe.work_limit_sec else 0
+        work = min(core - transition, recipe.work_limit_sec or (3000 - transition))
         extra = core - work
         if recipe.style == 'pyramid':
             shoulder = work // 5
@@ -161,8 +174,9 @@ def resize(recipe: Recipe, seconds: int) -> Programme:
             ])
         else:
             items.append(step(kind, work / 60, recipe.speed, recipe.incline))
-        items.append(step('recover', extra / 60, easy_speed))
-        limit = recipe.work_limit_sec or 2940
+        if extra:
+            items.append(step('recover', extra / 60, easy_speed))
+        limit = recipe.work_limit_sec or (3000 - transition)
     items.extend([step('cooldown', 2, easy_speed), step('cooldown', 3, 3.)])
     data = WorkoutInput(name=recipe.name, goal=recipe.goal, level=recipe.level, items=items)
     return Programme(data, Dose(work, recovery, extra, cycles, limit))
