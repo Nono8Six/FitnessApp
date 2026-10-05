@@ -1,6 +1,6 @@
 import { api, ApiError, isRecord } from './api'
 
-export interface Conversation { id: string; title: string; created_at: string; updated_at: string }
+export interface Conversation { id: string; title: string; created_at: string; updated_at: string; archived_at: string | null }
 export interface Source { id: string; version: number; name: string; href: string }
 export interface Proposal { content: string; quote: string; saved_memory_id?: string | null }
 export interface Turn {
@@ -15,6 +15,7 @@ export interface PageData<T> { items: T[]; total: number; next_offset: number | 
 const dates = (v: Record<string, unknown>) => typeof v.created_at === 'string' && typeof v.updated_at === 'string'
 const nullableText = (v: unknown) => v === null || typeof v === 'string'
 const isConversation = (v: unknown): v is Conversation => isRecord(v) && typeof v.id === 'string' && typeof v.title === 'string' && dates(v)
+  && nullableText(v.archived_at)
 const isSource = (v: unknown): v is Source => isRecord(v) && typeof v.id === 'string' && typeof v.name === 'string'
   && Number.isInteger(v.version) && typeof v.href === 'string' && /^#\/seances\/[a-f0-9]{32}\?version=\d+$/.test(v.href)
 export const isTurn = (v: unknown): v is Turn => isRecord(v) && typeof v.id === 'string' && typeof v.conversation_id === 'string'
@@ -31,7 +32,11 @@ const pageOf = <T,>(valid: (v: unknown) => v is T) => (v: unknown): v is PageDat
   && Array.isArray(v.items) && v.items.every(valid) && Number.isInteger(v.total)
   && (v.next_offset === null || Number.isInteger(v.next_offset)) && typeof v.partial === 'boolean'
 export const coachUrl = (profile: string) => `/api/profiles/${encodeURIComponent(profile)}/coach`
-export const readConversations = (profile: string, query = '', offset = 0) => api(`${coachUrl(profile)}/conversations?${new URLSearchParams({ query, offset: String(offset) })}`, { validate: pageOf(isConversation) })
+export const readConversations = (profile: string, query = '', offset = 0, archived = false) => api(
+  `${coachUrl(profile)}/conversations?${new URLSearchParams({ query, offset: String(offset), archived: String(archived) })}`, { validate: pageOf(isConversation) })
+/** Archiver retire la conversation de la liste ; ses échanges restent lisibles et un nouveau message la ramène. */
+export const archiveConversation = (profile: string, id: string, archived: boolean) => api(`${coachUrl(profile)}/conversations/${id}`, {
+  method: 'PATCH', body: { archived }, validate: isConversation })
 export const createConversation = (profile: string) => api(`${coachUrl(profile)}/conversations`, { method: 'POST', validate: isConversation })
 export const readTurns = (profile: string, id: string, offset = 0) => api(`${coachUrl(profile)}/conversations/${id}?offset=${offset}`, { validate: pageOf(isTurn) })
 export const stopTurn = (profile: string, id: string) => api(`${coachUrl(profile)}/messages/${id}/stop`, { method: 'POST',

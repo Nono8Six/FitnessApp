@@ -277,7 +277,8 @@ export function Page({
             </div>
           </div>
           {(actions || showAvatar) && (
-            <div className={cx('mt-1 flex shrink-0 items-center gap-3 transition-opacity duration-200', scrolled && 'pointer-events-none opacity-0')}>
+            // Repliés dans la barre de navigation au défilement : une seule copie reste atteignable.
+            <div inert={scrolled} className={cx('mt-1 flex shrink-0 items-center gap-3 transition-opacity duration-200', scrolled && 'opacity-0')}>
               {actions}
               {showAvatar && <span className="desk:hidden"><ProfileButton /></span>}
             </div>

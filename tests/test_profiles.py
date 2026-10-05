@@ -17,7 +17,7 @@ from backend.storage import DATABASE_FILE, StorageError, open_database
 from backend.storage.database import MIGRATIONS, alembic_config, create_db_engine
 
 URL = "http://127.0.0.1:4330"
-HEAD = "0005"
+HEAD = "0006"
 
 
 class ProfileTests(unittest.TestCase):

@@ -29,6 +29,10 @@ class Send(Input):
         return value.strip()
 
 
+class ArchiveInput(Input):
+    archived: bool
+
+
 class MemoryInput(Input):
     content: str = Field(min_length=1, max_length=500)
     source_turn_id: str | None = Field(default=None, pattern=r"^[a-f0-9]{32}$")
@@ -58,9 +62,12 @@ def page(session, query, offset=0, limit=20):
     return {"items": items, "total": total, "next_offset": next_offset, "partial": next_offset is not None}
 
 
-def conversations(session, profile, query="", offset=0, limit=20):
+def conversations(session, profile, query="", offset=0, limit=20, archived=None):
+    """archived : None pour toutes (outils du coach), sinon actives ou archivées seulement."""
     get_profile(session, profile)
     statement = select(Conversation).where(Conversation.profile_id == profile)
+    if archived is not None:
+        statement = statement.where(Conversation.archived_at.is_not(None) if archived else Conversation.archived_at.is_(None))
     if query:
         matches = select(CoachTurn.conversation_id).where(CoachTurn.profile_id == profile,
             or_(CoachTurn.user_text.contains(query, autoescape=True), CoachTurn.answer.contains(query, autoescape=True)))
@@ -73,6 +80,17 @@ def create_conversation(session, profile):
     now = utc_now()
     row = Conversation(id=uuid4().hex, profile_id=profile, title="Nouvelle conversation", created_at=now, updated_at=now)
     session.add(row)
+    session.flush()
+    return out(row)
+
+
+def archive_conversation(session, profile, conversation, archived):
+    row = owned(session, Conversation, profile, conversation)
+    if archived and session.scalar(select(CoachTurn.id).where(CoachTurn.profile_id == profile,
+            CoachTurn.conversation_id == conversation, CoachTurn.status == "running")):
+        raise CoachConflict("Une réponse est en cours dans cette conversation. Interrompez-la avant d’archiver.")
+    if archived != (row.archived_at is not None):
+        row.archived_at = utc_now() if archived else None
     session.flush()
     return out(row)
 
@@ -100,7 +118,8 @@ def reserve(session, profile, conversation, payload):
         created_at=now, updated_at=now)
     if not session.scalar(select(CoachTurn.id).where(CoachTurn.conversation_id == conversation).limit(1)):
         row.title = " ".join(payload.text.split())[:100]
-    row.updated_at = now
+    # Écrire dans une conversation archivée la remet dans la liste.
+    row.updated_at, row.archived_at = now, None
     session.add(turn)
     session.flush()
     return out(turn), True

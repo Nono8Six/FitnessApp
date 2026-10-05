@@ -180,7 +180,7 @@ class MigrationTests(unittest.TestCase):
                 self.assertEqual(profiles[0]["name"], "Profil conservé")
                 self.assertEqual(profiles[0]["weekly_goal"], 7)
                 self.assertEqual(profiles[0]["speed_unit"], "pace")
-                self.assertEqual(client.get("/api/health").json()["schema"], "0005")
+                self.assertEqual(client.get("/api/health").json()["schema"], "0006")
             finally:
                 app.state.database.close()
 

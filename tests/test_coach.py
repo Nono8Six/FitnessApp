@@ -110,6 +110,24 @@ class CoachDataTests(unittest.TestCase):
         self.assertEqual(self.tool("read_message", {"turn_id": turn["id"], "offset": 3500})["answer"], "FIN")
         self.assertIn("error", self.tool("read_message", {"turn_id": turn["id"]}, "ophelie"))
 
+    def test_archive_hides_without_losing_exchanges(self):
+        base = "/api/profiles/arnaud/coach/conversations"
+        turn, _ = self.reserve(text="Conseil à archiver")
+        self.assertEqual(self.client.patch(f"{base}/{self.conversation}", json={"archived": True}).status_code, 409)
+        with self.db.write() as s:
+            store.save_turn(s, "arnaud", turn["id"], answer="Réponse", status="completed")
+        self.assertEqual(self.client.patch(f"/api/profiles/ophelie/coach/conversations/{self.conversation}", json={"archived": True}).status_code, 404)
+        self.assertEqual(self.client.patch(f"{base}/{self.conversation}", json={"archived": "oui"}).status_code, 422)
+        archived = self.client.patch(f"{base}/{self.conversation}", json={"archived": True}).json()
+        self.assertIsNotNone(archived["archived_at"])
+        self.assertEqual(self.client.get(base).json()["total"], 0)
+        self.assertEqual(self.client.get(base, params={"archived": True}).json()["items"][0]["id"], self.conversation)
+        self.assertEqual(self.client.get(f"{base}/{self.conversation}").json()["items"][0]["answer"], "Réponse")
+        self.assertEqual(self.tool("search_conversations", {"query": "archiver"})["total"], 1)
+        self.reserve(text="Je reprends")
+        self.assertEqual(self.client.get(base).json()["total"], 1)
+        self.assertIsNone(self.client.get(base).json()["items"][0]["archived_at"])
+
     def test_memory_requires_user_write_and_proposal_ownership(self):
         proposal = self.tool("propose_memory", {"content": "Séances de vingt minutes", "quote": "je préfère vingt minutes"})
         self.assertFalse(proposal["saved"])
@@ -156,7 +174,7 @@ class CoachDataTests(unittest.TestCase):
         self.db.close()
         self.app = create_app(data_root=Path(self.tmp.name))
         self.db = self.app.state.database
-        self.assertEqual(self.db.schema, "0005")
+        self.assertEqual(self.db.schema, "0006")
         with self.db.transaction() as session:
             self.assertEqual(workouts.get_workout(session, "arnaud", self.workout["id"]), self.workout)
             self.assertEqual(store.conversations(session, "arnaud")["total"], 0)

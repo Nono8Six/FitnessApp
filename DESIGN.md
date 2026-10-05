@@ -103,6 +103,8 @@ Formats : virgule décimale, espace insécable avant `:` `?` `%` et à l’inté
 - **Carte de séance.** Carte entière cliquable avec chevron : pastille ronde de l’activité (accent sur fond accent à 16 %), nom, mesures colorées, profil compact. Pas de bouton « Voir » redondant.
 - **Section.** Titre Title 2 à gauche, action en accent à droite (« Changer »), comme « Exercices / Plus de détails » dans Forme.
 - **Chargement.** Squelette de la forme du contenu (pulsation), libellé réservé aux lecteurs d’écran.
+- **Coach.** Liste façon Messages : champ de recherche iOS (36 px, loupe, effacement), segmenté Récentes/Archivées, lignes titre + date relative + archivage. Bulle de l'utilisateur à droite en `surface-2`, réponse du coach en texte libre sous sa pastille. Saisie en capsule qui grandit, bouton d'envoi rond accent. Confirmation éphémère avec Annuler au-dessus de la saisie.
+- **Explication repliable.** Faits en lignes courtes libellé / valeur, une seule phrase de limite. Jamais de paragraphes.
 - **Anneau.** Trait de 11 px, piste à 22 %, extrémités arrondies.
 - **Bandeau d’état.** Fond de la couleur de rôle à 15 %, icône et une phrase.
 

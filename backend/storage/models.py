@@ -83,6 +83,8 @@ class Conversation(Base):
     title: Mapped[str] = mapped_column(String(100))
     created_at: Mapped[str] = mapped_column(String(40))
     updated_at: Mapped[str] = mapped_column(String(40))
+    # Archivée : retirée de la liste, échanges conservés et toujours consultables par le coach.
+    archived_at: Mapped[str | None] = mapped_column(String(40))
 
 
 class CoachTurn(Base):

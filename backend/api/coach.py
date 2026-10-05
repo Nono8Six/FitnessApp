@@ -33,9 +33,10 @@ def transaction(request, write=False):
 
 
 @router.get("/conversations")
-def conversations(profile_id: str, request: Request, query: str = Query("", max_length=100), offset: int = Query(0, ge=0), limit: int = Query(20, ge=1, le=50)):
+def conversations(profile_id: str, request: Request, query: str = Query("", max_length=100), offset: int = Query(0, ge=0),
+                  limit: int = Query(20, ge=1, le=50), archived: bool = False):
     with transaction(request) as session:
-        return store.conversations(session, profile_id, query, offset, limit)
+        return store.conversations(session, profile_id, query, offset, limit, archived)
 
 
 @router.post("/conversations", status_code=201)
@@ -55,6 +56,12 @@ def read(profile_id: str, conversation_id: str, request: Request, offset: int = 
             turn["proposals"] = [{**proposal, "saved_memory_id": accepted.get((turn["id"], index))}
                                  for index, proposal in enumerate(turn["proposals"])]
         return data
+
+
+@router.patch("/conversations/{conversation_id}")
+def archive(profile_id: str, conversation_id: str, payload: store.ArchiveInput, request: Request):
+    with transaction(request, True) as session:
+        return store.archive_conversation(session, profile_id, conversation_id, payload.archived)
 
 
 @router.post("/conversations/{conversation_id}/messages")

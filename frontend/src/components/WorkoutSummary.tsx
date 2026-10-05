@@ -31,19 +31,24 @@ export function WorkoutSummary({ data, editing = false }: { data: Preview; editi
     {energy.weight_kg === null ? editing
       ? <p className="mt-2 px-4 text-footnote text-label-2">Pour les calories, renseignez votre poids dans Réglages après avoir enregistré la séance.</p>
       : <WeightLink className="mt-3" />
-      : <details className="group mt-3 rounded-[12px] bg-surface text-footnote text-label-2">
+      : <details className="group mt-3 rounded-[12px] bg-surface">
         <summary className="flex min-h-11 cursor-pointer list-none items-center justify-between gap-2 px-4 text-subhead text-label [&::-webkit-details-marker]:hidden">
           Comprendre l’estimation
           <ChevronRight size={18} strokeWidth={2.4} className="shrink-0 text-label-3 transition-transform duration-300 ease-ios group-open:rotate-90" />
         </summary>
-        <div className="space-y-2 px-4 pb-4 leading-relaxed">
-          <p><span className="num font-medium text-label">≈ {Math.round(energy.total_kcal!)} kcal totales</span>, dont les calories actives affichées ci-dessus. Le total inclut une dépense de repos standard.</p>
-          <p>Calcul ACSM avec le poids actuel du profil ({dec1(energy.weight_kg)} kg), la durée, la vitesse et la pente de chaque segment. Le dénivelé représente une montée équivalente sur cette distance.</p>
-          <p>Le calcul suppose automatiquement la marche jusqu’à 6 km/h, puis la course au-delà.</p>
-          {energy.outside_range && <p className="text-orange">Certains blocs sont hors des plages de vitesse les mieux adaptées au calcul : marche de 3 à 6 km/h, course à partir d’environ 8 km/h. L’estimation y est plus incertaine.</p>}
-          <p>Ce sont des prévisions, pas des calories mesurées. Les changements rapides d’allure, l’appui sur les poignées et les différences individuelles peuvent modifier la dépense réelle.</p>
-          {!editing && <a href={href.settings} className="inline-flex min-h-11 items-center font-medium text-accent">Modifier mon poids</a>}
-        </div>
+        {/* Faits en lignes courtes, comme une fiche iOS ; le détail du calcul tient en une ligne. */}
+        <dl className="text-subhead">
+          {([
+            ['Total avec repos', `≈ ${Math.round(energy.total_kcal!)} kcal`],
+            ['Poids du profil', `${dec1(energy.weight_kg)} kg`],
+            ['Méthode', 'ACSM'],
+            ['Course calculée au-delà de', '6 km/h'],
+          ] as const).map(([label, value]) => <div key={label} className="ml-4 flex min-h-11 items-center justify-between gap-3 pr-4 shadow-[inset_0_0.5px_0_var(--color-sep)]">
+            <dt className="text-label-2">{label}</dt><dd className="num text-right text-label">{value}</dd>
+          </div>)}
+        </dl>
+        {energy.outside_range && <p className="mx-4 mt-1 rounded-[10px] bg-orange/15 px-3 py-2 text-footnote text-orange">Vitesses hors plage fiable (marche 3–6, course dès 8 km/h) : estimation moins sûre.</p>}
+        <p className="px-4 pt-2 pb-3 text-footnote text-label-2">Prévision, pas une mesure.{!editing && <> <a href={href.settings} className="text-accent">Modifier mon poids</a></>}</p>
       </details>}
     <div className="mt-3 rounded-[22px] bg-surface p-4 desk:p-5">
       <ProgrammeChart blocks={data.blocks} />

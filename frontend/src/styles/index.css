@@ -184,7 +184,7 @@
 /* Coach : texte lisible, saisie accessible au-dessus des onglets. */
 .coach-layout { display: grid; min-width: 0; }
 .coach-history { display: none; }
-.coach-composer { position: sticky; bottom: calc(70px + max(env(safe-area-inset-bottom), 14px)); z-index: 20; padding: 12px 0 4px; background: #000; }
+.coach-composer { position: sticky; bottom: calc(70px + max(env(safe-area-inset-bottom), 14px)); z-index: 20; padding: 16px 0 6px; background: linear-gradient(to bottom, transparent, #000 16px); }
 .coach-prose { overflow-wrap: anywhere; }
 .coach-prose p + p, .coach-prose ul, .coach-prose ol { margin-top: 12px; }
 .coach-prose ul { padding-left: 22px; list-style: disc; }
@@ -195,7 +195,7 @@
 .coach-prose pre { white-space: pre-wrap; border-radius: 12px; background: var(--color-surface); padding: 12px; }
 .coach-prose blockquote { margin: 12px 0; padding-left: 12px; border-left: 2px solid var(--color-sep); color: var(--color-label-2); }
 @media (min-width: 1100px) {
-  .coach-layout { grid-template-columns: 220px minmax(0, 720px); gap: 32px; align-items: start; }
+  .coach-layout { grid-template-columns: 300px minmax(0, 760px); gap: 40px; align-items: start; }
   .coach-history { display: block; position: sticky; top: 64px; max-height: calc(100dvh - 96px); overflow-y: auto; }
 }
 @media (min-width: 900px) { .coach-composer { bottom: 0; padding-bottom: 16px; } }
