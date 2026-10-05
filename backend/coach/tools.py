@@ -11,7 +11,7 @@ from sqlalchemy.exc import SQLAlchemyError
 from . import store
 from . import workout_proposals
 from ..storage.models import Workout, WorkoutSelection, WorkoutVersion
-from ..training import workouts
+from ..training import catalog, workouts
 from ..training.profiles import ProfileNotFound, get_profile
 from ..training.workouts import Input
 
@@ -81,8 +81,9 @@ DEFINITIONS = {
     "read_message": (MessageDetail, "Lire le texte complet d'une ancienne réponse par extraits paginés, après read_conversation."),
     "search_memories": (Search, "Lire les préférences durables explicitement enregistrées par l'utilisateur, avec dates."),
     "ask_questions": (Questions, "Afficher 1 à 3 questions à choix en cases interactives sous ta réponse ; l'utilisateur répond dans son prochain message. Une seule fois par réponse."),
+    "preview_catalog": (catalog.CatalogCopy, "Construire une base de séance depuis un format FitnessApp, sans enregistrer. template_id : brisk-walk, walk-intervals, hill-plateau, hill-waves, steady-endurance, run-walk. target : durée en secondes OU kcal actives avec le poids du profil. Renvoie blocs, dose et estimations backend ; adapter ensuite à l’allure connue, valider et proposer."),
     "propose_memory": (Proposal, "Proposer une préférence durable UNIQUEMENT sur demande explicite de la retenir. Citer exactement le message actuel. N'enregistre rien : l'utilisateur doit confirmer dans l'interface."),
-    "validate_workout": (workout_proposals.ProposalInput, "Valider un programme complet avant proposition : bornes, échauffement, retour au calme, objectif et niveau. Renvoie les erreurs précises et les prévisions Python. Corriger les erreurs avant de proposer."),
+    "validate_workout": (workout_proposals.ProposalInput, "Valider un programme complet avant proposition : bornes, 5 min d’échauffement et de retour au calme, durée, objectif, niveau et min_active_kcal si demandé. Renvoie les erreurs précises et les prévisions Python. Corriger les erreurs avant de proposer."),
     "propose_workout": (workout_proposals.ProposalInput, "Proposer une séance structurée validée, jamais l'enregistrer. L'interface affiche Enregistrer, Modifier, Ignorer. Si workout_target est fourni par le contexte serveur, ajuster exactement cette version. Sinon target facultatif pour ajuster une version lue via get_workout. Pas de target pour une nouvelle séance."),
 }
 
@@ -90,7 +91,7 @@ DEFINITIONS = {
 def definitions():
     return [{"type": "namespace", "name": "fitness", "description": "Données locales du seul profil actif. Lecture et propositions soumises à confirmation humaine.",
              "tools": [{"type": "function", "name": name, "description": description,
-                        "parameters": model.model_json_schema(), "strict": False}
+                        "parameters": model.model_json_schema(), "strict": name == 'ask_questions'}
                        for name, (model, description) in DEFINITIONS.items()]}]
 
 
@@ -104,6 +105,8 @@ def profile_context(session, profile, simulation):
                      "incline_unit": "%", "duration_unit": "seconds"},
         "activities": {"available": False, "reason": "L'historique des activités réalisées n'est pas encore implémenté. Bibliothèque = séances prévues, jamais réalisées."},
         "missing": ["fatigue actuelle sauf déclaration datée", "activité réelle", "résultats", "progression", "santé sauf déclaration explicite"],
+        "catalog_formats": [{"template_id": r.identifier, "name": r.name, "goal": r.goal}
+                            for r in catalog.recipes() if r.level == 'easy'],
         "memories": store.memories(session, profile, limit=8)}
 
 
@@ -135,15 +138,27 @@ def execute(database, profile, name, arguments, *, user_text, simulation=False, 
                 if payload.target:
                     workout_proposals.snapshot(session, profile, payload.target)
                 if name == 'validate_workout':
-                    return {'valid': True, **workouts.preview(payload.workout, current.weight_kg)}
+                    return workout_proposals.validated_preview(payload, current.weight_kg)
                 if not turn_id or not call_id:
                     return {'error': 'Une réponse du coach et un appel identifiés sont requis.'}
                 proposal = workout_proposals.propose(session, profile, turn_id, call_id, payload)
+                if 'error' in proposal:
+                    return proposal
                 return {'workout_proposal': proposal, 'saved': False, 'requires_user_confirmation': True}
         with database.transaction() as session:
             current = get_profile(session, profile)
             if name == "get_profile":
                 return profile_context(session, profile, simulation)
+            if name == 'preview_catalog':
+                recipe = next((r for r in catalog.recipes()
+                               if r.identifier == payload.template_id and r.level == payload.level), None)
+                if recipe is None:
+                    return {'error': 'Format introuvable. Utiliser un template_id de catalog_formats et un niveau autorisé.'}
+                programme = catalog.adapt(recipe, payload.target, current.weight_kg)
+                return {'workout': programme.workout.model_dump(),
+                        **workouts.preview(programme.workout, current.weight_kg),
+                        'method': catalog.methodology(recipe, programme), 'saved': False,
+                        'note': 'Base générale à adapter au niveau réel déclaré, pas une mesure des capacités de la personne.'}
             if name == "search_conversations":
                 return store.conversations(session, profile, **payload.model_dump())
             if name == "read_conversation":
@@ -186,6 +201,8 @@ def execute(database, profile, name, arguments, *, user_text, simulation=False, 
             data = workouts._out(row, current.weight_kg)
             # Les items contiennent tous les blocs et répétitions. Ne pas renvoyer aussi leur expansion.
             return {k: v for k, v in data.items() if k != "blocks"} | {"source": workout_link(data), "estimates": "Prévisions au poids actuel, pas une activité réalisée."}
+    except catalog.CatalogTargetError as exc:
+        return {'error': str(exc), 'valid': False}
     except ValidationError as exc:
         return {'error': 'Arguments invalides. Corriger les erreurs suivantes.',
                 'issues': [{'path': list(e['loc']), 'message': e['msg']} for e in exc.errors(include_input=False, include_url=False)]}

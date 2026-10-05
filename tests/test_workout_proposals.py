@@ -92,6 +92,55 @@ class ProposalTests(unittest.TestCase):
             'workout': catalog.variants()[0][2].model_dump(), 'explanation': 'Test', 'duration_sec': 1800}), user_text='30 minutes')
         self.assertIn('Durée totale incohérente', duration['issues'][0]['message'])
 
+    def test_calorie_minimum_checked_before_validation_and_proposal(self):
+        self.client.patch(self.url, json={'weight_kg': 80})
+        workout = catalog.variants()[0][2]
+        kcal = workouts.preview(workout, 80)['summary']['energy']['active_kcal']
+        payload = {'workout': workout.model_dump(), 'duration_sec': 1200,
+                   'explanation': 'Marche active.', 'min_active_kcal': kcal + 50}
+        with self.db.write() as session:
+            turn, _ = store.reserve(session, 'arnaud', self.conversation,
+                                    store.Send(request_id=uuid4().hex, text='Minimum calorique'))
+        for name in ('validate_workout', 'propose_workout'):
+            result = tools.execute(self.db, 'arnaud', name, json.dumps(payload), user_text=turn['user_text'],
+                                   turn_id=turn['id'], call_id=name)
+            self.assertFalse(result['valid'])
+            self.assertEqual(result['shortfall_active_kcal'], 50)
+            self.assertEqual(result['estimated_active_kcal'], kcal)
+        with self.db.transaction() as session:
+            self.assertEqual(proposals.for_turn(session, 'arnaud', turn['id']), [])
+        payload['min_active_kcal'] = kcal
+        result = tools.execute(self.db, 'arnaud', 'propose_workout', json.dumps(payload),
+                               user_text=turn['user_text'], turn_id=turn['id'], call_id='valid')
+        self.assertIn('workout_proposal', result)
+        self.assertEqual(self.client.get(self.url + '/workouts').json()['workouts'], [])
+        self.client.patch(self.url, json={'weight_kg': None})
+        missing = tools.execute(self.db, 'arnaud', 'validate_workout', json.dumps(payload), user_text='Minimum calorique')
+        self.assertTrue(missing['weight_required'])
+        self.assertIsNone(missing['preview']['summary']['energy']['active_kcal'])
+
+    def test_coach_catalog_preview_reuses_rules_without_saving(self):
+        self.client.patch(self.url, json={'weight_kg': 80})
+        payload = {'template_id': 'steady-endurance', 'level': 'intermediate', 'target': {'duration_sec': 2700}}
+        result = tools.execute(self.db, 'arnaud', 'preview_catalog', json.dumps(payload), user_text='Endurance')
+        recipe = next(r for r in catalog.recipes() if r.identifier == 'steady-endurance' and r.level == 'intermediate')
+        expected = catalog.adapt(recipe, catalog.CatalogTarget(duration_sec=2700), 80)
+        self.assertEqual(result['workout'], expected.workout.model_dump())
+        self.assertEqual(result['summary'], workouts.preview(expected.workout, 80)['summary'])
+        self.assertFalse(result['saved'])
+        self.assertEqual(self.client.get(self.url + '/workouts').json()['workouts'], [])
+        payload['target'] = {'active_kcal': 5000}
+        self.assertIn('error', tools.execute(self.db, 'arnaud', 'preview_catalog', json.dumps(payload), user_text='Endurance'))
+        payload['template_id'] = 'inconnu'
+        self.assertIn('error', tools.execute(self.db, 'arnaud', 'preview_catalog', json.dumps(payload), user_text='Endurance'))
+
+    def test_coach_cannot_hide_short_warmup_inside_other_blocks(self):
+        payload = {'workout': catalog.variants()[0][2].model_dump(), 'explanation': 'Test', 'duration_sec': 1200}
+        payload['workout']['items'][0]['sec'] = 30
+        payload['workout']['items'][2]['sec'] += 90
+        result = tools.execute(self.db, 'arnaud', 'validate_workout', json.dumps(payload), user_text='Test')
+        self.assertIn('5 min d’échauffement', result['issues'][0]['message'])
+
     def test_catalog_duration_exact_and_structure_preserved(self):
         for recipe in catalog.recipes():
             cap = (recipe.max_cycles * (recipe.effort_sec + recipe.recovery_sec) + 600

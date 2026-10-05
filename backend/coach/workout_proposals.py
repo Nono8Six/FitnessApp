@@ -18,6 +18,8 @@ class ProposalInput(workouts.Input):
     duration_sec: int = Field(ge=30, le=3600, description='Durée totale demandée ou choisie, en secondes, échauffement et retour au calme compris. Doit correspondre exactement aux blocs.')
     explanation: str = Field(min_length=1, max_length=600)
     target: Target | None = None
+    min_active_kcal: float | None = Field(default=None, gt=0, le=5000, allow_inf_nan=False,
+        description='Minimum de kcal actives estimées demandé par la personne, même si l’objectif principal est endurance. Ne pas confondre avec les calories totales. Null si aucun minimum demandé.')
 
     @model_validator(mode='after')
     def complete_programme(self):
@@ -27,11 +29,31 @@ class ProposalInput(workouts.Input):
             raise ValueError(f"Durée totale incohérente : {calculated['summary']['sec']} s dans les blocs, {self.duration_sec} s annoncées. Corriger les blocs pour respecter la durée demandée, échauffement et retour au calme compris.")
         if blocks[0]['kind'] != 'warmup' or blocks[-1]['kind'] != 'cooldown':
             raise ValueError('Prévoir un échauffement au début et un retour au calme à la fin.')
+        warmup = next((i for i, block in enumerate(blocks) if block['kind'] != 'warmup'), len(blocks))
+        cooldown = next((i for i, block in enumerate(reversed(blocks)) if block['kind'] != 'cooldown'), len(blocks))
+        if sum(b['sec'] for b in blocks[:warmup]) < 300 or sum(b['sec'] for b in blocks[-cooldown:]) < 300:
+            raise ValueError('Prévoir au moins 5 min d’échauffement au début et 5 min de retour au calme à la fin, dans la durée totale.')
         if self.workout.goal is None or self.workout.level is None:
             raise ValueError('Objectif (calories, incline, endurance) et niveau (easy, intermediate, hard) requis.')
         if not self.explanation.strip():
             raise ValueError('Une explication utile est requise.')
         return self
+
+
+def validated_preview(payload, weight):
+    """Vérifier aussi la cible énergétique avec le calcul et le poids du serveur."""
+    result = workouts.preview(payload.workout, weight)
+    if payload.min_active_kcal is not None:
+        estimated = result['summary']['energy']['active_kcal']
+        if estimated is None:
+            return {'error': 'Minimum calorique invérifiable : renseignez le poids du profil dans Réglages.',
+                    'valid': False, 'weight_required': True, 'preview': result}
+        if estimated < payload.min_active_kcal:
+            return {'error': 'La séance n’atteint pas le minimum de kcal actives estimées demandé. Adapter le programme sans dépasser le temps disponible ni les capacités déclarées ; sinon expliquer le compromis.',
+                    'valid': False, 'min_active_kcal': payload.min_active_kcal,
+                    'estimated_active_kcal': estimated, 'shortfall_active_kcal': round(payload.min_active_kcal - estimated, 1),
+                    'preview': result}
+    return {'valid': True, **result}
 
 
 class Acceptance(workouts.Input):
@@ -89,6 +111,9 @@ def propose(session, profile, turn_id, call_id, payload):
     old = session.scalar(select(WorkoutProposal).where(WorkoutProposal.turn_id == turn_id, WorkoutProposal.call_id == call_id))
     if old:
         return render(session, old)
+    checked = validated_preview(payload, get_profile(session, profile).weight_kg)
+    if not checked['valid']:
+        return checked
     if len(for_turn(session, profile, turn_id)) >= 6:
         raise store.CoachConflict('Six propositions maximum par message.')
     base = turn.workout_context

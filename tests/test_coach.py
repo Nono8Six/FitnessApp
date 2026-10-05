@@ -276,6 +276,42 @@ class CoachStreamTests(unittest.IsolatedAsyncioTestCase):
         read = tools.execute(self.db, "arnaud", "read_conversation", json.dumps({"conversation_id": self.conversation}), user_text="")
         self.assertEqual(read["items"][0]["questions"], questions)
 
+    async def test_context_keeps_older_user_constraints_and_recent_answer_details(self):
+        with self.db.write() as session:
+            for index in range(10):
+                previous, _ = store.reserve(session, 'arnaud', self.conversation,
+                    store.Send(request_id=uuid4().hex,
+                               text='Je cours confortablement à 8 km/h, maximum 45 min.' if index == 0 else f'Échange {index}'))
+                store.save_turn(session, 'arnaud', previous['id'], status='completed',
+                    created_at=f'2026-01-01T10:00:{index:02}+00:00',
+                    answer='Explication. ' * 200 + 'Repère final : parler en phrases complètes.',
+                    questions=[{'label': 'Allure', 'options': ['Marche', 'Course']}] if index == 9 else [])
+            current, _ = store.reserve(session, 'arnaud', self.conversation,
+                                      store.Send(request_id=uuid4().hex, text='Adapte la séance.'))
+        context, messages = self.runtime.context('arnaud', current)
+        self.assertTrue(context['answering_questions'])
+        self.assertFalse(context['recent_history_partial'])
+        self.assertIn('8 km/h', messages[0]['content'])
+        self.assertIn('Repère final : parler', messages[-2]['content'])
+        self.assertEqual(len([m for m in messages if m['role'] == 'user']), 11)
+
+    async def test_context_reports_earlier_history_with_retrievable_offset(self):
+        with self.db.write() as session:
+            for index in range(28):
+                previous, _ = store.reserve(session, 'arnaud', self.conversation,
+                    store.Send(request_id=uuid4().hex, text=f'Échange {index}'))
+                store.save_turn(session, 'arnaud', previous['id'], status='completed', answer='Réponse courte.',
+                                created_at=f'2026-01-01T10:00:{index:02}+00:00')
+            current, _ = store.reserve(session, 'arnaud', self.conversation,
+                                      store.Send(request_id=uuid4().hex, text='Suite'))
+        context, messages = self.runtime.context('arnaud', current)
+        self.assertTrue(context['recent_history_partial'])
+        self.assertEqual(context['earlier_history']['next_offset'], 25)
+        with self.db.transaction() as session:
+            earlier = store.turns(session, 'arnaud', self.conversation, offset=25, limit=5)
+        self.assertEqual([t['user_text'] for t in earlier['items']], [f'Échange {i}' for i in range(4)])
+        self.assertNotIn('Échange 0', json.dumps(messages))
+
     async def test_eof_preserves_partial_as_failed(self):
         async def transport(*_):
             yield {"type": "response.output_text.delta", "delta": "Texte reçu"}
