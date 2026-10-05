@@ -96,23 +96,33 @@ class ProposalTests(unittest.TestCase):
         for _, _, data in catalog.variants():
             original = workouts.preview(data)['blocks']
             for seconds in (900, 960, 1200, 1800, 3599, 3600):
-                if seconds - 600 < 30 * (len(original) - 2):
-                    with self.assertRaises(catalog.CatalogTargetError):
-                        catalog.adapt(data, catalog.CatalogTarget(duration_sec=seconds), None)
-                    continue
                 resized = catalog.adapt(data, catalog.CatalogTarget(duration_sec=seconds), None)
                 result = workouts.preview(resized)['blocks']
                 self.assertEqual(sum(b['sec'] for b in result), seconds)
                 self.assertEqual(result[0]['sec'], 300)
                 self.assertEqual(result[-1]['sec'], 300)
                 self.assertTrue(all(b['sec'] >= 30 for b in result))
-                self.assertEqual([(b['kind'], b['speed'], b['incline']) for b in result],
-                                 [(b['kind'], b['speed'], b['incline']) for b in original])
+                if isinstance(data.items[1], workouts.Repeat):
+                    active, recover = data.items[1].steps
+                    middle = result[1:-1]
+                    self.assertEqual(len(middle) % 2, 0)
+                    for effort, rest in zip(middle[::2], middle[1::2]):
+                        self.assertEqual((effort['kind'], effort['speed'], effort['incline']),
+                                         (active.kind, active.speed, active.incline))
+                        self.assertEqual((rest['kind'], rest['speed'], rest['incline']),
+                                         (recover.kind, recover.speed, recover.incline))
+                        self.assertLessEqual(effort['sec'], active.sec)
+                        self.assertLessEqual(rest['sec'], recover.sec)
+                        self.assertLessEqual(abs(effort['sec'] / active.sec - rest['sec'] / recover.sec), .04)
+                    self.assertLessEqual(len(result), 120)
+                else:
+                    self.assertEqual([(b['kind'], b['speed'], b['incline']) for b in result],
+                                     [(b['kind'], b['speed'], b['incline']) for b in original])
                 self.assertEqual(data.model_dump(), catalog.adapt(data, catalog.CatalogTarget(), None).model_dump())
 
     def test_catalog_calorie_solver_weight_and_bounds(self):
         for _, _, data in catalog.variants():
-            minimum = max(900, 600 + 30 * (len(workouts.preview(data)['blocks']) - 2))
+            minimum = 900
             lower = workouts.preview(catalog.resize(data, minimum), 80)['summary']['energy']['active_kcal']
             upper = workouts.preview(catalog.resize(data, 3600), 80)['summary']['energy']['active_kcal']
             for calories in (lower, (lower + upper) / 2, upper):
@@ -153,12 +163,14 @@ class ProposalTests(unittest.TestCase):
             self.assertEqual(response.status_code, 200)
             entries = response.json()
             self.assertEqual(len(entries), 18)
+            self.assertTrue(all(w['method']['purpose'] and w['method']['sources'] for w in entries))
             expected = next(w['workout'] for w in entries if w['template_id'] == 'brisk-walk' and w['level'] == 'easy')
             self.assertIsNotNone(expected)
             saved = self.client.post(url, json=payload | {'target': target}).json()
             self.assertEqual(saved['items'], expected['items'])
             self.assertEqual(saved['summary'], expected['summary'])
             self.assertEqual(saved['origin']['target'], target)
+            self.assertEqual(saved['origin']['catalog_revision'], catalog.CATALOG_REVISION)
             self.assertEqual(self.client.get(self.url + '/workouts/' + saved['id']).json(), saved)
         blocked = self.client.post(url + '/preview', json={'active_kcal': 5000}).json()
         self.assertTrue(all(w['workout'] is None and 'entre' in w['message'] for w in blocked))
@@ -167,6 +179,19 @@ class ProposalTests(unittest.TestCase):
         self.assertEqual(self.client.post('/api/profiles/inconnu/workouts/catalog/preview', json={}).status_code, 404)
         updated = self.client.get(url).json()
         self.assertEqual([w['items'] for w in original], [w['items'] for w in updated])
+
+    def test_run_walk_long_session_keeps_short_efforts_and_saved_versions(self):
+        data = next(data for identifier, _, data in catalog.variants() if identifier == 'run-walk' and data.level == 'easy')
+        short = workouts.preview(catalog.resize(data, 1800))
+        long = workouts.preview(catalog.resize(data, 3600))
+        self.assertEqual([b['sec'] for b in short['blocks'][1:-1]], [60, 90] * 8)
+        self.assertEqual([b['sec'] for b in long['blocks'][1:-1]], [60, 90] * 20)
+        # Les copies sont des versions figées : un changement du catalogue ne les réécrit pas.
+        saved = self.client.post(self.url + '/workouts', json={
+            'name': 'Ancienne alternance', 'goal': 'endurance', 'level': 'easy',
+            'items': [catalog.step('warmup', 5, 3.5), catalog.step('run', 10, 8.1), catalog.step('cooldown', 5, 3)]}).json()
+        self.client.post(self.url + '/workouts/catalog/preview', json={'duration_sec': 3600})
+        self.assertEqual(self.client.get(self.url + '/workouts/' + saved['id']).json(), saved)
 
     def test_concurrent_idempotent_acceptance_and_deleted_result(self):
         p = self.proposal()

@@ -98,6 +98,19 @@ export function Discover({ profile }: { profile: string }) {
       <div className="mt-4">{feedback}</div>
       {selected?.message && <p role="status" className="mt-4 text-subhead text-orange">{selected.message}</p>}
       {mode === 'calories' && selected?.weight_kg === null && <WeightLink className="mt-3" />}
+      {selected && <details className="group mt-4 rounded-[12px] bg-surface-2">
+        <summary className="min-h-11 cursor-pointer px-4 py-3 text-subhead">Pourquoi ce programme ?</summary>
+        <dl className="space-y-3 px-4 pb-4 text-subhead">
+          {([['But', selected.method.purpose], ['Construction', selected.method.structure],
+            ['Adaptation', selected.method.adaptation], ['Effort recherché', selected.method.effort]] as const).map(([label, text]) => <div key={label}>
+            <dt className="font-semibold">{label}</dt><dd className="mt-1 text-label-2">{text}</dd>
+          </div>)}
+        </dl>
+        <p className="px-4 pb-3 text-footnote text-label-2">{selected.method.limits}</p>
+        <ul className="space-y-1 px-4 pb-4">{selected.method.sources.map(source => <li key={source.url}>
+          <a href={source.url} target="_blank" rel="noopener noreferrer" className="inline-flex min-h-11 items-center text-footnote text-accent">{source.title}</a>
+        </li>)}</ul>
+      </details>}
       {shown && <>
         <div className="mt-4"><WorkoutLabels data={shown} /><WorkoutSummary data={shown} compact /></div>
         <WorkoutBlocks data={shown} />

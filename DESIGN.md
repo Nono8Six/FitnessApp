@@ -127,6 +127,8 @@ Les prévisions affichent durée, distance, **kcal actives estimées** et déniv
 
 Dans Découvrir, les réglages Durée/Calories et difficulté précèdent les formats. Le même réglage apparaît dans la feuille d’aperçu. La cible calorique porte sur les calories actives estimées avec le poids du profil ; les formats hors plage affichent leur limite. Toute modification recalcule les mesures et segments côté serveur, avec un chargement explicite qui empêche l’ajout d’un ancien aperçu. Les mesures dans cette feuille restent en deux colonnes, même sur PC, pour conserver des libellés et valeurs lisibles.
 
+La feuille contient Pourquoi ce programme ?, replié par défaut : but, construction, adaptation, effort recherché et sources consultables. Les liens ouvrent les références officielles dans un autre onglet. Les vitesses restent des valeurs de départ, jamais une mesure de capacité ; le texte distingue les principes sourcés des paramètres FitnessApp. Les alternances ajoutent des cycles en gardant des passages bornés, plutôt que d’étirer une course ou une récupération.
+
 ## 8. Mouvement
 
 Courbe `cubic-bezier(.32, .72, 0, 1)`.

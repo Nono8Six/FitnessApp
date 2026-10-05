@@ -16,13 +16,17 @@ export interface Energy { active_kcal: number | null; total_kcal: number | null;
 export interface Preview { blocks: Block[]; summary: { sec: number; km: number; count: number; minSpeed: number; maxSpeed: number; ascent_m: number; energy: Energy } }
 export interface Workout extends WorkoutInput, Preview {
   id: string; version: number; author: 'human' | 'chatgpt'; author_name: string; created_at: string
-  origin: { kind: 'catalog' | 'chatgpt'; template_id?: string; level?: Level; target?: CatalogTarget; conversation_id?: string; turn_id?: string; proposal_id?: string } | null
+  origin: { kind: 'catalog' | 'chatgpt'; template_id?: string; level?: Level; target?: CatalogTarget; catalog_revision?: string; conversation_id?: string; turn_id?: string; proposal_id?: string } | null
 }
 export interface CatalogWorkout extends WorkoutInput, Preview { template_id: string; description: string; goal: Goal; level: Level }
 export interface CatalogTarget { duration_sec?: number; active_kcal?: number }
+export interface CatalogMethod {
+  purpose: string; structure: string; adaptation: string; effort: string; limits: string
+  sources: { title: string; url: string }[]
+}
 export interface CatalogOption {
   template_id: string; name: string; description: string; goal: Goal; level: Level
-  weight_kg: number | null; workout: CatalogWorkout | null; message: string | null
+  weight_kg: number | null; method: CatalogMethod; workout: CatalogWorkout | null; message: string | null
 }
 export const randomId = () => Array.from(crypto.getRandomValues(new Uint8Array(16)), v => v.toString(16).padStart(2, '0')).join('')
 export interface LibraryData { workouts: Workout[]; selected_id: string | null }
@@ -51,6 +55,10 @@ export const isWorkout = (v: unknown): v is Workout => isPreview(v) && isRecord(
 const isLibrary = (v: unknown): v is LibraryData => isRecord(v) && Array.isArray(v.workouts)
   && v.workouts.every(isWorkout) && (v.selected_id === null || typeof v.selected_id === 'string')
 const isSelection = (v: unknown): v is { selected_id: string | null } => isRecord(v) && (v.selected_id === null || typeof v.selected_id === 'string')
+const isCatalogMethod = (v: unknown): v is CatalogMethod => isRecord(v)
+  && ['purpose', 'structure', 'adaptation', 'effort', 'limits'].every(k => typeof v[k] === 'string')
+  && Array.isArray(v.sources) && v.sources.length > 0 && v.sources.every(s => isRecord(s)
+    && typeof s.title === 'string' && typeof s.url === 'string' && /^https:\/\//.test(s.url))
 export const isWorkoutInput = (v: unknown): v is WorkoutInput => isRecord(v) && typeof v.name === 'string'
   && Array.isArray(v.items) && v.items.every(isItem)
   && (v.goal === null || v.goal === undefined || Object.hasOwn(GOALS, String(v.goal)))
@@ -61,6 +69,7 @@ export const previewCatalog = (profile: string, target: CatalogTarget) => api(`$
   validate: (v): v is CatalogOption[] => Array.isArray(v) && v.length > 0 && v.every(w => isRecord(w)
     && typeof w.template_id === 'string' && typeof w.name === 'string' && typeof w.description === 'string'
     && Object.hasOwn(GOALS, String(w.goal)) && Object.hasOwn(LEVELS, String(w.level))
+    && isCatalogMethod(w.method)
     && (w.weight_kg === null || finite(w.weight_kg))
     && ((w.workout === null && typeof w.message === 'string')
       || (isPreview(w.workout) && isWorkoutInput(w.workout) && isRecord(w.workout)
