@@ -24,6 +24,7 @@ export interface Session {
   command: { action: string; value: number | null; status: 'sent' | 'accepted' | 'observed' | 'refused' | 'unknown' } | null
   distance_m: number | null; distance_quality: 'fresh' | 'stale' | 'absent' | 'partial'
   recording: { status: 'recording' | 'saved' | 'error'; error: string | null; persisted_at: string | null; persisted_s: number; pending: number; lost_entries: number }
+  totals: { speed_avg: number | null; coverage: { speed: number | null; energy: number | null }; energy: { active_kcal: number | null; outside_range: boolean } }
 }
 interface AdjustmentRange { min: number; max: number; step: number }
 interface Feed { type: 'snapshot' | 'state'; instance_id: string; sequence: number; session: Session; device: DeviceState; samples: LiveSample[]; markers: { t: number; label: string }[] }
@@ -42,6 +43,9 @@ function isFeed(v: unknown): v is Feed {
   const r = s.recording
   if (!isRecord(r) || !['recording', 'saved', 'error'].includes(String(r.status)) || !nullableString(r.error)
     || !nullableString(r.persisted_at) || !finite(r.persisted_s) || !finite(r.pending) || !finite(r.lost_entries)) return false
+  const t = s.totals
+  if (!isRecord(t) || !nullableNumber(t.speed_avg) || !isRecord(t.energy) || !nullableNumber(t.energy.active_kcal)
+    || typeof t.energy.outside_range !== 'boolean' || !isRecord(t.coverage) || !nullableNumber(t.coverage.speed) || !nullableNumber(t.coverage.energy)) return false
   if (s.id !== null && (!isWorkout(s.workout) || !isProfile(s.profile)
     || !Number.isSafeInteger(s.block_index) || Number(s.block_index) < 0 || Number(s.block_index) >= s.workout.blocks.length)) return false
   if (!Array.isArray(s.targets) || !s.targets.every(isLimits) || s.targets.length !== (isWorkout(s.workout) ? s.workout.blocks.length : 0)

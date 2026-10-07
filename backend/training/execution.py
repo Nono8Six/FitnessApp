@@ -15,6 +15,7 @@ from ..device import ftms
 from . import workouts
 from .profiles import get_profile
 from ..recording.store import Recorder
+from ..recording.metrics import Totals
 
 LOGGER = logging.getLogger(__name__)
 TERMINAL = {"completed", "stopped", "cancelled"}
@@ -64,6 +65,7 @@ class Execution:
         self.distance_partial = False
         self.recovered = False
         self.recorder = Recorder(self)
+        self.totals = Totals(None)
         self.controller.recording_listener = self.recorder.device_event
 
     @property
@@ -152,6 +154,7 @@ class Execution:
         self.owner = viewer
         self.owner_seen = now
         self.workout, self.profile = workout, profile
+        self.totals = Totals(profile["weight_kg"])
         self.targets = [{"speed": b["speed"], "incline": b["incline"]} for b in workout["blocks"]]
         self.applied_targets = {"speed": None, "incline": None}
         self.offsets = {"speed": 0.0, "incline": 0.0}
@@ -495,6 +498,7 @@ class Execution:
             "limits": self.limits, "command": c.last_command,
             "distance_m": round(self.distance, 1) if self.distance_quality != "absent" else None,
             "distance_quality": self.distance_quality,
+            "totals": self.totals.result(self.samples[-1]["active_s"] if self.samples else 0),
             **({"recording": self.recorder.status()} if include_recording else {}),
         })
 
@@ -533,6 +537,8 @@ class Execution:
                              "applied_speed": self.applied_targets["speed"], "applied_incline": self.applied_targets["incline"],
                              "at": datetime.now(timezone.utc).isoformat(),
                              "measurements": self.device.snapshot()["measurements"]}
+        if self.samples:
+            self.totals.add(self.samples[-1], sample)
         self.recorder.add("sample", sample, source="simulation" if c.simulation else "ftms", at=sample["at"])
         self.samples.append(sample)
 

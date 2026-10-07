@@ -6,7 +6,7 @@ Les entrées sont déjà validées par les modèles de séance et de profil.
 from math import hypot
 
 
-def estimate(blocks: list[dict], weight_kg: float | None) -> dict:
+def estimate(blocks: list[dict], weight_kg: float | None, *, rounded: bool = True) -> dict:
     active = total = ascent = 0.0
     outside_range = False
     for block in blocks:
@@ -25,10 +25,10 @@ def estimate(blocks: list[dict], weight_kg: float | None) -> dict:
         # La distance du tapis suit la bande ; la pente est élévation / horizontale.
         ascent += speed * minutes * grade / hypot(1, grade)
     return {
-        "ascent_m": round(ascent, 1),
+        "ascent_m": round(ascent, 1) if rounded else ascent,
         "energy": {
-            "active_kcal": round(active, 1) if weight_kg is not None else None,
-            "total_kcal": round(total, 1) if weight_kg is not None else None,
+            "active_kcal": (round(active, 1) if rounded else active) if weight_kg is not None else None,
+            "total_kcal": (round(total, 1) if rounded else total) if weight_kg is not None else None,
             "weight_kg": weight_kg,
             "automatic_gait": True,
             "outside_range": outside_range,

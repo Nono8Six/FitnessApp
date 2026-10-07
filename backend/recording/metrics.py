@@ -9,11 +9,47 @@ VERSION = "recording-v1-acsm-v1"
 MOVING = {"running", "transitioning", "adjusting", "pausing", "stopping"}
 
 
+class Totals:
+    """Même réduction pour le bilan et le Direct, sans stocker tous les points."""
+    def __init__(self, weight):
+        self.weight = weight
+        self.covered = {"speed": 0.0, "incline": 0.0, "energy": 0.0}
+        self.sums = {"speed": 0.0, "incline": 0.0}
+        self.active_kcal = self.total_kcal = 0.0
+        self.outside_range = False
+
+    def add(self, a, b):
+        dt = b["t"] - a["t"]
+        da = max(0, b["active_s"] - a["active_s"])
+        valid = {k: 0.0 for k in self.covered}
+        if not (0 < dt <= 2 and da > 0 and a.get("phase") not in {"unknown", "paused"}):
+            return valid
+        for field in self.sums:
+            if a.get(field) is not None and b.get(field) is not None:
+                valid[field] = da
+                self.covered[field] += da
+                self.sums[field] += a[field] * da
+        if valid["speed"] and valid["incline"]:
+            valid["energy"] = da
+            self.covered["energy"] += da
+            energy = estimate([{"speed": a["speed"], "incline": a["incline"], "sec": da}], self.weight, rounded=False)["energy"]
+            self.active_kcal += energy["active_kcal"] or 0
+            self.total_kcal += energy["total_kcal"] or 0
+            self.outside_range |= energy["outside_range"]
+        return valid
+
+    def result(self, active):
+        return {**{f"{k}_avg": round(self.sums[k] / self.covered[k], 2) if self.covered[k] else None for k in self.sums},
+                "coverage": {k: round(min(1, v / active), 4) if active else None for k, v in self.covered.items()},
+                "valid_s": {k: round(v, 2) for k, v in self.covered.items()},
+                "energy": {"active_kcal": round(self.active_kcal, 1) if self.covered["energy"] and self.weight is not None else None,
+                           "total_kcal": round(self.total_kcal, 1) if self.covered["energy"] and self.weight is not None else None,
+                           "weight_kg": self.weight, "automatic_gait": True, "outside_range": self.outside_range}}
+
+
 def calculate(samples, checkpoint, weight, blocks):
     active = checkpoint.get("active_s", 0)
-    covered = {"speed": 0.0, "incline": 0.0, "energy": 0.0}
-    sums = {"speed": 0.0, "incline": 0.0}
-    energy_blocks = []
+    totals = Totals(weight)
     distance = 0.0
     distance_valid = 0.0
     distance_expected = 0.0
@@ -25,19 +61,13 @@ def calculate(samples, checkpoint, weight, blocks):
         if dt <= 0:
             continue
         da = max(0, b["active_s"] - a["active_s"])
-        contiguous = 0 < dt <= 2 and a.get("phase") not in {"unknown", "paused"}
+        valid = totals.add(a, b)
         block = per_block[a.get("block_index", 0)]
         block["active_s"] += da
         for field in ("speed", "incline"):
-            if contiguous and a.get(field) is not None and b.get(field) is not None:
-                covered[field] += da
-                sums[field] += a[field] * da
+            if valid[field]:
                 block[f"{field}_valid_s"] += da
                 block[f"{field}_sum"] += a[field] * da
-        if contiguous and da > 0 and all(p.get(k) is not None for p in (a, b) for k in ("speed", "incline")):
-            covered["energy"] += da
-            # Une vitesse nulle ne crée pas de calories actives de locomotion.
-            energy_blocks.append({"speed": a["speed"], "incline": a["incline"], "sec": da})
         if b.get("phase") in MOVING or a.get("phase") in MOVING:
             distance_expected += max(0, dt)
             ca, cb = a.get("counter_m"), b.get("counter_m")
@@ -46,8 +76,6 @@ def calculate(samples, checkpoint, weight, blocks):
                 distance_valid += dt
             else:
                 partial = True
-    energy = estimate(energy_blocks, weight)["energy"] if covered["energy"] > 0 else {
-        "active_kcal": None, "total_kcal": None, "weight_kg": weight, "outside_range": False}
     for block in per_block:
         for field in ("speed", "incline"):
             valid = block.pop(f"{field}_valid_s")
@@ -59,10 +87,7 @@ def calculate(samples, checkpoint, weight, blocks):
             "distance_m": round(distance, 1) if distance_valid else None,
             "distance_quality": "absent" if not distance_valid else "partial" if partial else "complete",
             "distance_coverage": round(distance_valid / distance_expected, 4) if distance_expected else None,
-            "speed_avg": round(sums["speed"] / covered["speed"], 2) if covered["speed"] else None,
-            "incline_avg": round(sums["incline"] / covered["incline"], 2) if covered["incline"] else None,
-            "coverage": {k: round(min(1, v / active), 4) if active else None for k, v in covered.items()},
-            "valid_s": {k: round(v, 2) for k, v in covered.items()}, "energy": energy, "blocks": per_block}
+            **totals.result(active), "blocks": per_block}
 
 
 def calculate_version(version, samples, checkpoint, weight, blocks):

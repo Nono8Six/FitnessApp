@@ -18,7 +18,7 @@ from sqlalchemy import func, select
 
 from backend.app import create_app
 from backend.recording import service
-from backend.recording.metrics import calculate
+from backend.recording.metrics import calculate, Totals
 from backend.storage.models import RecordedEntry, RecordedSession
 from backend.training.profiles import ProfileUpdate, update_profile
 from backend.training.workouts import WorkoutInput, create_workout, delete_workout
@@ -73,6 +73,12 @@ class CalculationTests(unittest.TestCase):
         self.assertEqual(m["valid_s"]["speed"], 10800)
         self.assertEqual(m["distance_m"], 10800)
         self.assertEqual(sum(b["active_s"] for b in m["blocks"]), 10800)
+        direct = Totals(80)
+        for a, b in zip(rows, rows[1:]):
+            direct.add(a, b)
+        # Le Direct garde ses totaux même après éviction des 9 000 points affichables.
+        self.assertEqual(direct.result(10800)["energy"], m["energy"])
+        self.assertEqual(direct.result(10800)["speed_avg"], m["speed_avg"])
 
     def test_no_data_never_becomes_zero(self):
         m = self.calculate([], 0)
@@ -141,6 +147,9 @@ class RecordingTests(unittest.IsolatedAsyncioTestCase):
             update_profile(s, "arnaud", ProfileUpdate(weight_kg=90.0, name="Nom modifié"))
             delete_workout(s, "arnaud", self.workout["id"])
         data = self.read()
+        live = self.e.snapshot()["totals"]
+        self.assertEqual(live["speed_avg"], data["metrics"]["speed_avg"])
+        self.assertEqual(live["energy"], data["metrics"]["energy"])
         self.assertEqual(data["profile"]["weight_kg"], 80)
         self.assertEqual(data["profile"]["name"], "Arnaud")
         self.assertEqual(data["workout"]["name"], WORKOUT.name)

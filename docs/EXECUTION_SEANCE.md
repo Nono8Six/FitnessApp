@@ -20,6 +20,8 @@ Après fin ou arrêt confirmé, Direct attend la confirmation de clôture durabl
 
 Le calcul `recording-v1-acsm-v1` utilise les échantillons persistés et le poids figé. Moyennes : pondération par le delta de temps actif, valeur de l’extrémité gauche, deux extrémités disponibles espacées d’au plus 2 s, sans traverser une pause ou un état inconnu. Couverture : secondes valides / secondes actives. Distance : deltas non négatifs du compteur pendant l’effort et la décélération ; compteur absent, coupure ou remise à zéro rendent la lecture partielle. Aucune distance vitesse × temps. Énergie : méthode ACSM du service partagé sur les seules secondes où vitesse et pente sont conjointement disponibles ; ≈ et limites visibles. Absence et zéro restent distincts.
 
+Direct affiche les calories actives ≈ et la vitesse moyenne en km/h, calculées par cette même réduction Python à chaque nouvel échantillon. Les sommes utilisent les valeurs non arrondies ; seul le résultat affiché est arrondi. Les totaux ne disparaissent pas lorsque les anciens points du buffer Direct sont évincés. La pause ne modifie ni dépense ni moyenne ; la couverture et les limites ACSM figurent dans État du tapis et des mesures.
+
 Les graphiques du bilan distinguent mesure et consigne acceptée, partagent axe temporel et curseur et affichent les trous. Tous les points se consultent, en séance entière ou fenêtres de 5 min. Les blocs exposent programme initial, plage de consignes appliquées et moyenne mesurée. Événements et qualité se développent à la demande. Profil et programme sont figés ; une modification/suppression ultérieure du programme ne modifie pas le bilan. La suppression du profil supprime ses bilans en cascade.
 
 ## Contrôle et limites

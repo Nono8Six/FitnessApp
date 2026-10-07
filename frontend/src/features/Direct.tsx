@@ -252,7 +252,10 @@ export function Direct() {
           <div className="live-secondary">
             <div><span className="text-footnote text-label-2">Distance{ s.distance_quality === 'partial' ? ' · partielle' : ''}</span><p className={cx('num', available && ['fresh','partial'].includes(s.distance_quality) ? 'text-distance' : 'text-label-3')}>{available && ['fresh','partial'].includes(s.distance_quality) && s.distance_m !== null ? dec2(s.distance_m / 1000) : '--'}<small>KM</small></p></div>
             <div><span className="text-footnote text-label-2">Pente mesurée</span><p className={cx('num', incline === null ? 'text-label-3' : 'text-incline')}>{incline === null ? '--' : dec1(incline)}<small>%</small></p></div>
+            <div><span className="text-footnote text-label-2">Calories actives</span><p className={cx('num', available && s.totals.energy.active_kcal !== null ? 'text-energy' : 'text-label-3')}>{available && s.totals.energy.active_kcal !== null ? `≈ ${Math.round(s.totals.energy.active_kcal)}` : '--'}<small>KCAL</small></p></div>
+            <div><span className="text-footnote text-label-2">Vitesse moyenne</span><p className={cx('num', available && s.totals.speed_avg !== null ? 'text-speed' : 'text-label-3')}>{available && s.totals.speed_avg !== null ? dec1(s.totals.speed_avg) : '--'}<small>KM/H</small></p></div>
           </div>
+          {available && ((s.totals.coverage.speed !== null && s.totals.coverage.speed < .99) || (s.totals.coverage.energy !== null && s.totals.coverage.energy < .99)) && <p className="mt-1 text-caption text-orange">Moyenne et estimation sur les mesures disponibles</p>}
         </div>
         <div className="live-controls-wrap">
           {error && <p role="alert" className={cx('live-notice', s.phase === 'unknown' && 'is-urgent')}>{error}</p>}
@@ -293,6 +296,10 @@ export function Direct() {
             ['Tapis', e.feed?.device.phase === 'connected' ? 'Connecté' : 'Déconnecté · bande inconnue'],
             ['Commande', s.command ? `${s.command.status === 'sent' ? 'Envoyée' : s.command.status === 'accepted' ? 'Acceptée · effet attendu' : s.command.status === 'observed' ? 'Effet observé' : s.command.status === 'unknown' ? 'Résultat inconnu' : 'Refusée'}` : 'Aucune'],
             ['Pause cumulée', clock(Math.floor(s.pause_s))],
+            ['Calories actives', 'Estimation ACSM · poids figé au départ'],
+            ['Couverture calories', s.totals.coverage.energy === null ? '--' : `${Math.round(s.totals.coverage.energy * 100)} % du temps actif`],
+            ['Couverture vitesse moyenne', s.totals.coverage.speed === null ? '--' : `${Math.round(s.totals.coverage.speed * 100)} % du temps actif`],
+            ['Limite du calcul', s.totals.energy.outside_range ? 'Vitesse hors des plages usuelles ACSM · estimation moins sûre' : 'Calories estimées, pas une mesure physiologique'],
             ['Autorisation restante', clock(s.authorization_remaining_s)],
             ...(['speed_kmh', 'incline_pct'] as const).map(key => {
               const m = e.feed!.device.measurements[key]
