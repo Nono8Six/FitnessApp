@@ -35,7 +35,10 @@ export function ExecutionSheets() {
   const open = e.preparing || e.confirmingResume
   const resume = e.confirmingResume
   useEffect(() => {
-    setKey(false); setClear(false); setPrepared(undefined); setIssue(undefined)
+    setKey(false); setClear(false)
+  }, [e.preparing, e.confirmingResume, e.selected])
+  useEffect(() => {
+    setPrepared(undefined); setIssue(undefined)
     if (!e.preparing || !e.selected) return
     let active = true
     setChecking(true)
@@ -46,7 +49,8 @@ export function ExecutionSheets() {
   const close = () => { if (!e.pending) { e.clearSelected(); e.setConfirmingResume(false) } }
   const mode = resume ? s?.mode : prepared?.mode ?? e.feed?.device.mode
   const limits = resume ? s?.limits : prepared?.limits
-  const live = e.status === 'live'
+  const live = e.status === 'live' && e.now - e.receivedAt < 5000
+  const connected = live && e.feed?.device.phase === 'connected'
   const ready = resume ? s?.phase === 'paused' && s.owned_by_me && s.restart_delay_s === 0 && currentMeasurement(e, 'speed_kmh') === 0
     : prepared?.ready && e.feed?.device.phase === 'connected' && currentMeasurement(e, 'speed_kmh') === 0
   const message = issue ?? e.error ?? (resume ? s?.restart_delay_s ? `La bande se stabilise · encore ${s.restart_delay_s} s` : undefined : prepared?.issue)
@@ -58,15 +62,15 @@ export function ExecutionSheets() {
     <p className="mt-2 text-title2 break-words">{resume ? s?.workout?.name : e.selected?.workout.name}</p>
     <p className="mt-1 text-subhead text-label-2">{resume ? `${s?.profile?.name} · reprise à ${clock(Math.floor(s?.active_s ?? 0))}` : `${prepared?.profile.name ?? ''} · ${clock(e.selected?.workout.summary.sec ?? 0)}`}</p>
     <div className="mt-5 flex min-h-11 items-center gap-3 text-subhead">
-      <Bluetooth size={20} className={e.feed?.device.phase === 'connected' ? 'text-green' : 'text-label-2'} />
+      <Bluetooth size={20} className={connected ? 'text-green' : 'text-label-2'} />
       <span className="flex-1">{e.feed?.device.device_name ?? 'Tapis non connecté'}</span>
-      {checking ? <span role="status" className="text-label-2">Vérification…</span> : e.feed?.device.phase === 'connected' && <Check size={18} className="text-green" />}
+      {checking ? <span role="status" className="text-label-2">Vérification…</span> : connected && <Check size={18} className="text-green" />}
     </div>
     {message && <p role="alert" className="mt-2 rounded-[12px] bg-orange/15 px-4 py-3 text-subhead text-orange">{message}</p>}
-    {!live && <p role="alert" className="mt-2 text-subhead text-orange">Observation du PC interrompue. Attendez la reconnexion.</p>}
+    {!live && <p role="alert" className="mt-2 text-subhead text-orange">{e.status === 'loading' ? 'Connexion au PC en cours…' : 'Contact avec le PC perdu. Reconnexion en cours…'}</p>}
     {(!ready && !checking) && <div className="mt-3 flex gap-2">
       <Button variant="gray" size="md" onClick={settings}>Réglages du tapis</Button>
-      {!resume && <Button variant="plain" size="md" onClick={() => setRevision(v => v + 1)}>Revérifier</Button>}
+      {!resume && <Button variant="plain" size="md" disabled={checking} onClick={() => setRevision(v => v + 1)}>Revérifier</Button>}
     </div>}
     <Confirmations keyReady={keyReady} clear={clear} setKey={setKey} setClear={setClear} />
     <p className="mt-4 px-1 text-footnote text-label-2">Gardez cet écran ouvert. Si le téléphone suspend la page, le PC demandera l’arrêt après 12 s sans contact.</p>
