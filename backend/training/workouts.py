@@ -17,6 +17,8 @@ from .energy import estimate
 
 MAX_SECONDS = 3600
 MAX_SEGMENTS = 120
+MAX_SPEED = 16.0
+MAX_INCLINE = 10.0
 KIND_LABEL = {"warmup": "Échauffement", "steady": "Allure continue", "run": "Course",
               "recover": "Récupération", "cooldown": "Retour au calme"}
 
@@ -28,8 +30,8 @@ class Input(BaseModel):
 class Step(Input):
     kind: Literal["warmup", "steady", "run", "recover", "cooldown"]
     sec: Annotated[int, Field(ge=30, le=MAX_SECONDS)]
-    speed: Annotated[float, Field(ge=1, le=16)]
-    incline: Annotated[float, Field(ge=0, le=10)]
+    speed: Annotated[float, Field(ge=1, le=MAX_SPEED)]
+    incline: Annotated[float, Field(ge=0, le=MAX_INCLINE)]
     # Compatibilité des anciennes versions/clients : accepté, ignoré par le calcul,
     # et absent des nouveaux snapshots. Le choix dépend uniquement de la vitesse.
     gait: Literal["auto", "walk", "run"] = Field(default="auto", exclude=True)

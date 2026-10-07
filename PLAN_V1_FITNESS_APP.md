@@ -337,7 +337,7 @@ Contrôles de ce complément : build et 46 tests ciblés réussis (calculs, API,
 
 ### Brique 8 · Exécuter une séance
 
-**Livré :** depuis Aujourd’hui ou la fiche d’une séance, Commencer, confirmer la clé et la bande, compte à rebours annulable, puis Direct, Pause, Reprendre au même point et Arrêter. Le même moteur utilise le RUN500 réel ou le simulateur, selon le mode du serveur. Le chemin réel est implémenté dès cette brique ; la brique 10 reçoit le matériel et élargit progressivement ses limites.
+**Livré :** depuis Aujourd’hui ou la fiche d’une séance, Commencer, confirmer la clé et la bande, compte à rebours annulable, puis Direct, Pause, Reprendre au même point et Arrêter. Le même moteur utilise le RUN500 réel ou le simulateur, selon le mode du serveur. Le chemin réel est implémenté dès cette brique ; la brique 10 reçoit le parcours sur le matériel.
 
 **Travail :**
 1. Horloge et transitions sur le PC ; profil, version et blocs figés. Programmes de l’application jusqu’à 60 min et 120 segments, sans reprendre les limites de durée du diagnostic.
@@ -345,7 +345,7 @@ Contrôles de ce complément : build et 46 tests ciblés réussis (calculs, API,
 3. Autorisation absolue : durée prévue + 30 s par bloc + 15 min de pause cumulée + 15 s. Aucun renouvellement par heartbeat. L’écran propriétaire envoie son contact toutes les 3 s ; après 12 s de silence, le PC demande STOP. Un observateur ne renouvelle pas cette présence. Réduire et naviguer conservent le propriétaire ; recharger devient un nouvel observateur, sans reprise automatique.
 4. Pause demandée : temps actif figé, point conservé. Reprise réservée au propriétaire avec les deux nouvelles confirmations et préconditions revérifiées. Les pauses confirmées et la remise en mouvement sont exclues du temps actif ; les transitions entre blocs pendant l’effort y restent incluses.
 5. Direct plein écran : vitesse dominante et durée jaune ; commandes de 68 px ancrées sur téléphone, deux colonnes sur PC. Capsule mobile et activité latérale, graphiques SVG synchronisés (1 min / 5 min / séance), curseur daté souris/toucher/clavier, trous pour mesures indisponibles, buffers bornés. Valeur absente distincte de zéro ; aucun panneau cardio vide.
-6. Réel : **1–2,5 km/h et 0–1 %**, plage/pas lus également imposés. Simulation : jusqu’à 16 km/h et 10 %, selon ses capacités. Programme incompatible refusé avec le bloc et la limite, sans correction silencieuse. Les plafonds 4 km/h/3 % et l’autorisation de 10 min du POC restent distincts.
+6. Réel et simulation : **1–16 km/h et 0–10 %**, restreints aux plages/pas effectivement lus. Plafonds initiaux de 2,5 km/h / 1 % retirés le 7 octobre sur demande d’Arnaud. Programme incompatible refusé avec le bloc et la plage, sans correction silencieuse ; une plage inconnue bloque le démarrage. Les plafonds 4 km/h/3 % et l’autorisation de 10 min du POC restent distincts.
 7. Ajustement en direct demandé le 5 octobre : boutons − / + de vitesse et de pente ; décalage commun au bloc actuel et aux suivants, conservé après pause/reprise. Séance enregistrée et durées intactes. Propriétaire seul ; tous les blocs restants validés avant application, sans écrêtage ni file de commandes. Pause/STOP prioritaires pendant l’ajustement.
 
 **Vérifications du complément :** 29 tests ciblés réussis (20 moteur/API, 9 tapis) et build TypeScript/Vite. Chrome en simulation : +0,5 km/h et +1 % appliqués au bloc actuel, conservés après Pause/Reprendre et observés au passage suivant (3 km/h / 2 %), puis STOP confirmé. Nouveau démarrage sans ancien décalage. Typographie corrigée : la virgule de 2,5 ne recouvre plus le libellé ; 16,0 km/h et 60′00″ tiennent à 360 × 640, 390 × 844, 900 × 768 et 1366 × 768. Boutons de réglage de 44 px ; les deux lignes restent accessibles sur le petit écran. Données d’essai séparées ; aucune commande matérielle réelle. Serveur 4330 et JS/CSS du build vérifiés ; tables existantes et coffre ChatGPT conservés lors de la relance.
@@ -359,11 +359,11 @@ Contrôles de ce complément : build et 46 tests ciblés réussis (calculs, API,
 
 **Limites :** le verrouillage ou la suspension du téléphone peuvent arrêter ses heartbeats. Si le PC et le Bluetooth restent utilisables, le PC demande STOP après 12 s ; une perte du PC/BLE laisse l’arrêt matériel non garanti. Résultat incertain : STOP physique, déconnexion/reconnexion passive, mesures fraîches à zéro, puis clôture de la séance interrompue, sans réarmement. Réglages > Tapis affiche honnêtement le contrôle actif et refuse la déconnexion pendant une séance. Détails et API dans [Exécution d’une séance](docs/EXECUTION_SEANCE.md).
 
-**Correction du 7 octobre 2026 après usage sur téléphone :** « Revérifier » conserve les deux confirmations ; une nouvelle préparation ou reprise les remet à zéro. Le témoin vert du tapis exige un état PC récent ; une perte de contact annonce la reconnexion. Défaut reproduit puis correction vérifiée dans Chrome à 390 × 844, console sans erreur, build réussi. Serveur habituel vérifié en mode réel ; la séance Cardio continu à 3–4,5 km/h reste bloquée par le plafond reçu de 2,5 km/h. Aucune commande matérielle envoyée. La coupure d’observation du téléphone n’a pas été reproduite ; les journaux indiquent une coupure Bluetooth le 6 octobre vers 19 h 29, sans établir sa cause.
+**Correction du 7 octobre 2026 après usage sur téléphone :** « Revérifier » conserve les deux confirmations ; une nouvelle préparation ou reprise les remet à zéro. Le témoin vert du tapis exige un état PC récent ; une perte de contact annonce la reconnexion. Défaut reproduit puis correction vérifiée dans Chrome à 390 × 844, console sans erreur, build réussi. Le serveur est en mode réel ; le plafond initial qui bloquait Cardio continu à 3–4,5 km/h est retiré sur instruction d’Arnaud. Contrôles ciblés moteur/tapis : préparation et exécution 3 → 4,5 km/h / 2 %, arrêt confirmé, validation 16 km/h / 10 %, respect de capacités plus basses et refus de plage inconnue, avec transport BLE de test. Aucune commande matérielle envoyée. La coupure d’observation du téléphone n’a pas été reproduite ; les journaux indiquent une coupure Bluetooth le 6 octobre vers 19 h 29, sans établir sa cause. Les plages complètes sont autorisées mais la réception physique de l’application reste ouverte.
 
 **Livraison logicielle du 5 octobre 2026 :** serveur habituel 4330 relancé, API d’exécution disponible, JS/CSS servis identiques au build ; neuf tables SQLite et coffre ChatGPT identiques avant/après, intégrité et clés étrangères conformes. Sources du lanceur, manifests et lockfiles inchangés, aucune migration ni recherche Bluetooth réelle. Vérification isolée sur 4331, données extérieures distinctes. La relance par script a rencontré un fichier npm verrouillé : dépendances restaurées par `npm ci` sans changement du lockfile, préparation et build ensuite réussis ; serveur lancé directement et toujours arrêtable par le canal local existant du lanceur.
 
-**Pas dans cette brique :** conservation durable, bilan, historique, réception physique du nouveau parcours ou extension du périmètre reçu. Les commandes réelles sont disponibles ; aucun essai moteur RUN500 n’a été réalisé pour cette livraison.
+**Pas dans cette brique :** conservation durable, bilan, historique, réception physique du nouveau parcours. Les commandes réelles sont disponibles ; aucun essai moteur RUN500 n’a été réalisé pour cette livraison.
 
 ### Brique 9 · Enregistrer et revoir
 
@@ -385,15 +385,15 @@ Contrôles de ce complément : build et 46 tests ciblés réussis (calculs, API,
 
 **Livré :** les séances fonctionnent sur le vrai tapis, dans un périmètre reçu et documenté.
 
-**Travail :** réception du moteur déjà implémenté en brique 8, avec présence humaine et autorisation à chaque palier.
+**Travail :** réception du moteur déjà implémenté en brique 8, avec présence humaine. Les plages complètes annoncées sont autorisées depuis le 7 octobre ; les essais documentent leur fonctionnement physique sans servir de verrou logiciel.
 1. Séance courte à 1–2,5 km/h : démarrage, transitions, pause, reprise, arrêt.
 2. Séance de 30 min à basse vitesse.
 3. Pertes : clé retirée, Bluetooth coupé, téléphone verrouillé, veille du PC, arrêt du processus.
-4. Extension des vitesses et pentes palier par palier ; chaque palier reçu élargit les limites du moteur.
+4. Vérification progressive des vitesses et pentes dans les plages annoncées par le tapis.
 
 **Fait quand :**
 - [ ] Chaque palier a sa preuve (commande, réponse, mesure, observation humaine).
-- [ ] Les limites du moteur correspondent exactement au périmètre reçu.
+- [ ] Le fonctionnement physique est documenté dans les plages annoncées et autorisées ; les cas encore non essayés restent explicites.
 
 **Pas dans cette brique :** nouvelles fonctions.
 

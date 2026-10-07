@@ -22,9 +22,6 @@ from .profiles import get_profile
 LOGGER = logging.getLogger(__name__)
 TERMINAL = {"completed", "stopped", "cancelled"}
 ACTIVE = {"countdown", "starting", "running", "transitioning", "adjusting", "pausing", "paused", "stopping", "unknown"}
-# Périmètre physique reçu, distinct des plages annoncées et des limites du POC.
-REAL_LIMITS = {"speed": 2.5, "incline": 1.0}
-SIM_LIMITS = {"speed": 16.0, "incline": 10.0}
 MAX_PAUSE_SECONDS = 900
 STOP_CONFIRM_TIMEOUT = 15
 
@@ -70,7 +67,10 @@ class Execution:
 
     @property
     def limits(self):
-        return SIM_LIMITS if self.controller.simulation else REAL_LIMITS
+        # Réel et simulation utilisent les mêmes bornes de séance, restreintes
+        # aux capacités lues. Une plage absente bloque toujours la validation.
+        return {action: min(maximum, (self.controller.capabilities.get(f"{action}_range") or {}).get("max", maximum))
+                for action, maximum in (("speed", workouts.MAX_SPEED), ("incline", workouts.MAX_INCLINE))}
 
     def _load(self, profile_id, workout_id, version):
         with self.database.transaction() as session:
@@ -95,8 +95,10 @@ class Execution:
                 except ValueError as exc:
                     unit = "km/h" if action == "speed" else "%"
                     noun = "vitesse" if action == "speed" else "pente"
-                    raise ControllerError(f"Bloc {b['index'] + 1} : {noun} {value:g} {unit} incompatible. "
-                                          f"Limite {self.limits[action]:g} {unit} et pas du tapis à respecter.") from exc
+                    r = c.capabilities.get(f"{action}_range")
+                    detail = (f"Plage {max(0, r['min']):g}–{self.limits[action]:g} {unit}, pas {r['step']:g}."
+                              if r else "Plage du tapis inconnue. Reconnectez le tapis.")
+                    raise ControllerError(f"Bloc {b['index'] + 1} : {noun} {value:g} {unit} incompatible. {detail}") from exc
 
     def _ready_at_rest(self, workout):
         if self.device.operation_lock.locked():

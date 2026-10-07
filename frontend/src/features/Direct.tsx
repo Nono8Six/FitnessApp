@@ -77,7 +77,7 @@ export function ExecutionSheets() {
     <Disclosure title="Périmètre de la séance" className="mt-4"><Facts rows={[
       ['Vitesse maximale', limits ? `${dec1(limits.speed)} km/h` : 'En cours de vérification'],
       ['Pente maximale', limits ? `${dec1(limits.incline)} %` : 'En cours de vérification'],
-      ['Mode', mode === 'simulation' ? 'Simulation' : mode === 'reel' ? 'RUN500 réel · périmètre reçu' : 'En cours de vérification'],
+      ['Mode', mode === 'simulation' ? 'Simulation' : mode === 'reel' ? 'RUN500 réel' : 'En cours de vérification'],
       ['Présence', 'Nouvelle confirmation à chaque reprise'],
     ]} /></Disclosure>
   </Sheet>

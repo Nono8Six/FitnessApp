@@ -234,14 +234,46 @@ class ExecutionTests(unittest.IsolatedAsyncioTestCase):
 
     async def test_real_limits_steps_and_poc_limits_are_distinct(self):
         await self.real()
-        incompatible = copy_workout = {**self.workout, "blocks": [{**self.workout["blocks"][0], "speed": 3.0}]}
-        with self.assertRaisesRegex(ControllerError, "Limite 2.5"):
-            self.e._compatible(incompatible)
+        copy_workout = {**self.workout, "blocks": [{**self.workout["blocks"][0], "speed": 16.0, "incline": 10.0}]}
+        self.e._compatible(copy_workout)
+        self.assertEqual(self.e.limits, {"speed": 16, "incline": 10})
+        # Les capacités d'un tapis plus limité restent respectées et publiées.
+        self.c.capabilities["speed_range"]["max"] = 8
+        self.c.capabilities["incline_range"]["max"] = 5
+        self.assertEqual(self.e.limits, {"speed": 8, "incline": 5})
+        with self.assertRaisesRegex(ControllerError, "Plage 1–8"):
+            self.e._compatible(copy_workout)
+        with self.assertRaisesRegex(ControllerError, "Plage 0–5"):
+            self.e._compatible({**copy_workout, "blocks": [{**copy_workout["blocks"][0], "speed": 3}]})
         with self.assertRaises(ControllerError):
             self.e._compatible({**copy_workout, "blocks": [{**copy_workout["blocks"][0], "speed": 2.1, "incline": .2}]})
+        del self.c.capabilities["speed_range"]
+        with self.assertRaisesRegex(ControllerError, "Plage du tapis inconnue"):
+            self.e._compatible({**copy_workout, "blocks": [{**copy_workout["blocks"][0], "speed": 3, "incline": 1}]})
         self.assertEqual(self.client.writes, [])
         with self.assertRaisesRegex(ControllerError, "1 à 3"):
             self.c.validate_workout([{}] * 4)
+
+    async def test_real_workout_above_initial_test_limits_prepares_runs_and_stops(self):
+        await self.real()
+        data = WorkoutInput(name="Cardio continu", items=[
+            {"kind": "warmup", "sec": 30, "speed": 3.0, "incline": 0.0},
+            {"kind": "steady", "sec": 30, "speed": 4.5, "incline": 2.0}])
+        with self.app.state.database.write() as session:
+            self.workout = create_workout(session, "arnaud", data)
+        prepared = self.e.prepare("arnaud", self.workout["id"], 1)
+        self.assertTrue(prepared["ready"], prepared["issue"])
+        self.assertEqual(prepared["mode"], "reel")
+        await self.start_running()
+        self.assertEqual(self.client.speed, 3)
+        self.e.active_since -= 31
+        await asyncio.sleep(.5)
+        self.assertEqual((self.e.phase, self.e.block), ("running", 1))
+        self.assertEqual((self.client.speed, self.client.incline), (4.5, 2))
+        self.e.request_halt()
+        await self.wait("stopped")
+        self.assertTrue(self.e.stop_confirmed)
+        self.assertEqual(self.client.speed, 0)
 
     async def test_stop_consumes_inflight_real_response_then_no_more_motion(self):
         await self.real()
@@ -351,6 +383,8 @@ class ExecutionTests(unittest.IsolatedAsyncioTestCase):
 
     async def test_adjustment_all_remaining_limits_steps_and_owner_are_atomic(self):
         await self.real()
+        self.c.capabilities["speed_range"]["max"] = 2.5
+        self.c.capabilities["incline_range"]["max"] = 1
         await self.start_running()
         original = self.e.snapshot()["targets"]
         writes = len(self.client.writes)

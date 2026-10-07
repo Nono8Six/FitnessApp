@@ -25,11 +25,13 @@ Pause/STOP restent accessibles pendant cet échange et bloquent immédiatement t
 | Sujet | Application | Diagnostic POC |
 |---|---|---|
 | Durée et segments | Validation métier existante : 60 min / 120 segments | 1–3 blocs de 5–60 s |
-| Vitesse/pente réelles | 1–2,5 km/h / 0–1 %, ainsi que plage et pas effectivement lus | Programmes 4 km/h / 3 % ; manuel jusqu’à la plage annoncée |
+| Vitesse/pente réelles | 1–16 km/h / 0–10 %, restreints aux plages et pas effectivement lus | Programmes 4 km/h / 3 % ; manuel jusqu’à la plage annoncée |
 | Simulation | Jusqu’à 16 km/h / 10 %, selon ses propres capacités | Plafonds existants conservés |
 | Autorisation | Durée prévue + 30 s par segment + 900 s + 15 s, échéance absolue | Activation de 10 min conservée |
 
-Ces plafonds distinguent le périmètre physiquement reçu (1–2,5/0–1) des capacités annoncées (16/10). Un programme incompatible est refusé avec le bloc et la limite ; aucun ajustement silencieux. La brique 10 reçoit le parcours réel et élargit les plafonds palier par palier.
+Le 7 octobre 2026, Arnaud a demandé le retrait des plafonds des premiers essais (2,5 km/h / 1 %). Réel et simulation utilisent désormais les mêmes bornes de conception des séances ; les capacités du tapis peuvent les réduire. Une plage inconnue, une valeur hors plage ou un pas incompatible bloque le programme avec le bloc concerné ; aucun ajustement silencieux. Les plages annoncées du RUN500 (1–16 km/h / 0–10 %) sont autorisées sans les présenter comme physiquement reçues. La réception matérielle du parcours complet reste ouverte en brique 10.
+
+« Revérifier » conserve les deux confirmations de présence dans la préparation ouverte. Une nouvelle préparation ou reprise les remet à zéro. Un état PC ancien ou une perte de contact désactive le démarrage et retire le témoin vert du tapis.
 
 La connexion seule reste passive. Après démarrage explicite : abonnement aux indications Control Point → Request Control accepté → vitesse minimale → Start accepté → mouvement fraîchement observé → pente/vitesse cibles → effet observé. À chaque étape les conditions de présence, autorisation, fraîcheur et contrôle sont revérifiées. Une réponse HTTP ou FTMS positive ne prouve pas l’effet physique. Réglages > Tapis décrit le contrôle actif et bloque les opérations de connexion/déconnexion pendant le mouvement ou une pause.
 
