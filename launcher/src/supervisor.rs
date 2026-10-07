@@ -307,14 +307,85 @@ impl LocalControl {
                 std::env::var_os("LOCALAPPDATA").map(|path| PathBuf::from(path).join("FitnessApp"))
             })
             .ok_or("Le dossier des données Windows est indisponible pour le lanceur.")?;
-        let file = std::fs::File::open(data.join(format!("launcher/servers/{pid}.json"))).map_err(
-            |error| {
-                format!(
+        let path = data.join(format!("launcher/servers/{pid}.json"));
+        let file = match std::fs::File::open(&path) {
+            Ok(file) => file,
+            Err(error) => {
+                #[cfg(windows)]
+                if error.kind() == std::io::ErrorKind::NotFound {
+                    if let Some(control) = Self::read_redirected(root, info, port, &data, pid)? {
+                        return Ok(control);
+                    }
+                }
+                return Err(format!(
                     "Lecture du canal d'arrêt impossible dans {} : {error}",
-                    data.display()
-                )
-            },
-        )?;
+                    path.display()
+                ));
+            }
+        };
+        Self::read_file(root, info, port, file)
+    }
+
+    #[cfg(windows)]
+    fn read_redirected(
+        root: &Path,
+        info: &Health,
+        port: u16,
+        data: &Path,
+        pid: u32,
+    ) -> Result<Option<Self>, String> {
+        // MSIX peut rediriger AppData vers le cache privé du processus qui a lancé Python.
+        // Les chemins restent dans le compte courant ; chaque candidat est vérifié comme le canal habituel.
+        let Some(local) = std::env::var_os("LOCALAPPDATA").map(PathBuf::from) else {
+            return Ok(None);
+        };
+        let Ok(relative) = data.strip_prefix(&local) else {
+            return Ok(None);
+        };
+        let packages = match std::fs::read_dir(local.join("Packages")) {
+            Ok(packages) => packages,
+            Err(error) if error.kind() == std::io::ErrorKind::NotFound => return Ok(None),
+            Err(error) => {
+                return Err(format!(
+                    "Recherche du canal Windows redirigé impossible : {error}"
+                ))
+            }
+        };
+        let mut invalid = None;
+        for package in packages {
+            let package = package.map_err(|error| {
+                format!("Lecture des dossiers Windows redirigés impossible : {error}")
+            })?;
+            let path = package
+                .path()
+                .join("LocalCache/Local")
+                .join(relative)
+                .join(format!("launcher/servers/{pid}.json"));
+            let result = match std::fs::File::open(&path) {
+                Ok(file) => Self::read_file(root, info, port, file),
+                Err(error) if error.kind() == std::io::ErrorKind::NotFound => continue,
+                Err(error) => Err(format!(
+                    "Lecture du canal redirigé {} impossible : {error}",
+                    path.display()
+                )),
+            };
+            match result {
+                Ok(control) => return Ok(Some(control)),
+                Err(error) => invalid = Some(error),
+            }
+        }
+        match invalid {
+            Some(error) => Err(error),
+            None => Ok(None),
+        }
+    }
+
+    fn read_file(
+        root: &Path,
+        info: &Health,
+        port: u16,
+        file: std::fs::File,
+    ) -> Result<Self, String> {
         let control: Self = serde_json::from_reader(file.take(16384))
             .map_err(|_| "Le fichier du canal d'arrêt local est invalide.")?;
         let canonical_root = root
@@ -331,7 +402,7 @@ impl LocalControl {
                 canonical_root.display()
             ));
         }
-        if control.pid != pid
+        if Some(control.pid) != info.pid
             || control.port != port
             || Some(control.instance_id.as_str()) != info.instance_id.as_deref()
         {

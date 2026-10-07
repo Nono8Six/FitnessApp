@@ -128,10 +128,10 @@ class SupervisorTests(unittest.TestCase):
         with urlopen(self.url + "/api/health") as response:
             self.assertEqual(json.load(response)["mode"], "reel")
 
-    def start_console(self):
+    def start_console(self, env=None):
         process = subprocess.Popen(
             [os.sys.executable, "-m", "backend", "--simulation", "--port", str(self.port)],
-            cwd=ROOT, env=self.env, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
+            cwd=ROOT, env=env or self.env, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
         )
 
         def close():
@@ -181,6 +181,37 @@ class SupervisorTests(unittest.TestCase):
         self.wait("stopped")
         self.assertEqual(process.wait(timeout=5), 0)
         self.assert_integrity()
+
+    def test_console_channel_redirected_by_msix_is_verified_and_stoppable(self):
+        self.bridge.close()
+        self.env = {key: value for key, value in self.env.items() if key.upper() != "FITNESS_DATA_DIR"}
+        self.env["LOCALAPPDATA"] = self.temporary.name
+        self.bridge = RustBridge(self.env)
+        self.addCleanup(self.bridge.close)
+        redirected = Path(self.temporary.name) / "Packages" / "Fitness.Test" / "LocalCache" / "Local" / "FitnessApp"
+        process = self.start_console({**self.env, "FITNESS_DATA_DIR": str(redirected)})
+        snapshot = self.wait("external", can_stop=True)
+        path = redirected / "launcher" / "servers" / f'{snapshot["pid"]}.json'
+        self.assertTrue(path.is_file())
+        primary = Path(self.temporary.name) / "FitnessApp" / "launcher" / "servers" / path.name
+        self.assertFalse(primary.exists())
+        original = json.loads(path.read_text(encoding="utf-8"))
+        for field, value in [("instance_id", "ancienne-instance"), ("port", self.port + 1),
+                             ("project_root", self.temporary.name), ("token", "invalide")]:
+            with self.subTest(field=field):
+                path.write_text(json.dumps({**original, field: value}), encoding="utf-8")
+                self.wait("external", can_stop=False)
+                self.assertIn("error", self.bridge.invoke({"command": "stop_server"}))
+                self.assertIsNone(process.poll())
+                path.write_text(json.dumps(original), encoding="utf-8")
+                self.wait("external", can_stop=True)
+        self.invoke("stop_server")
+        self.wait("stopped")
+        self.assertEqual(process.wait(timeout=5), 0)
+        self.assertFalse(path.exists())
+        with sqlite3.connect(redirected / "simulation" / "fitness.db") as connection:
+            self.assertEqual(connection.execute("PRAGMA integrity_check").fetchone()[0], "ok")
+        connection.close()
 
     def test_mismatched_project_or_instance_is_not_controllable(self):
         process = self.start_console()
