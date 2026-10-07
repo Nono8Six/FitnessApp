@@ -25,7 +25,7 @@ function TargetRows({ mode, value, disabled, onMode, onValue, children }: {
   const limits = LIMITS[mode]
   return <Group footer={error ? undefined : mode === 'duration'
     ? 'Échauffement et retour au calme compris.'
-    : 'Prévision selon votre poids. La durée s’adapte, jusqu’à 60 min.'}>
+    : 'Prévision selon votre poids. La durée s’adapte au niveau choisi, même au-delà d’une heure.'}>
     <div className="g-row px-4 py-2.5">
       <Segmented label="Cible de la séance" value={mode} disabled={disabled} onChange={v => { setError(undefined); onMode(v) }}
         options={[{ value: 'duration', label: 'Durée' }, { value: 'calories', label: 'Calories' }]} />
@@ -62,7 +62,6 @@ function EffortBreakdown({ dose, total }: { dose: NonNullable<CatalogMethod['dos
         <dd className="num font-semibold">{clock(p.sec)}</dd>
       </div>)}
     </dl>
-    <p className="pb-1.5 text-footnote text-label-3">Plafond de travail : {clock(dose.work_limit_sec)}</p>
   </section>
 }
 

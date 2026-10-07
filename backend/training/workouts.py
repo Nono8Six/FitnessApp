@@ -17,6 +17,7 @@ from .energy import estimate
 
 MAX_SECONDS = 3600
 MAX_SEGMENTS = 120
+MAX_DURATION_SECONDS = MAX_SECONDS * MAX_SEGMENTS
 MAX_SPEED = 16.0
 MAX_INCLINE = 10.0
 KIND_LABEL = {"warmup": "Échauffement", "steady": "Allure continue", "run": "Course",
@@ -62,9 +63,6 @@ class WorkoutInput(Input):
         count = sum(len(i.steps) * i.repeat if isinstance(i, Repeat) else 1 for i in self.items)
         if count > MAX_SEGMENTS:
             raise ValueError("120 segments maximum après répétitions")
-        seconds = sum(sum(s.sec for s in i.steps) * i.repeat if isinstance(i, Repeat) else i.sec for i in self.items)
-        if seconds > MAX_SECONDS:
-            raise ValueError("Durée maximale : 60 minutes, répétitions comprises")
         return self
 
 

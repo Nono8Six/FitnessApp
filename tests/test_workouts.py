@@ -152,7 +152,7 @@ class WorkoutApiTests(unittest.TestCase):
         response = self.client.post(URL, json=data)
         self.assertEqual(response.status_code, 422)
         self.assertIn("Pente : de 0 à 10 %", response.json()["detail"])
-        data = copy.deepcopy(BASE); data["items"][1]["repeat"] = 30
+        data = copy.deepcopy(BASE); data["items"][1]["repeat"] = 60
         self.assertEqual(self.client.post(URL, json=data).status_code, 422)
 
     def test_selection_can_be_cleared(self):

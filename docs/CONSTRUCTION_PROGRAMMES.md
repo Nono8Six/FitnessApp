@@ -1,6 +1,6 @@
 # Construction des programmes du catalogue
 
-Révision `2026-10-05-running-3`, 5 octobre 2026. Principes vérifiés et règles appliquées dans `backend/training/catalog.py`. Aucun tirage aléatoire, aucune génération IA du catalogue.
+Révision `2026-10-07-calories-4`, 7 octobre 2026. Principes et règles appliquées dans `backend/training/catalog.py`. Aucun tirage aléatoire, aucune génération IA du catalogue.
 
 ## Ce que les sources établissent
 
@@ -44,9 +44,9 @@ Exemple **Course et marche · Facile** :
 
 Exemple **Allure régulière · Soutenu** : 30 minutes donnent 5 minutes d’échauffement, 20 minutes de course à 10 km/h puis 5 minutes de retour au calme ; 60 minutes donnent 50 minutes de course centrale. **Cardio en alternance · Soutenu** conserve de la course entre les efforts, avec récupération en footing. **Course et marche · Soutenu** conserve uniquement la marche prévue dans ses cycles, sans ajout final : à 60 minutes, environ 36 min 21 de course et 13 min 39 de récupération, en plus des dix minutes de début/fin.
 
-La cible calorique cherche une durée entre 15 et 60 min avec le calcul partagé de [l’estimation des calories](ESTIMATION_CALORIES.md). Elle utilise exactement les mêmes plafonds et récupérations. Elle ne hausse jamais vitesse ou pente pour forcer le résultat. Poids absent ou cible hors plage : explication et ajout bloqué, sans remplacer l’inconnu par zéro.
+La cible calorique cherche la première durée d’au moins 15 min qui atteint la cible estimée, avec le calcul partagé de [l’estimation des calories](ESTIMATION_CALORIES.md). Depuis le 7 octobre, cette durée peut dépasser une heure : le plafond de 60 min ne bloque plus artificiellement 200 kcal sur certains formats faciles. Le niveau, les allures, les pentes, l’échauffement, le retour au calme et les récupérations sont conservés. Les formats à volume plafonné gardent leur complément de marche facile ; en cardio/endurance Soutenu, les cycles ou la course couvrent tout le temps central, même au-delà d’une heure. Un bloc dépassant une heure est réparti en blocs consécutifs de mêmes consignes ; la limite de 120 segments reste technique. La durée demandée explicitement dans le mode Durée reste sélectionnable entre 15 et 60 min. Poids absent, cible sous le minimum de 15 min ou construction trop longue : explication et ajout bloqué, sans remplacer l’inconnu par zéro. Les nouvelles copies conservent la cible et la nouvelle révision ; les séances déjà enregistrées restent inchangées.
 
-La dépense estimée doit être croissante sur la durée, y compris aux changements de nombre de cycles et au passage des plafonds. Le test critique vérifie chaque seconde de 15 à 60 min pour les dix-huit variantes : c’est la condition de validité de la recherche calorique. L’API et l’ajout utilisent la même construction ; la dose affichée réconcilie travail, récupération, marche facile et dix minutes de début/fin.
+La dépense estimée doit être croissante sur la durée, y compris aux changements de nombre de cycles et au passage des plafonds : c’est la condition de validité de la recherche calorique. L’API et l’ajout utilisent la même construction ; la dose affichée réconcilie travail, récupération, marche facile et dix minutes de début/fin. La recherche choisit une durée atteignant le minimum estimé demandé, plutôt que l’arrondi le plus proche qui pouvait rester légèrement en dessous. Les contrôles historiques par seconde couvraient 15 à 60 min ; aucune suite de tests ni recette navigateur relancée pour la modification du 7 octobre, conformément à la demande d’Arnaud.
 
 ## Traçabilité et limites
 

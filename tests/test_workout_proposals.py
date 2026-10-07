@@ -190,9 +190,12 @@ class ProposalTests(unittest.TestCase):
                 self.assertLessEqual(abs(estimate['energy']['active_kcal'] - calories), .4)
                 self.assertLessEqual(estimate['sec'], 3600)
                 self.assertLessEqual(result.dose.work_sec, result.dose.work_limit_sec)
-            for calories in (lower - .1, upper + .1):
-                with self.assertRaises(catalog.CatalogTargetError):
-                    catalog.adapt(recipe, catalog.CatalogTarget(active_kcal=calories), 80)
+            with self.assertRaises(catalog.CatalogTargetError):
+                catalog.adapt(recipe, catalog.CatalogTarget(active_kcal=lower - .1), 80)
+            extended = catalog.adapt(recipe, catalog.CatalogTarget(active_kcal=upper + 1), 80)
+            extended_preview = workouts.preview(extended.workout, 80)['summary']
+            self.assertGreater(extended_preview['sec'], 3600)
+            self.assertGreaterEqual(extended_preview['energy']['active_kcal'], upper + 1)
         walk = catalog.recipes()[0]
         a = workouts.preview(catalog.adapt(walk, catalog.CatalogTarget(active_kcal=150), 80).workout)
         b = workouts.preview(catalog.adapt(walk, catalog.CatalogTarget(active_kcal=150), 100).workout)

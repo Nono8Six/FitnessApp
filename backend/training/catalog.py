@@ -9,12 +9,12 @@ from typing import Literal
 
 from pydantic import Field, model_validator
 
-from .workouts import Input, WorkoutInput, WorkoutNotFound, create_workout, preview
+from .workouts import MAX_SECONDS, MAX_SEGMENTS, Input, WorkoutInput, WorkoutNotFound, create_workout, preview
 from .profiles import get_profile
 
 GOALS = {'calories': 'Dépense calorique', 'incline': 'Jambes et fessiers — marche inclinée', 'endurance': 'Endurance'}
 LEVELS = {'easy': 'Facile', 'intermediate': 'Intermédiaire', 'hard': 'Soutenu'}
-CATALOG_REVISION = '2026-10-05-running-3'
+CATALOG_REVISION = '2026-10-07-calories-4'
 SOURCES = {
     'aha': {'title': 'AHA · Échauffement et retour au calme',
             'url': 'https://www.heart.org/en/healthy-living/exercise-and-physical-activity/fitness-basics/warm-up-cool-down'},
@@ -56,7 +56,7 @@ class Recipe:
     effort_sec: int = 0
     recovery_sec: int = 0
     max_cycles: int = 0
-    # Temps central maximal pour le continu/la pyramide ; 0 = jusqu'à 60 min totales.
+    # Temps central maximal pour le continu/la pyramide ; 0 = toute la durée centrale.
     work_limit_sec: int = 0
     # Allure de récupération spécifique ; sinon marche facile selon le niveau.
     recovery_speed: float | None = None
@@ -127,6 +127,19 @@ def spread(seconds, count):
     return [base + (i < remainder) for i in range(count)]
 
 
+def max_duration(recipe: Recipe) -> int:
+    """Durée constructible avec 120 segments de 60 min, sans plafond d'une heure."""
+    if recipe.style == 'intervals':
+        cycle_sec = recipe.effort_sec + recipe.recovery_sec
+        if recipe.level == 'hard' and recipe.goal != 'incline':
+            return 600 + (MAX_SEGMENTS - 4) // 2 * cycle_sec
+        return 600 + recipe.max_cycles * cycle_sec + (MAX_SEGMENTS - 4 - 2 * recipe.max_cycles) * MAX_SECONDS
+    if recipe.style == 'pyramid' or recipe.work_limit_sec:
+        work_items = 3 if recipe.style == 'pyramid' else 1
+        return 600 + recipe.work_limit_sec + (MAX_SEGMENTS - 4 - work_items) * MAX_SECONDS
+    return 600 + (MAX_SEGMENTS - 4) * MAX_SECONDS
+
+
 def resize(recipe: Recipe, seconds: int) -> Programme:
     """Construire une dose exacte, sans étirer les efforts au-delà de leurs plafonds.
 
@@ -134,8 +147,8 @@ def resize(recipe: Recipe, seconds: int) -> Programme:
     chaque seconde supplémentaire devient de la marche facile. Cela conserve
     une dépense croissante, nécessaire à la recherche d'une cible calorique.
     """
-    if not 900 <= seconds <= 3600:
-        raise CatalogTargetError('Choisissez une durée entre 15 et 60 min.')
+    if not 900 <= seconds <= max_duration(recipe):
+        raise CatalogTargetError('Choisissez une durée compatible avec ce format, d’au moins 15 min.')
     i = list(LEVELS).index(recipe.level)
     easy_speed = [3.8, 4., 4.2][i]
     kind = 'run' if recipe.speed > 6 else 'steady'
@@ -144,7 +157,8 @@ def resize(recipe: Recipe, seconds: int) -> Programme:
     cycles = recovery = 0
     if recipe.style == 'intervals':
         cycle_sec = recipe.effort_sec + recipe.recovery_sec
-        window = min(core, recipe.max_cycles * cycle_sec)
+        full_core = recipe.level == 'hard' and recipe.goal != 'incline'
+        window = core if full_core else min(core, recipe.max_cycles * cycle_sec)
         cycles = ceil(window / cycle_sec)
         work = window * recipe.effort_sec // cycle_sec
         recovery = window - work
@@ -158,12 +172,12 @@ def resize(recipe: Recipe, seconds: int) -> Programme:
             items[-1]['sec'] += extra
         elif extra:
             items.append(step('recover', extra / 60, easy_speed))
-        limit = recipe.effort_sec * recipe.max_cycles
+        limit = work if full_core else recipe.effort_sec * recipe.max_cycles
     else:
         # La pyramide finit par une transition à plat. En continu, le retour au
         # calme suffit : aucune minute de marche ajoutée au temps de course.
         transition = 60 if recipe.style == 'pyramid' or recipe.work_limit_sec else 0
-        work = min(core - transition, recipe.work_limit_sec or (3000 - transition))
+        work = min(core - transition, recipe.work_limit_sec or (core - transition))
         extra = core - work
         if recipe.style == 'pyramid':
             shoulder = work // 5
@@ -176,9 +190,15 @@ def resize(recipe: Recipe, seconds: int) -> Programme:
             items.append(step(kind, work / 60, recipe.speed, recipe.incline))
         if extra:
             items.append(step('recover', extra / 60, easy_speed))
-        limit = recipe.work_limit_sec or (3000 - transition)
+        limit = recipe.work_limit_sec or (core - transition)
     items.extend([step('cooldown', 2, easy_speed), step('cooldown', 3, 3.)])
-    data = WorkoutInput(name=recipe.name, goal=recipe.goal, level=recipe.level, items=items)
+    # Une séance longue conserve les mêmes consignes ; seul un bloc de plus
+    # d'une heure est réparti en blocs consécutifs, sans fragment de moins de 30 s.
+    expanded = []
+    for item in items:
+        for duration in spread(item['sec'], ceil(item['sec'] / MAX_SECONDS)):
+            expanded.append({**item, 'sec': duration})
+    data = WorkoutInput(name=recipe.name, goal=recipe.goal, level=recipe.level, items=expanded)
     return Programme(data, Dose(work, recovery, extra, cycles, limit))
 
 
@@ -212,23 +232,30 @@ def adapt(recipe, target, weight):
         return resize(recipe, target.duration_sec or recipe.default_sec)
     if weight is None:
         raise CatalogTargetError('Renseignez votre poids dans Réglages pour choisir un objectif de calories.')
-    low, high = 900, 3600
+    low = 900
+    high = 3600
 
     def kcal(seconds):
         return preview(resize(recipe, seconds).workout, weight)['summary']['energy']['active_kcal']
 
-    lower, upper = kcal(low), kcal(high)
-    if not lower <= target.active_kcal <= upper:
-        lower_text, upper_text = (f'{v:g}'.replace('.', ',') for v in (lower, upper))
-        raise CatalogTargetError(f'À ce niveau, choisissez entre {lower_text} et {upper_text} kcal actives estimées (15 à 60 min).')
+    lower = kcal(low)
+    if target.active_kcal < lower:
+        lower_text = f'{lower:g}'.replace('.', ',')
+        raise CatalogTargetError(f'Ce format commence à environ {lower_text} kcal actives pour 15 min. Choisissez une cible plus élevée ou un autre niveau.')
+    maximum = max_duration(recipe)
+    while kcal(high) < target.active_kcal:
+        if high == maximum:
+            raise CatalogTargetError('Cette cible demande une séance trop longue pour ce format. Choisissez une cible plus basse ou un autre niveau.')
+        low, high = high, min(high * 2, maximum)
     while high - low > 1:
         mid = (low + high) // 2
         if kcal(mid) < target.active_kcal:
             low = mid
         else:
             high = mid
-    seconds = min((low, high), key=lambda s: abs(kcal(s) - target.active_kcal))
-    return resize(recipe, seconds)
+    # Première seconde qui atteint la cible estimée : pas de programme en dessous
+    # du minimum demandé à cause d'un arrondi au plus proche.
+    return resize(recipe, high if kcal(low) < target.active_kcal else low)
 
 
 def methodology(recipe, programme):

@@ -15,7 +15,7 @@ Target = workouts.Target
 
 class ProposalInput(workouts.Input):
     workout: workouts.WorkoutInput
-    duration_sec: int = Field(ge=30, le=3600, description='Durée totale demandée ou choisie, en secondes, échauffement et retour au calme compris. Doit correspondre exactement aux blocs.')
+    duration_sec: int = Field(ge=30, le=workouts.MAX_DURATION_SECONDS, description='Durée totale demandée ou choisie, en secondes, échauffement et retour au calme compris. Doit correspondre exactement aux blocs.')
     explanation: str = Field(min_length=1, max_length=600)
     target: Target | None = None
     min_active_kcal: float | None = Field(default=None, gt=0, le=5000, allow_inf_nan=False,

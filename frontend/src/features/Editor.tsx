@@ -167,7 +167,7 @@ function EditorForm({ profile, source, proposal }: { profile: string; source?: W
             <button onClick={retry} className="min-h-11 px-4 text-footnote text-accent">Vérifier à nouveau</button>
           </> : <p role="status" className="mt-3 px-4 text-footnote text-label-2">Calcul de l’aperçu…</p>}
         </>}
-        <p className="mt-3 px-4 text-footnote text-label-2">60 min maximum · 120 segments · 1–16 km/h · pente 0–10 %</p>
+        <p className="mt-3 px-4 text-footnote text-label-2">120 segments · 1–16 km/h · pente 0–10 %</p>
         {source && <p className="mt-1 px-4 text-footnote text-label-2">La version {source.version} sera conservée.</p>}
         {proposal?.base && preview.status === 'ok' && <WorkoutDifferences before={proposal.base} after={preview.data} />}
         {source && <div className="mt-3 px-4">
