@@ -88,7 +88,7 @@ export default function Launcher() {
             : phase === 'stopping' ? 'Le serveur termine ses opérations avant de s’arrêter.'
             : phase === 'external' ? snapshot?.can_stop
               ? 'Lancé ailleurs. Vous pouvez l’ouvrir ou l’arrêter depuis cette fenêtre.'
-              : 'Ancien serveur ou canal d’arrêt indisponible. Arrêtez sa console avec Ctrl+C, puis relancez Fitness.'
+              : 'Fitness est disponible, mais son arrêt depuis cette fenêtre est indisponible. Consultez le journal.'
             : ready ? `Fitness est disponible · ${snapshot?.mode === 'simulation' ? 'Simulation' : 'Données réelles'}`
             : 'Démarrez Fitness, puis ouvrez l’application sur ce PC.'}
         </p>

@@ -1,10 +1,12 @@
 # Empreinte du contenu, partagee par les deux lanceurs Windows.
 function Get-SourceFingerprint([string]$Directory, [string[]]$RelativePaths) {
     $paths = $RelativePaths | ForEach-Object { Join-Path $Directory $_ } | Where-Object { Test-Path -LiteralPath $_ }
-    $entries = Get-ChildItem -LiteralPath $paths -Recurse -File | Sort-Object FullName | ForEach-Object {
+    $entries = [string[]]@(Get-ChildItem -LiteralPath $paths -Recurse -File | ForEach-Object {
         $relative = $_.FullName.Substring($Directory.Length + 1).Replace('\', '/')
         "$relative=$((Get-FileHash -LiteralPath $_.FullName -Algorithm SHA256).Hash)"
-    }
+    })
+    # Sort-Object classe notamment '-' differemment entre Windows PowerShell et PowerShell 7.
+    [Array]::Sort($entries, [StringComparer]::Ordinal)
     $sha = [System.Security.Cryptography.SHA256]::Create()
     try {
         return [BitConverter]::ToString($sha.ComputeHash([System.Text.Encoding]::UTF8.GetBytes(($entries -join "`n")))).Replace('-', '')

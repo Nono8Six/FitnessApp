@@ -460,6 +460,8 @@ Contrôles de ce complément : build et 46 tests ciblés réussis (calculs, API,
 
 **Complément demandé le 4 octobre 2026 :** [lanceur Windows Rust/Tauri](launcher/README.md) livré séparément : démarrer, arrêter, ouvrir l'application, état réel et journal. Le double-clic utilise l'exécutable local et conserve le mode console. L'arrêt propre, les processus enfants et les données ont des vérifications ciblées. Le lanceur peut aussi arrêter un serveur Fitness lancé en console, après vérification du projet et de l'instance par un canal local authentifié ; il conserve ce serveur à la fermeture de la fenêtre. Une ancienne version demande une relance initiale. Le runtime Python embarqué et l'installateur autonome restent à faire ; la brique 16 complète reste donc ouverte. Ce complément ne modifie pas le périmètre des séances développé en parallèle.
 
+**Correction du 7 octobre 2026 :** erreurs du canal d'arrêt précisées et consignées une fois dans le journal ; application disponible distinguée de l'arrêt indisponible. Empreintes de construction identiques entre Windows PowerShell et PowerShell 7, avec régression reproduite puis testée. Bouton Arrêter actif dans le lanceur Windows et Chrome après reconstruction, serveur habituel conservé ; huit tests ciblés réussis. La cause exacte du refus initial reste non isolée. Aucun mouvement réel ni changement de données.
+
 ### Brique 17 · Réception finale
 
 **Livré :** le parcours complet (préparer avec ChatGPT, courir, revoir, ajuster) est reçu sur le PC, un iPhone et un Android, sur le vrai tapis.

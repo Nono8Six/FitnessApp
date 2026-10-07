@@ -300,28 +300,48 @@ struct LocalControl {
 
 impl LocalControl {
     fn read(root: &Path, info: &Health, port: u16) -> Result<Self, String> {
-        let unavailable = || {
-            "Canal d'arrêt local introuvable ou invalide. Redémarrer la console Fitness pour le mettre à jour.".to_string()
-        };
-        let pid = info.pid.ok_or_else(unavailable)?;
+        let pid = info.pid.ok_or("Ce serveur ne fournit pas son identité. Arrêter sa console avec Ctrl+C, puis relancer Fitness.")?;
         let data = std::env::var_os("FITNESS_DATA_DIR")
             .map(PathBuf::from)
             .or_else(|| {
                 std::env::var_os("LOCALAPPDATA").map(|path| PathBuf::from(path).join("FitnessApp"))
             })
-            .ok_or_else(unavailable)?;
-        let file = std::fs::File::open(data.join(format!("launcher/servers/{pid}.json")))
-            .map_err(|_| unavailable())?;
-        let control: Self = serde_json::from_reader(file.take(16384)).map_err(|_| unavailable())?;
-        let canonical_root = root.canonicalize().map_err(|_| unavailable())?;
+            .ok_or("Le dossier des données Windows est indisponible pour le lanceur.")?;
+        let file = std::fs::File::open(data.join(format!("launcher/servers/{pid}.json"))).map_err(
+            |error| {
+                format!(
+                    "Lecture du canal d'arrêt impossible dans {} : {error}",
+                    data.display()
+                )
+            },
+        )?;
+        let control: Self = serde_json::from_reader(file.take(16384))
+            .map_err(|_| "Le fichier du canal d'arrêt local est invalide.")?;
+        let canonical_root = root
+            .canonicalize()
+            .map_err(|error| format!("Le dossier du lanceur est inaccessible : {error}"))?;
+        let server_root = control
+            .project_root
+            .canonicalize()
+            .map_err(|error| format!("Le dossier du serveur est inaccessible : {error}"))?;
+        if server_root != canonical_root {
+            return Err(format!(
+                "Le serveur vient d'un autre dossier : {} (lanceur : {}).",
+                server_root.display(),
+                canonical_root.display()
+            ));
+        }
         if control.pid != pid
             || control.port != port
             || Some(control.instance_id.as_str()) != info.instance_id.as_deref()
-            || control.project_root.canonicalize().ok().as_ref() != Some(&canonical_root)
-            || control.token.len() != 64
-            || !control.token.bytes().all(|byte| byte.is_ascii_hexdigit())
         {
-            return Err(unavailable());
+            return Err(
+                "Le canal d'arrêt ne correspond pas au serveur actif. Aucun arrêt envoyé.".into(),
+            );
+        }
+        if control.token.len() != 64 || !control.token.bytes().all(|byte| byte.is_ascii_hexdigit())
+        {
+            return Err("La clé du canal d'arrêt local est invalide. Arrêter sa console avec Ctrl+C, puis relancer Fitness.".into());
         }
         Ok(control)
     }
@@ -408,6 +428,14 @@ fn apply_external(state: &Shared, info: Health, root: &Path, port: u16) -> Optio
     let control = LocalControl::read(root, &info, port);
     let pid = info.pid;
     let previous = state.lock().unwrap_or_else(|p| p.into_inner()).clone();
+    if let Err(error) = &control {
+        if previous.phase != "external"
+            || previous.pid != pid
+            || previous.error.as_ref() != Some(error)
+        {
+            log(state, "lanceur", error);
+        }
+    }
     apply_health(state, info, false, port);
     update(state, |s| {
         s.pid = pid;

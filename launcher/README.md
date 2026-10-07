@@ -4,9 +4,13 @@ Double-cliquer sur **`Lancer Fitness.cmd`** à la racine, puis **Démarrer → O
 
 Un serveur Fitness lancé en console peut aussi être ouvert et arrêté depuis le lanceur. Celui-ci vérifie son identité et son canal local avant d'activer **Arrêter**. Fermer la fenêtre laisse ce serveur externe en marche ; seuls les serveurs démarrés par cette fenêtre s'arrêtent à sa fermeture. Pour un serveur externe, le journal suit les actions du lanceur ; les sorties du serveur restent dans sa console. Une ancienne version sans canal d'arrêt doit être arrêtée une fois avec `Ctrl+C`, puis relancée. Un autre service qui occupe le port reste intact. Aucun redémarrage automatique.
 
+Si l'application répond mais que **Arrêter** reste indisponible, le message et le journal distinguent désormais un canal absent ou illisible, un format invalide, un autre dossier de projet et une identité différente. Le même refus n'est pas répété à chaque actualisation. Ne pas conclure qu'un serveur doit être redémarré à partir de la seule indisponibilité de son arrêt.
+
 ## Installation et mise à jour
 
 Sur le PC de développement, `launcher/bin/Fitness Launcher.exe` est construit localement. Le double-clic vérifie les sources et reconstruit le lanceur si nécessaire. Les sources et `Cargo.lock` sont versionnés ; les exécutables, caches et dépendances restent ignorés par Git.
+
+Les empreintes trient les fichiers dans un ordre indépendant de la version de PowerShell : construire avec PowerShell 7 puis ouvrir avec Windows PowerShell ne déclenche plus une reconstruction pour des sources identiques.
 
 Pour construire sur un nouveau PC : Python 3.12, Node.js LTS, Rust stable, les outils de compilation C++ Microsoft et WebView2 doivent être disponibles. Depuis la racine :
 
@@ -34,6 +38,7 @@ Uvicorn termine son cycle de vie et ferme la base. Après 10 secondes sans arrê
 # Depuis la racine
 .\.venv\Scripts\python.exe -m unittest discover -s tests -p test_managed_server.py -v
 .\.venv\Scripts\python.exe -m unittest discover -s tests -p test_launcher_control.py -v
+.\.venv\Scripts\python.exe -m unittest discover -s tests -p test_prepare_helpers.py -v
 .\.venv\Scripts\python.exe launcher/test_supervisor.py -v
 
 # Depuis launcher/
@@ -59,3 +64,5 @@ npm run dev:launcher
 Ce pont est réservé au développement, lié à `127.0.0.1:4391` et aux origines du serveur Vite sur 5175. Il est absent du lancement normal. Arrêter les deux terminaux après la vérification.
 
 Vérification du 4 octobre 2026 : builds React et Windows réussis, Clippy sans avertissement ; 2 tests Rust, 9 tests du superviseur, 3 tests du canal local et 2 tests du backend géré réussis. Le scénario initial a été reproduit dans la fenêtre Windows, puis l'arrêt d'un serveur lancé en console a été effectué dans cette fenêtre et dans Chrome avec le vrai Rust : retour à « À l'arrêt », processus terminé, port fermé et SQLite intègre. Chrome ne présente aucune erreur console. Pendant l'arrêt, les boutons et options restent désactivés ; les options affichées correspondent encore au serveur en cours d'arrêt. Aucun essai Bluetooth ou téléphone physique.
+
+Vérification du 7 octobre 2026 : le bouton **Arrêter** est de nouveau actif dans la fenêtre Windows, y compris après `Lancer Fitness.cmd`, et dans Chrome avec le superviseur réel, sans erreur console. Le serveur habituel et son instance ont été conservés. Le refus initial a disparu après reconstruction et réouverture ; sa cause exacte n'a pas été isolée. Le défaut distinct des empreintes PowerShell a été reproduit avant correction puis couvert par un test. Les trois tests du canal et les quatre scénarios ciblés du superviseur (arrêt console avec conservation des données, fermeture du lanceur, canal incompatible et serveur non vérifié) réussissent. Aucun arrêt du serveur habituel ni commande matérielle.
