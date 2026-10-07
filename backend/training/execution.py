@@ -37,7 +37,8 @@ class Execution:
         self.targets = []
         self.applied_targets = {"speed": None, "incline": None}
         self.offsets = {"speed": 0.0, "incline": 0.0}
-        self.adjust_actions = ()
+        self.adjustment_revision = 0
+        self.adjustment_note = None
         self.profile = None
         self.block = 0
         self.elapsed = 0.0
@@ -67,6 +68,7 @@ class Execution:
         self.recorder = Recorder(self)
         self.totals = Totals(None)
         self.controller.recording_listener = self.recorder.device_event
+        self.controller.target_listener = self._console_target
 
     @property
     def limits(self):
@@ -158,7 +160,8 @@ class Execution:
         self.targets = [{"speed": b["speed"], "incline": b["incline"]} for b in workout["blocks"]]
         self.applied_targets = {"speed": None, "incline": None}
         self.offsets = {"speed": 0.0, "incline": 0.0}
-        self.adjust_actions = ()
+        self.adjustment_revision = 0
+        self.adjustment_note = None
         self.block = 0
         self.elapsed = self.paused = self.distance = 0.0
         self.active_since = self.pause_since = None
@@ -246,15 +249,17 @@ class Execution:
         if not self.workout or self.controller.phase != "connected":
             return None
         bounds = {}
-        remaining = self.workout["blocks"][self.block:]
+        remaining = self.targets[self.block:]
         for action in ("speed", "incline"):
             r = self.controller.capabilities.get(f"{action}_range")
             if not r:
                 return None
             floor = max(1 if action == "speed" else 0, r["min"])
             ceiling = min(self.limits[action], r["max"])
-            bounds[action] = {"min": round(max(floor - b[action] for b in remaining), 6),
-                              "max": round(min(ceiling - b[action] for b in remaining), 6), "step": r["step"]}
+            # Le pas des boutons est distinct de la résolution Bluetooth.
+            step = round(max(1, math.ceil(.5 / r["step"] - 1e-6)) * r["step"], 6)
+            bounds[action] = {"min": round(self.offsets[action] + max(floor - b[action] for b in remaining), 6),
+                              "max": round(self.offsets[action] + min(ceiling - b[action] for b in remaining), 6), "step": step}
             if bounds[action]["min"] > bounds[action]["max"]:
                 return None
         return bounds
@@ -262,7 +267,7 @@ class Execution:
     def adjust(self, viewer, speed_offset, incline_offset):
         if viewer != self.owner:
             raise ControllerError("Ajustez sur l’écran qui a démarré la séance.")
-        if self.phase != "running":
+        if self.phase not in ("running", "adjusting") or self.requested:
             raise ControllerError("Attendez que la séance soit en cours avant d’ajuster les consignes.")
         self._alive()
         offsets = {"speed": speed_offset, "incline": incline_offset}
@@ -270,8 +275,8 @@ class Execution:
             raise ControllerError("Les ajustements doivent être des nombres valides.")
         # Tout vérifier avant de changer quoi que ce soit : pas d'écrêtage des
         # récupérations ni d'un bloc futur. Le programme enregistré reste figé.
-        targets = [{action: round(b[action] + offsets[action], 6) for action in offsets}
-                   for b in self.workout["blocks"][self.block:]]
+        targets = [{action: round(b[action] + offsets[action] - self.offsets[action], 6) for action in offsets}
+                   for b in self.targets[self.block:]]
         candidate = {"blocks": [{**b, **target} for b, target in zip(self.workout["blocks"][self.block:], targets)]}
         self._compatible(candidate)
         bounds = self.adjustment_bounds()
@@ -285,10 +290,46 @@ class Execution:
             return
         self.targets[self.block:] = targets
         self.offsets = offsets
-        self.adjust_actions = actions
+        self.adjustment_revision += 1
+        self.adjustment_note = None
         self.phase = "adjusting"
         self.recorder.add("adjustment", {"label": "Ajustement demandé", "offsets": offsets,
                                        "block_index": self.block, "targets": self.targets})
+
+    def _console_target(self, action, value):
+        if self.phase not in ("running", "adjusting", "transitioning") or self.requested:
+            return
+        command = self.controller.last_command
+        # Une notification de notre échange ne doit pas écraser des clics plus récents.
+        if command and command["action"] == action and command["value"] == value and command["status"] in ("sent", "accepted"):
+            return
+        delta = round(value - self.targets[self.block][action], 6)
+        if not delta:
+            return
+        r = self.controller.capabilities.get(f"{action}_range")
+        try:
+            ftms.validate_target(value, r, self.limits[action], scale=100 if action == "speed" else 10)
+            if action == "speed" and value < 1:
+                return  # Le zéro est traité par le moteur d'arrêt, jamais comme une consigne d'effort.
+        except ValueError as exc:
+            self.controller.log("warning", "Consigne du tapis hors des limites de séance", action=action, value=value, detail=str(exc))
+            return
+        targets = [{**b, action: round(b[action] + delta, 6)} for b in self.targets[self.block:]]
+        try:
+            self._compatible({"blocks": [{**b, **t} for b, t in zip(self.workout["blocks"][self.block:], targets)]})
+        except ControllerError:
+            # Le tapis a déjà changé : refléter ce bloc sans écrêter les suivants.
+            self.targets[self.block] = {**self.targets[self.block], action: value}
+            self.adjustment_note = "Réglage du tapis repris pour ce bloc ; limites des blocs suivants conservées."
+        else:
+            self.targets[self.block:] = targets
+            self.offsets = {**self.offsets, action: round(self.offsets[action] + delta, 6)}
+            self.adjustment_note = "Réglage du tapis repris pour les blocs restants."
+        self.applied_targets[action] = value
+        self.adjustment_revision += 1
+        self.recorder.add("adjustment", {"label": "Réglage sur le tapis", "action": action, "value": value,
+                                       "offsets": self.offsets, "targets": self.targets, "block_index": self.block})
+        self.markers.append({"t": round(time.monotonic() - self.began, 2), "label": "Réglage tapis"})
 
     def _alive(self, *, rest=False):
         now = time.monotonic()
@@ -316,10 +357,12 @@ class Execution:
             self.applied_targets[action] = value
         return self.requested not in ("stop", "pause", "cancel")
 
-    async def _observe(self, since, predicate, timeout=15):
+    async def _observe(self, since, predicate, timeout=15, revision=None):
         end = time.monotonic() + timeout
         while not self.requested:
             self._alive()
+            if revision is not None and revision != self.adjustment_revision:
+                return False
             c = self.controller
             if c.received_at.get("speed_kmh", 0) > since and c.received_at.get("incline_pct", 0) > since and predicate():
                 if c.last_command:
@@ -331,14 +374,17 @@ class Execution:
         return False
 
     async def _target(self, actions=("incline", "speed")):
-        b = self.targets[self.block]
+        b = dict(self.targets[self.block])
+        revision = self.adjustment_revision
         since = time.monotonic()
         for action in actions:
+            if revision != self.adjustment_revision:
+                return False
             if not await self._exchange(action, b[action]):
                 return False
         c = self.controller
         return await self._observe(since, lambda: abs(c.telemetry["speed_kmh"] - b["speed"]) <= .05
-                                   and abs(c.telemetry["incline_pct"] - b["incline"]) <= .1)
+                                   and abs(c.telemetry["incline_pct"] - b["incline"]) <= .1, revision=revision)
 
     async def _launch(self):
         self._alive(rest=True)
@@ -455,11 +501,10 @@ class Execution:
                         self._sample(final=True)
                         if await self._target():
                             self.phase = "running"
-                            self.adjust_actions = ()
-                    elif self.phase == "adjusting":
-                        if await self._target(self.adjust_actions):
+                    elif self.phase in ("adjusting", "transitioning"):
+                        actions = tuple(a for a in ("incline", "speed") if self.applied_targets[a] != self.targets[self.block][a])
+                        if await self._target(actions):
                             self.markers.append({"t": round(time.monotonic() - self.began, 2), "label": "Ajustement"})
-                            self.adjust_actions = ()
                             self.phase = "running"
                 await asyncio.sleep(.1)
         except asyncio.CancelledError:
@@ -488,6 +533,7 @@ class Execution:
             "owned_by_me": bool(self.owner and viewer == self.owner),
             "profile": self.profile, "workout": self.workout,
             "targets": self.targets, "offsets": self.offsets, "adjustment_bounds": self.adjustment_bounds(),
+            "adjustment_note": self.adjustment_note,
             "block_index": self.block, "active_s": round(active, 2), "pause_s": round(self.pause_time(), 2),
             "wall_s": round((self.ended or time.monotonic()) - self.began, 2) if self.id else 0,
             "started_at": self.started_at,

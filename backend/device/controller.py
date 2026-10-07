@@ -80,6 +80,7 @@ class Controller:
         self.last_command = None
         # Observateurs métier : copie/enfilement uniquement, aucune écriture SQL.
         self.recording_listener = None
+        self.target_listener = None
         self.log("info", "Contrôleur prêt", mode="simulation" if simulation else "ble")
 
     def log(self, level: str, message: str, **details):
@@ -349,6 +350,16 @@ class Controller:
 
     def _status_notification(self, _char, data):
         self.log("status", "État FTMS reçu", raw=bytes(data).hex())
+        try:
+            target = ftms.parse_status_target(bytes(data))
+        except ValueError as exc:
+            self.log("error", "État FTMS invalide", detail=str(exc), raw=bytes(data).hex())
+            return
+        if target:
+            action, value = target
+            self.targets["speed_kmh" if action == "speed" else "incline_pct"] = value
+            if self.target_listener:
+                self.target_listener(action, value)
         if data and data[0] == 0xFF:
             self.control_acquired = False
             self.armed_until = 0

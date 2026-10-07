@@ -397,11 +397,10 @@ class ExecutionTests(unittest.IsolatedAsyncioTestCase):
             self.assertEqual(self.e.snapshot()["targets"], original)
             self.assertEqual(len(self.client.writes), writes)
         self.e.adjust(OWNER, -.1, 0)
-        with self.assertRaisesRegex(ControllerError, "Attendez"):
-            self.e.adjust(OWNER, -.2, 0)
+        self.e.adjust(OWNER, -.2, 0)
         await self.wait("running")
-        self.assertEqual(self.client.writes[writes:], [ftms.encode_command("speed", 1.9)])
-        self.assertEqual(self.c.telemetry["speed_kmh"], 1.9)
+        self.assertEqual(self.client.writes[writes:], [ftms.encode_command("speed", 1.8)])
+        self.assertEqual(self.c.telemetry["speed_kmh"], 1.8)
         self.e.request_halt(pause=True)
         await self.wait("paused")
         with self.assertRaises(ControllerError):
@@ -427,6 +426,68 @@ class ExecutionTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(self.client.writes[writes:], [ftms.encode_command("incline", 0), b"\x08\x01"])
         self.assertTrue(self.e.stop_confirmed)
         self.assertFalse(self.c.desynchronized)
+
+    async def test_console_targets_sync_without_rewriting_measurements_or_echoing_commands(self):
+        await self.real()
+        await self.start_running()
+        writes = len(self.client.writes)
+        self.c._status_notification(None, bytes.fromhex("059a01"))  # Console : 4,1 km/h.
+        self.c._status_notification(None, bytes.fromhex("060a00"))  # Console : 1 %.
+        self.assertEqual(self.e.targets, [{"speed": 4.1, "incline": 1}, {"speed": 4.6, "incline": 2}])
+        self.assertEqual(self.c.telemetry["speed_kmh"], 2)
+        self.assertEqual(self.c.telemetry["incline_pct"], 0)
+        self.assertEqual(len(self.client.writes), writes)
+        self.client.speed, self.client.incline = 4.1, 1
+        self.client.measure()
+        self.assertEqual(self.device.snapshot()["measurements"]["speed_kmh"]["value"], 4.1)
+        self.assertEqual(self.e.adjustment_bounds()["speed"]["step"], .5)
+        self.e.adjust(OWNER, self.e.offsets["speed"] + .5, self.e.offsets["incline"])
+        await self.wait("running")
+        self.assertEqual(self.c.telemetry["speed_kmh"], 4.6)
+        self.assertEqual(self.e.targets[1]["speed"], 5.1)
+        self.assertEqual(self.e.workout["blocks"][0]["speed"], 2)
+
+    async def test_rapid_adjustments_keep_latest_target_and_ignore_older_command_echo(self):
+        await self.real()
+        await self.start_running()
+        self.client.delay = .2
+        writes = len(self.client.writes)
+        self.e.adjust(OWNER, .5, 0)
+        while not self.c.command_lock.locked():
+            await asyncio.sleep(.01)
+        for offset in (1, 1.5, 2, 2.5, 3):
+            self.e.adjust(OWNER, offset, 0)
+        self.c._status_notification(None, bytes.fromhex("05fa00"))  # Ancien échange : 2,5.
+        self.assertEqual(self.e.targets[0]["speed"], 5)
+        await self.wait("running")
+        self.assertEqual(self.client.writes[writes:], [ftms.encode_command("speed", 2.5), ftms.encode_command("speed", 5)])
+        self.assertEqual(self.c.telemetry["speed_kmh"], 5)
+
+    async def test_stop_discards_rapid_pending_targets_after_inflight_exchange(self):
+        await self.real()
+        await self.start_running()
+        self.client.delay = .2
+        writes = len(self.client.writes)
+        self.e.adjust(OWNER, .5, 0)
+        while not self.c.command_lock.locked():
+            await asyncio.sleep(.01)
+        self.e.adjust(OWNER, 3, .5)
+        self.e.request_halt()
+        await self.wait("stopped")
+        self.assertEqual(self.client.writes[writes:], [ftms.encode_command("speed", 2.5), b"\x08\x01"])
+
+    async def test_console_target_preserves_future_limits_and_malformed_status_is_ignored(self):
+        await self.real()
+        await self.start_running()
+        self.c._status_notification(None, bytes.fromhex("054006"))  # 16 km/h : bloc suivant à 16,5 interdit.
+        self.assertEqual(self.e.targets[0]["speed"], 16)
+        self.assertEqual(self.e.targets[1]["speed"], 2.5)
+        self.assertIn("ce bloc", self.e.adjustment_note)
+        self.assertEqual(self.e.adjustment_bounds()["speed"]["max"], self.e.offsets["speed"])
+        ages = dict(self.c.received_at)
+        self.c._status_notification(None, b"\x05\x00")
+        self.assertEqual(self.e.targets[0]["speed"], 16)
+        self.assertEqual(self.c.received_at, ages)
 
     async def test_real_adjustment_refusal_stops_and_unknown_response_never_retries(self):
         await self.real()

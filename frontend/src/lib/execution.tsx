@@ -18,6 +18,7 @@ export interface Session {
   profile: { id: string; name: string } | null; workout: Workout | null
   targets: { speed: number; incline: number }[]; offsets: { speed: number; incline: number }
   adjustment_bounds: { speed: AdjustmentRange; incline: AdjustmentRange } | null
+  adjustment_note: string | null
   block_index: number; active_s: number; pause_s: number; wall_s: number; started_at: string | null
   countdown: number | null; reason: string | null; error: string | null; stop_confirmed: boolean
   restart_delay_s: number; authorization_remaining_s: number; limits: { speed: number; incline: number }
@@ -49,6 +50,7 @@ function isFeed(v: unknown): v is Feed {
   if (s.id !== null && (!isWorkout(s.workout) || !isProfile(s.profile)
     || !Number.isSafeInteger(s.block_index) || Number(s.block_index) < 0 || Number(s.block_index) >= s.workout.blocks.length)) return false
   if (!Array.isArray(s.targets) || !s.targets.every(isLimits) || s.targets.length !== (isWorkout(s.workout) ? s.workout.blocks.length : 0)
+    || !nullableString(s.adjustment_note)
     || !isLimits(s.offsets) || !(s.adjustment_bounds === null || (isRecord(s.adjustment_bounds) && isAdjustmentRange(s.adjustment_bounds.speed) && isAdjustmentRange(s.adjustment_bounds.incline)))) return false
   return nullableString(s.id) && isPhase(s.phase) && ['simulation', 'reel'].includes(String(s.mode)) && typeof s.owned_by_me === 'boolean'
     && (s.profile === null || isProfile(s.profile)) && (s.workout === null || isWorkout(s.workout))
@@ -71,6 +73,8 @@ interface Selected { profile: string; workout: Workout; origin: string }
 interface State {
   feed?: Feed; receivedAt: number; now: number; status: 'loading' | 'live' | 'offline'; error?: string; pending?: string
   selected?: Selected; preparing: boolean; confirmingResume: boolean
+  adjustment?: Session['offsets']
+  changeAdjustment: (action: 'speed' | 'incline', direction: number) => void
   select: (profile: string, workout: Workout) => void; setPreparing: (value: boolean) => void; clearSelected: () => void
   setConfirmingResume: (value: boolean) => void
   act: (action: 'start' | 'pause' | 'stop' | 'resume' | 'recover' | 'adjust', confirmation?: boolean, offsets?: Session['offsets']) => Promise<boolean>
@@ -88,23 +92,33 @@ export function ExecutionProvider({ children }: { children: ReactNode }) {
   const [selected, setSelected] = useState<Selected>()
   const [preparing, setPreparing] = useState(false)
   const [confirmingResume, setConfirmingResume] = useState(false)
+  const [adjustment, setAdjustment] = useState<Session['offsets']>()
+  const desiredAdjustment = useRef<{ session: string; offsets: Session['offsets'] } | undefined>(undefined)
+  const adjustmentTimer = useRef<number | undefined>(undefined)
+  const adjustmentSending = useRef(false)
   const last = useRef<Feed | undefined>(undefined)
   const cursor = useRef<{ instance: string; sequence: number } | undefined>(undefined)
   const starting = useRef(false)
   const requestNumber = useRef(0)
   const mounted = useRef(false)
+  const clearAdjustment = useCallback(() => {
+    desiredAdjustment.current = undefined
+    window.clearTimeout(adjustmentTimer.current)
+    setAdjustment(undefined)
+  }, [])
   const accept = useCallback((next: Feed) => {
     if (cursor.current?.instance === next.instance_id && cursor.current.sequence > next.sequence) return
     cursor.current = { instance: next.instance_id, sequence: next.sequence }
-    setFeed(previous => {
-      const reset = next.type === 'snapshot' || previous?.session.id !== next.session.id || previous?.instance_id !== next.instance_id
-      const after = reset ? 0 : previous?.samples.at(-1)?.seq ?? 0
-      const value = { ...next, samples: (reset ? next.samples : [...(previous?.samples ?? []), ...next.samples.filter(s => s.seq > after)]).slice(-9000) }
-      last.current = value
-      return value
-    })
+    const previous = last.current
+    const reset = next.type === 'snapshot' || previous?.session.id !== next.session.id || previous?.instance_id !== next.instance_id
+    const after = reset ? 0 : previous?.samples.at(-1)?.seq ?? 0
+    const value = { ...next, samples: (reset ? next.samples : [...(previous?.samples ?? []), ...next.samples.filter(s => s.seq > after)]).slice(-9000) }
+    last.current = value
+    setFeed(value)
+    if (previous?.instance_id !== next.instance_id || desiredAdjustment.current?.session !== next.session.id
+      || !next.session.owned_by_me || !['running', 'adjusting'].includes(next.session.phase)) clearAdjustment()
     setReceivedAt(Date.now())
-  }, [])
+  }, [clearAdjustment])
   useEffect(() => {
     mounted.current = true
     let disposed = false, socket: WebSocket, retry: number | undefined, deadline: number | undefined, backoff = 1000
@@ -124,7 +138,7 @@ export function ExecutionProvider({ children }: { children: ReactNode }) {
       socket.onclose = () => {
         window.clearTimeout(deadline)
         if (disposed) return
-        setStatus('offline'); retry = window.setTimeout(connect, backoff); backoff = Math.min(10000, backoff * 2)
+        clearAdjustment(); setStatus('offline'); retry = window.setTimeout(connect, backoff); backoff = Math.min(10000, backoff * 2)
       }
       socket.onerror = () => socket.close()
     }
@@ -143,11 +157,13 @@ export function ExecutionProvider({ children }: { children: ReactNode }) {
     window.addEventListener('pagehide', release)
     return () => {
       disposed = true; mounted.current = false
+      window.clearTimeout(adjustmentTimer.current); desiredAdjustment.current = undefined
       window.clearInterval(heartbeat); window.clearInterval(clock); window.clearTimeout(retry); window.clearTimeout(deadline)
       window.removeEventListener('pagehide', release); socket.close()
     }
-  }, [accept, client])
+  }, [accept, client, clearAdjustment])
   const act: State['act'] = async (action, confirmation = false, offsets) => {
+    if (action !== 'adjust') clearAdjustment()
     const movement = ['start', 'resume', 'adjust'].includes(action)
     if (movement && starting.current) return false
     if (movement) starting.current = true
@@ -175,14 +191,41 @@ export function ExecutionProvider({ children }: { children: ReactNode }) {
       if (mounted.current && requestNumber.current === number) setPending(undefined)
     }
   }
-  return <Context value={{ feed, receivedAt, now, status, error, pending, selected, preparing, confirmingResume,
+  const sendAdjustment = async () => {
+    if (adjustmentSending.current) return
+    const next = desiredAdjustment.current
+    if (!next) return
+    const s = last.current?.session
+    if (s?.id !== next.session || !s.owned_by_me || !['running', 'adjusting'].includes(s.phase)) { clearAdjustment(); return }
+    adjustmentSending.current = true
+    const ok = await act('adjust', false, next.offsets)
+    adjustmentSending.current = false
+    if (!ok) { clearAdjustment(); return }
+    if (desiredAdjustment.current === next) clearAdjustment()
+    else if (desiredAdjustment.current) void sendAdjustment()
+  }
+  const changeAdjustment: State['changeAdjustment'] = (action, direction) => {
+    const s = last.current?.session, range = s?.adjustment_bounds?.[action]
+    if (!s?.id || !range || !s.owned_by_me || !['running', 'adjusting'].includes(s.phase) || status !== 'live'
+      || Date.now() - receivedAt >= 5000 || currentMeasurement({ feed: last.current, status, now: Date.now(), receivedAt }, 'speed_kmh') === null
+      || currentMeasurement({ feed: last.current, status, now: Date.now(), receivedAt }, 'incline_pct') === null) return
+    const base = desiredAdjustment.current?.session === s.id ? desiredAdjustment.current.offsets : s.offsets
+    const value = Math.round((base[action] + direction * range.step) * 1e6) / 1e6
+    if (value < range.min - 1e-6 || value > range.max + 1e-6) return
+    const offsets = { ...base, [action]: value }
+    desiredAdjustment.current = { session: s.id, offsets }
+    setAdjustment(offsets); setError(undefined)
+    window.clearTimeout(adjustmentTimer.current)
+    adjustmentTimer.current = window.setTimeout(() => void sendAdjustment(), 120)
+  }
+  return <Context value={{ feed, receivedAt, now, status, error, pending, selected, preparing, confirmingResume, adjustment, changeAdjustment,
     select: (profile, workout) => { if (inProgress(last.current?.session.phase)) navigate(href.direct)
       else { setSelected({ profile, workout, origin: location.hash || href.today }); setPreparing(true); setError(undefined) } },
     setPreparing, clearSelected: () => { setPreparing(false); setSelected(undefined) }, setConfirmingResume, act }}>{children}</Context>
 }
 
 export function useExecution() { const state = useContext(Context); if (!state) throw new Error('ExecutionProvider absent'); return state }
-export function currentMeasurement(state: State, key: MeasurementKey): number | null {
+export function currentMeasurement(state: Pick<State, 'feed' | 'status' | 'now' | 'receivedAt'>, key: MeasurementKey): number | null {
   const d = state.feed?.device, m = d?.measurements[key]
   if (state.status !== 'live' || d?.phase !== 'connected' || m?.quality !== 'fresh' || m.value === null || m.age_s === null
     || m.age_s + Math.max(0, (state.now - state.receivedAt) / 1000) > d.stale_after_s) return null

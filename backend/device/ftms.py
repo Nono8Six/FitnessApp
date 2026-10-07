@@ -135,3 +135,16 @@ def parse_response(data: bytes) -> tuple[int, int]:
     if len(data) != 3 or data[0] != 0x80 or data[2] not in RESULTS:
         raise ValueError("Réponse Control Point FTMS invalide")
     return data[1], data[2]
+
+
+def parse_status_target(data: bytes) -> tuple[str, float] | None:
+    """A status reports a target, never an instantaneous belt measurement."""
+    if not data:
+        raise ValueError("État FTMS vide")
+    if data[0] not in (0x05, 0x06):
+        return None
+    if len(data) != 3:
+        raise ValueError("Changement de consigne FTMS : 3 octets attendus")
+    if data[0] == 0x05:
+        return "speed", struct.unpack("<H", data[1:])[0] / 100
+    return "incline", struct.unpack("<h", data[1:])[0] / 10

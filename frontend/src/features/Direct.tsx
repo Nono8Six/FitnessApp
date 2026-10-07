@@ -171,34 +171,28 @@ function Progress({ blocks, active }: { blocks: Block[]; active: number }) {
 
 function LiveAdjustments() {
   const e = useExecution(), s = e.feed!.session
-  const enabled = s.owned_by_me && s.phase === 'running' && !e.pending && e.status === 'live'
+  const enabled = s.owned_by_me && ['running', 'adjusting'].includes(s.phase) && (!e.pending || e.pending === 'adjust') && e.status === 'live'
     && e.now - e.receivedAt < 5000 && currentMeasurement(e, 'speed_kmh') !== null && currentMeasurement(e, 'incline_pct') !== null
   const target = s.targets[s.block_index]
-  const signed = (v: number) => `${v > 0 ? '+' : ''}${dec1(v)}`
-  const adjusted = s.offsets.speed !== 0 || s.offsets.incline !== 0
-  const offsetLabel = [s.offsets.speed ? `${signed(s.offsets.speed)} km/h` : '', s.offsets.incline ? `${signed(s.offsets.incline)} %` : ''].filter(Boolean).join(' · ')
-  const limited = (['speed', 'incline'] as const).filter(action => s.adjustment_bounds && s.offsets[action] + s.adjustment_bounds[action].step > s.adjustment_bounds[action].max + 1e-6)
+  const offsets = e.adjustment ?? s.offsets
+  const limited = (['speed', 'incline'] as const).filter(action => s.adjustment_bounds && offsets[action] + s.adjustment_bounds[action].step > s.adjustment_bounds[action].max + 1e-6)
   const limitHint = limited.length === 2 ? 'Limites atteintes dans les blocs restants' : limited.length ? `Un bloc restant limite la ${limited[0] === 'speed' ? 'vitesse' : 'pente'}` : undefined
   return <div className="live-adjustments" role="group" aria-label="Consignes pour le reste de la séance">
     {(['speed', 'incline'] as const).map(action => {
       const label = action === 'speed' ? 'Vitesse' : 'Pente', unit = action === 'speed' ? 'km/h' : '%'
       const range = s.adjustment_bounds?.[action]
-      const change = (direction: number) => {
-        if (!range) return
-        const offsets = { ...s.offsets, [action]: Math.round((s.offsets[action] + direction * range.step) * 1e6) / 1e6 }
-        void e.act('adjust', false, offsets)
-      }
+      const value = target[action] + offsets[action] - s.offsets[action]
       return <div className="live-adjust-row" key={action}>
         <span className="text-subhead text-label-2">{label}</span>
         <div className="live-adjust-stepper">
-          <button type="button" aria-label={`Diminuer la ${label.toLowerCase()} pour le reste de la séance`} disabled={!enabled || !range || s.offsets[action] - range.step < range.min - 1e-6} onClick={() => change(-1)}><Minus size={20} /></button>
-          <span className={cx('live-adjust-value num', action === 'speed' ? 'text-speed' : 'text-incline')}>{dec1(target[action])}<small>{unit}</small></span>
-          <button type="button" aria-label={`Augmenter la ${label.toLowerCase()} pour le reste de la séance`} disabled={!enabled || !range || s.offsets[action] + range.step > range.max + 1e-6} onClick={() => change(1)}><Plus size={20} /></button>
+          <button type="button" aria-label={`Diminuer la ${label.toLowerCase()} de ${dec1(range?.step ?? .5)} ${unit} pour le reste de la séance`} disabled={!enabled || !range || offsets[action] - range.step < range.min - 1e-6} onClick={() => e.changeAdjustment(action, -1)}><Minus size={20} /></button>
+          <span className={cx('live-adjust-value num', action === 'speed' ? 'text-speed' : 'text-incline')}>{dec1(value)}<small>{unit}</small></span>
+          <button type="button" aria-label={`Augmenter la ${label.toLowerCase()} de ${dec1(range?.step ?? .5)} ${unit} pour le reste de la séance`} disabled={!enabled || !range || offsets[action] + range.step > range.max + 1e-6} onClick={() => e.changeAdjustment(action, 1)}><Plus size={20} /></button>
         </div>
       </div>
     })}
-    <p className="live-adjust-hint" role="status">{s.phase === 'adjusting' ? 'Consignes envoyées · effet attendu' : !s.owned_by_me && inProgress(s.phase) ? 'Réglages sur l’écran qui a démarré la séance'
-      : adjusted ? `Blocs restants : ${offsetLabel}` : limitHint ?? 'Les réglages s’appliquent aux blocs restants'}</p>
+    <p className="live-adjust-hint" role="status">{e.adjustment || s.phase === 'adjusting' ? 'Cible demandée · effet attendu' : !s.owned_by_me && inProgress(s.phase) ? 'Réglages sur l’écran qui a démarré la séance'
+      : s.adjustment_note ?? limitHint ?? 'Cibles · réglages sur les blocs restants'}</p>
   </div>
 }
 
