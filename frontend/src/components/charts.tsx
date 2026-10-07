@@ -200,9 +200,10 @@ export interface Series {
   step?: boolean
   area?: boolean
   opacity?: number
+  maxGap?: number
 }
 
-export interface Marker { t: number; label: string; sec?: number }
+export interface Marker { t: number; label: string; sec?: number; color?: string }
 
 type Pt = [number, number]
 
@@ -258,7 +259,7 @@ export function TimeChart({
   const yTicks = useMemo(() => niceTicks(y0, y1, 3), [y0, y1])
   const xTicks = useMemo(() => {
     const span = x1 - x0
-    const step = [15, 30, 60, 120, 300, 600, 900].find((s) => span / s <= (w < 480 ? 4 : 6)) ?? 1800
+    const step = [15, 30, 60, 120, 300, 600, 900, 1800, 3600, 7200, 14400, 28800, 86400].find((s) => span / s <= (w < 480 ? 4 : 6)) ?? Math.ceil(span / 4)
     const out: number[] = []
     for (let t = Math.ceil(x0 / step) * step; t <= x1; t += step) out.push(t)
     return out
@@ -296,7 +297,7 @@ export function TimeChart({
     if (e.key === 'Escape') onCursor(null)
   }
 
-  const fmtT = (t: number) => (x1 - x0 <= 600 ? clock(t) : `${Math.round(t / 60)}`)
+  const fmtT = (t: number) => clock(t)
 
   return (
     <div ref={ref} style={{ height }} className="select-none">
@@ -328,14 +329,15 @@ export function TimeChart({
             {gaps.map(([a, b]) => (
               <rect key={a} x={x(a)} y={padT} width={Math.max(2, x(b) - x(a))} height={ph} fill="rgb(255 159 10 / .2)" />
             ))}
-            {markers.map((m) => (
-              <g key={m.t}>
-                <line x1={x(m.t)} x2={x(m.t)} y1={padT} y2={padT + ph} stroke="var(--color-yellow)" strokeWidth={1} strokeDasharray="3 3" />
-                <rect x={x(m.t) - 4} y={padT} width={8} height={8} rx={2} fill="var(--color-yellow)" />
+            {markers.map((m, i) => (
+              <g key={`${m.t}:${i}`}><title>{m.label}</title>
+                {m.sec !== undefined && <rect x={x(m.t)} y={padT} width={Math.max(0, x(m.t + m.sec) - x(m.t))} height={ph} fill={m.color ?? 'var(--color-yellow)'} opacity={.1} />}
+                <line x1={x(m.t)} x2={x(m.t)} y1={padT} y2={padT + ph} stroke={m.color ?? 'var(--color-yellow)'} strokeWidth={1} strokeDasharray="3 3" />
+                <rect x={x(m.t) - 4} y={padT} width={8} height={8} rx={2} fill={m.color ?? 'var(--color-yellow)'} />
               </g>
             ))}
             {series.map((s) => {
-              const segs = segments(s.data.filter((p) => p.t >= x0 - 10 && p.t <= x1 + 10), s.value, x, y, s.step)
+              const segs = segments(s.data.filter((p) => p.t >= x0 - 10 && p.t <= x1 + 10), s.value, x, y, s.step, s.maxGap)
               return (
                 <g key={s.key} opacity={s.opacity ?? 1}>
                   {s.area && <path d={area(segs, padT + ph)} fill={`url(#${gradId})`} />}
@@ -361,7 +363,7 @@ export function TimeChart({
               {series.filter((s) => !s.dash).map((s) => {
                 const p = nearest(s.data, cursor)
                 const v = p && s.value(p)
-                return v != null && Math.abs(p!.t - cursor) < 12 ? (
+                return v != null && Math.abs(p!.t - cursor) < (s.maxGap ?? 12) ? (
                   <circle key={s.key} cx={x(p!.t)} cy={y(v)} r={4.5} fill={s.color} stroke="#000" strokeWidth={2} />
                 ) : null
               })}
@@ -378,7 +380,7 @@ export function TimeChart({
   )
 }
 
-export function nearest(data: Sample[], t: number): Sample | undefined {
+export function nearest<T extends Sample>(data: T[], t: number): T | undefined {
   let lo = 0, hi = data.length - 1
   if (hi < 0) return undefined
   while (hi - lo > 1) {

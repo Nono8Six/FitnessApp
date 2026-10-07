@@ -15,7 +15,7 @@ Une seule brique en cours dans le périmètre demandé. Les cases indiquent les 
 - [x] **Brique 6 · Catalogue et séances personnalisées** : six formats, trois niveaux, copies personnelles ; création et ajustement ChatGPT validés, persistants et acceptés explicitement.
 - [ ] **Brique 7 · Tapis dans l’app** : logiciel livré, connexion en lecture seule et état en direct vérifiés en simulation ; essai RUN500 et téléphone physique restant à faire.
 - [x] **Brique 8 · Exécuter une séance** : moteur réel et simulé, Direct, pause/reprise et arrêt ; simulation vérifiée, réception physique de l’application encore ouverte.
-- [ ] **Brique 9 · Enregistrer et revoir** : mesures conservées, bilan réel, ressenti.
+- [x] **Brique 9 · Enregistrer et revoir** : mesures conservées, bilan réel, ressenti.
 - [ ] **Brique 10 · RUN500 réel** : réception matérielle progressive du parcours et des pertes.
 - [ ] **Brique 11 · Historique et semaine** : historique, objectifs, Aujourd’hui alimenté par les vraies séances.
 - [ ] **Brique 12 · Coach informé** : ChatGPT lit tout l’historique du profil et cite ses sources.
@@ -369,19 +369,23 @@ Contrôles de ce complément : build et 46 tests ciblés réussis (calculs, API,
 
 ### Brique 9 · Enregistrer et revoir
 
-**Livré :** à la fin d’une séance, le bilan réel s’affiche et reste consultable ; on peut saisir son ressenti.
+**Livré le 7 octobre 2026 :** après une fin ou un arrêt confirmé et la dernière transaction réussie, Direct ouvre le bilan à son URL stable `#/bilans/{id}`. Aujourd’hui → Bilans retrouve tous les bilans du profil ; la fiche de séance ouvre ceux de ce programme. Liste paginée de consultation, sans totaux ni comparaisons. Un arrêt incertain conserve le Direct et ses actions protectrices ; le bilan consulté expose explicitement l’absence de confirmation.
 
-**Travail :**
-1. Enregistrement des mesures par lots, des événements et des commandes, hors de la boucle Bluetooth.
-2. Reprise après arrêt brutal du processus : la séance est marquée interrompue, avec les données conservées.
-3. Calculs versionnés : durées, distance du compteur, vitesse et pente moyennes, couverture.
-4. Écran Bilan : chiffres, vitesse et cible, pente, blocs prévus et mesurés, événements, données, ressenti 1 à 10.
+**Conservation :** migration additive `0009`, deux tables avec suppression en cascade du profil. Profil, poids, version du programme et paramètres de calcul figés ; suppression ou modification du programme sans effet sur le bilan. Mesures brutes/décodées UTC, source/qualité, échantillons à la seconde, transitions, pauses, reprises, ajustements, commandes et résultats. File bornée indépendante du Direct, transactions par lots sur un thread ; aucune écriture disque dans le callback FTMS. Repère durable avancé uniquement après commit, erreurs et pertes explicites, arrêt demandé en cas de stockage indisponible. Un processus interrompu laisse les données des derniers lots et une séance interrompue, sans reprise moteur. Réel et simulation restent dans leurs bases séparées.
+
+**Calculs partagés :** Python versionné `recording-v1-acsm-v1`. Durées active/pause/murale distinctes ; distance exclusivement issue du compteur, partielle en cas de coupure ou remise à zéro. Moyennes pondérées par les secondes actives valides, valeur de gauche et deux extrémités fraîches espacées d’au plus 2 s ; aucune interpolation de coupure. Couverture calculée, absence distincte de zéro. Calories actives ≈ : méthode ACSM partagée, poids figé, seules secondes conjointement valides ; limites et couverture accessibles dans Données et calculs.
+
+**Bilan :** durée dominante, mesures secondaires, état/date/nom, ressenti facultatif 1–10 sans sélection initiale, saisie et modification avec confirmation serveur et reprise explicite après échec. Téléphone compact ; PC à deux colonnes dès 900 px. Courbes SVG vitesse mesurée/consigne effectivement acceptée et pente liée, même curseur tactile/souris/clavier, pauses et événements, trous réels. Vue complète ou fenêtres de 5 min, tous les points conservés même au-delà du buffer Direct. Blocs initialement prévus, consignes appliquées et moyennes mesurées ; événements et qualité en détails développables.
 
 **Fait quand :**
-- [ ] Un arrêt forcé du serveur en pleine séance laisse une séance interrompue et lisible.
-- [ ] Les chiffres du bilan sont égaux à ceux recalculés par les tests.
+- [x] Un arrêt forcé du serveur en pleine séance laisse une séance interrompue et lisible ; intégrité et ressenti conservés après une seconde relance, sans connexion ni armement automatique.
+- [x] Calculs pondérés, pauses, zéros, mesures manquantes, coupures/remises à zéro et séance de 3 h / 10 801 points contrôlés ; isolation API, ressentis stricts, suppression en cascade, programme figé et panne/saturation du stockage vérifiés.
+- [x] Build TypeScript/Vite et 104 tests ciblés réussis ; les 30 contrôles enregistrement/exécution ont repassé après les derniers correctifs.
+- [x] Chrome via MCP : parcours moteur simulé réel, pause/reprise/ajustement, arrivée au bilan, curseur souris/toucher/clavier, ressenti ajouté/modifié, panne réseau avec saisie conservée et réessai, rechargement et changement de profil. Deuxième séance complète et blocs vérifiés ; troisième séance coupée par arrêt brutal du processus, bilan interrompu retrouvé avec arrêt non confirmé visible et bloc non réalisé sans valeurs inventées. Formats 360 × 640, 390 × 844, 1366 × 768 et seuil 899/900 px inspectés et corrigés.
 
-**Pas dans cette brique :** historique complet, comparaisons.
+**Installation habituelle :** sauvegarde SQLite préalable, migration installée, huit tables existantes identiques et coffre ChatGPT inchangé par empreintes, intégrité SQLite `ok`. Relance au repos par le mécanisme du lanceur ; HTML, JS et CSS servis identiques au build final. Répertoire réel des bilans vide, aucune donnée simulée importée ; instance isolée arrêtée après contrôle. Aucun mouvement ni scan du RUN500 réel.
+
+**Limites :** les lots non encore commités lors d’un arrêt brutal ne sont pas garantis (repère durable visible). Pas d’essai sur téléphone physique ni de réception matérielle RUN500. Les avertissements réseau des arrêts volontaires et le 404 d’un bilan d’un autre profil sont attendus ; aucun succès de sauvegarde n’est annoncé sur ces refus. Historique complet, totaux hebdomadaires, comparaisons et lectures d’activités par le Coach restent dans les briques suivantes.
 
 ### Brique 10 · RUN500 réel
 

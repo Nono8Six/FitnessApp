@@ -23,6 +23,8 @@ from .api import chatgpt as chatgpt_api
 from .api import coach as coach_api
 from .api import device as device_api
 from .api import execution as execution_api
+from .api import recordings as recordings_api
+from .recording.store import recover as recover_recordings
 from .training.execution import Execution
 from .device.runtime import DeviceRuntime
 from .coach.connection import Connection
@@ -80,6 +82,7 @@ def create_app(*, simulation: bool = False, data_root: Path | None = None, dist:
         with database.write() as session:
             ensure_default_profiles(session)
             recover_coach(session)
+            recover_recordings(session)
     except Exception as exc:
         database.close()
         raise StorageError(f"Base de données {database.path} : profils par défaut impossibles à créer ({exc}).") from exc
@@ -178,6 +181,7 @@ def create_app(*, simulation: bool = False, data_root: Path | None = None, dist:
     app.include_router(coach_api.router)
     app.include_router(device_api.router)
     app.include_router(execution_api.router)
+    app.include_router(recordings_api.router)
 
     @app.api_route("/api/{_path:path}", methods=["GET", "POST", "PUT", "PATCH", "DELETE"])
     async def unknown_api(_path: str):

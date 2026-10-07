@@ -11,7 +11,7 @@ import { inProgress, useExecution } from '../lib/execution'
 
 /** Destinations réellement construites. Chaque brique ajoute la sienne. */
 const TABS = [
-  { key: 'today', label: 'Aujourd’hui', href: href.today, Icon: TodayIcon, match: ['today'] },
+  { key: 'today', label: 'Aujourd’hui', href: href.today, Icon: TodayIcon, match: ['today', 'recordings', 'report'] },
   { key: 'library', label: 'Séances', href: href.library, Icon: LibraryIcon, match: ['library', 'workout', 'editor'] },
   { key: 'coach', label: 'Coach', href: href.coach, Icon: CoachIcon, match: ['coach'] },
 ] as const
@@ -249,16 +249,16 @@ export function Page({
           scrolled ? 'material hairline-b' : 'bg-transparent',
         )}
       >
-        <div className={cx('mx-auto grid h-11 grid-cols-[1fr_auto_1fr] items-center gap-2 px-4 desk:px-10', width)}>
-          <div className="min-w-0 justify-self-start">
+        <div className={cx('mx-auto grid h-11 grid-cols-3 items-center gap-2 px-4 desk:px-10', width)}>
+          <div className="min-w-0">
             {back && (
-              <a href={back.href} className="pressable -ml-2 flex h-11 items-center pr-2 text-body text-accent">
+              <a href={back.href} className="pressable -ml-2 flex h-11 max-w-full items-center pr-2 text-body text-accent">
                 <ChevronLeft size={28} strokeWidth={2.2} className="-mr-0.5 shrink-0" />
                 <span className="truncate">{back.label}</span>
               </a>
             )}
           </div>
-          <div className={cx('max-w-[50vw] truncate text-headline transition-opacity duration-200 desk:max-w-[480px]', scrolled ? 'opacity-100' : 'opacity-0')} aria-hidden>
+          <div className={cx('min-w-0 truncate text-center text-headline transition-opacity duration-200', scrolled ? 'opacity-100' : 'opacity-0')} aria-hidden>
             {title}
           </div>
           <div className="flex items-center gap-3 justify-self-end">

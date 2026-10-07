@@ -25,7 +25,7 @@ Référence fonctionnelle des écrans, à appliquer brique par brique ([plan](..
 | Pause | Bouton jaune, demande immédiate ; « Pause demandée » puis « En pause » | Identique | Durée active figée dès la demande ; pause confirmée après réponse et mesure de zéro stabilisée | 8 |
 | Reprendre | Bouton vert, puis clé et bande libre | Identique | Réservé au propriétaire, mêmes confirmations et préconditions qu’au démarrage, point conservé | 8 |
 | Arrêter | Bouton rouge ; « Arrêt demandé » puis « Arrêt confirmé · 0,0 km/h » | Identique | Une demande n’est jamais un arrêt confirmé | 8 |
-| Bilan | Chiffres, courbes liées, blocs prévus et mesurés, ressenti, événements, données | Deux colonnes | Ressenti 1–10 facultatif | 9 |
+| Bilan | Après fin/arrêt confirmé : chiffres, courbes liées, blocs, ressenti et détails | Deux colonnes dès 900 px | URL stable ; Aujourd’hui → Bilans et fiche de séance ; ressenti 1–10 facultatif, sans valeur initiale | 9 |
 | Analyser | Coach : question sur l’historique, sources ouvrables | Identique | Chiffres identiques au bilan | 12 |
 | Planifier | Coach : semaine proposée, acceptée en tout ou partie | Identique | Aujourd’hui affiche la séance du jour | 13 |
 
@@ -42,7 +42,7 @@ Référence fonctionnelle des écrans, à appliquer brique par brique ([plan](..
 | Proposition invalide | Erreurs renvoyées à ChatGPT ; la carte n’apparaît qu’une fois valide | 6 |
 | Coach hors ligne | Bandeau neutre, composeur désactivé ; séances et historique disponibles | 5 |
 | Tapis absent / connexion en cours | Réglages > Tapis et feuille « Avant de démarrer » : état réel, Démarrer désactivé | 7 |
-| Programme incompatible | Bloc et limite affichés ; aucune valeur modifiée. Réel 1–2,5 km/h / 0–1 %, simulation jusqu’à 16/10, capacités et pas lus imposés | 8 |
+| Programme incompatible | Bloc et limite affichés ; aucune valeur modifiée. Réel et simulation 1–16 km/h / 0–10 %, restreints aux capacités et pas lus ; plus d’une heure autorisée | 8 |
 | Démarrage | Compte à rebours, Annuler | 8 |
 | Transition | La cible change avant la mesure ; rampe visible | 8 |
 | Mesures anciennes | `--` en gris, dernière mesure datée, bandeau orange | 8 |
@@ -50,10 +50,13 @@ Référence fonctionnelle des écrans, à appliquer brique par brique ([plan](..
 | Résultat de commande inconnu | Bandeau rouge, STOP physique puis reconnexion | 8 |
 | Observateur | Même séance et mêmes mesures ; Pause et Arrêter disponibles, Reprendre désactivé et propriétaire indiqué | 8 |
 | Observation interrompue | Mesures actuelles `--`, durée marquée dernière reçue, commandes désactivées aux mêmes places, reconnexion d’observation seule | 8 |
-| Programme terminé | Temps actif complet ; arrêt demandé puis confirmé, Terminer revient à Aujourd’hui | 8 |
+| Programme terminé | Temps actif complet ; arrêt demandé puis confirmé, puis bilan après clôture durable | 8–9 |
 | Séance interrompue | Bilan marqué interrompu, données conservées | 9 |
 | Donnée manquante | Trou dans la courbe, bande orange, événement, couverture | 9 |
 | Erreur de stockage | Bandeau rouge, dernier lot confirmé indiqué | 9 |
+| Aucun bilan | Liste vide explicite ; aucun résultat ni ressenti inventé | 9 |
+| Bilan introuvable / autre profil | Même message, aucune donnée du profil d’origine | 9 |
+| Ressenti non sauvegardé | Saisie conservée, message et Réessayer ; enregistré uniquement après réponse serveur | 9 |
 
 ## 4. Graphiques
 

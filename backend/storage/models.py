@@ -148,3 +148,38 @@ class WorkoutProposal(Base):
     accepted_id: Mapped[str | None] = mapped_column(String(32))
     accepted_version: Mapped[int | None]
     created_at: Mapped[str] = mapped_column(String(40))
+
+
+class RecordedSession(Base):
+    """Réalisation indépendante du programme éditable, détenue par son profil."""
+    __tablename__ = "recorded_sessions"
+    __table_args__ = (
+        CheckConstraint("feeling BETWEEN 1 AND 10", name="feeling"),
+        CheckConstraint("mode IN ('reel', 'simulation')", name="mode"),
+        Index("ix_recorded_sessions_profile_date", "profile_id", "started_at", "id"),
+    )
+    id: Mapped[str] = mapped_column(String(32), primary_key=True)
+    profile_id: Mapped[str] = mapped_column(ForeignKey("profiles.id", ondelete="CASCADE"))
+    mode: Mapped[str] = mapped_column(String(16))
+    started_at: Mapped[str] = mapped_column(String(40))
+    closed_at: Mapped[str | None] = mapped_column(String(40))
+    profile_snapshot: Mapped[dict] = mapped_column(JSON)
+    workout_snapshot: Mapped[dict] = mapped_column(JSON)
+    calculation_version: Mapped[str] = mapped_column(String(40))
+    checkpoint: Mapped[dict] = mapped_column(JSON)
+    persisted_at: Mapped[str] = mapped_column(String(40))
+    persisted_seq: Mapped[int]
+    lost_entries: Mapped[int]
+    feeling: Mapped[int | None]
+    feeling_updated_at: Mapped[str | None] = mapped_column(String(40))
+
+
+class RecordedEntry(Base):
+    __tablename__ = "recorded_entries"
+    session_id: Mapped[str] = mapped_column(ForeignKey("recorded_sessions.id", ondelete="CASCADE"), primary_key=True)
+    seq: Mapped[int] = mapped_column(primary_key=True)
+    at: Mapped[str] = mapped_column(String(40))
+    t: Mapped[float] = mapped_column(Float)
+    kind: Mapped[str] = mapped_column(String(24))
+    source: Mapped[str] = mapped_column(String(24))
+    data: Mapped[dict] = mapped_column(JSON)

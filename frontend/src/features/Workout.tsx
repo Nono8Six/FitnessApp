@@ -77,6 +77,7 @@ export function Workout({ profile, id, requestedVersion }: { profile: string; id
             <WorkoutBlocks data={shown} className="" />
           </section>
           <aside className="grid gap-5 desk:col-start-2 desk:row-start-2" aria-label="Actions">
+            <Group><Row title="Bilans de cette séance" href={href.workoutReports(id)} /></Group>
             <Group>
               <Row href={href.coachAdjust(id, shown.version)} leading={<Tile color="var(--color-incline)"><Sparkles size={17} strokeWidth={2.2} /></Tile>} title="Ajuster avec ChatGPT" />
               <Row onClick={busy ? undefined : () => void run(async () => {

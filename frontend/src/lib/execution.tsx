@@ -23,6 +23,7 @@ export interface Session {
   restart_delay_s: number; authorization_remaining_s: number; limits: { speed: number; incline: number }
   command: { action: string; value: number | null; status: 'sent' | 'accepted' | 'observed' | 'refused' | 'unknown' } | null
   distance_m: number | null; distance_quality: 'fresh' | 'stale' | 'absent' | 'partial'
+  recording: { status: 'recording' | 'saved' | 'error'; error: string | null; persisted_at: string | null; persisted_s: number; pending: number; lost_entries: number }
 }
 interface AdjustmentRange { min: number; max: number; step: number }
 interface Feed { type: 'snapshot' | 'state'; instance_id: string; sequence: number; session: Session; device: DeviceState; samples: LiveSample[]; markers: { t: number; label: string }[] }
@@ -38,6 +39,9 @@ function isFeed(v: unknown): v is Feed {
   if (!isRecord(v) || !['snapshot', 'state'].includes(String(v.type)) || typeof v.instance_id !== 'string'
     || !Number.isSafeInteger(v.sequence) || !isDeviceState(v.device) || !isRecord(v.session) || !Array.isArray(v.samples) || !Array.isArray(v.markers)) return false
   const s = v.session
+  const r = s.recording
+  if (!isRecord(r) || !['recording', 'saved', 'error'].includes(String(r.status)) || !nullableString(r.error)
+    || !nullableString(r.persisted_at) || !finite(r.persisted_s) || !finite(r.pending) || !finite(r.lost_entries)) return false
   if (s.id !== null && (!isWorkout(s.workout) || !isProfile(s.profile)
     || !Number.isSafeInteger(s.block_index) || Number(s.block_index) < 0 || Number(s.block_index) >= s.workout.blocks.length)) return false
   if (!Array.isArray(s.targets) || !s.targets.every(isLimits) || s.targets.length !== (isWorkout(s.workout) ? s.workout.blocks.length : 0)

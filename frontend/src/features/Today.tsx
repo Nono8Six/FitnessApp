@@ -2,7 +2,7 @@ import { ChevronRight } from 'lucide-react'
 import { ProgrammeMini } from '../components/charts'
 import { RunIcon } from '../components/Icons'
 import { Page } from '../components/Shell'
-import { Glyph, SectionHeader, StatGrid } from '../components/ui'
+import { Glyph, Group, Row, SectionHeader, StatGrid } from '../components/ui'
 import { WeightLink, WorkoutError, WorkoutLoading, workoutStats } from '../components/WorkoutSummary'
 import { useToday } from '../lib/date'
 import { href } from '../lib/router'
@@ -35,6 +35,7 @@ export function Today({ profile }: { profile: string }) {
             <p className="mt-4 text-title3">Aucune séance prévue</p>
             <a href={href.library} className="pressable mt-6 inline-flex h-[52px] items-center rounded-[14px] bg-accent px-6 text-headline text-on-accent">Choisir une séance</a>
           </section>}
+        <Group className="mt-7"><Row title="Bilans" href={href.recordings} /></Group>
       </div>
     </Page>
   )

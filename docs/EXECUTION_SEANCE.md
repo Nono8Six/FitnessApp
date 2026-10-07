@@ -10,7 +10,17 @@ Le PC fige le profil, la version et les blocs avant le compte à rebours. Le tem
 
 La distance est la somme des deltas du compteur reçu pendant l’effort et la décélération ; aucune estimation vitesse × temps ne la remplace. Une remise à zéro rend la distance partielle. Les valeurs absentes/anciennes restent indisponibles ; le détail expose la dernière mesure avec son âge. Le cardio n’apparaît pas sans source. Vitesse et cible sont distinctes ; l’allure à zéro est `--`.
 
-Le Direct et ses formes réduites lisent le même état. PC : mesures/commandes à gauche, bloc/progression/courbes à droite. Téléphone : plein écran sans onglets, commandes fixes de 68 px, détails défilants, capsule au-dessus des onglets. Courbes à un échantillon par seconde, au plus 9 000 points et 256 événements, curseur commun daté, interruptions non interpolées. Tout reste en mémoire jusqu’à la prochaine séance ou la fermeture du serveur. Aucun historique ni bilan enregistré.
+Le Direct et ses formes réduites lisent le même état. PC : mesures/commandes à gauche, bloc/progression/courbes à droite. Téléphone : plein écran sans onglets, commandes fixes de 68 px, détails défilants, capsule au-dessus des onglets. Courbes à un échantillon par seconde, au plus 9 000 points et 256 événements dans le buffer d’observation du Direct, curseur commun daté, interruptions non interpolées. Depuis la brique 9, un journal SQLite indépendant conserve les mesures et événements pendant l’exécution, sans cette limite de lecture.
+
+## Enregistrement et bilan
+
+La ligne de séance et ses snapshots sont commités avant toute commande moteur. Les callbacks du tapis copient les données dans une file bornée de 8 192 entrées ; un worker écrit jusqu’à 1 024 entrées par transaction, hors de la boucle Bluetooth. Le journal diagnostic JSONL est lui aussi écrit par lots sur un thread. Le checkpoint durable correspond aux événements commités ; une panne conserve la file en attente, affiche le dernier repère confirmé et demande l’arrêt. Une saturation compte explicitement les entrées perdues et interdit d’afficher « Enregistré ».
+
+Après fin ou arrêt confirmé, Direct attend la confirmation de clôture durable avant d’ouvrir `#/bilans/{id}`. Une commande incertaine reste dans Direct ; le bilan accessible depuis Aujourd’hui → Bilans n’affirme jamais un arrêt confirmé. Au redémarrage, les lignes ouvertes sont clôturées comme interrompues avec les données réellement conservées et sans réarmement. Les anciennes entrées restent immuables ; seul le ressenti facultatif 1–10 est modifiable.
+
+Le calcul `recording-v1-acsm-v1` utilise les échantillons persistés et le poids figé. Moyennes : pondération par le delta de temps actif, valeur de l’extrémité gauche, deux extrémités disponibles espacées d’au plus 2 s, sans traverser une pause ou un état inconnu. Couverture : secondes valides / secondes actives. Distance : deltas non négatifs du compteur pendant l’effort et la décélération ; compteur absent, coupure ou remise à zéro rendent la lecture partielle. Aucune distance vitesse × temps. Énergie : méthode ACSM du service partagé sur les seules secondes où vitesse et pente sont conjointement disponibles ; ≈ et limites visibles. Absence et zéro restent distincts.
+
+Les graphiques du bilan distinguent mesure et consigne acceptée, partagent axe temporel et curseur et affichent les trous. Tous les points se consultent, en séance entière ou fenêtres de 5 min. Les blocs exposent programme initial, plage de consignes appliquées et moyenne mesurée. Événements et qualité se développent à la demande. Profil et programme sont figés ; une modification/suppression ultérieure du programme ne modifie pas le bilan. La suppression du profil supprime ses bilans en cascade.
 
 ## Contrôle et limites
 
@@ -24,7 +34,7 @@ Pause/STOP restent accessibles pendant cet échange et bloquent immédiatement t
 
 | Sujet | Application | Diagnostic POC |
 |---|---|---|
-| Durée et segments | Validation métier existante : 60 min / 120 segments | 1–3 blocs de 5–60 s |
+| Durée et segments | 30–3 600 s par bloc, 120 segments ; séances de plus d’une heure autorisées | 1–3 blocs de 5–60 s |
 | Vitesse/pente réelles | 1–16 km/h / 0–10 %, restreints aux plages et pas effectivement lus | Programmes 4 km/h / 3 % ; manuel jusqu’à la plage annoncée |
 | Simulation | Jusqu’à 16 km/h / 10 %, selon ses propres capacités | Plafonds existants conservés |
 | Autorisation | Durée prévue + 30 s par segment + 900 s + 15 s, échéance absolue | Activation de 10 min conservée |
@@ -56,6 +66,6 @@ Après résultat inconnu : STOP physique → déconnexion/reconnexion passive da
 
 Vérifications logicielles : 52 tests ciblés (16 moteur/API, 9 tapis, 20 POC, 7 serveur) et `npm run build` réussis. Le faux transport Bleak teste la branche réelle, ses notifications et réponses, les refus, la sérialisation de STOP, le timeout, le STOP accepté sans zéro et la récupération passive. La simulation utilise des données extérieures distinctes sur le port 4331. `scripts/verify_execution_simulation.py` observe passivement une séance de 30 min, exige deux pauses et 1 800 s actives sans accélération ; il ne fournit aucun heartbeat propriétaire.
 
-Les résultats de l’essai long et des parcours Chrome sont consignés dans la brique 8 du [plan](../PLAN_V1_FITNESS_APP.md). Aucun Bluetooth réel, appel Coach, modification de schéma ou source du lanceur n’est nécessaire à ces vérifications.
+Les résultats de l’essai long et des parcours Chrome sont consignés dans la brique 8 du [plan](../PLAN_V1_FITNESS_APP.md). Ces vérifications de la brique 8 n’ont nécessité ni Bluetooth réel, ni appel Coach, ni modification de schéma ou source du lanceur. La migration additive et les contrôles de conservation du bilan figurent désormais dans la brique 9 du même plan.
 
 Complément des ajustements : 29 tests moteur/API/tapis, build et parcours Chrome réussis. Conservation après pause, transition, retour au programme et nouveau départ ; refus atomique de borne/pas/propriétaire, STOP pendant le premier échange de deux consignes, refus FTMS et réponse inconnue sans retry. Les valeurs 2,5, 16,0 et l’allure 60′00″ sont vérifiées sans débordement sur les formats téléphone et PC. Réception physique des ajustements encore ouverte.

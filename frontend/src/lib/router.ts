@@ -5,8 +5,14 @@ export type Route = { name: 'today' } | { name: 'settings'; treadmill?: boolean 
   | { name: 'coach'; conversationId?: string; target?: { workout_id: string; version: number }; createWorkout?: boolean }
   | { name: 'library'; view?: 'discover' | 'mine' } | { name: 'editor'; id?: string; proposalId?: string }
   | { name: 'workout'; id: string; version?: number }
+  | { name: 'recordings'; workoutId?: string } | { name: 'report'; id: string }
 
 export function parse(hash: string): Route {
+  if (hash === href.recordings) return { name: 'recordings' }
+  const reports = /^#\/bilans\?seance=([a-f0-9]{32})$/.exec(hash)
+  if (reports) return { name: 'recordings', workoutId: reports[1] }
+  const report = /^#\/bilans\/([a-f0-9]{32})$/.exec(hash)
+  if (report) return { name: 'report', id: report[1] }
   if (hash === href.settings) return { name: 'settings' }
   if (hash === href.treadmill) return { name: 'settings', treadmill: true }
   if (hash === href.direct) return { name: 'direct' }
@@ -31,6 +37,9 @@ export const href = {
   settings: '#/reglages',
   treadmill: '#/reglages?tapis=1',
   direct: '#/direct',
+  recordings: '#/bilans',
+  report: (id: string) => `#/bilans/${id}`,
+  workoutReports: (id: string) => `#/bilans?seance=${id}`,
   coach: '#/coach',
   library: '#/seances',
   myWorkouts: '#/seances?vue=mes',

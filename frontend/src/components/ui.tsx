@@ -594,7 +594,7 @@ export function StatGrid({ stats, className, compact = false }: { stats: Stat[];
       {stats.map((s) => (
         <div key={s.label} className={cx('group-bg min-w-0 bg-surface px-3.5 py-3 desk:px-4', s.wide && 'col-span-2 desk:col-span-1')}>
           <dt className="truncate text-subhead text-label">{s.label}</dt>
-          <dd className="num mt-0.5 text-[26px] leading-[32px] font-semibold tracking-[-0.01em] whitespace-nowrap"
+          <dd data-long-value={s.value !== null && s.value.length >= 8 ? 'true' : undefined} className="num mt-0.5 text-[26px] leading-[32px] font-semibold tracking-[-0.01em] whitespace-nowrap"
             style={{ color: s.value === null ? 'var(--color-label-3)' : s.color }}>
             {s.value ?? '--'}
             {s.unit && s.value !== null && <span className="ml-0.5 text-[17px] font-semibold uppercase">{s.unit}</span>}

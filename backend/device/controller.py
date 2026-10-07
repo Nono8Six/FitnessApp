@@ -70,30 +70,61 @@ class Controller:
         self.sim_distance = 0.0
         self.sim_elapsed = 0
         self.audit_error = None
+        self.audit_buffer = deque()
+        self.audit_task = None
+        self.audit_stopping = asyncio.Event()
         # L'application possède sa propre autorisation bornée et son moteur.
         # Le diagnostic conserve ses limites et son watchdog de dix minutes.
         self.session_limits = None
         self.control_notifications = False
         self.last_command = None
+        # Observateurs métier : copie/enfilement uniquement, aucune écriture SQL.
+        self.recording_listener = None
         self.log("info", "Contrôleur prêt", mode="simulation" if simulation else "ble")
 
     def log(self, level: str, message: str, **details):
         event = {"time": datetime.now(timezone.utc).isoformat(), "level": level, "message": message,
                  "mode": "simulation" if self.simulation else "ble", **details}
+        if self.recording_listener:
+            self.recording_listener(event)
         if level != "data":
             self.events.append(event)
-        try:
-            with self.audit_path.open("a", encoding="utf-8") as audit:
-                audit.write(json.dumps(event, ensure_ascii=False) + "\n")
-        except OSError as exc:
-            self.audit_error = f"Écriture du journal impossible : {exc}"
+        if len(self.audit_buffer) >= 8192:
+            self.audit_error = "Journal du tapis saturé : des événements ne sont pas conservés."
             self.armed_until = 0
-            LOGGER.exception(self.audit_error)
+        else:
+            self.audit_buffer.append(event)
         if level == "error":
             LOGGER.error("%s %s", message, details)
 
     async def start(self):
         self.watchdog_task = asyncio.create_task(self._watchdog())
+        async def audit_worker():
+            while not self.audit_stopping.is_set():
+                try:
+                    await asyncio.wait_for(self.audit_stopping.wait(), 1)
+                except TimeoutError:
+                    pass
+                await self._flush_audit()
+        self.audit_task = asyncio.create_task(audit_worker())
+
+    async def _flush_audit(self):
+        batch = list(self.audit_buffer)
+        if not batch:
+            return
+        def write():
+            with self.audit_path.open("a", encoding="utf-8") as audit:
+                audit.writelines(json.dumps(event, ensure_ascii=False) + "\n" for event in batch)
+        try:
+            await asyncio.to_thread(write)
+        except OSError as exc:
+            if not self.audit_error:
+                LOGGER.exception("Journal du tapis indisponible")
+            self.audit_error = f"Écriture du journal impossible : {exc}"
+            self.armed_until = 0
+            return
+        for _ in batch:
+            self.audit_buffer.popleft()
 
     def snapshot(self, viewer: str = "") -> dict:
         now = time.monotonic()
@@ -707,3 +738,7 @@ class Controller:
             with contextlib.suppress(asyncio.CancelledError):
                 await self.watchdog_task
         await self._close_client()
+        self.audit_stopping.set()
+        if self.audit_task:
+            await self.audit_task
+        await self._flush_audit()

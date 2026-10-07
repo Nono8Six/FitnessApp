@@ -35,8 +35,9 @@ class ValidationTests(unittest.TestCase):
         with self.assertRaisesRegex(ValidationError, "120 segments"):
             WorkoutInput.model_validate(data)
         data["items"] = [{"repeat": 2, "steps": [{"kind": "steady", "sec": 1801, "speed": 1, "incline": 0}]}]
-        with self.assertRaisesRegex(ValidationError, "60 minutes"):
-            WorkoutInput.model_validate(data)
+        self.assertEqual(preview(WorkoutInput.model_validate(data))["summary"]["sec"], 3602)
+        data["items"] = [{"repeat": 120, "steps": [{"kind": "steady", "sec": 3600, "speed": 1, "incline": 0}]}]
+        self.assertEqual(preview(WorkoutInput.model_validate(data))["summary"]["sec"], 432000)
 
 
 class WorkoutApiTests(unittest.TestCase):
@@ -180,7 +181,7 @@ class MigrationTests(unittest.TestCase):
                 self.assertEqual(profiles[0]["name"], "Profil conservé")
                 self.assertEqual(profiles[0]["weekly_goal"], 7)
                 self.assertEqual(profiles[0]["speed_unit"], "pace")
-                self.assertEqual(client.get("/api/health").json()["schema"], "0008")
+                self.assertEqual(client.get("/api/health").json()["schema"], "0009")
             finally:
                 app.state.database.close()
 

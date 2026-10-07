@@ -212,6 +212,9 @@ export function Direct() {
   const block = blocks[s?.block_index ?? 0], next = blocks[(s?.block_index ?? 0) + 1]
   const total = s?.workout?.summary.sec ?? 0
   const finished = s && ['stopped', 'completed', 'cancelled'].includes(s.phase)
+  useEffect(() => {
+    if (finished && s.id && s.recording?.status === 'saved' && s.profile?.id === profile?.id && e.status === 'live') navigate(href.report(s.id))
+  }, [finished, s?.id, s?.recording?.status, s?.profile?.id, profile?.id, e.status])
   const paused = s?.phase === 'paused'
   const statusTone = !available ? 'text-orange' : s?.phase === 'unknown' ? 'text-red' : paused ? 'text-yellow' : 'text-green'
   const reduce = () => navigate(href.today)
@@ -253,6 +256,10 @@ export function Direct() {
         </div>
         <div className="live-controls-wrap">
           {error && <p role="alert" className={cx('live-notice', s.phase === 'unknown' && 'is-urgent')}>{error}</p>}
+          {s.recording && <p role={s.recording.status === 'error' ? 'alert' : 'status'} className={cx('mb-3 text-footnote', s.recording.status === 'error' ? 'text-red' : 'text-label-2')}>
+            {s.recording.status === 'error' ? `${s.recording.error} Données conservées jusqu’à ${clock(s.recording.persisted_s)} depuis le départ.` : s.recording.status === 'saved' ? 'Enregistré' : `Enregistrement · conservé jusqu’à ${clock(s.recording.persisted_s)}`}
+          </p>}
+          {finished && s.recording?.status === 'error' && <a href={href.report(s.id)} className="pressable mb-3 flex min-h-11 items-center text-subhead text-accent">Consulter les données conservées</a>}
           {paused && <p className="live-action-hint text-label-2">{!s.owned_by_me ? 'Reprise sur l’écran qui a démarré la séance' : s.restart_delay_s ? `Stabilisation · ${s.restart_delay_s} s` : `Point conservé · pause ${clock(Math.floor(s.pause_s))}`}</p>}
           {s.phase === 'unknown' && <Button variant="plain" className="mb-2 w-full" onClick={() => navigate(href.treadmill)}>Reconnecter dans Réglages</Button>}
           {s.phase === 'unknown' && e.feed?.device.read_only && e.feed.device.phase === 'connected' && speed === 0 && <Button variant="gray" className="mb-3 w-full" onClick={() => void e.act('recover')}>Clore la séance interrompue</Button>}

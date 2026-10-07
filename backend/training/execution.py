@@ -1,8 +1,4 @@
-"""Une séance volatile, une horloge PC et un seul propriétaire du mouvement.
-
-Le transport FTMS est partagé avec le diagnostic. Aucun historique métier n'est
-enregistré ici ; les échantillons bornés servent uniquement au Direct courant.
-"""
+"""Une horloge PC et un seul propriétaire ; journal durable indépendant du Direct."""
 
 import asyncio
 import contextlib
@@ -18,6 +14,7 @@ from ..device.controller import ControllerError, LEASE_SECONDS, STALE_SECONDS, S
 from ..device import ftms
 from . import workouts
 from .profiles import get_profile
+from ..recording.store import Recorder
 
 LOGGER = logging.getLogger(__name__)
 TERMINAL = {"completed", "stopped", "cancelled"}
@@ -37,6 +34,7 @@ class Execution:
         self.owner_seen = 0.0
         self.workout = None
         self.targets = []
+        self.applied_targets = {"speed": None, "incline": None}
         self.offsets = {"speed": 0.0, "incline": 0.0}
         self.adjust_actions = ()
         self.profile = None
@@ -64,6 +62,9 @@ class Execution:
         self.distance_last = None
         self.distance_quality = "absent"
         self.distance_partial = False
+        self.recovered = False
+        self.recorder = Recorder(self)
+        self.controller.recording_listener = self.recorder.device_event
 
     @property
     def limits(self):
@@ -79,7 +80,7 @@ class Execution:
             workout = next((w for w in rows if w["version"] == version), None)
             if workout is None:
                 raise ControllerError("Cette version de séance n'existe plus. Choisissez une séance disponible.")
-            return copy.deepcopy(workout), {"id": profile.id, "name": profile.name}
+            return copy.deepcopy(workout), profile.model_dump()
 
     def _compatible(self, workout):
         c = self.controller
@@ -138,6 +139,12 @@ class Execution:
     async def start(self, viewer, profile_id, workout_id, version):
         if self.phase in ACTIVE or (self.task and not self.task.done()):
             raise ControllerError("Une séance est déjà en cours. Retrouvez-la dans Direct.")
+        self.recorder.update()
+        await self.recorder.flush()
+        if self.phase in ACTIVE or (self.task and not self.task.done()):
+            raise ControllerError("Une séance est déjà en cours. Retrouvez-la dans Direct.")
+        if self.recorder.session_id and not self.recorder.finalized:
+            raise ControllerError("L'enregistrement précédent est encore en attente. Vérifiez le stockage dans Direct.")
         workout, profile = self._load(profile_id, workout_id, version)
         self._ready_at_rest(workout)
         now = time.monotonic()
@@ -146,6 +153,7 @@ class Execution:
         self.owner_seen = now
         self.workout, self.profile = workout, profile
         self.targets = [{"speed": b["speed"], "incline": b["incline"]} for b in workout["blocks"]]
+        self.applied_targets = {"speed": None, "incline": None}
         self.offsets = {"speed": 0.0, "incline": 0.0}
         self.adjust_actions = ()
         self.block = 0
@@ -160,6 +168,7 @@ class Execution:
         self.distance_last = None
         self.distance_quality = "absent"
         self.distance_partial = False
+        self.recovered = False
         self.began = now
         self.ended = None
         self.started_at = datetime.now(timezone.utc).isoformat()
@@ -168,6 +177,13 @@ class Execution:
         self.deadline = now + workout["summary"]["sec"] + 30 * len(workout["blocks"]) + MAX_PAUSE_SECONDS + 15
         self.countdown_until = now + 3
         self.phase = "countdown"
+        try:
+            await self.recorder.begin()
+        except Exception as exc:
+            self.phase = "idle"
+            self.id = None
+            LOGGER.exception("Enregistrement impossible avant départ")
+            raise ControllerError("Enregistrement indisponible. Aucun départ envoyé ; vérifiez le stockage du PC.") from exc
         self.task = asyncio.create_task(self._run())
 
     def heartbeat(self, viewer):
@@ -194,6 +210,7 @@ class Execution:
             raise ControllerError("État de la bande inconnu. Utilisez le STOP physique, puis reconnectez le tapis.")
         if self.phase == "stopping" or (self.phase == "pausing" and pause):
             return
+        self.recorder.add("request", {"label": "Pause demandée" if pause else reason, "pause": pause})
         if self.phase == "countdown":
             self.requested = "cancel"
             self.phase = "cancelled"
@@ -220,6 +237,7 @@ class Execution:
         self.requested = "resume"
         self.stop_confirmed = False
         self.phase = "starting"
+        self.recorder.add("request", {"label": "Reprise confirmée"})
 
     def adjustment_bounds(self):
         if not self.workout or self.controller.phase != "connected":
@@ -266,6 +284,8 @@ class Execution:
         self.offsets = offsets
         self.adjust_actions = actions
         self.phase = "adjusting"
+        self.recorder.add("adjustment", {"label": "Ajustement demandé", "offsets": offsets,
+                                       "block_index": self.block, "targets": self.targets})
 
     def _alive(self, *, rest=False):
         now = time.monotonic()
@@ -290,6 +310,7 @@ class Execution:
         await self.controller._exchange(action, value)
         if action in ("speed", "incline"):
             self.controller.targets["speed_kmh" if action == "speed" else "incline_pct"] = value
+            self.applied_targets[action] = value
         return self.requested not in ("stop", "pause", "cancel")
 
     async def _observe(self, since, predicate, timeout=15):
@@ -340,6 +361,7 @@ class Execution:
             self.active_since = time.monotonic()
             self.phase = "running"
             self.error = None
+            self._sample(final=True)
 
     async def _halt(self, pause):
         self._freeze()
@@ -351,6 +373,7 @@ class Execution:
                 raise ControllerError("Arrêt non confirmé. Utilisez le STOP physique, puis reconnectez le tapis.")
             since = time.monotonic()
             await c.halt(self.reason or "Arrêt demandé", pause=pause)
+            self.applied_targets["speed"] = 0
             # Réponse positive ET zéro plus récent ET fenêtre sans état tardif.
             deadline = time.monotonic() + STOP_CONFIRM_TIMEOUT
             while True:
@@ -423,8 +446,10 @@ class Execution:
                     if active >= self.workout["summary"]["sec"]:
                         self.request_halt("Programme terminé · arrêt demandé")
                     elif active >= self.workout["blocks"][self.block]["end"]:
+                        self._sample(final=True)
                         self.block += 1
                         self.phase = "transitioning"
+                        self._sample(final=True)
                         if await self._target():
                             self.phase = "running"
                             self.adjust_actions = ()
@@ -452,7 +477,7 @@ class Execution:
             self.controller.armed_until = 0
             self.controller.owner = None
 
-    def snapshot(self, viewer=""):
+    def snapshot(self, viewer="", *, include_recording=True):
         active = self.active_time()
         c = self.controller
         return copy.deepcopy({
@@ -470,6 +495,7 @@ class Execution:
             "limits": self.limits, "command": c.last_command,
             "distance_m": round(self.distance, 1) if self.distance_quality != "absent" else None,
             "distance_quality": self.distance_quality,
+            **({"recording": self.recorder.status()} if include_recording else {}),
         })
 
     def _sample(self, *, final=False):
@@ -484,7 +510,11 @@ class Execution:
         fresh = lambda key: c.telemetry.get(key) if c.phase == "connected" and now - c.received_at.get(key, 0) <= STALE_SECONDS else None
         speed, incline, distance = fresh("speed_kmh"), fresh("incline_pct"), fresh("distance_m")
         if distance is None:
-            self.distance_quality = "stale" if self.distance_last is not None else "absent"
+            was_received = self.distance_last is not None or self.distance_partial
+            if self.distance_last is not None:
+                self.distance_partial = True
+            self.distance_last = None
+            self.distance_quality = "stale" if was_received else "absent"
         else:
             if self.distance_last is not None and self.phase in ("running", "transitioning", "adjusting", "pausing", "stopping"):
                 delta = distance - self.distance_last
@@ -496,14 +526,22 @@ class Execution:
             self.distance_quality = "partial" if self.distance_partial else "fresh"
         b = self.targets[self.block]
         self.sample_seq += 1
-        self.samples.append({"seq": self.sample_seq, "t": t, "active_s": round(self.active_time(), 2),
+        sample = {"seq": self.sample_seq, "t": t, "active_s": round(self.active_time(), 2),
                              "speed": speed, "incline": incline, "target": b["speed"],
-                             "target_incline": b["incline"], "phase": self.phase})
+                             "target_incline": b["incline"], "phase": self.phase,
+                             "counter_m": distance, "block_index": self.block,
+                             "applied_speed": self.applied_targets["speed"], "applied_incline": self.applied_targets["incline"],
+                             "at": datetime.now(timezone.utc).isoformat(),
+                             "measurements": self.device.snapshot()["measurements"]}
+        self.recorder.add("sample", sample, source="simulation" if c.simulation else "ftms", at=sample["at"])
+        self.samples.append(sample)
 
     async def start_runtime(self):
+        await self.recorder.start()
         async def tick():
             while True:
                 self._sample()
+                self.recorder.update()
                 await asyncio.sleep(.25)
         self.ticker = asyncio.create_task(tick())
 
@@ -520,6 +558,8 @@ class Execution:
         if c.telemetry["speed_kmh"] != 0:
             raise ControllerError("Attendez des mesures fraîches de bande arrêtée avant de clore la séance.")
         self.phase = "stopped"
+        self.recovered = True
+        self.recorder.add("recovery", {"label": "Clôture après reconnexion passive", "stop_confirmed": False})
         self.owner = None
         self.reason = "Séance interrompue · tapis reconnecté à l'arrêt"
         self.error = None
@@ -539,3 +579,4 @@ class Execution:
             self.ticker.cancel()
             with contextlib.suppress(asyncio.CancelledError):
                 await self.ticker
+        await self.recorder.close()

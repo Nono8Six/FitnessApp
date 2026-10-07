@@ -1,6 +1,35 @@
 @import "tailwindcss";
 @import "@fontsource-variable/inter";
 
+/* Bilan : mesure dominante, lecture verticale sur téléphone, deux colonnes sur PC. */
+.report-layout { display: grid; gap: 28px; }
+.report-summary, .report-exploration, .report-details { min-width: 0; }
+.report-duration { margin: 24px 0; }
+.report-duration .num { font-size: 64px; line-height: 1.12; letter-spacing: -.035em; }
+.report-duration.is-long .num { font-size: 52px; }
+.report-duration.is-very-long .num { font-size: 44px; }
+.report-summary dt { font-size: 15px; line-height: 20px; }
+.report-summary dd[data-long-value] { font-size: 20px; }
+.report-summary dd[data-long-value] span { font-size: 13px; }
+.report-feeling { margin-top: 20px; padding: 4px 0; }
+.report-curves { border-radius: 22px; padding: 16px; background: var(--color-surface); }
+.report-readout { display: flex; align-items: center; gap: 8px; min-height: 80px; margin: 12px 0; }
+.report-block { padding: 16px; }
+.report-block + .report-block { box-shadow: inset 0 .5px 0 var(--color-sep); }
+.report-event { display: flex; align-items: baseline; gap: 16px; margin-left: 16px; padding: 12px 16px 12px 0; box-shadow: inset 0 .5px 0 var(--color-sep); }
+.report-list-row { display: flex; align-items: center; gap: 12px; padding: 16px; min-height: 88px; }
+.report-list-row + .report-list-row { box-shadow: inset 0 .5px 0 var(--color-sep); }
+@media (min-width: 900px) {
+  .report-layout { grid-template-columns: minmax(252px, .85fr) minmax(0, 1.4fr); grid-template-rows: min-content 1fr; gap: 28px 24px; align-items: start; }
+  .report-summary { grid-column: 1; grid-row: 1; }
+  .report-exploration { grid-column: 2; grid-row: 1 / span 2; }
+  .report-details { grid-column: 1; grid-row: 2; }
+  .report-curves { padding: 20px; }
+}
+@media (min-width: 900px) and (max-width: 1050px) {
+  .report-summary > dl { grid-template-columns: 1fr; }
+}
+
 /* Dark-first tokens. Values follow the iOS dark semantic palette; see DESIGN.md. */
 @theme {
   --color-*: initial;
