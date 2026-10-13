@@ -47,14 +47,17 @@ def durations(text):
 
 class RequestFacts(Input):
     goal: Literal['fat_loss', 'cardio', 'endurance', 'recovery'] | None = None
-    max_duration_sec: int | None = Field(default=None, ge=30, le=432000)
-    duration_quote: str | None = Field(default=None, max_length=500)
+    max_duration_sec: int | None = Field(default=None, ge=30, le=432000,
+        description='Durée totale EN SECONDES : 30 minutes = 1800. Null si déjà présente dans request_constraints.')
+    duration_quote: str | None = Field(default=None, max_length=500,
+        description='Copier un extrait EXACT du message actuel contenant le nombre et son unité, par exemple « 30 minutes ». Ne pas reformuler.')
     max_speed: float | None = Field(default=None, ge=1, le=16)
     speed_quote: str | None = Field(default=None, max_length=500)
     max_incline: float | None = Field(default=None, ge=0, le=10)
     incline_quote: str | None = Field(default=None, max_length=500)
     gait: Literal['walk', 'run', 'either'] | None = None
-    gait_quote: str | None = Field(default=None, max_length=500)
+    gait_quote: str | None = Field(default=None, max_length=500,
+        description='Extrait EXACT du message actuel, par exemple « séance de marche ». Ne pas remplacer marche par marcher.')
     min_active_kcal: float | None = Field(default=None, gt=0, le=5000)
     calories_quote: str | None = Field(default=None, max_length=500)
 

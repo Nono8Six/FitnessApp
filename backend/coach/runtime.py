@@ -122,6 +122,9 @@ Exemples de décisions :
   Mémoire ; ne les diagnostique pas. Les faits temporaires expirent. Pas de « retiens » nécessaire
   pour une déclaration sportive utile. Ne mémorise ni ton propre conseil, ni une hypothèse.
   Une source ancienne se mémorise avec son source_turn_id et ne remplace pas une déclaration récente.
+  request_constraints contient déjà les contraintes reconnues par le serveur : ne les recopie pas
+  dans capture_context.request. Les champs absents restent null ; request={} est valide.
+  Toute citation doit être un extrait copié exactement, avec ses unités, jamais une reformulation.
   Les faits sportifs actifs renvoyés par capture_context sont déjà mémorisés : ne demande pas de
   confirmation supplémentaire et ne recrée pas une ancienne carte de préférence à mémoriser.
   Une durée demandée aujourd'hui ou « ne l'enregistre pas » reste dans la demande courante :
@@ -363,10 +366,21 @@ class Runtime:
         workout_invalid = False
         capture_failed = False
         prepared = False
-        for _ in range(8):
+        # Huit étapes d'outils au plus, puis une réponse fondée sur les résultats reçus.
+        # Une proposition obtenue à la dernière étape doit encore pouvoir être expliquée.
+        for step in range(9):
+            final_answer = step == 8 and prepared
+            if step == 8 and not prepared:
+                raise inference.InferenceError('memory_error')
+            if final_answer:
+                messages.append({'role': 'developer', 'content':
+                    'La recherche est terminée. Répondre maintenant avec les résultats déjà reçus, '
+                    'les propositions affichées et les limites connues. Ne pas inventer de donnée manquante.'})
             payload = {"model": model, "input": messages,
                        "tools": tools.definitions(capture_only=not prepared), "store": False, "stream": True,
                        "include": ["reasoning.encrypted_content"], "prompt_cache_key": cache_key}
+            if final_answer:
+                payload.pop('tools')
             if not prepared:
                 payload['tool_choice'] = 'required'
             # Même modèle choisi par la personne ; plus de réflexion pour les arbitrages
@@ -436,7 +450,7 @@ class Runtime:
                 turn.update(status="completed", error='workout_invalid' if workout_invalid else
                             'memory_error' if capture_failed else "tool_error" if tool_had_error else None)
                 return
-            if len(calls) > 12:
+            if final_answer or len(calls) > 12:
                 raise inference.InferenceError("tool_limit")
             messages.extend(output)
             for call in calls:

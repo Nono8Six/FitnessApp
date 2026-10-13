@@ -258,3 +258,28 @@ class InformedCoachTests(unittest.TestCase):
             self.assertEqual(final['status'], 'completed')
             self.assertEqual(final['sources'][0]['href'], f'#/bilans/{identifier}')
         asyncio.run(run())
+
+    def test_last_tool_round_keeps_a_final_answer_without_more_tools(self):
+        async def run():
+            runtime = Runtime(self.db, Connected())
+            payloads = []
+            async def transport(token, payload):
+                payloads.append(payload)
+                step = len(payloads)
+                if step <= 8:
+                    name = 'capture_context' if step == 1 else 'get_profile'
+                    args = '{"facts":[],"request":{}}' if step == 1 else '{}'
+                    yield completed([{'type': 'function_call', 'name': name, 'namespace': 'fitness',
+                        'call_id': f'call_{step}', 'arguments': args}])
+                else:
+                    self.assertNotIn('tools', payload)
+                    yield {'type': 'response.output_text.delta', 'delta': 'Voici les résultats reçus et leurs limites.'}
+                    yield completed()
+            runtime.transport = transport
+            turn, fresh = await runtime.start('ophelie', self.conv, store.Send(request_id=uuid4().hex, text='Mon bilan'))
+            frames = [f async for f in runtime.stream('ophelie', turn, fresh)]
+            final = json.loads(frames[-1][6:])
+            self.assertEqual((final['status'], final['error']), ('completed', None))
+            self.assertEqual(len(payloads), 9)
+            self.assertIn('résultats reçus', final['answer'])
+        asyncio.run(run())
