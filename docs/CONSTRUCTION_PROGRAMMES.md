@@ -1,6 +1,6 @@
 # Construction des programmes du catalogue
 
-Révision `2026-10-07-calories-4`, 7 octobre 2026. Principes et règles appliquées dans `backend/training/catalog.py`. Aucun tirage aléatoire, aucune génération IA du catalogue.
+Révision `2026-10-13-movement-5`, 13 octobre 2026. Principes et règles appliquées dans `backend/training/catalog.py`. Les formats, allures et règles de dose ci-dessous sont conservés ; chaque bloc indique maintenant son intention marche/course pour la méthode calorique v2. Les programmes personnels existants restent inchangés. Aucun tirage aléatoire, aucune génération IA du catalogue.
 
 ## Ce que les sources établissent
 

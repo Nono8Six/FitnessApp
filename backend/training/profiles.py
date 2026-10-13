@@ -14,7 +14,8 @@ from sqlalchemy import delete, func, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
-from ..storage.models import Profile
+from uuid import uuid4
+from ..storage.models import Profile, ProfileWeight
 
 WEEKLY_GOAL_MIN = 1
 WEEKLY_GOAL_MAX = 14
@@ -58,6 +59,7 @@ class ProfileOut(BaseModel):
     weekly_goal: int
     speed_unit: SpeedUnit
     weight_kg: float | None
+    weight_updated_at: str | None = None
     created_at: str
     updated_at: str
 
@@ -161,9 +163,12 @@ def create_profile(session: Session, data: ProfileCreate) -> ProfileOut:
         n += 1
     now = utc_now()
     row = Profile(id=profile_id, name=data.name, weekly_goal=data.weekly_goal, speed_unit=data.speed_unit,
-                  weight_kg=data.weight_kg, created_at=now, updated_at=now)
+                  weight_kg=data.weight_kg, weight_updated_at=now if data.weight_kg is not None else None,
+                  created_at=now, updated_at=now)
     session.add(row)
     _flush(session)
+    if data.weight_kg is not None:
+        session.add(ProfileWeight(id=uuid4().hex, profile_id=profile_id, weight_kg=data.weight_kg, recorded_at=now))
     return ProfileOut.model_validate(row)
 
 
@@ -171,6 +176,11 @@ def update_profile(session: Session, profile_id: str, changes: ProfileUpdate) ->
     """À appeler dans une transaction d'écriture (Database.write)."""
     row = _row(session, profile_id)
     values = changes.model_dump(include=changes.model_fields_set)
+    if "weight_kg" in values:
+        now = utc_now()
+        row.weight_updated_at = now if values["weight_kg"] is not None else None
+        session.add(ProfileWeight(id=uuid4().hex, profile_id=profile_id,
+                                  weight_kg=values["weight_kg"], recorded_at=now))
     if "name" in values:
         _check_name_free(session, values["name"], except_id=profile_id)
     for field, value in values.items():

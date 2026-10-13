@@ -33,6 +33,8 @@ class Step(Input):
     sec: Annotated[int, Field(ge=30, le=MAX_SECONDS)]
     speed: Annotated[float, Field(ge=1, le=MAX_SPEED)]
     incline: Annotated[float, Field(ge=0, le=MAX_INCLINE)]
+    movement: Literal['walk', 'run'] | None = Field(default=None,
+        description='Déplacement prévu quand connu. Hypothèse de calcul, jamais détection physiologique.')
     # Compatibilité des anciennes versions/clients : accepté, ignoré par le calcul,
     # et absent des nouveaux snapshots. Le choix dépend uniquement de la vitesse.
     gait: Literal["auto", "walk", "run"] = Field(default="auto", exclude=True)

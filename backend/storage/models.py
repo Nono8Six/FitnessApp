@@ -34,6 +34,7 @@ class Profile(Base):
     speed_unit: Mapped[str] = mapped_column(String(8))
     weight_kg: Mapped[float | None] = mapped_column(Float, CheckConstraint(
         "weight_kg BETWEEN 20 AND 300", name="weight_kg"))
+    weight_updated_at: Mapped[str | None] = mapped_column(String(40))
     # Horodatages UTC ISO 8601, au même format partout : ils se trient comme du texte.
     created_at: Mapped[str] = mapped_column(String(40))
     updated_at: Mapped[str] = mapped_column(String(40))
@@ -46,6 +47,14 @@ class Workout(Base):
     id: Mapped[str] = mapped_column(String(32), primary_key=True)
     profile_id: Mapped[str] = mapped_column(ForeignKey("profiles.id", ondelete="CASCADE"), index=True)
     created_at: Mapped[str] = mapped_column(String(40))
+
+
+class ProfileWeight(Base):
+    __tablename__ = "profile_weights"
+    id: Mapped[str] = mapped_column(String(32), primary_key=True)
+    profile_id: Mapped[str] = mapped_column(ForeignKey("profiles.id", ondelete="CASCADE"), index=True)
+    weight_kg: Mapped[float | None] = mapped_column(Float)
+    recorded_at: Mapped[str] = mapped_column(String(40))
 
 
 class WorkoutVersion(Base):
@@ -116,6 +125,8 @@ class CoachTurn(Base):
     questions: Mapped[list] = mapped_column(JSON, server_default=text("'[]'"))
     usage: Mapped[dict] = mapped_column(JSON)
     workout_context: Mapped[dict | None] = mapped_column(JSON)
+    request_context: Mapped[dict | None] = mapped_column(JSON)
+    memory_reviewed_at: Mapped[str | None] = mapped_column(String(40))
     created_at: Mapped[str] = mapped_column(String(40))
     updated_at: Mapped[str] = mapped_column(String(40))
 
@@ -130,6 +141,8 @@ class CoachMemory(Base):
     proposal_index: Mapped[int | None]
     created_at: Mapped[str] = mapped_column(String(40))
     updated_at: Mapped[str] = mapped_column(String(40))
+    status: Mapped[str] = mapped_column(String(16), default="active", server_default="active")
+    details: Mapped[dict] = mapped_column(JSON, default=dict, server_default=text("'{}'"))
 
 
 class WorkoutProposal(Base):
@@ -148,6 +161,7 @@ class WorkoutProposal(Base):
     accepted_id: Mapped[str | None] = mapped_column(String(32))
     accepted_version: Mapped[int | None]
     created_at: Mapped[str] = mapped_column(String(40))
+    constraints: Mapped[dict | None] = mapped_column(JSON)
 
 
 class RecordedSession(Base):

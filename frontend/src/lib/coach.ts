@@ -26,7 +26,8 @@ export interface Turn {
   questions?: Question[]
   usage: { requests: number; reports: { input_tokens: number | null; output_tokens: number | null; cached_input_tokens: number | null }[] }
 }
-export interface Memory { id: string; content: string; source_turn_id: string | null; proposal_index: number | null; created_at: string; updated_at: string }
+export interface Memory { id: string; content: string; source_turn_id: string | null; proposal_index: number | null; created_at: string; updated_at: string
+  status: 'active' | 'pending'; details: { key?: string; quote?: string; origin?: string; observed_at?: string; valid_until?: string | null; conversation_id?: string } }
 export interface PageData<T> { items: T[]; total: number; next_offset: number | null; partial: boolean }
 
 const dates = (v: Record<string, unknown>) => typeof v.created_at === 'string' && typeof v.updated_at === 'string'
@@ -36,7 +37,7 @@ const isQuestion = (v: unknown): v is Question => isRecord(v) && typeof v.label 
 const isConversation = (v: unknown): v is Conversation => isRecord(v) && typeof v.id === 'string' && typeof v.title === 'string' && dates(v)
   && nullableText(v.archived_at)
 const isSource = (v: unknown): v is Source => isRecord(v) && typeof v.id === 'string' && typeof v.name === 'string'
-  && Number.isInteger(v.version) && typeof v.href === 'string' && /^#\/seances\/[a-f0-9]{32}\?version=\d+$/.test(v.href)
+  && Number.isInteger(v.version) && typeof v.href === 'string' && /^(#\/seances\/[a-f0-9]{32}\?version=\d+|#\/bilans\/[a-f0-9]{32})$/.test(v.href)
 export const isTurn = (v: unknown): v is Turn => isRecord(v) && typeof v.id === 'string' && typeof v.conversation_id === 'string'
   && typeof v.request_id === 'string' && typeof v.user_text === 'string' && typeof v.answer === 'string'
   && ['running', 'completed', 'interrupted', 'failed'].includes(String(v.status)) && nullableText(v.error) && nullableText(v.model)
@@ -74,6 +75,7 @@ export const saveMemory = (profile: string, content: string, id?: string, source
   api(`${coachUrl(profile)}/memories${id ? `/${id}` : ''}`, { method: id ? 'PATCH' : 'POST', body: { content, ...source }, validate: isMemory })
 export const deleteMemory = (profile: string, id: string) => api(`${coachUrl(profile)}/memories/${id}`, { method: 'DELETE',
   validate: (v): v is { deleted: true } => isRecord(v) && v.deleted === true })
+export const confirmMemory = (profile: string, id: string) => api(`${coachUrl(profile)}/memories/${id}/confirm`, { method: 'POST', validate: isMemory })
 
 /** Aucune répétition automatique. La même clé est conservée si l'accusé de réception a été perdu. */
 export async function sendMessage(profile: string, conversation: string, text: string, requestId: string,

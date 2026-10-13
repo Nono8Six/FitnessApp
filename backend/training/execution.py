@@ -556,11 +556,16 @@ class Execution:
         fresh = lambda key: c.telemetry.get(key) if c.phase == "connected" and now - c.received_at.get(key, 0) <= STALE_SECONDS else None
         speed, incline, distance = fresh("speed_kmh"), fresh("incline_pct"), fresh("distance_m")
         b = self.targets[self.block]
+        planned = self.workout['blocks'][self.block]
+        movement = planned.get('movement') or ('run' if planned.get('kind') == 'run' else None)
+        if b['speed'] != planned.get('speed', b['speed']):
+            movement = None  # Un ajustement de vitesse peut changer le déplacement envisagé.
         self.sample_seq += 1
         sample = {"seq": self.sample_seq, "t": t, "active_s": round(self.active_time(), 2),
                              "speed": speed, "incline": incline, "target": b["speed"],
                              "target_incline": b["incline"], "phase": self.phase,
                              "counter_m": distance, "block_index": self.block,
+                             "movement": movement,
                              "applied_speed": self.applied_targets["speed"], "applied_incline": self.applied_targets["incline"],
                              "at": datetime.now(timezone.utc).isoformat(),
                              "measurements": self.device.snapshot()["measurements"]}

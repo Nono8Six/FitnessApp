@@ -17,7 +17,7 @@ from backend.coach import store, tools, workout_proposals as proposals
 from backend.storage.database import alembic_config, create_db_engine
 from backend.storage.models import Workout, WorkoutVersion
 from backend.training import catalog, workouts
-from tests.test_coach import Connected, completed
+from tests.test_coach import Connected, completed, capture_transport
 from backend.coach.runtime import Runtime
 
 
@@ -373,14 +373,14 @@ class ProposalTests(unittest.TestCase):
                 else:
                     yield {'type': 'response.output_text.delta', 'delta': 'Voici la proposition.'}
                     yield completed()
-            runtime.transport = transport
+            runtime.transport = capture_transport(transport)
             turn, fresh = await runtime.start('arnaud', self.conversation, store.Send(request_id=uuid4().hex, text='Crée une séance'))
             frames = [frame async for frame in runtime.stream('arnaud', turn, fresh)]
             last = json.loads(frames[-1][6:])
             self.assertEqual(last['status'], 'completed')
             self.assertIsNone(last['error'])
             self.assertEqual(len(last['workout_proposals']), 1)
-            output = next(item for item in requests[1]['input'] if item.get('type') == 'function_call_output')
+            output = next(item for item in requests[1]['input'] if item.get('type') == 'function_call_output' and 'speed' in item['output'])
             self.assertIn('speed', output['output'])
             await runtime.close()
         asyncio.run(check())
@@ -394,7 +394,7 @@ class ProposalTests(unittest.TestCase):
                 requests.append(payload)
                 yield {'type': 'response.output_text.delta', 'delta': 'Ce rythme sert la régularité.'}
                 yield completed()
-            runtime.transport = transport
+            runtime.transport = capture_transport(transport)
             turn, fresh = await runtime.start('arnaud', self.conversation, store.Send(request_id=uuid4().hex, text='Pourquoi ce rythme ?'))
             [frame async for frame in runtime.stream('arnaud', turn, fresh)]
             await runtime.close()
@@ -440,7 +440,7 @@ class ProposalTests(unittest.TestCase):
                 else:
                     yield {'type': 'response.output_text.delta', 'delta': 'Voici une séance textuelle.'}
                     yield completed()
-            runtime.transport = transport
+            runtime.transport = capture_transport(transport)
             turn, fresh = await runtime.start('arnaud', self.conversation, store.Send(request_id=uuid4().hex, text='Crée une séance'))
             frames = [f async for f in runtime.stream('arnaud', turn, fresh)]
             last = json.loads(frames[-1][6:])

@@ -63,9 +63,9 @@ function MenuRow<T extends string>({ title, label, value, options, empty, onChan
 
 function StepFields({ value, onChange, errorAt }: { value: Step; onChange: (value: Step) => void; errorAt: (field: string) => string | undefined }) {
   return <>
-    <MenuRow title="Type" label="Type de bloc" value={value.kind} options={KIND_LABEL} onChange={kind => kind && onChange({ ...value, kind })} />
+    <MenuRow title="Type" label="Type de bloc" value={value.kind} options={KIND_LABEL} onChange={kind => kind && onChange({ ...value, kind, movement: null })} />
     <NumberField label="Durée" unit="min" step={0.5} value={value.sec / 60} error={errorAt('sec')} onChange={v => onChange({ ...value, sec: Number((v * 60).toFixed(4)) })} />
-    <NumberField label="Vitesse" unit="km/h" step={0.5} value={value.speed} error={errorAt('speed')} onChange={v => onChange({ ...value, speed: v })} />
+    <NumberField label="Vitesse" unit="km/h" step={0.5} value={value.speed} error={errorAt('speed')} onChange={v => onChange({ ...value, speed: v, movement: null })} />
     <NumberField label="Pente" unit="%" step={0.5} value={value.incline} error={errorAt('incline')} onChange={v => onChange({ ...value, incline: v })} />
   </>
 }

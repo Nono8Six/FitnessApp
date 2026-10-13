@@ -1,6 +1,6 @@
 # Refonte du Coach IA
 
-Audit et proposition du 13 octobre 2026. Les règles proposées ci-dessous ne sont pas encore des fonctions livrées. Les sources scientifiques ont été consultées le 13 octobre 2026 ; leur date de publication est conservée pour éviter de présenter une étude ancienne comme une nouveauté.
+Audit du 13 octobre 2026, puis mise en œuvre décrite au §10. Les §§2 et 3 conservent le constat initial et la proposition pour rendre les changements vérifiables. Les sources scientifiques ont été consultées le 13 octobre 2026 ; leur date de publication est conservée pour éviter de présenter une étude ancienne comme une nouveauté.
 
 ## 1. Résultat attendu
 
@@ -195,4 +195,45 @@ Aucun code applicatif modifié pour cet audit, aucun appel réel au Coach, aucun
 
 Les recommandations populationnelles et les études citées orientent le produit ; aucune ne valide à elle seule un algorithme personnel FitnessApp. Il n'existe ici ni mesure de calorimétrie d'Ophélie, ni détermination de FATmax, ni démonstration d'une séance optimale individuelle. Des mesures plus riches peuvent améliorer une décision, sans supprimer l'incertitude.
 
-Le lien Texas Tech utilisé dans `ESTIMATION_CALORIES.md` a renvoyé une erreur HTTP 404 lors de cette recherche. Le tableau ACSM original a été retrouvé dans la copie déjà référencée par ce même document. Le présent travail ne modifie ni les équations existantes, ni l'historique, ni les règles de commande du tapis.
+Le lien Texas Tech utilisé dans `ESTIMATION_CALORIES.md` a renvoyé une erreur HTTP 404 lors de cette recherche. Le tableau ACSM original a été retrouvé dans la copie déjà référencée par ce même document. L'audit initial ne modifiait ni les équations, ni l'historique, ni les règles de commande du tapis. La mise en œuvre ultérieure est décrite au §10.
+
+## 10. Mise en œuvre du 13 octobre 2026
+
+### 10.1 Mémoire et profil
+
+Migration additive `0010` : métadonnées et statut des souvenirs, contraintes des demandes/propositions, repère de reprise des archives, date du poids et historique des nouvelles saisies. Les tables et contenus existants sont conservés. Pas de dépendance ajoutée.
+
+- Les allures confortables clairement déclarées en km/h sont retenues dès l'enregistrement du message, sans dépendre du succès du modèle. Les autres faits passent par `capture_context`, étape préalable obligatoire de chaque réponse, avec citation exacte et source du profil.
+- Les corrections remplacent le fait courant ; les sources anciennes ne le rétablissent pas. Une modification dans Mémoire actualise aussi la valeur numérique appliquée par le serveur, avec validation de l'unité.
+- L'état du jour a une validité de 24 h ; une allure déclarée confortable devient à actualiser après 90 jours. Ces fenêtres sont des choix prudents du produit, pas des durées de validité physiologique démontrées. Les restrictions sensibles restent à confirmer ; une restriction non résolue ne s'efface pas avec le temps.
+- Retirer un souvenir le masque et empêche sa reprise automatique depuis sa citation ancienne. Le texte original reste conservé dans sa conversation : retirer un souvenir n'est pas supprimer toute la conversation.
+- Les consignes ponctuelles, comme « ne l'enregistre pas », ne deviennent pas des préférences permanentes. L'ancien outil de proposition de préférence n'est plus exposé ; les cartes historiques restent consultables.
+- Les anciens échanges sont examinés progressivement pendant les réponses, en plus d'une recherche liée à la demande. Toutes les conversations restent accessibles, même archivées. Le contexte sélectionne jusqu'à 24 faits avec priorité aux contraintes/capacités ; les autres restent lisibles par pagination. Aucune promesse de lecture intégrale des archives en un seul appel.
+
+Implémentation : [mémoire](../backend/coach/memory.py), [stockage](../backend/coach/store.py), [moteur](../backend/coach/runtime.py), [écran Mémoire](../frontend/src/features/CoachMemory.tsx).
+
+### 10.2 Bilans, recommandations et contraintes
+
+Le Coach reçoit les résumés des cinq bilans récents, leurs sources, leur qualité, le ressenti et les cumuls reçus sur sept jours. `list_sessions`, `get_session`, `get_session_samples`, `get_feedback`, `get_progress` et `compare_sessions` donnent accès aux bilans du seul profil. Les métriques viennent du service existant et restent identiques à celles de l'écran Bilan ; les grandes lectures sont paginées ou explicitement abrégées.
+
+`recommend_workout` fournit une base à partir d'une allure déclarée ou de blocs terminés, reçus avec une couverture suffisante et un ressenti déclaré au plus 6/10. Une observation de plus de 28 jours n'est pas utilisée comme preuve de capacité actuelle ; elle reste retrouvable. Une simulation ne sert pas à prouver une capacité réelle. Sans repère, la base propose une marche prudente en annonçant l'hypothèse. Cette construction est une règle FitnessApp, pas un modèle clinique validé ; l'IA peut adapter la dose avant validation.
+
+Les contraintes explicites sont conservées en dehors des blocs du modèle : durée maximale, plafonds personnels, marche seule et minimum calorique. La validation et la proposition les contrôlent. Un minimum calorique oublié par le modèle est encore imposé côté serveur. Le poids et les limites courants sont revérifiés à l'acceptation d'une proposition non retouchée ; une retouche humaine conserve son auteur et la validation métier générale.
+
+Implémentation : [lectures](../backend/coach/insights.py), [construction](../backend/coach/recommendations.py), [contraintes](../backend/coach/constraints.py), [propositions](../backend/coach/workout_proposals.py).
+
+### 10.3 Estimation énergétique
+
+`acsm-v2-movement` traite le déplacement prévu comme une hypothèse documentée. En l'absence de déplacement connu entre 6 et 8,04 km/h, le calcul ne fournit plus un nombre unique, mais deux scénarios. Le détail de la séance explique cette incertitude et la cible calorique ne peut pas être validée sur un nombre indisponible. Le catalogue renseigne son intention et l'éditeur la retire lorsque le type ou la vitesse change. Un ajustement de vitesse en Direct peut également rendre cette intention caduque.
+
+Les anciens bilans `recording-v1-acsm-v1` restent calculés avec la formule v1 conservée ; les nouveaux utilisent v2. Le repos de 3,5 ml/kg/min et les 5 kcal/litre restent des approximations standard. Ni âge/taille supplémentaires, ni fréquence cardiaque non étalonnée, ni décimales supplémentaires ne sont présentés comme une précision individuelle.
+
+### 10.4 Contrôles et limites
+
+Suite backend complète : **197 tests réussis**, dont les nouveaux contrôles de mémoire, oubli, correction manuelle, sources, durée, cible calorique omise, session ancienne et conservation des calculs historiques. `npm run build` réussi, TypeScript inclus. Relecture du diff et contrôle d'espaces.
+
+Les essais réels du modèle utilisent la connexion SIWC existante et une base indépendante en simulation, avec des déclarations et un bilan de vérification. Le premier essai a produit une séance de 30 min à l'allure déclarée, en marche, avec pente bornée. La reprise dans une autre conversation et la correction d'allure ont servi à corriger les consignes temporaires mémorisées à tort et l'ancien parcours de confirmation. Les résultats techniques ne prouvent ni la supériorité sportive de ces séances, ni le fonctionnement matériel du RUN500.
+
+Le dernier essai réel a retenu la correction à 4,2 km/h sans confirmation supplémentaire et proposé exactement 25 min de marche, avec pente au plus 2 %, 68,6 kcal actives estimées et référence au bilan simulé. La réponse explique que la simulation ne prouve aucune tolérance physique. Le lien ouvre réellement le bilan : 20 min, 1,17 km, environ 45 kcal actives, ressenti 5/10. Chrome a vérifié la conversation et la mémoire avec citation/date au format 390 × 844 ; aucune nouvelle erreur console sur ce parcours. Les avertissements antérieurs correspondent aux arrêts volontaires du serveur de diagnostic. Les derniers ajustements de messages d'erreur ont été revérifiés par 38 tests ciblés réussis.
+
+Pas de mesure calorimétrique individuelle, pas d'essai matériel dans cette livraison. Aucun planning daté ajouté. Le modèle reste celui choisi dans le compte ; aucune API payante de secours et aucun service externe de mémoire/observabilité ajouté. Le serveur doit être relancé pour charger le code et migrer la base locale.

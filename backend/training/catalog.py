@@ -14,7 +14,7 @@ from .profiles import get_profile
 
 GOALS = {'calories': 'Dépense calorique', 'incline': 'Jambes et fessiers — marche inclinée', 'endurance': 'Endurance'}
 LEVELS = {'easy': 'Facile', 'intermediate': 'Intermédiaire', 'hard': 'Soutenu'}
-CATALOG_REVISION = '2026-10-07-calories-4'
+CATALOG_REVISION = '2026-10-13-movement-5'
 SOURCES = {
     'aha': {'title': 'AHA · Échauffement et retour au calme',
             'url': 'https://www.heart.org/en/healthy-living/exercise-and-physical-activity/fitness-basics/warm-up-cool-down'},
@@ -118,7 +118,8 @@ def recipes():
 
 
 def step(kind, minutes, speed, incline=0):
-    return {'kind': kind, 'sec': round(minutes * 60), 'speed': float(speed), 'incline': float(incline)}
+    return {'kind': kind, 'sec': round(minutes * 60), 'speed': float(speed), 'incline': float(incline),
+            'movement': 'run' if kind == 'run' or speed > 6 else 'walk'}
 
 
 def spread(seconds, count):
@@ -236,7 +237,10 @@ def adapt(recipe, target, weight):
     high = 3600
 
     def kcal(seconds):
-        return preview(resize(recipe, seconds).workout, weight)['summary']['energy']['active_kcal']
+        value = preview(resize(recipe, seconds).workout, weight)['summary']['energy']['active_kcal']
+        if value is None:
+            raise CatalogTargetError('Déplacement ambigu : impossible de garantir une cible calorique estimée.')
+        return value
 
     lower = kcal(low)
     if target.active_kcal < lower:

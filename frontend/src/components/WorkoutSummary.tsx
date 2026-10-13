@@ -33,11 +33,12 @@ export function WorkoutSummary({ data, editing = false, compact = false }: { dat
       : <WeightLink className="mt-3" />
       : <Disclosure title="Comprendre l’estimation" className="mt-3">
         <Facts rows={[
-          ['Total avec repos', `≈ ${Math.round(energy.total_kcal!)} kcal`],
+          ['Total avec repos', energy.total_kcal === null ? '--' : `≈ ${Math.round(energy.total_kcal)} kcal`],
           ['Poids du profil', `${dec1(energy.weight_kg)} kg`],
           ['Méthode', 'ACSM'],
-          ['Course calculée au-delà de', '6 km/h'],
+          ['Déplacement', energy.movement_ambiguous ? 'Marche ou course à préciser' : 'Hypothèse du programme et de l’allure'],
         ]} />
+        {energy.movement_ambiguous && <p className="px-4 pt-2 text-footnote text-orange">L’allure seule ne permet pas de distinguer marche et course. {energy.active_kcal_low != null && energy.active_kcal_high != null && <>Les deux hypothèses donnent environ {Math.round(energy.active_kcal_low)} à {Math.round(energy.active_kcal_high)} kcal actives ; cette plage ne garantit pas votre dépense.</>}</p>}
         {energy.outside_range && <p className="mx-4 mt-1 rounded-[10px] bg-orange/15 px-3 py-2 text-footnote text-orange">Vitesses hors plage fiable (marche 3–6, course dès 8 km/h) : estimation moins sûre.</p>}
         <p className="px-4 pt-2 pb-3 text-footnote text-label-2">Prévision, pas une mesure.{!editing && <> <a href={href.settings} className="text-accent">Modifier mon poids</a></>}</p>
       </Disclosure>}

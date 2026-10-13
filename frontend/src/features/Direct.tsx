@@ -297,7 +297,7 @@ export function Direct() {
             ['Calories actives', 'Estimation ACSM · poids figé au départ'],
             ['Couverture calories', s.totals.coverage.energy === null ? '--' : `${Math.round(s.totals.coverage.energy * 100)} % du temps actif`],
             ['Couverture vitesse moyenne', s.totals.coverage.speed === null ? '--' : `${Math.round(s.totals.coverage.speed * 100)} % du temps actif`],
-            ['Limite du calcul', s.totals.energy.outside_range ? 'Vitesse hors des plages usuelles ACSM · estimation moins sûre' : 'Calories estimées, pas une mesure physiologique'],
+            ['Limite du calcul', s.totals.energy.movement_ambiguous ? 'Déplacement marche/course ambigu · aucune estimation unique' : s.totals.energy.outside_range ? 'Vitesse hors des plages usuelles ACSM · estimation moins sûre' : 'Calories estimées, pas une mesure physiologique'],
             ['Autorisation restante', clock(s.authorization_remaining_s)],
             ...(['speed_kmh', 'incline_pct'] as const).map(key => {
               const m = e.feed!.device.measurements[key]

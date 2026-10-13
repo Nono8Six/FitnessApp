@@ -125,15 +125,21 @@ def reserve(session, profile, conversation, payload):
     now = utc_now()
     from .workout_proposals import snapshot
     context = snapshot(session, profile, payload.workout_target) if payload.workout_target else None
+    from .constraints import extract
+    previous_turn = session.scalar(select(CoachTurn).where(CoachTurn.profile_id == profile,
+        CoachTurn.conversation_id == conversation).order_by(CoachTurn.created_at.desc(), CoachTurn.id.desc()).limit(1))
+    request_context = extract(payload.text, previous_turn.request_context if previous_turn else None)
     turn = CoachTurn(id=uuid4().hex, profile_id=profile, conversation_id=conversation, request_id=payload.request_id,
         user_text=payload.text, answer="", status="running", error=None, model=None, sources=[], proposals=[], questions=[], usage={"requests": 0, "reports": []},
-        created_at=now, updated_at=now, workout_context=context)
+        created_at=now, updated_at=now, workout_context=context, request_context=request_context)
     if not session.scalar(select(CoachTurn.id).where(CoachTurn.conversation_id == conversation).limit(1)):
         row.title = " ".join(payload.text.split())[:100]
     # Écrire dans une conversation archivée la remet dans la liste.
     row.updated_at, row.archived_at = now, None
     session.add(turn)
     session.flush()
+    from .memory import declared_quantities
+    declared_quantities(session, profile, turn)
     return out(turn), True
 
 
@@ -154,7 +160,7 @@ def recover(session):
 
 def memories(session, profile, query="", offset=0, limit=20):
     get_profile(session, profile)
-    statement = select(CoachMemory).where(CoachMemory.profile_id == profile)
+    statement = select(CoachMemory).where(CoachMemory.profile_id == profile, CoachMemory.status.in_(['active', 'pending']))
     if query:
         statement = statement.where(CoachMemory.content.contains(query, autoescape=True))
     return page(session, statement.order_by(CoachMemory.updated_at.desc(), CoachMemory.id), offset, limit)
@@ -165,6 +171,10 @@ def save_memory(session, profile, payload, identifier=None):
     if identifier:
         row = owned(session, CoachMemory, profile, identifier)
         row.content, row.updated_at = payload.content, utc_now()
+        if row.status in {'forgotten', 'superseded'}:
+            raise CoachConflict('Ce souvenir a été retiré. Ajoutez une nouvelle déclaration si nécessaire.')
+        from .memory import manual_details
+        row.details = manual_details(row, payload.content)
     else:
         if payload.source_turn_id:
             turn = owned(session, CoachTurn, profile, payload.source_turn_id)

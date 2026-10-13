@@ -9,6 +9,7 @@ from .protocol import MESSAGES, RESOURCE
 
 logger = logging.getLogger(__name__)
 ERRORS = {**MESSAGES,
+    'memory_error': 'Certains faits n’ont pas pu être mémorisés. Vérifiez la Mémoire du coach avant de vous appuyer dessus.',
     'workout_invalid': 'La proposition reste invalide. Aucun programme correspondant n’a été enregistré. Précisez la demande pour réessayer.',
     "limit": "Limite d’utilisation ChatGPT atteinte. Consultez votre usage avant de réessayer.",
     "usage_unavailable": "L’usage du forfait ne peut pas être vérifié. Réessayez plus tard.",

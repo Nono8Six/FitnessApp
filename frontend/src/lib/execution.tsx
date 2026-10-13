@@ -25,7 +25,7 @@ export interface Session {
   command: { action: string; value: number | null; status: 'sent' | 'accepted' | 'observed' | 'refused' | 'unknown' } | null
   distance_m: number | null; distance_quality: 'fresh' | 'stale' | 'absent' | 'partial'
   recording: { status: 'recording' | 'saved' | 'error'; error: string | null; persisted_at: string | null; persisted_s: number; pending: number; lost_entries: number }
-  totals: { speed_avg: number | null; coverage: { speed: number | null; energy: number | null }; energy: { active_kcal: number | null; outside_range: boolean } }
+  totals: { speed_avg: number | null; coverage: { speed: number | null; energy: number | null }; energy: { active_kcal: number | null; outside_range: boolean; movement_ambiguous?: boolean } }
 }
 interface AdjustmentRange { min: number; max: number; step: number }
 interface Feed { type: 'snapshot' | 'state'; instance_id: string; sequence: number; session: Session; device: DeviceState; samples: LiveSample[]; markers: { t: number; label: string }[] }

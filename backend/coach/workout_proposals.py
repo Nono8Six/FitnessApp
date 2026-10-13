@@ -5,6 +5,7 @@ from pydantic import Field, model_validator
 from sqlalchemy import select
 
 from . import store
+from . import constraints, memory
 from ..storage.models import WorkoutProposal, WorkoutVersion
 from ..training import workouts
 from ..training.profiles import get_profile, utc_now
@@ -40,18 +41,37 @@ class ProposalInput(workouts.Input):
         return self
 
 
-def validated_preview(payload, weight):
+def request_limits(session, profile, turn_id=None, user_text=''):
+    result = memory.limits(session, profile)
+    request = store.owned(session, store.CoachTurn, profile, turn_id).request_context if turn_id else constraints.extract(user_text)
+    for key, value in (request or {}).items():
+        if key in {'max_speed', 'max_incline', 'max_duration_sec'} and result.get(key) is not None:
+            result[key] = min(result[key], value)
+        else:
+            result[key] = value
+    result['restrictions_to_confirm'] = [r.id for r in memory.rows(session, profile, ('pending',))
+        if r.details.get('key') == 'restriction']
+    return result
+
+
+def validated_preview(payload, weight, request=None):
     """Vérifier aussi la cible énergétique avec le calcul et le poids du serveur."""
     result = workouts.preview(payload.workout, weight)
-    if payload.min_active_kcal is not None:
+    errors = constraints.check(payload.workout, result['blocks'], request or {})
+    if (request or {}).get('restrictions_to_confirm'):
+        errors.append('Confirmer ou corriger la restriction déclarée dans Mémoire avant de proposer une séance.')
+    if errors:
+        return {'error': ' '.join(errors), 'valid': False, 'constraints': request, 'preview': result}
+    minimum = max(payload.min_active_kcal or 0, (request or {}).get('min_active_kcal') or 0)
+    if minimum:
         estimated = result['summary']['energy']['active_kcal']
         if estimated is None:
-            return {'error': 'Minimum calorique invérifiable : renseignez le poids du profil dans Réglages.',
-                    'valid': False, 'weight_required': True, 'preview': result}
-        if estimated < payload.min_active_kcal:
+            return {'error': 'Minimum calorique invérifiable : poids absent ou déplacement marche/course ambigu.',
+                    'valid': False, 'weight_required': weight is None, 'preview': result}
+        if estimated < minimum:
             return {'error': 'La séance n’atteint pas le minimum de kcal actives estimées demandé. Adapter le programme sans dépasser le temps disponible ni les capacités déclarées ; sinon expliquer le compromis.',
-                    'valid': False, 'min_active_kcal': payload.min_active_kcal,
-                    'estimated_active_kcal': estimated, 'shortfall_active_kcal': round(payload.min_active_kcal - estimated, 1),
+                    'valid': False, 'min_active_kcal': minimum,
+                    'estimated_active_kcal': estimated, 'shortfall_active_kcal': round(minimum - estimated, 1),
                     'preview': result}
     return {'valid': True, **result}
 
@@ -111,7 +131,10 @@ def propose(session, profile, turn_id, call_id, payload):
     old = session.scalar(select(WorkoutProposal).where(WorkoutProposal.turn_id == turn_id, WorkoutProposal.call_id == call_id))
     if old:
         return render(session, old)
-    checked = validated_preview(payload, get_profile(session, profile).weight_kg)
+    limits = request_limits(session, profile, turn_id, turn.user_text)
+    if payload.min_active_kcal:
+        limits['min_active_kcal'] = max(payload.min_active_kcal, limits.get('min_active_kcal') or 0)
+    checked = validated_preview(payload, get_profile(session, profile).weight_kg, limits)
     if not checked['valid']:
         return checked
     if len(for_turn(session, profile, turn_id)) >= 6:
@@ -123,7 +146,7 @@ def propose(session, profile, turn_id, call_id, payload):
         base = base or snapshot(session, profile, payload.target)
     row = WorkoutProposal(id=uuid4().hex, profile_id=profile, turn_id=turn_id, call_id=call_id,
         workout=payload.workout.model_dump(), explanation=payload.explanation, base=base,
-        status='pending', accepted_id=None, accepted_version=None, created_at=utc_now())
+        status='pending', accepted_id=None, accepted_version=None, created_at=utc_now(), constraints=limits)
     session.add(row)
     session.flush()
     return render(session, row)
@@ -139,6 +162,16 @@ def accept(session, profile, identifier, payload):
         return workouts._out(version, get_profile(session, profile).weight_kg)
     turn = store.owned(session, store.CoachTurn, profile, row.turn_id)
     data = payload.edited_workout or workouts.WorkoutInput.model_validate(row.workout)
+    if not payload.edited_workout:
+        current_limits = request_limits(session, profile, row.turn_id)
+        errors = constraints.check(data, workouts.preview(data)['blocks'], current_limits)
+        if errors:
+            raise store.CoachConflict(' '.join(errors))
+        minimum = (row.constraints or {}).get('min_active_kcal')
+        if minimum:
+            estimate = workouts.preview(data, get_profile(session, profile).weight_kg)['summary']['energy']['active_kcal']
+            if estimate is None or estimate < minimum:
+                raise store.CoachConflict('Le poids ou le calcul courant ne permet plus de vérifier le minimum calorique demandé. Faire ajuster la proposition.')
     author = 'human' if payload.edited_workout and payload.edited_workout.model_dump() != row.workout else 'chatgpt'
     origin = {'kind': 'chatgpt', 'conversation_id': turn.conversation_id, 'turn_id': turn.id, 'proposal_id': row.id}
     if row.base:

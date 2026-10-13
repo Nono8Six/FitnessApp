@@ -8,6 +8,7 @@ export interface Profile {
   weekly_goal: number
   speed_unit: SpeedUnit
   weight_kg: number | null
+  weight_updated_at?: string | null
   created_at: string
   updated_at: string
 }

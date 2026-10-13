@@ -2,7 +2,7 @@ import { Pencil, Trash2 } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { Button, Group, Sheet } from '../components/ui'
 import { errorMessage } from '../lib/api'
-import { deleteMemory, readMemories, saveMemory, type Memory, type Proposal } from '../lib/coach'
+import { confirmMemory, deleteMemory, readMemories, saveMemory, type Memory, type Proposal } from '../lib/coach'
 
 export function CoachMemory({ profile, close, proposal, saved }: {
   profile: string; close: () => void; proposal?: { value: Proposal; turn: string; index: number }; saved: () => void
@@ -34,9 +34,9 @@ export function CoachMemory({ profile, close, proposal, saved }: {
   }
   return <Sheet open onClose={() => { if (!busy) close() }} title="Mémoire du coach"
     trailing={<button className="h-11 min-w-11 text-accent" disabled={busy} onClick={close}>OK</button>}>
-    <p className="mb-4 text-subhead text-label-2">Préférences conservées pour ce profil. Seuls vos ajouts et confirmations sont enregistrés.</p>
+    <p className="mb-4 text-subhead text-label-2">Le coach retient vos déclarations utiles pour ce profil. Vous pouvez les corriger ou les retirer. Les restrictions sensibles demandent votre confirmation.</p>
     {proposal && content && !editing && <p className="mb-3 text-footnote text-label-2">Votre message : « {proposal.value.quote} »</p>}
-    <label className="text-footnote text-label-2" htmlFor="coach-memory">{editing ? 'Corriger la préférence' : 'Préférence à retenir'}</label>
+    <label className="text-footnote text-label-2" htmlFor="coach-memory">{editing ? 'Corriger le souvenir' : 'Information à retenir'}</label>
     <textarea id="coach-memory" rows={3} maxLength={500} value={content} onChange={e => setContent(e.target.value)}
       placeholder="Par exemple : je préfère les séances courtes en semaine."
       className="mt-2 w-full resize-y rounded-[12px] bg-surface-2 p-3 text-body text-label" />
@@ -47,11 +47,16 @@ export function CoachMemory({ profile, close, proposal, saved }: {
       {editing && <Button size="md" variant="plain" disabled={busy} onClick={() => { setEditing(undefined); setContent('') }}>Annuler</Button>}
     </div>
     {error && <p role="alert" className="mb-4 text-subhead text-red">{error} <button className="min-h-11 text-accent" onClick={() => void load()}>Actualiser</button></p>}
-    {loading ? <p role="status" className="text-label-2">Chargement…</p> : !loaded ? null : items.length === 0 ? <p className="text-subhead text-label-2">Aucune préférence mémorisée.</p> : <Group>
+    {loading ? <p role="status" className="text-label-2">Chargement…</p> : !loaded ? null : items.length === 0 ? <p className="text-subhead text-label-2">Aucun souvenir pour ce profil.</p> : <Group>
       {items.map(item => <div key={item.id} className="border-b border-sep/40 p-4 last:border-0">
         <p className="whitespace-pre-wrap break-words text-body">{item.content}</p>
-        <p className="mt-1 text-caption text-label-2">Mis à jour le {new Date(item.updated_at).toLocaleDateString('fr-FR')}</p>
+        <p className="mt-1 text-caption text-label-2">{item.details?.origin === 'conversation' ? 'Déclaré' : 'Mis à jour'} le {new Date(item.details?.observed_at ?? item.updated_at).toLocaleDateString('fr-FR')}
+          {item.details?.valid_until && new Date(item.details.valid_until) < new Date() && ' · ancien, à actualiser'}</p>
+        {item.details?.quote && item.details.origin === 'conversation' && <p className="mt-2 text-footnote text-label-2">« {item.details.quote} »</p>}
+        {item.details?.conversation_id && <a className="inline-flex min-h-11 items-center text-footnote text-accent" href={`#/coach?conversation=${item.details.conversation_id}`} onClick={close}>Voir l’échange d’origine</a>}
+        {item.status === 'pending' && <p className="mt-2 text-footnote text-orange">Restriction à confirmer</p>}
         <div className="mt-2 flex flex-wrap gap-2">
+          {item.status === 'pending' && <Button size="md" disabled={busy} onClick={() => void perform(() => confirmMemory(profile, item.id))}>Confirmer</Button>}
           <Button size="md" variant="plain" disabled={busy} onClick={() => { setEditing(item.id); setContent(item.content) }}><Pencil size={16} />Modifier</Button>
           {confirm === item.id ? <><Button size="md" variant="danger" disabled={busy} onClick={() => void perform(() => deleteMemory(profile, item.id))}>Confirmer la suppression</Button>
             <Button size="md" variant="plain" onClick={() => setConfirm(undefined)}>Annuler</Button></>

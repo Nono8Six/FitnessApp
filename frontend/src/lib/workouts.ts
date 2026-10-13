@@ -4,7 +4,7 @@ import { loadProfiles } from './profiles'
 import { useServer } from './server'
 import type { Block, BlockKind } from './types'
 
-export interface Step { kind: BlockKind; sec: number; speed: number; incline: number }
+export interface Step { kind: BlockKind; sec: number; speed: number; incline: number; movement?: 'walk' | 'run' | null }
 export interface Repeat { repeat: number; steps: Step[] }
 export type Item = Step | Repeat
 export type Goal = 'calories' | 'incline' | 'endurance'
@@ -14,7 +14,8 @@ export const GOALS: Record<Goal, string> = { calories: 'Dépense calorique', inc
 export const GOAL_SHORT: Record<Goal, string> = { calories: 'Calories', incline: 'Marche inclinée', endurance: 'Endurance' }
 export const LEVELS: Record<Level, string> = { easy: 'Facile', intermediate: 'Intermédiaire', hard: 'Soutenu' }
 export interface WorkoutInput { name: string; items: Item[]; goal?: Goal | null; level?: Level | null }
-export interface Energy { active_kcal: number | null; total_kcal: number | null; weight_kg: number | null; automatic_gait: boolean; outside_range: boolean }
+export interface Energy { active_kcal: number | null; total_kcal: number | null; weight_kg: number | null; automatic_gait: boolean; outside_range: boolean
+  movement_ambiguous?: boolean; method?: string; active_kcal_low?: number | null; active_kcal_high?: number | null }
 export interface Preview { blocks: Block[]; summary: { sec: number; km: number; count: number; minSpeed: number; maxSpeed: number; ascent_m: number; energy: Energy } }
 export interface Workout extends WorkoutInput, Preview {
   id: string; version: number; author: 'human' | 'chatgpt'; author_name: string; created_at: string
@@ -44,7 +45,10 @@ const finite = (v: unknown): v is number => typeof v === 'number' && Number.isFi
 const isEnergy = (v: unknown): v is Energy => isRecord(v)
   && typeof v.automatic_gait === 'boolean' && typeof v.outside_range === 'boolean'
   && ((v.weight_kg === null && v.active_kcal === null && v.total_kcal === null)
-    || (finite(v.weight_kg) && finite(v.active_kcal) && finite(v.total_kcal)))
+    || (finite(v.weight_kg) && ((finite(v.active_kcal) && finite(v.total_kcal))
+      || (v.active_kcal === null && v.total_kcal === null && v.movement_ambiguous === true
+        && finite(v.active_kcal_low) && finite(v.active_kcal_high)))))
+  && (v.movement_ambiguous === undefined || typeof v.movement_ambiguous === 'boolean')
 const isStep = (v: unknown): v is Step => isRecord(v) && typeof v.kind === 'string' && Object.hasOwn(KIND_LABEL, v.kind)
   && finite(v.sec) && finite(v.speed) && finite(v.incline)
 const isItem = (v: unknown): v is Item => isStep(v) || (isRecord(v) && Number.isInteger(v.repeat)

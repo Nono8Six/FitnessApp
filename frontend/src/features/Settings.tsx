@@ -172,7 +172,7 @@ function ProfileSettings({ profile, readOnly }: { profile: Profile; readOnly: bo
       />
     </Group>
     <Group header="Estimation des calories" className="mt-9"
-      footer={<span role={weight.saving ? 'status' : undefined}>{weight.saving ? 'Enregistrement…' : 'Utilisé avec la vitesse, la pente et le type de déplacement de chaque bloc. Videz le champ pour retirer votre poids.'}</span>}>
+      footer={<span role={weight.saving ? 'status' : undefined}>{weight.saving ? 'Enregistrement…' : <>Utilisé avec la vitesse, la pente et le déplacement. {profile.weight_updated_at ? `Renseigné le ${new Date(profile.weight_updated_at).toLocaleDateString('fr-FR')}. ` : ''}Videz le champ pour retirer votre poids.</>}</span>}>
       <ControlRow title="Poids" error={weight.error}
         control={<WeightInput value={weight.value} onChange={weight.save} onInvalid={weight.setError}
           error={weight.error} disabled={readOnly || weight.saving} />} />

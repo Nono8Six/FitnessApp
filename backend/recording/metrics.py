@@ -3,9 +3,10 @@
 Les deux extrémités doivent être valides et séparées de 2 s au maximum.
 La distance suit exclusivement le compteur, effort et décélération compris.
 """
-from ..training.energy import estimate
+from ..training.energy import estimate, estimate_legacy, METHOD
 
-VERSION = "recording-v1-acsm-v1"
+LEGACY_VERSION = "recording-v1-acsm-v1"
+VERSION = "recording-v1-acsm-v2"
 MOVING = {"running", "transitioning", "adjusting", "pausing", "stopping"}
 
 
@@ -35,8 +36,11 @@ class Distance:
 
 class Totals:
     """Même réduction pour le bilan et le Direct, sans stocker tous les points."""
-    def __init__(self, weight):
+    def __init__(self, weight, *, legacy=False):
         self.weight = weight
+        self.legacy = legacy
+        self.ambiguous = False
+        self.low = self.high = self.total_low = self.total_high = 0.0
         self.covered = {"speed": 0.0, "incline": 0.0, "energy": 0.0}
         self.sums = {"speed": 0.0, "incline": 0.0}
         self.active_kcal = self.total_kcal = 0.0
@@ -56,24 +60,37 @@ class Totals:
         if valid["speed"] and valid["incline"]:
             valid["energy"] = da
             self.covered["energy"] += da
-            energy = estimate([{"speed": a["speed"], "incline": a["incline"], "sec": da}], self.weight, rounded=False)["energy"]
+            energy = (estimate_legacy if self.legacy else estimate)([{"speed": a["speed"], "incline": a["incline"],
+                "sec": da, 'movement': a.get('movement')}], self.weight, rounded=False)["energy"]
             self.active_kcal += energy["active_kcal"] or 0
             self.total_kcal += energy["total_kcal"] or 0
+            self.ambiguous |= energy.get('movement_ambiguous', False)
+            self.low += energy.get('active_kcal_low', energy['active_kcal']) or 0
+            self.high += energy.get('active_kcal_high', energy['active_kcal']) or 0
+            self.total_low += energy.get('total_kcal_low', energy['total_kcal']) or 0
+            self.total_high += energy.get('total_kcal_high', energy['total_kcal']) or 0
             self.outside_range |= energy["outside_range"]
         return valid
 
     def result(self, active):
+        available = bool(self.covered['energy'] and self.weight is not None)
+        energy = {'active_kcal': round(self.active_kcal, 1) if available and not self.ambiguous else None,
+                  'total_kcal': round(self.total_kcal, 1) if available and not self.ambiguous else None,
+                  'weight_kg': self.weight, 'automatic_gait': True, 'outside_range': self.outside_range}
+        if not self.legacy:
+            energy.update({'method': METHOD, 'movement_ambiguous': self.ambiguous,
+                **{k: round(v, 1) if available else None for k, v in (
+                    ('active_kcal_low', self.low), ('active_kcal_high', self.high),
+                    ('total_kcal_low', self.total_low), ('total_kcal_high', self.total_high))}})
         return {**{f"{k}_avg": round(self.sums[k] / self.covered[k], 2) if self.covered[k] else None for k in self.sums},
                 "coverage": {k: round(min(1, v / active), 4) if active else None for k, v in self.covered.items()},
                 "valid_s": {k: round(v, 2) for k, v in self.covered.items()},
-                "energy": {"active_kcal": round(self.active_kcal, 1) if self.covered["energy"] and self.weight is not None else None,
-                           "total_kcal": round(self.total_kcal, 1) if self.covered["energy"] and self.weight is not None else None,
-                           "weight_kg": self.weight, "automatic_gait": True, "outside_range": self.outside_range}}
+                "energy": energy}
 
 
-def calculate(samples, checkpoint, weight, blocks):
+def calculate(samples, checkpoint, weight, blocks, *, legacy=False):
     active = checkpoint.get("active_s", 0)
-    totals = Totals(weight)
+    totals = Totals(weight, legacy=legacy)
     distance = Distance()
     per_block = [{"active_s": 0.0, "speed_sum": 0.0, "incline_sum": 0.0,
                   "speed_valid_s": 0.0, "incline_valid_s": 0.0} for _ in blocks]
@@ -96,13 +113,13 @@ def calculate(samples, checkpoint, weight, blocks):
             block[f"{field}_coverage"] = round(min(1, valid / block["active_s"]), 4) if block["active_s"] else None
             block[f"{field}_avg"] = round(block.pop(f"{field}_sum") / valid, 2) if valid else None
         block["active_s"] = round(block["active_s"], 2)
-    return {"version": VERSION, "active_s": active, "pause_s": checkpoint.get("pause_s", 0),
+    return {"version": LEGACY_VERSION if legacy else VERSION, "active_s": active, "pause_s": checkpoint.get("pause_s", 0),
             "wall_s": checkpoint.get("wall_s", 0),
             **distance.result(),
             **totals.result(active), "blocks": per_block}
 
 
 def calculate_version(version, samples, checkpoint, weight, blocks):
-    if version != VERSION:
+    if version not in {VERSION, LEGACY_VERSION}:
         raise ValueError("Cette version de calcul nécessite une mise à jour de FitnessApp.")
-    return calculate(samples, checkpoint, weight, blocks)
+    return calculate(samples, checkpoint, weight, blocks, legacy=version == LEGACY_VERSION)

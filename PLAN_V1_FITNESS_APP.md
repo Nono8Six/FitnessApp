@@ -18,7 +18,7 @@ Une seule brique en cours dans le périmètre demandé. Les cases indiquent les 
 - [x] **Brique 9 · Enregistrer et revoir** : mesures conservées, bilan réel, ressenti.
 - [ ] **Brique 10 · RUN500 réel** : réception matérielle progressive du parcours et des pertes.
 - [ ] **Brique 11 · Historique et semaine** : historique, objectifs, Aujourd’hui alimenté par les vraies séances.
-- [ ] **Brique 12 · Coach informé** : ChatGPT lit tout l’historique du profil et cite ses sources.
+- [x] **Brique 12 · Coach informé** : bilans du profil, mémoire sourcée, personnalisation et sources ouvrables ; limites et vérifications dans la refonte du 13 octobre ci-dessous.
 - [ ] **Brique 13 · Planning avec ChatGPT** : séances datées, semaine proposée par ChatGPT puis acceptée.
 - [ ] **Brique 14 · Graphiques avancés** : comparaison, calendrier, distributions, tendances, qualité.
 - [ ] **Brique 15 · Données** : exports, imports FIT/TCX, sauvegarde et restauration.
@@ -441,8 +441,14 @@ Contrôles de ce complément : build et 46 tests ciblés réussis (calculs, API,
 **Travail :** compléter les lectures déjà livrées en brique 5 par les activités réellement enregistrées : outils `list_sessions`, `get_session`, `get_session_samples` (par tranches), `get_feedback`, `get_progress`, `compare_sessions`, avec pagination, couverture et troncature signalée ; mêmes calculs que le bilan. Ne pas reconstruire les conversations, la mémoire et les lectures de bibliothèque.
 
 **Fait quand :**
-- [ ] Le coach retrouve une séance ancienne et cite des valeurs identiques au bilan.
-- [ ] Aucun outil ne renvoie de données de l’autre profil (test).
+- [x] Le coach retrouve une séance ancienne et cite des valeurs identiques au bilan.
+- [x] Aucun outil ne renvoie de données de l’autre profil (test).
+
+**Refonte du 13 octobre 2026 :** migration additive 0010, mémoire automatique avec citations/dates, corrections et retrait ; état temporaire distinct des préférences, restrictions sensibles à confirmer. Les allures confortables explicitement chiffrées sont conservées dès le message, même si l'inférence échoue. L'extraction préalable par le modèle traite les autres faits et les anciennes archives progressivement ; les échanges complets restent recherchables. Les faits importants sont prioritaires dans un contexte borné, avec accès aux autres par outils.
+
+Le contexte fournit les cinq bilans récents, la qualité, le ressenti et le volume reçu sur sept jours. Les outils donnent accès à toutes les séances, aux tranches de mesures et aux comparaisons ; une simulation ne devient pas une capacité réelle. `recommend_workout` construit une base depuis l'allure déclarée ou des blocs réellement reçus et tolérés ; l'IA peut l'adapter puis la faire valider. Temps maximal, plafonds personnels et minimum calorique sont contrôlés indépendamment des blocs fournis. La méthode énergétique v2 traite l'ambiguïté marche/course, préserve v1 pour les anciens bilans et date les nouvelles saisies du poids. Détail : [refonte Coach IA](docs/REFONTE_COACH_IA.md), [calories](docs/ESTIMATION_CALORIES.md).
+
+**Limites :** les règles de construction FitnessApp ne sont pas une validation clinique individuelle ; les kcal restent estimées, sans FATmax, VO2max ou grammes de graisse perdus déduits. Les anciens échanges sont repris par groupes pendant l'utilisation, sans appel autonome au modèle. La brique 11 et le planning daté ne sont pas livrés par cette refonte. Réception RUN500/téléphone physique toujours ouverte.
 
 ### Brique 13 · Planning avec ChatGPT
 

@@ -17,7 +17,7 @@ from backend.storage import DATABASE_FILE, StorageError, open_database
 from backend.storage.database import MIGRATIONS, alembic_config, create_db_engine
 
 URL = "http://127.0.0.1:4330"
-HEAD = "0009"
+HEAD = "0010"
 
 
 class ProfileTests(unittest.TestCase):
@@ -66,7 +66,7 @@ class ProfileTests(unittest.TestCase):
         with self.db() as conn:
             self.assertEqual(conn.execute("SELECT version_num FROM alembic_version").fetchall(), [(HEAD,)])
             columns = [row[1] for row in conn.execute("PRAGMA table_info(profiles)")]
-        self.assertEqual(columns, ["id", "name", "weekly_goal", "speed_unit", "created_at", "updated_at", "weight_kg"])
+            self.assertEqual(columns, ["id", "name", "weekly_goal", "speed_unit", "created_at", "updated_at", "weight_kg", "weight_updated_at"])
 
     def test_connections_use_wal_and_foreign_keys(self):
         self.start()

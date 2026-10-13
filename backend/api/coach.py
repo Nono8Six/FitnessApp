@@ -145,5 +145,13 @@ def edit_memory(profile_id: str, memory_id: str, payload: store.MemoryInput, req
 @router.delete("/memories/{memory_id}")
 def forget(profile_id: str, memory_id: str, request: Request):
     with transaction(request, True) as session:
-        session.delete(store.owned(session, CoachMemory, profile_id, memory_id))
+        from ..coach import memory
+        memory.forget(session, profile_id, memory_id)
     return {"deleted": True}
+
+
+@router.post('/memories/{memory_id}/confirm')
+def confirm_memory(profile_id: str, memory_id: str, request: Request):
+    from ..coach import memory
+    with transaction(request, True) as session:
+        return memory.confirm(session, profile_id, memory_id)

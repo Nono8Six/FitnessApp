@@ -37,6 +37,21 @@ def completed(output=None):
         "usage": {"input_tokens": 2000, "output_tokens": 50, "input_tokens_details": {"cached_tokens": 1024}}}}
 
 
+def capture_transport(transport):
+    """Préparation neutre pour les tests qui ciblent le flux après extraction.
+
+    La préparation obligatoire et ses erreurs ont leurs propres contrôles critiques.
+    """
+    async def events(token, payload):
+        if payload.get('tool_choice') == 'required':
+            yield completed([{'type': 'function_call', 'namespace': 'fitness', 'name': 'capture_context',
+                              'call_id': uuid4().hex, 'arguments': '{"facts":[],"request":{}}'}])
+        else:
+            async for event in transport(token, payload):
+                yield event
+    return events
+
+
 class CoachDataTests(unittest.TestCase):
     def setUp(self):
         self.tmp = tempfile.TemporaryDirectory()
@@ -97,7 +112,7 @@ class CoachDataTests(unittest.TestCase):
         versions = self.tool("list_versions", {"workout_id": updated["id"], "limit": 1})
         self.assertEqual((versions["total"], versions["next_offset"], versions["partial"]), (2, 1, True))
         self.assertEqual(self.tool("get_profile")["selected_workout_id"], updated["id"])
-        self.assertFalse(self.tool("get_profile")["activities"]["available"])
+        self.assertTrue(self.tool("get_profile")["activities"]["available"])
         self.assertEqual(self.tool("list_workouts", {"query": "' OR 1=1 --"})["total"], 0)
 
     def test_old_conversations_search_and_full_text_pagination(self):
@@ -128,14 +143,13 @@ class CoachDataTests(unittest.TestCase):
         self.assertEqual(self.client.get(base).json()["total"], 1)
         self.assertIsNone(self.client.get(base).json()["items"][0]["archived_at"])
 
-    def test_memory_requires_user_write_and_proposal_ownership(self):
-        proposal = self.tool("propose_memory", {"content": "Séances de vingt minutes", "quote": "je préfère vingt minutes"})
-        self.assertFalse(proposal["saved"])
+    def test_legacy_memory_proposal_stays_owned_and_editable(self):
+        proposal = {"content": "Séances de vingt minutes", "quote": "je préfère vingt minutes"}
         self.assertEqual(self.tool("search_memories")["total"], 0)
-        self.assertIn("error", self.tool("propose_memory", {"content": "Fatigue durable", "quote": "citation inventée"}))
+        self.assertIn("error", self.tool("propose_memory", proposal))
         turn, _ = self.reserve()
         with self.db.write() as s:
-            store.save_turn(s, "arnaud", turn["id"], proposals=[proposal["proposal"]], status="completed")
+            store.save_turn(s, "arnaud", turn["id"], proposals=[proposal], status="completed")
         payload = {"content": "Texte corrigé par l'utilisateur", "source_turn_id": turn["id"], "proposal_index": 0}
         url = "/api/profiles/arnaud/coach/memories"
         first = self.client.post(url, json=payload)
@@ -174,7 +188,7 @@ class CoachDataTests(unittest.TestCase):
         self.db.close()
         self.app = create_app(data_root=Path(self.tmp.name))
         self.db = self.app.state.database
-        self.assertEqual(self.db.schema, "0009")
+        self.assertEqual(self.db.schema, "0010")
         with self.db.transaction() as session:
             self.assertEqual(workouts.get_workout(session, "arnaud", self.workout["id"]), self.workout)
             self.assertEqual(store.conversations(session, "arnaud")["total"], 0)
@@ -187,7 +201,7 @@ class CoachDataTests(unittest.TestCase):
             calls.append(1)
             yield {"type": "response.output_text.delta", "delta": "Bonjour Arnaud"}
             yield completed()
-        runtime.transport = transport
+        runtime.transport = capture_transport(transport)
         payload = {"text": "Bonjour", "request_id": uuid4().hex}
         url = f"/api/profiles/arnaud/coach/conversations/{self.conversation}/messages"
         with TestClient(self.app, base_url="http://127.0.0.1") as client:
@@ -234,11 +248,11 @@ class CoachStreamTests(unittest.IsolatedAsyncioTestCase):
             else:
                 yield {"type": "response.output_text.delta", "delta": "Pas d’historique réalisé."}
                 yield completed()
-        self.runtime.transport = transport
+        self.runtime.transport = capture_transport(transport)
         turn, frames = await self.run_turn()
         self.assertEqual(turn["status"], "completed")
-        self.assertEqual(turn["usage"]["requests"], 2)
-        self.assertEqual(sum(x["cached_input_tokens"] for x in turn["usage"]["reports"]), 2048)
+        self.assertEqual(turn["usage"]["requests"], 3)
+        self.assertEqual(sum(x["cached_input_tokens"] for x in turn["usage"]["reports"]), 3072)
         self.assertEqual(payloads[1]["input"][:len(payloads[0]["input"])], payloads[0]["input"])
         self.assertNotIn("prompt_cache_breakpoint", json.dumps(payloads[0]))
         self.assertNotIn("SECRET", "".join(frames))
@@ -248,9 +262,9 @@ class CoachStreamTests(unittest.IsolatedAsyncioTestCase):
         self.assertNotIn("max_output_tokens", payloads[0])
         self.assertNotIn("prompt_cache_options", payloads[0])
         self.assertNotIn("previous_response_id", payloads[0])
-        # Un nouveau message conserve le préfixe du premier envoi, dates comprises.
+        # Les instructions restent stables ; le contexte du nouveau message évolue.
         await self.run_turn()
-        self.assertEqual(payloads[2]["input"][:len(payloads[0]["input"])], payloads[0]["input"])
+        self.assertEqual(payloads[2]["input"][0], payloads[0]["input"][0])
 
     async def test_questions_are_validated_kept_and_recalled(self):
         questions = [{"label": "Temps disponible", "options": ["30 min", "45 min", "60 min"]}]
@@ -265,10 +279,10 @@ class CoachStreamTests(unittest.IsolatedAsyncioTestCase):
             else:
                 yield {"type": "response.output_text.delta", "delta": "Quelques questions pour bien viser."}
                 yield completed()
-        self.runtime.transport = transport
+        self.runtime.transport = capture_transport(transport)
         turn, _ = await self.run_turn()
         self.assertEqual((turn["status"], turn["error"], turn["questions"]), ("completed", None, questions))
-        outputs = [json.loads(i["output"]) for i in payloads[1]["input"] if i.get("type") == "function_call_output"]
+        outputs = [json.loads(i["output"]) for i in payloads[1]["input"] if i.get("type") == "function_call_output" and i.get('call_id') in {'q0', 'q1'}]
         self.assertIn("error", outputs[0])
         await self.run_turn()
         recalled = [m["content"] for m in payloads[2]["input"] if m.get("role") == "assistant"]
@@ -315,7 +329,7 @@ class CoachStreamTests(unittest.IsolatedAsyncioTestCase):
     async def test_eof_preserves_partial_as_failed(self):
         async def transport(*_):
             yield {"type": "response.output_text.delta", "delta": "Texte reçu"}
-        self.runtime.transport = transport
+        self.runtime.transport = capture_transport(transport)
         turn, _ = await self.run_turn()
         self.assertEqual((turn["status"], turn["error"], turn["answer"]), ("failed", "incomplete", "Texte reçu"))
 
@@ -330,9 +344,9 @@ class CoachStreamTests(unittest.IsolatedAsyncioTestCase):
             else:
                 yield {"type": "response.output_text.delta", "delta": "Données consultées."}
             yield completed()
-        self.runtime.transport = transport
+        self.runtime.transport = capture_transport(transport)
         turn, _ = await self.run_turn()
-        self.assertEqual((turn["status"], turn["usage"]["requests"]), ("completed", 2))
+        self.assertEqual((turn["status"], turn["usage"]["requests"]), ("completed", 3))
         self.assertIn(item, calls[1]["input"])
         self.assertEqual(calls[1]["input"][-1]["call_id"], "call_stream")
 
@@ -344,7 +358,7 @@ class CoachStreamTests(unittest.IsolatedAsyncioTestCase):
                 yield {"type": "response.output_text.delta", "delta": "Partie conservée"}
                 received.set()
                 await asyncio.sleep(30)
-            self.runtime.transport = transport
+            self.runtime.transport = capture_transport(transport)
             turn, _ = await self.runtime.start("arnaud", self.conversation, store.Send(request_id=uuid4().hex, text="Interrompre"))
             task = self.runtime.tasks[turn["id"]]
             await asyncio.wait_for(received.wait(), 3)
@@ -363,10 +377,10 @@ class CoachStreamTests(unittest.IsolatedAsyncioTestCase):
             calls.append(1)
             yield {"type": "response.output_text.delta", "delta": "Partiel"}
             raise inference.InferenceError("limit")
-        self.runtime.transport = transport
+        self.runtime.transport = capture_transport(transport)
         turn, _ = await self.run_turn()
         self.assertEqual((turn["status"], turn["error"], len(calls)), ("failed", "limit", 1))
-        self.assertEqual(turn["usage"]["reports"], [])  # Inconnu, jamais inventé à zéro.
+        self.assertEqual(len(turn["usage"]["reports"]), 1)  # Inconnu, jamais inventé à zéro.
 
     async def test_single_token_refresh_before_stream_without_model_substitution(self):
         calls = []
@@ -376,7 +390,7 @@ class CoachStreamTests(unittest.IsolatedAsyncioTestCase):
                 raise inference.InferenceError("revoked")
             yield {"type": "response.output_text.delta", "delta": "Connexion renouvelée"}
             yield completed()
-        self.runtime.transport = transport
+        self.runtime.transport = capture_transport(transport)
         turn, _ = await self.run_turn()
         self.assertEqual((turn["status"], self.connection.refreshes), ("completed", 1))
         self.assertEqual(calls, ["gpt-5.6-luna", "gpt-5.6-luna"])
@@ -385,7 +399,7 @@ class CoachStreamTests(unittest.IsolatedAsyncioTestCase):
         async def transport(*_):
             yield {"type": "response.created"}
             raise inference.InferenceError("revoked")
-        self.runtime.transport = transport
+        self.runtime.transport = capture_transport(transport)
         turn, _ = await self.run_turn()
         self.assertEqual((turn["status"], self.connection.refreshes), ("failed", 0))
 

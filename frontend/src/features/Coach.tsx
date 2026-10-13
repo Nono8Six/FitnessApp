@@ -270,7 +270,7 @@ export function Coach({ profile, target, conversationId, createWorkout }: { prof
           : turns.items.length === 0 ? <div className="flex flex-col items-center py-6 text-center desk:py-10">
             <Glyph size={64}><CoachIcon size={30} /></Glyph>
             <h2 className="mt-4 text-title2">De quoi avez-vous besoin ?</h2>
-            <p className="mt-2 max-w-[40ch] text-subhead text-label-2">Le coach lit votre profil, vos programmes et vos échanges. Les bilans enregistrés ne lui sont pas encore accessibles.</p>
+            <p className="mt-2 max-w-[40ch] text-subhead text-label-2">Le coach s’appuie sur votre profil, vos échanges et vos séances réalisées pour personnaliser ses conseils.</p>
             <Group className="mt-7 w-full max-w-[520px] text-left">
               {SUGGESTIONS.map(text => <Row key={text} title={<span className="text-subhead">{text}</span>} onClick={() => { changeDraft(text); composer.current?.focus() }} />)}
             </Group>
@@ -296,7 +296,7 @@ export function Coach({ profile, target, conversationId, createWorkout }: { prof
               </div>
               {turn.sources.length > 0 && <div className="mt-3 flex flex-wrap gap-2" aria-label="Séances consultées">{turn.sources.map(s => <a key={`${s.id}:${s.version}`} href={s.href}
                 className="pressable inline-flex min-h-9 items-center gap-1.5 rounded-full bg-fill-3 py-1.5 pr-3 pl-2.5 text-footnote font-medium text-accent">
-                <LibraryIcon size={15} />{s.name}<span className="text-label-2">v{s.version}</span></a>)}</div>}
+                <LibraryIcon size={15} />{s.name}<span className="text-label-2">{s.href.startsWith('#/bilans/') ? 'Bilan' : `v${s.version}`}</span></a>)}</div>}
               {turn.status !== 'running' && turn.status !== 'completed' && <div role="status" className="mt-4 rounded-[12px] bg-orange/15 px-4 py-3 text-subhead text-orange">
                 <p className="font-semibold">{turn.status === 'interrupted' ? 'Réponse interrompue' : 'Réponse échouée'} · incomplète</p>
                 <p className="mt-0.5">{turn.error_message ?? 'Le texte reçu a été conservé.'}</p>
@@ -306,6 +306,7 @@ export function Coach({ profile, target, conversationId, createWorkout }: { prof
                 </div>
               </div>}
               {turn.status === 'completed' && turn.error === 'tool_error' && <p className="mt-3 text-footnote text-orange" role="status">Une consultation a échoué : les données correspondantes n’ont pas pu être vérifiées.</p>}
+              {turn.status === 'completed' && turn.error === 'memory_error' && <p className="mt-3 text-footnote text-orange" role="status">{turn.error_message}</p>}
               {turn.status === 'completed' && turn.error === 'workout_invalid' && <p className="mt-3 text-subhead text-red" role="alert">{turn.error_message ?? 'La proposition reste invalide. Aucun programme correspondant n’a été enregistré.'}</p>}
               {!!turn.questions?.length && <CoachQuestions key={`${turn.id}:${turn.status}`} questions={turn.questions} disabled={locked || blocked}
                 onSubmit={turn.status === 'completed' && turn.id === turns.items.at(-1)?.id ? text => void send(text) : undefined} />}

@@ -54,7 +54,8 @@ class EnergyTests(unittest.TestCase):
         self.assertEqual(calculation([step(6, gait="run")])["energy"]["active_kcal"], 40)
         self.assertEqual(calculation([step(12, gait="walk")])["energy"]["active_kcal"], 160)
         # Le seuil est appliqué sans choix utilisateur, y compris dans les répétitions.
-        self.assertEqual(calculation([step(6.01)])["energy"]["active_kcal"], 80.1)
+        self.assertIsNone(calculation([step(6.01)])["energy"]["active_kcal"])
+        self.assertTrue(calculation([step(6.01)])["energy"]["movement_ambiguous"])
         legacy = WorkoutInput(name="Ancienne", items=[{"repeat": 2, "steps": [step(gait="run")]}])
         self.assertNotIn("gait", legacy.model_dump()["items"][0]["steps"][0])
         self.assertTrue(calculation([step()])["energy"]["automatic_gait"])
