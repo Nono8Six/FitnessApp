@@ -60,6 +60,23 @@ class PassiveClient:
         self.callback(self)
 
 
+class SimulationCounterTests(unittest.TestCase):
+    def test_optional_counters_outside_ftms_range_do_not_stop_telemetry(self):
+        with tempfile.TemporaryDirectory() as root:
+            controller = Controller(Path(root), simulation=True, read_only=True)
+            controller.sim_speed, controller.sim_incline = 3, 1
+            for elapsed, distance in [(65535, 0xFFFFFF), (65536, 100), (65536, 0x1000000)]:
+                with self.subTest(elapsed=elapsed, distance=distance):
+                    controller.sim_elapsed, controller.sim_distance = elapsed, distance
+                    with patch.object(controller, '_data_notification') as notify:
+                        controller._sim_notification()
+                    values = ftms.parse_treadmill(notify.call_args.args[1])
+                    self.assertEqual(values['speed_kmh'], 3)
+                    self.assertEqual(values['incline_pct'], 1)
+                    self.assertEqual(values.get('elapsed_s'), elapsed if elapsed <= 65535 else None)
+                    self.assertEqual(values.get('distance_m'), distance if distance <= 0xFFFFFF else None)
+
+
 class PassiveControllerTests(unittest.IsolatedAsyncioTestCase):
     async def asyncSetUp(self):
         self.temp = tempfile.TemporaryDirectory()

@@ -90,6 +90,39 @@ class CalculationTests(unittest.TestCase):
         self.assertFalse(resting_then_run["energy"]["outside_range"])
 
 
+class LiveDistanceTests(unittest.TestCase):
+    def test_live_distance_matches_report_across_gaps_pause_and_final_stop(self):
+        with tempfile.TemporaryDirectory() as root:
+            app = create_app(simulation=True, data_root=Path(root))
+            try:
+                e, c = app.state.execution, app.state.device.controller
+                e.id, e.began = "a" * 32, 100
+                e.workout = {"blocks": [{}], "summary": {"sec": 300}}
+                e.targets = [{"speed": 3, "incline": 1}]
+                c.phase = "connected"
+                for t, active, phase, counter in [
+                    (0, 0, "countdown", 100), (1, 0, "running", 101),
+                    (2, 1, "running", 103), (6, 5, "running", 110),
+                    (7, 5, "pausing", 111), (8, 5, "paused", 112),
+                    (9, 5, "paused", 112), (10, 5, "running", 112),
+                    (11, 6, "running", 114), (12, 6, "stopping", 115),
+                    (13, 6, "stopped", 116),
+                ]:
+                    e.phase, e.elapsed = phase, active
+                    c.telemetry = {"speed_kmh": 3, "incline_pct": 1, "distance_m": counter}
+                    c.received_at = {key: 100 + t for key in c.telemetry}
+                    with patch("backend.training.execution.time.monotonic", return_value=100 + t):
+                        e._sample(final=True)
+                        live = e.snapshot()
+                    report = calculate(list(e.samples), {"active_s": active}, None, [{}])
+                    with self.subTest(t=t, phase=phase):
+                        self.assertEqual(live["distance_m"], report["distance_m"])
+                        if report["distance_quality"] == "partial":
+                            self.assertEqual(live["distance_quality"], "partial")
+            finally:
+                app.state.database.close()
+
+
 class RecordingTests(unittest.IsolatedAsyncioTestCase):
     async def asyncSetUp(self):
         self.temp = tempfile.TemporaryDirectory()
@@ -133,6 +166,24 @@ class RecordingTests(unittest.IsolatedAsyncioTestCase):
     def read(self):
         with self.db.transaction() as s:
             return service.read(s, "arnaud", self.e.id)
+
+    async def test_profile_cannot_be_deleted_until_recording_is_finalized(self):
+        await self.running()
+        client = TestClient(self.app, base_url="http://127.0.0.1")
+        response = client.request("DELETE", "/api/profiles/arnaud", json={})
+        self.assertEqual(response.status_code, 409)
+        self.assertEqual(self.e.phase, "running")
+        self.assertEqual(self.read()["profile"]["id"], "arnaud")
+        self.e.request_halt()
+        await self.wait("stopped")
+        await self.e.task
+        # Même terminée, la séance ne doit pas être effacée avant son dernier lot.
+        with patch.object(self.e.recorder, "finalized", False):
+            self.assertEqual(client.request("DELETE", "/api/profiles/arnaud", json={}).status_code, 409)
+        self.e.recorder.update()
+        await self.e.recorder.flush()
+        self.assertTrue(self.e.recorder.finalized)
+        self.assertEqual(client.request("DELETE", "/api/profiles/arnaud", json={}).status_code, 200)
 
     async def test_live_recording_freezes_inputs_and_survives_program_deletion(self):
         await self.running()

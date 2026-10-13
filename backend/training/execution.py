@@ -15,7 +15,7 @@ from ..device import ftms
 from . import workouts
 from .profiles import get_profile
 from ..recording.store import Recorder
-from ..recording.metrics import Totals
+from ..recording.metrics import Distance, Totals
 
 LOGGER = logging.getLogger(__name__)
 TERMINAL = {"completed", "stopped", "cancelled"}
@@ -60,10 +60,7 @@ class Execution:
         self.markers = deque(maxlen=256)
         self.sample_seq = 0
         self.last_sample = -1
-        self.distance = 0.0
-        self.distance_last = None
-        self.distance_quality = "absent"
-        self.distance_partial = False
+        self.distance = Distance()
         self.recovered = False
         self.recorder = Recorder(self)
         self.totals = Totals(None)
@@ -163,7 +160,8 @@ class Execution:
         self.adjustment_revision = 0
         self.adjustment_note = None
         self.block = 0
-        self.elapsed = self.paused = self.distance = 0.0
+        self.elapsed = self.paused = 0.0
+        self.distance = Distance()
         self.active_since = self.pause_since = None
         self.requested = self.reason = self.error = None
         self.stop_confirmed = False
@@ -171,9 +169,6 @@ class Execution:
         self.markers.clear()
         self.sample_seq = 0
         self.last_sample = -1
-        self.distance_last = None
-        self.distance_quality = "absent"
-        self.distance_partial = False
         self.recovered = False
         self.began = now
         self.ended = None
@@ -528,6 +523,7 @@ class Execution:
     def snapshot(self, viewer="", *, include_recording=True):
         active = self.active_time()
         c = self.controller
+        distance = self.distance.result()
         return copy.deepcopy({
             "id": self.id, "phase": self.phase, "mode": "simulation" if c.simulation else "reel",
             "owned_by_me": bool(self.owner and viewer == self.owner),
@@ -542,8 +538,8 @@ class Execution:
             "restart_delay_s": max(0, math.ceil(c.restart_after - time.monotonic())),
             "authorization_remaining_s": max(0, round(self.deadline - time.monotonic())) if self.id else 0,
             "limits": self.limits, "command": c.last_command,
-            "distance_m": round(self.distance, 1) if self.distance_quality != "absent" else None,
-            "distance_quality": self.distance_quality,
+            "distance_m": distance["distance_m"],
+            "distance_quality": "fresh" if distance["distance_quality"] == "complete" else distance["distance_quality"],
             "totals": self.totals.result(self.samples[-1]["active_s"] if self.samples else 0),
             **({"recording": self.recorder.status()} if include_recording else {}),
         })
@@ -559,21 +555,6 @@ class Execution:
         c = self.controller
         fresh = lambda key: c.telemetry.get(key) if c.phase == "connected" and now - c.received_at.get(key, 0) <= STALE_SECONDS else None
         speed, incline, distance = fresh("speed_kmh"), fresh("incline_pct"), fresh("distance_m")
-        if distance is None:
-            was_received = self.distance_last is not None or self.distance_partial
-            if self.distance_last is not None:
-                self.distance_partial = True
-            self.distance_last = None
-            self.distance_quality = "stale" if was_received else "absent"
-        else:
-            if self.distance_last is not None and self.phase in ("running", "transitioning", "adjusting", "pausing", "stopping"):
-                delta = distance - self.distance_last
-                if delta >= 0:
-                    self.distance += delta
-                else:
-                    self.distance_partial = True
-            self.distance_last = distance
-            self.distance_quality = "partial" if self.distance_partial else "fresh"
         b = self.targets[self.block]
         self.sample_seq += 1
         sample = {"seq": self.sample_seq, "t": t, "active_s": round(self.active_time(), 2),
@@ -585,6 +566,7 @@ class Execution:
                              "measurements": self.device.snapshot()["measurements"]}
         if self.samples:
             self.totals.add(self.samples[-1], sample)
+            self.distance.add(self.samples[-1], sample)
         self.recorder.add("sample", sample, source="simulation" if c.simulation else "ftms", at=sample["at"])
         self.samples.append(sample)
 

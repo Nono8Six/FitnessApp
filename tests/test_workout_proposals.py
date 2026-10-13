@@ -130,7 +130,11 @@ class ProposalTests(unittest.TestCase):
         self.assertFalse(result['saved'])
         self.assertEqual(self.client.get(self.url + '/workouts').json()['workouts'], [])
         payload['target'] = {'active_kcal': 5000}
-        self.assertIn('error', tools.execute(self.db, 'arnaud', 'preview_catalog', json.dumps(payload), user_text='Endurance'))
+        long = tools.execute(self.db, 'arnaud', 'preview_catalog', json.dumps(payload), user_text='Endurance')
+        self.assertGreater(long['summary']['sec'], 3600)
+        self.assertGreaterEqual(long['summary']['energy']['active_kcal'], 5000)
+        self.assertFalse(long['saved'])
+        self.assertEqual(self.client.get(self.url + '/workouts').json()['workouts'], [])
         payload['template_id'] = 'inconnu'
         self.assertIn('error', tools.execute(self.db, 'arnaud', 'preview_catalog', json.dumps(payload), user_text='Endurance'))
 
@@ -246,9 +250,20 @@ class ProposalTests(unittest.TestCase):
             self.assertEqual(saved['origin']['target'], target)
             self.assertEqual(saved['origin']['catalog_revision'], catalog.CATALOG_REVISION)
             self.assertEqual(self.client.get(self.url + '/workouts/' + saved['id']).json(), saved)
-        blocked = self.client.post(url + '/preview', json={'active_kcal': 5000}).json()
-        self.assertTrue(all(w['workout'] is None and 'entre' in w['message'] for w in blocked))
-        self.assertEqual(self.client.post(url, json=payload | {'target': {'active_kcal': 5000}}).status_code, 422)
+        # La durée peut dépasser une heure ; seules les bornes constructibles
+        # (120 segments et dose du format) bloquent une cible valide.
+        extended = self.client.post(url + '/preview', json={'active_kcal': 5000}).json()
+        for option in extended:
+            if option['workout']:
+                self.assertGreater(option['workout']['summary']['sec'], 3600)
+                self.assertGreaterEqual(option['workout']['summary']['energy']['active_kcal'], 5000)
+                self.assertLessEqual(option['workout']['summary']['count'], workouts.MAX_SEGMENTS)
+            else:
+                self.assertIn('trop longue', option['message'])
+        self.assertEqual(self.client.post(url, json=payload | {'target': {'active_kcal': 5000}}).status_code, 201)
+        blocked = self.client.post(url + '/preview', json={'active_kcal': 1}).json()
+        self.assertTrue(all(w['workout'] is None and 'commence' in w['message'] for w in blocked))
+        self.assertEqual(self.client.post(url, json=payload | {'target': {'active_kcal': 1}}).status_code, 422)
         self.assertEqual(self.client.get('/api/profiles/ophelie/workouts').json()['workouts'], [])
         self.assertEqual(self.client.post('/api/profiles/inconnu/workouts/catalog/preview', json={}).status_code, 404)
         updated = self.client.get(url).json()

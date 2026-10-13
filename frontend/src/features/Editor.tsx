@@ -88,6 +88,9 @@ function EditorForm({ profile, source, proposal }: { profile: string; source?: W
   const { state: preview, retry } = usePreview(profile, input)
   const errorAt = (path: (string | number)[]) => preview.status === 'error'
     ? preview.issues?.find(issue => JSON.stringify(issue.path) === JSON.stringify(path))?.message : undefined
+  const inlineError = (path: (string | number)[]) => (path.length === 1 && path[0] === 'name')
+    || (path[0] === 'items' && ((path.length === 3 && ['sec', 'speed', 'incline', 'repeat'].includes(String(path[2])))
+      || (path.length === 5 && path[2] === 'steps' && ['sec', 'speed', 'incline'].includes(String(path[4])))))
   const dirty = JSON.stringify(input) !== JSON.stringify(initial ? { name: initial.name, items: initial.items, goal: initial.goal ?? null, level: initial.level ?? null } : { name: '', items: [newStep()], goal: null, level: null })
   useEffect(() => {
     if (!dirty) return
@@ -162,7 +165,7 @@ function EditorForm({ profile, source, proposal }: { profile: string; source?: W
         {preview.status === 'ok' ? <WorkoutSummary data={preview.data} editing /> : <>
           <StatGrid stats={['Durée', 'Distance', 'Kcal actives', 'Dénivelé équiv.'].map(label => ({ label, value: null, color: '' }))} />
           {/* Les erreurs de champ s'affichent sous leur champ ; ici, seulement l'état et les erreurs sans champ. */}
-          {preview.status === 'error' ? !(preview.issues?.length && preview.issues.every(issue => issue.path.length > 0)) && <>
+          {preview.status === 'error' ? !(preview.issues?.length && preview.issues.every(issue => inlineError(issue.path))) && <>
             <p role="alert" className="mt-3 px-4 text-footnote text-red">{preview.message}</p>
             <button onClick={retry} className="min-h-11 px-4 text-footnote text-accent">Vérifier à nouveau</button>
           </> : <p role="status" className="mt-3 px-4 text-footnote text-label-2">Calcul de l’aperçu…</p>}

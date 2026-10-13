@@ -184,8 +184,12 @@ async def events(socket: WebSocket):
             await queue.get()
             payload = event(socket, viewer, full=first or session_id != engine.id, after=after)
             await socket.send_json(payload)
-            after = engine.sample_seq
-            session_id = engine.id
+            # Le moteur continue pendant l'envoi : n'acquitter que ce message.
+            if payload["samples"]:
+                after = payload["samples"][-1]["seq"]
+            elif payload["type"] == "snapshot":
+                after = 0
+            session_id = payload["session"]["id"]
             first = False
 
     async def receive():

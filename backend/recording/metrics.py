@@ -9,6 +9,30 @@ VERSION = "recording-v1-acsm-v1"
 MOVING = {"running", "transitioning", "adjusting", "pausing", "stopping"}
 
 
+class Distance:
+    """Deltas du compteur partagés par le Direct et le bilan, sans combler les trous."""
+    def __init__(self):
+        self.meters = self.valid_s = self.expected_s = 0.0
+        self.partial = False
+
+    def add(self, a, b):
+        dt = b["t"] - a["t"]
+        if dt <= 0 or not (a.get("phase") in MOVING or b.get("phase") in MOVING):
+            return
+        self.expected_s += dt
+        ca, cb = a.get("counter_m"), b.get("counter_m")
+        if dt <= 2 and a.get("phase") != "unknown" and ca is not None and cb is not None and cb >= ca:
+            self.meters += cb - ca
+            self.valid_s += dt
+        else:
+            self.partial = True
+
+    def result(self):
+        return {"distance_m": round(self.meters, 1) if self.valid_s else None,
+                "distance_quality": "absent" if not self.valid_s else "partial" if self.partial else "complete",
+                "distance_coverage": round(self.valid_s / self.expected_s, 4) if self.expected_s else None}
+
+
 class Totals:
     """Même réduction pour le bilan et le Direct, sans stocker tous les points."""
     def __init__(self, weight):
@@ -50,10 +74,7 @@ class Totals:
 def calculate(samples, checkpoint, weight, blocks):
     active = checkpoint.get("active_s", 0)
     totals = Totals(weight)
-    distance = 0.0
-    distance_valid = 0.0
-    distance_expected = 0.0
-    partial = False
+    distance = Distance()
     per_block = [{"active_s": 0.0, "speed_sum": 0.0, "incline_sum": 0.0,
                   "speed_valid_s": 0.0, "incline_valid_s": 0.0} for _ in blocks]
     for a, b in zip(samples, samples[1:]):
@@ -68,14 +89,7 @@ def calculate(samples, checkpoint, weight, blocks):
             if valid[field]:
                 block[f"{field}_valid_s"] += da
                 block[f"{field}_sum"] += a[field] * da
-        if b.get("phase") in MOVING or a.get("phase") in MOVING:
-            distance_expected += max(0, dt)
-            ca, cb = a.get("counter_m"), b.get("counter_m")
-            if dt <= 2 and a.get("phase") != "unknown" and ca is not None and cb is not None and cb >= ca:
-                distance += cb - ca
-                distance_valid += dt
-            else:
-                partial = True
+        distance.add(a, b)
     for block in per_block:
         for field in ("speed", "incline"):
             valid = block.pop(f"{field}_valid_s")
@@ -84,9 +98,7 @@ def calculate(samples, checkpoint, weight, blocks):
         block["active_s"] = round(block["active_s"], 2)
     return {"version": VERSION, "active_s": active, "pause_s": checkpoint.get("pause_s", 0),
             "wall_s": checkpoint.get("wall_s", 0),
-            "distance_m": round(distance, 1) if distance_valid else None,
-            "distance_quality": "absent" if not distance_valid else "partial" if partial else "complete",
-            "distance_coverage": round(distance_valid / distance_expected, 4) if distance_expected else None,
+            **distance.result(),
             **totals.result(active), "blocks": per_block}
 
 

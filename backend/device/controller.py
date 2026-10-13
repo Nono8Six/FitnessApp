@@ -726,10 +726,15 @@ class Controller:
                         await self.halt("Contrôle désarmé : écran absent, délai expiré ou mesures indisponibles")
 
     def _sim_notification(self):
-        flags = (1 << 2) | (1 << 3) | (1 << 10)
+        # Les compteurs sont optionnels : ne pas interrompre les mesures si une
+        # simulation cumulée dépasse leur format (18 h 12 min pour le temps).
+        distance = round(self.sim_distance)
+        has_distance, has_elapsed = 0 <= distance <= 0xFFFFFF, 0 <= self.sim_elapsed <= 0xFFFF
+        flags = (1 << 3) | ((1 << 2) if has_distance else 0) | ((1 << 10) if has_elapsed else 0)
         payload = (struct.pack("<HH", flags, round(self.sim_speed * 100)) +
-                   round(self.sim_distance).to_bytes(3, "little") +
-                   struct.pack("<hhH", round(self.sim_incline * 10), 0, self.sim_elapsed))
+                   (distance.to_bytes(3, "little") if has_distance else b"") +
+                   struct.pack("<hh", round(self.sim_incline * 10), 0) +
+                   (struct.pack("<H", self.sim_elapsed) if has_elapsed else b""))
         self._data_notification(None, payload)
 
     async def _simulate(self):

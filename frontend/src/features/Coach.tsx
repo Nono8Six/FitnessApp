@@ -270,7 +270,7 @@ export function Coach({ profile, target, conversationId, createWorkout }: { prof
           : turns.items.length === 0 ? <div className="flex flex-col items-center py-6 text-center desk:py-10">
             <Glyph size={64}><CoachIcon size={30} /></Glyph>
             <h2 className="mt-4 text-title2">De quoi avez-vous besoin ?</h2>
-            <p className="mt-2 max-w-[40ch] text-subhead text-label-2">Le coach lit votre profil, vos séances et vos échanges. Les activités réalisées ne sont pas encore enregistrées.</p>
+            <p className="mt-2 max-w-[40ch] text-subhead text-label-2">Le coach lit votre profil, vos programmes et vos échanges. Les bilans enregistrés ne lui sont pas encore accessibles.</p>
             <Group className="mt-7 w-full max-w-[520px] text-left">
               {SUGGESTIONS.map(text => <Row key={text} title={<span className="text-subhead">{text}</span>} onClick={() => { changeDraft(text); composer.current?.focus() }} />)}
             </Group>

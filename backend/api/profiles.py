@@ -3,6 +3,7 @@ from fastapi import APIRouter, HTTPException, Request
 from ..storage import Database
 from ..training import profiles
 from ..training.profiles import ProfileConflict, ProfileCreate, ProfileNotFound, ProfileOut, ProfileUpdate
+from ..training.execution import ACTIVE
 
 router = APIRouter(prefix="/api/profiles")
 
@@ -51,6 +52,11 @@ def delete_profile(profile_id: str, request: Request) -> list[ProfileOut]:
     """Renvoie les profils restants."""
     try:
         with database(request).write() as session:
+            engine = request.app.state.execution
+            if engine.profile and engine.profile["id"] == profile_id and (
+                engine.phase in ACTIVE or (engine.recorder.session_id and not engine.recorder.finalized)
+            ):
+                raise ProfileConflict("Une séance utilise ce profil. Terminez-la dans Direct et attendez la sauvegarde du bilan avant de supprimer le profil.")
             return profiles.delete_profile(session, profile_id)
     except ProfileNotFound:
         raise HTTPException(404, "Profil introuvable") from None

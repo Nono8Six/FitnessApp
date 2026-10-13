@@ -17,24 +17,24 @@ const LIMITS = { duration: { min: 15, max: 60, step: 5, unit: 'min' }, calories:
 const LEVEL_OPTIONS = (Object.entries(LEVELS) as [Level, string][]).map(([value, label]) => ({ value, label }))
 
 /** Cible exclusive durée ou calories actives, avec le même réglage sur la page et dans l'aperçu. */
-function TargetRows({ mode, value, disabled, onMode, onValue, children }: {
+function TargetRows({ mode, value, disabled, onMode, onValue, error, onInvalid, children }: {
   mode: Mode; value: number; disabled: boolean
   onMode: (v: Mode) => void; onValue: (v: number) => void; children?: ReactNode
+  error?: string; onInvalid: (message: string | undefined) => void
 }) {
-  const [error, setError] = useState<string>()
   const limits = LIMITS[mode]
   return <Group footer={error ? undefined : mode === 'duration'
     ? 'Échauffement et retour au calme compris.'
     : 'Prévision selon votre poids. La durée s’adapte au niveau choisi, même au-delà d’une heure.'}>
     <div className="g-row px-4 py-2.5">
-      <Segmented label="Cible de la séance" value={mode} disabled={disabled} onChange={v => { setError(undefined); onMode(v) }}
+      <Segmented label="Cible de la séance" value={mode} disabled={disabled} onChange={v => { onInvalid(undefined); onMode(v) }}
         options={[{ value: 'duration', label: 'Durée' }, { value: 'calories', label: 'Calories' }]} />
     </div>
     <ControlRow title={mode === 'duration' ? 'Durée' : 'Kcal actives'} error={error}
       control={<Stepper key={mode} value={value} min={limits.min} max={limits.max} step={limits.step} unit={limits.unit}
         color={mode === 'duration' ? 'var(--color-time)' : 'var(--color-energy)'}
         label={mode === 'duration' ? 'Durée souhaitée en minutes' : 'Objectif de calories actives'}
-        disabled={disabled} onChange={onValue} onInvalid={setError} />} />
+        disabled={disabled} onChange={onValue} onInvalid={onInvalid} />} />
     {children}
   </Group>
 }
@@ -94,6 +94,7 @@ export function Discover({ profile }: { profile: string }) {
   const [calories, setCalories] = useState(200)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
+  const [targetError, setTargetError] = useState<string>()
   const mounted = useRef(true), saving = useRef(false)
   const value = mode === 'duration' ? duration : calories
   const target: CatalogTarget = mode === 'duration' ? { duration_sec: value * 60 } : { active_kcal: value }
@@ -120,7 +121,7 @@ export function Discover({ profile }: { profile: string }) {
   const feedback = state.status === 'loading' ? <WorkoutLoading cards={template ? 1 : 2} />
     : state.status === 'error' ? <WorkoutError message={state.message} retry={() => setRevision(v => v + 1)} /> : null
   const add = async () => {
-    if (saving.current || !shown) return
+    if (saving.current || !shown || targetError) return
     saving.current = true; setBusy(true); setError('')
     try { const saved = await addCatalog(profile, shown, target); if (mounted.current) navigate(href.workout(saved.id)) }
     catch (e) { if (mounted.current) setError(errorMessage(e)) }
@@ -128,7 +129,7 @@ export function Discover({ profile }: { profile: string }) {
   }
   return <>
     <div className="mb-3 flex flex-wrap gap-2">
-      <button type="button" onClick={() => setTargetOpen(true)} aria-label={`Cible : ${value} ${LIMITS[mode].unit}. Modifier`} className={pillClass}>
+      <button type="button" onClick={() => { setTargetError(undefined); setTargetOpen(true) }} aria-label={`Cible : ${value} ${LIMITS[mode].unit}. Modifier`} className={pillClass}>
         {mode === 'duration' ? <Timer size={16} strokeWidth={2.4} className="text-time" /> : <Flame size={16} strokeWidth={2.4} className="text-energy" />}
         <span className="num">{value.toLocaleString('fr-FR')} {LIMITS[mode].unit}</span>
         <ChevronDown size={15} strokeWidth={2.6} className="text-label-2" />
@@ -146,7 +147,7 @@ export function Discover({ profile }: { profile: string }) {
     {!missingWeight && options.length > 0 && groups.map(key => <section key={key} className="mb-9" aria-labelledby={`goal-${key}`}>
       <h2 id={`goal-${key}`} className="mb-3 px-1 text-title2">{GOALS[key]}</h2>
       <div className="grid gap-3 desk:grid-cols-2 desk:gap-4">{options.filter(w => w.goal === key && w.level === level).map(w => <button key={w.template_id} type="button"
-        onClick={() => { setTemplate({ id: w.template_id, name: w.name }); setError('') }}
+        onClick={() => { setTemplate({ id: w.template_id, name: w.name }); setError(''); setTargetError(undefined) }}
         className="pressable flex min-w-0 flex-col rounded-[22px] bg-surface p-4 text-left desk:p-5 desk:hover:bg-[#232325]">
         {w.workout ? <WorkoutCard data={w.workout} /> : <><h3 className="text-headline">{w.name}</h3><p className="mt-2 text-subhead text-orange">{w.message}</p></>}
         <p className="mt-3 text-footnote text-label-2">{w.description}</p>
@@ -154,20 +155,20 @@ export function Discover({ profile }: { profile: string }) {
     </section>)}
 
     <Sheet open={targetOpen} onClose={() => setTargetOpen(false)} title="Cible"
-      trailing={<button type="button" onClick={() => setTargetOpen(false)} className="pressable -mr-2 h-11 min-w-11 px-2 text-headline text-accent">OK</button>}>
-      <TargetRows mode={mode} value={value} disabled={busy} onMode={setMode} onValue={setValue} />
+      trailing={<button type="button" disabled={!!targetError} onClick={() => setTargetOpen(false)} className="pressable -mr-2 h-11 min-w-11 px-2 text-headline text-accent disabled:text-label-3">OK</button>}>
+      <TargetRows mode={mode} value={value} disabled={busy} onMode={setMode} onValue={setValue} error={targetError} onInvalid={setTargetError} />
     </Sheet>
 
     <Sheet wide open={!!template} onClose={() => { if (!busy) setTemplate(null) }} title={selected?.name ?? template?.name ?? 'Séance'}
       leading={<button type="button" disabled={busy} className="pressable -ml-2 h-11 min-w-11 px-2 text-body text-accent disabled:text-label-3" onClick={() => setTemplate(null)}>Fermer</button>}
       footer={<>
         {error && <p role="alert" className="mb-2 text-subhead text-red">{error}</p>}
-        <Button className="w-full" disabled={busy || !shown} onClick={() => void add()}>{busy ? 'Ajout…' : 'Ajouter à mes séances'}</Button>
+        <Button className="w-full" disabled={busy || !shown || !!targetError} onClick={() => void add()}>{busy ? 'Ajout…' : 'Ajouter à mes séances'}</Button>
       </>}>
       {selected && <p className="mb-4 px-1 text-subhead text-label-2">
         <span className="text-label">{GOALS[selected.goal]}</span> · {LEVELS[selected.level]}<br />{selected.description}
       </p>}
-      <TargetRows mode={mode} value={value} disabled={busy} onMode={setMode} onValue={setValue}>
+      <TargetRows mode={mode} value={value} disabled={busy} onMode={setMode} onValue={setValue} error={targetError} onInvalid={setTargetError}>
         <div className="g-row pl-4">
           <div className="row-sep py-2.5 pr-4">
             <Segmented label="Difficulté du programme" value={level} disabled={busy} onChange={setLevel} options={LEVEL_OPTIONS} />

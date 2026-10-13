@@ -117,11 +117,14 @@ export function Activity({ desktop = false }: { desktop?: boolean }) {
 const LiveCurves = memo(function LiveCurves({ samples, markers, wall, startedAt, live }: { samples: LiveSample[]; markers: { t: number; label: string }[]; wall: number; startedAt: string | null; live: boolean }) {
   const [windowS, setWindowS] = useState(300), [cursor, setCursor] = useState<number | null>(null)
   const x1 = Math.max(60, Math.ceil(wall)), x0 = windowS ? Math.max(0, x1 - windowS) : 0
-  const selected = cursor === null ? undefined : nearest(samples, cursor)
+  const point = cursor === null ? undefined : nearest(samples, cursor)
+  const selected = point && Math.abs(point.t - cursor!) <= 1.5 ? point : undefined
   const gaps = useMemo(() => {
     const ranges: [number, number][] = []
     let start: number | undefined
-    for (const p of samples) {
+    for (let i = 0; i < samples.length; i++) {
+      const p = samples[i], previous = samples[i - 1]
+      if (previous && p.t - previous.t > 2) ranges.push([previous.t, p.t])
       if (p.speed === null || p.incline === null) start ??= p.t
       else if (start !== undefined) { ranges.push([start, p.t]); start = undefined }
     }
@@ -129,11 +132,11 @@ const LiveCurves = memo(function LiveCurves({ samples, markers, wall, startedAt,
     return ranges
   }, [samples, wall])
   const speedSeries: Series[] = useMemo(() => [
-    { key: 'speed', data: samples, value: p => p.speed, color: 'var(--color-speed)', width: 2.5, area: true },
-    { key: 'target', data: samples, value: p => p.target, color: 'rgb(255 255 255 / .6)', dash: '4 4', step: true },
+    { key: 'speed', data: samples, value: p => p.speed, color: 'var(--color-speed)', width: 2.5, area: true, maxGap: 2 },
+    { key: 'target', data: samples, value: p => p.target, color: 'rgb(255 255 255 / .6)', dash: '4 4', step: true, maxGap: 2 },
   ], [samples])
   const inclineSeries: Series[] = useMemo(() => [
-    { key: 'incline', data: samples, value: p => p.incline, color: 'var(--color-incline)', width: 2, step: true },
+    { key: 'incline', data: samples, value: p => p.incline, color: 'var(--color-incline)', width: 2, step: true, maxGap: 2 },
   ], [samples])
   const stamp = selected && startedAt ? new Date(new Date(startedAt).getTime() + selected.t * 1000).toLocaleTimeString('fr-FR') : ''
   return <section className="live-curves" aria-label="Courbes de la séance">
@@ -146,11 +149,12 @@ const LiveCurves = memo(function LiveCurves({ samples, markers, wall, startedAt,
     </div>
     <div className="live-chart-readout" aria-live="polite">
       <div className="min-w-0 flex-1">
-        <p className="num text-footnote text-label-2">{selected ? `Lecture à ${stamp} · ${clock(selected.t)} depuis le départ` : 'Mesures reçues · cible en pointillés'}</p>
+        <p className="num text-footnote text-label-2">{selected ? `Lecture à ${stamp} · ${clock(selected.t)} depuis le départ` : cursor !== null ? `${clock(cursor)} depuis le départ` : 'Mesures reçues · cible en pointillés'}</p>
         <p className="num mt-1 flex flex-wrap gap-x-4 text-subhead">
           <span className="text-speed">{selected ? selected.speed === null ? '--' : dec1(selected.speed) : 'Vitesse'}{selected && ' km/h'}</span>
           <span className="text-label-2">{selected ? `Cible ${dec1(selected.target)} km/h` : 'Cible'}</span>
           <span className="text-incline">{selected ? selected.incline === null ? '--' : `${dec1(selected.incline)} %` : 'Pente'}</span>
+          {cursor !== null && !selected && <span className="text-orange">Aucune mesure à cet instant</span>}
         </p>
       </div>
       {cursor !== null && <button type="button" aria-label="Revenir aux mesures actuelles" onClick={() => setCursor(null)} className="pressable grid size-11 place-items-center rounded-full bg-fill-3"><X size={17} /></button>}

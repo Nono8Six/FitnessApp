@@ -81,6 +81,10 @@ export async function api<T>(path: string, { method = 'GET', body, validate, tim
     try {
       value = await res.json()
     } catch (cause) {
+      // La connexion peut se couper après les en-têtes, pendant la lecture du corps.
+      if (ctrl.signal.aborted || cause instanceof TypeError) {
+        throw new ApiError('network', 'Serveur du PC injoignable', res.status, { cause, label })
+      }
       throw new ApiError('format', 'Réponse du serveur invalide', res.status, { cause, label })
     }
     if (!validate(value)) throw new ApiError('format', 'Réponse du serveur invalide', res.status, { label })

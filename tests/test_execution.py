@@ -8,9 +8,11 @@ import unittest
 from pathlib import Path
 from unittest.mock import patch
 
+from fastapi import WebSocketDisconnect
 from fastapi.testclient import TestClient
 
 from backend.app import create_app
+from backend.api.execution import events
 from backend.device import ftms
 from backend.device.controller import ControllerError
 from backend.training.workouts import WorkoutInput, WorkoutUpdate, create_workout, update_workout
@@ -18,6 +20,45 @@ from tests.test_device import PassiveClient
 
 OWNER = "a" * 32
 OBSERVER = "b" * 32
+
+
+class EventDeliveryTests(unittest.IsolatedAsyncioTestCase):
+    async def test_measurements_arriving_during_send_are_delivered_next(self):
+        with tempfile.TemporaryDirectory() as root:
+            app = create_app(simulation=True, data_root=Path(root))
+            engine = app.state.execution
+            engine.samples.append({"seq": 1, "t": 0, "active_s": 0})
+            engine.sample_seq = 1
+            frames = []
+
+            class SlowSocket:
+                headers = {"origin": "http://127.0.0.1", "host": "127.0.0.1"}
+                query_params = {"client_id": OWNER}
+
+                async def accept(self):
+                    pass
+
+                async def send_json(self, payload):
+                    frames.append(payload)
+                    if len(frames) == 1:
+                        await asyncio.sleep(0)
+                        engine.samples.append({"seq": 2, "t": 1, "active_s": 1})
+                        engine.sample_seq = 2
+                        app.state.device.publish()
+                    else:
+                        raise WebSocketDisconnect()
+
+                async def receive_json(self):
+                    await asyncio.Event().wait()
+
+            socket = SlowSocket()
+            socket.app = app
+            try:
+                await asyncio.wait_for(events(socket), 2)
+                self.assertEqual([s["seq"] for s in frames[1]["samples"]], [2])
+                self.assertEqual(len(app.state.device.subscribers), 0)
+            finally:
+                app.state.database.close()
 
 
 class CommandClient(PassiveClient):

@@ -25,6 +25,22 @@ Une seule brique en cours dans le périmètre demandé. Les cases indiquent les 
 - [ ] **Brique 16 · Usage quotidien Windows** : lanceur, démarrage simple, hors ligne, performances.
 - [ ] **Brique 17 · Réception finale** : parcours complet sur les vrais appareils.
 
+### Revue et corrections du 13 octobre 2026
+
+Revue des fonctions déjà livrées : calculs ACSM et dénivelé, expansion des répétitions, adaptation du catalogue, temps actif/pause, distances et moyennes, commandes FTMS, sauvegarde, profils, Coach, interface et lanceur. Les briques restantes ci-dessus gardent leur périmètre.
+
+- Distance du Direct alignée sur le calcul du bilan : mêmes intervalles valides, coupures exclues, décélération finale conservée, absence distincte de zéro. Le calcul historique du bilan reste inchangé.
+- Flux WebSocket : une mesure arrivée pendant l'envoi d'un message est livrée au suivant, sans avancer le repère sur des données non envoyées.
+- Suppression du profil refusée pendant sa séance et jusqu'à la sauvegarde finale du bilan.
+- Courbes du Direct : coupures de plus de 2 s visibles, pas de valeur éloignée présentée au curseur comme une mesure disponible.
+- Éditeur vide : erreur explicite. Catalogue : une cible invalide empêche d'enregistrer le programme correspondant à l'ancienne cible.
+- Simulation prolongée : un compteur dépassant sa largeur FTMS devient indisponible sans interrompre la vitesse et la pente. Une rupture réseau pendant la lecture d'une réponse API est distinguée d'un JSON invalide.
+- Texte du Coach actualisé : les bilans existent, mais ses outils ne peuvent pas encore les consulter. Deux attentes de tests obsolètes sur les objectifs caloriques supérieurs à une heure sont corrigées ; les limites actuelles du catalogue sont conservées.
+
+**Vérification :** 182 tests backend et 10 tests du superviseur Windows réussis sur données/ports isolés, quatre contrôles du client API réussis et build frontend avec TypeScript. Dans Chrome, création, validation, connexion simulée, démarrage, ajustements, pause/reprise, arrêt, bilan et ressenti ; contrôle PC et 390 × 844. Sur la séance simulée contrôlée : Direct et bilan donnent 45 m, 3,24 km/h de moyenne et 2,2 kcal actives estimées ; une pause ne modifie pas les cumuls d'effort.
+
+**Limites :** aucun mouvement du RUN500 ni essai sur téléphone physique. Pas de nouvelle connexion ni de requête réelle au Coach ; ses contrats sont contrôlés par les tests. La réception matérielle et les briques 11 à 17 restent ouvertes.
+
 ## 1. Méthode
 
 1. **Une brique = une fonction réelle.** À la fin, Arnaud peut l’utiliser lui-même dans l’app. Si ce n’est pas utilisable, ce n’est pas terminé.

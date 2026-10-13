@@ -103,7 +103,7 @@ def profile_context(session, profile, simulation):
         "selected_workout_id": selection.workout_id if selection else None,
         "settings": {"mode": "simulation" if simulation else "reel", "language": "fr", "distance_unit": "km",
                      "incline_unit": "%", "duration_unit": "seconds"},
-        "activities": {"available": False, "reason": "L'historique des activités réalisées n'est pas encore implémenté. Bibliothèque = séances prévues, jamais réalisées."},
+        "activities": {"available": False, "reason": "Les bilans enregistrés ne sont pas encore accessibles aux outils du Coach. Bibliothèque = séances prévues, jamais réalisées."},
         "missing": ["fatigue actuelle sauf déclaration datée", "activité réelle", "résultats", "progression", "santé sauf déclaration explicite"],
         "catalog_formats": [{"template_id": r.identifier, "name": r.name, "goal": r.goal}
                             for r in catalog.recipes() if r.level == 'easy'],
