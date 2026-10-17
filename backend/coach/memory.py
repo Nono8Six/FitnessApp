@@ -20,7 +20,8 @@ class Fact(Input):
     quote: str = Field(min_length=3, max_length=500)
     source_turn_id: str | None = Field(default=None, pattern=r'^[a-f0-9]{32}$',
         description='Null pour le message actuel. Pour une archive, son turn_id exact ; jamais conversation_id.')
-    value: float | None = Field(default=None, allow_inf_nan=False)
+    value: float | None = Field(default=None, allow_inf_nan=False,
+        description='Quantité citée avec son unité. Pour une allure confortable donnée en plage, choisir une valeur dans cette plage ; la citation conserve les bornes.')
     gait: Literal['walk', 'run', 'either'] | None = None
 
 
@@ -87,12 +88,16 @@ def capture(session, profile, turn, payload):
                 saved.append(same.id)
             continue  # Idempotence et oubli, y compris lors d'une réindexation ancienne.
         value = fact.value
+        value_range = None
         units = {'comfortable_speed': ('speed', 1, 16), 'max_speed': ('speed', 1, 16),
                  'max_incline': ('incline', 0, 10), 'preferred_duration': ('duration', 600, 432000)}
         if fact.key in units:
             unit, low, high = units[fact.key]
             numbers = constraints.durations(fact.quote) if unit == 'duration' else constraints.quantities(fact.quote, unit)
-            if value is None or not low <= value <= high or value not in numbers:
+            if fact.key == 'comfortable_speed' and value is not None:
+                value_range = next(([a, b] for a, b in constraints.speed_ranges(fact.quote)
+                                    if low <= a <= value <= b <= high), None)
+            if value is None or not low <= value <= high or (value not in numbers and value_range is None):
                 raise store.CoachConflict('La valeur du fait doit correspondre à la quantité citée, avec son unité.')
         if fact.key == 'preferred_gait' and fact.gait is None:
             raise store.CoachConflict('Préciser marche, course ou les deux pour cette préférence.')
@@ -114,6 +119,7 @@ def capture(session, profile, turn, payload):
         row = CoachMemory(id=uuid4().hex, profile_id=profile, content=fact.content,
             source_turn_id=source.id, proposal_index=None, created_at=now, updated_at=now, status=status,
             details={'key': fact.key, 'quote': fact.quote, 'value': value, 'gait': fact.gait,
+                     **({'value_range': value_range} if value_range else {}),
                      'observed_at': source.created_at, 'valid_until': until, 'origin': 'conversation',
                      'conversation_id': source.conversation_id})
         session.add(row)
@@ -160,7 +166,12 @@ def manual_details(row, content):
     if key in {'comfortable_speed', 'max_speed', 'max_incline', 'preferred_duration'}:
         unit = 'incline' if key == 'max_incline' else 'duration' if key == 'preferred_duration' else 'speed'
         values = constraints.durations(content) if unit == 'duration' else constraints.quantities(content, unit)
+        ranges = constraints.speed_ranges(content) if key == 'comfortable_speed' else []
         low, high = (0, 10) if unit == 'incline' else (30, 432000) if unit == 'duration' else (1, 16)
+        details.pop('value_range', None)
+        if len(ranges) == 1 and len(values) == 1 and low <= ranges[0][0] <= ranges[0][1] <= high:
+            details['value_range'] = list(ranges[0])
+            values = [round(sum(ranges[0]) / 2, 1)]
         if len(values) != 1 or not low <= values[0] <= high:
             raise CoachConflict('Indiquez une seule valeur avec son unité (km/h, % ou minutes) pour corriger ce souvenir.')
         details['value'] = values[0]
@@ -229,9 +240,16 @@ def declared_quantities(session, profile, turn):
     """
     text = turn.user_text
     match = re.search(r'(?:allure confortable(?:\s+est)?(?:\s+(?:maintenant|désormais|desormais))?(?:\s+de)?\s*:?|'
-                      r'(?:marche|cours)\s+confortablement\s+[àa])\s*(\d+(?:[.,]\d+)?)\s*km\s*/\s*h', text, re.IGNORECASE)
+                      r'(?:marche|cours)\s+confortablement\s+[àa])\s*(\d+(?:[.,]\d+)?)'
+                      r'(?:\s*(?:[-–—]|[àa]|et)\s*\d+(?:[.,]\d+)?)?\s*km\s*/?\s*h', text, re.IGNORECASE)
     if match and not re.search(r'\b(si|exemple|imaginons)\b', text[:match.start()], re.IGNORECASE):
-        value = float(match.group(1).replace(',', '.'))
+        ranges = constraints.speed_ranges(match.group())
+        if ranges and not 1 <= ranges[0][0] <= ranges[0][1] <= 16:
+            return
+        value = round(sum(ranges[0]) / 2, 1) if ranges else float(match.group(1).replace(',', '.'))
+        if not ranges and value not in constraints.quantities(match.group(), 'speed'):
+            return
+        gait = 'run' if re.search(r'\bcours\b', match.group(), re.IGNORECASE) else 'walk' if re.search(r'\bmarche\b', match.group(), re.IGNORECASE) else None
         if 1 <= value <= 16:
             capture(session, profile, turn.id, Capture(facts=[Fact(key='comfortable_speed',
-                content=f'Allure confortable déclarée : {value:g} km/h.', quote=match.group(), value=value)]))
+                content=f'Allure confortable déclarée : {match.group()}.', quote=match.group(), value=value, gait=gait)]))

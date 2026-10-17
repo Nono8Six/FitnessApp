@@ -23,9 +23,17 @@ def quantities(text, unit):
     patterns = {'seconds': rf'{NUMBER}\s*(secondes?|secs?|s)\b',
                 'minutes': rf'{NUMBER}\s*(minutes?|mins?|mn)\b',
                 'hours': rf'{NUMBER}\s*(heures?|hours?|h)\b',
-                'speed': rf'{NUMBER}\s*km\s*/\s*h\b',
+                'speed': rf'{NUMBER}\s*km\s*/?\s*h\b',
                 'incline': rf'{NUMBER}\s*%', 'calories': rf'{NUMBER}\s*(kcal|calories)\b'}
     return [float(m.group(1).replace(',', '.')) for m in re.finditer(patterns[unit], text)]
+
+
+def speed_ranges(text):
+    """Plages explicites avec unité ; un effort « 6–7/10 » n'est pas une vitesse."""
+    pattern = rf'{NUMBER}\s*(?:[-–—]|a|et)\s*{NUMBER}\s*km\s*/?\s*h\b'
+    return [(float(m.group(1).replace(',', '.')), float(m.group(2).replace(',', '.')))
+            for m in re.finditer(pattern, normalized(text))
+            if float(m.group(1).replace(',', '.')) <= float(m.group(2).replace(',', '.'))]
 
 
 def durations(text):
@@ -103,7 +111,9 @@ def extract(text, previous=None):
     if re.search(r'(sans course|ne (?:veux|peux).{0,12}(courir|course)|uniquement.{0,10}marche|marche uniquement)', clean):
         result['gait'] = 'walk'
     for goal, pattern in (('fat_loss', r'(graisse|maigrir|perdre.{0,12}poids)'), ('cardio', r'cardio'),
-                          ('endurance', r'endurance'), ('recovery', r'(recuperation|recuperer)')):
+                          ('endurance', r'endurance'), ('recovery',
+                           r'(?:seance|entrainement|programme|objectif).{0,25}(?:recuperation|recuperer)|'
+                           r'(?:pour|veux|souhaite).{0,15}recuperer|^\s*recuperation[.!]?\s*$')):
         if re.search(pattern, clean):
             result['goal'] = goal
             break

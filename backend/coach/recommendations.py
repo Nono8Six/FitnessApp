@@ -37,12 +37,15 @@ def recommend(session, profile, payload, request, weight, simulation=False):
         if steady:
             baseline = max(b['speed_avg'] for b in steady)
             source = candidate['source']
-    gait = limits.get('gait')
+    gait = limits.get('gait') or (comfort.details.get('gait') if comfort else None)
     if baseline is None:
         baseline, gait = 3.5, 'walk'
         assumption = 'Capacité inconnue : départ prudent en marche, à ajuster avec le ressenti.'
     else:
-        assumption = 'Allure déclarée confortable.' if comfort else 'Allure observée dans une séance terminée, avec ressenti au plus 6/10.'
+        assumption = ('Point de départ choisi dans la plage confortable déclarée, pas une vitesse maximale.'
+                      if comfort and comfort.details.get('value_range') else
+                      'Allure déclarée confortable, pas une vitesse maximale.' if comfort else
+                      'Allure observée dans une séance terminée, avec ressenti au plus 6/10.')
         gait = gait or ('run' if baseline >= 8.04 else 'walk' if baseline <= 6 else None)
     if gait in {None, 'either'} and 6 < baseline < 8.04:
         return {'needs_clarification': True, 'reason': 'À cette allure, préciser si la personne marche ou court pour personnaliser et estimer les calories.'}

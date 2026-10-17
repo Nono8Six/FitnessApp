@@ -11,7 +11,7 @@ from fastapi.testclient import TestClient
 from sqlalchemy import insert
 
 from backend.app import create_app
-from backend.coach import store, tools, memory, insights
+from backend.coach import store, tools, memory, insights, constraints
 from backend.coach.runtime import Runtime
 from backend.storage.models import RecordedSession, RecordedEntry, ProfileWeight
 from backend.recording.metrics import calculate_version, LEGACY_VERSION, VERSION
@@ -130,6 +130,61 @@ class InformedCoachTests(unittest.TestCase):
         facts = self.tool('get_profile', {})['training_memory']['facts']
         self.assertEqual(len(facts), 1)
         self.assertEqual((facts[0]['value'], facts[0]['source_turn_id']), (4.2, current['id']))
+
+    def test_questionnaire_speed_range_is_sourced_and_keeps_running(self):
+        turn = self.turn('Allure de footing facile : 6–7 km/h')
+        result = self.tool('capture_context', {'facts': [{'key': 'comfortable_speed',
+            'quote': '6–7 km/h', 'content': 'Footing facile entre 6 et 7 km/h.',
+            'value': 6.5, 'gait': 'run'}]}, turn)
+        self.assertNotIn('error', result)
+        fact = result['memory']['facts'][0]
+        self.assertEqual((fact['value'], fact['value_range'], fact['quote']), (6.5, [6., 7.], '6–7 km/h'))
+        with self.db.transaction() as session:
+            self.assertNotIn('max_speed', memory.limits(session, 'ophelie'))
+        programme = self.tool('recommend_workout', {'goal': 'cardio', 'duration_sec': 1800}, turn)
+        self.assertNotIn('needs_clarification', programme)
+        running = [b for b in programme['blocks'] if b['kind'] == 'run']
+        self.assertTrue(running)
+        self.assertTrue(all(b['movement'] == 'run' and b['speed'] == 6.5 for b in running))
+        identifier = fact['id']
+        response = self.client.patch(f'/api/profiles/ophelie/coach/memories/{identifier}',
+                                     json={'content': 'Footing facile : 7 km/h'})
+        self.assertEqual(response.status_code, 200)
+        self.assertNotIn('value_range', response.json()['details'])
+
+    def test_speed_range_does_not_accept_unquoted_speed_or_effort_rating(self):
+        for quote, value in [('6-7 kmh', 8.), ('6–7/10', 6.5)]:
+            with self.subTest(quote=quote):
+                turn = self.turn('Mon repère : ' + quote)
+                self.assertIn('error', self.capture(turn, value=value))
+                self.assertEqual(self.tool('search_memories', {})['total'], 0)
+                self.finish(turn)
+        self.assertEqual(constraints.speed_ranges('entre 6 et 7 km/h'), [(6., 7.)])
+        self.assertEqual(constraints.speed_ranges('6 à 7 km/h'), [(6., 7.)])
+
+    def test_declared_range_survives_without_inference_and_can_be_edited(self):
+        turn = self.turn('Je cours confortablement à 6-7 kmh.')
+        fact = self.tool('get_profile', {})['training_memory']['facts'][0]
+        self.assertEqual((fact['value'], fact['value_range'], fact['gait']), (6.5, [6., 7.], 'run'))
+        response = self.client.patch(f"/api/profiles/ophelie/coach/memories/{fact['id']}",
+                                     json={'content': 'Footing facile : 7–8 km/h'})
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()['details']['value_range'], [7., 8.])
+        self.assertEqual(response.json()['details']['value'], 7.5)
+        self.finish(turn)
+        for text in ['Mon allure confortable est 9–7 km/h.', 'Mon allure confortable est 0–20 km/h.']:
+            invalid = self.turn(text)
+            self.finish(invalid)
+        self.assertEqual(self.tool('get_profile', {})['training_memory']['facts'][0]['value'], 7.5)
+
+    def test_recovery_feedback_does_not_change_the_workout_goal(self):
+        initial = self.turn('Prépare une séance cardio de 30 minutes.')
+        self.finish(initial)
+        feedback = self.turn("J'ai bien pu récupérer à 8 km/h, effort 6–7/10.")
+        self.assertEqual(feedback['request_context']['goal'], 'cardio')
+        self.finish(feedback)
+        recovery = self.turn('Prépare une séance de récupération pour demain.')
+        self.assertEqual(recovery['request_context']['goal'], 'recovery')
 
     def test_current_weight_is_dated_and_history_is_preserved(self):
         with self.db.write() as s:
