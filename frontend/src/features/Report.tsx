@@ -5,7 +5,7 @@ import { nearest, TimeChart, type Marker, type Series } from '../components/char
 import { Button, cx, Disclosure, Facts, Group, Metric, Skeleton, StatGrid, StatusLabel } from '../components/ui'
 import { WorkoutError } from '../components/WorkoutSummary'
 import { errorMessage } from '../lib/api'
-import { clock, dec1, dec2 } from '../lib/format'
+import { calories, clock, dec1, dec2 } from '../lib/format'
 import { href } from '../lib/router'
 import { phaseLabel, useExecution, type Phase } from '../lib/execution'
 import { readRecording, recordingDate, recordingLabel, saveFeeling, type Recording, type RecordedEvent } from '../lib/recordings'
@@ -163,8 +163,8 @@ function Details({ data }: { data: Recording }) {
     <Disclosure title="Calories estimées"><Facts rows={[
       ['Poids au départ', measured(data.profile.weight_kg, 'kg')], ['Méthode partagée', 'ACSM'],
       ['Durée exploitable', clock(m.valid_s.energy)], ['Couverture', percent(m.coverage.energy)],
-      ['Total avec repos', m.energy.total_kcal === null ? '--' : `≈ ${Math.round(m.energy.total_kcal)} kcal`],
-    ]} /><p className="px-4 pt-2 pb-4 text-footnote text-label-2">{m.energy.active_kcal === null ? data.profile.weight_kg === null ? 'Poids absent au départ : aucune estimation pour cette séance.' : m.energy.movement_ambiguous ? 'Déplacement marche/course ambigu : aucune estimation unique.' : 'Mesures insuffisantes : aucune estimation.' : 'Estimation de locomotion sur les mesures valides, pas une mesure physiologique.'}{m.coverage.energy !== null && m.coverage.energy < .99 && ' Couverture partielle : les intervalles absents ne sont pas estimés.'}{m.energy.outside_range && ' Vitesses hors des plages usuelles du calcul : estimation moins sûre.'}</p></Disclosure>
+      ['Total avec repos', calories(m.energy, true) === null ? '--' : `${calories(m.energy, true)} kcal`],
+    ]} /><p className="px-4 pt-2 pb-4 text-footnote text-label-2">{m.energy.active_kcal === null ? data.profile.weight_kg === null ? 'Poids absent au départ : aucune estimation pour cette séance.' : m.energy.movement_ambiguous ? 'Deux estimations selon marche ou course : cette plage ne garantit pas votre dépense réelle.' : 'Mesures insuffisantes : aucune estimation.' : 'Estimation de locomotion sur les mesures valides, pas une mesure physiologique.'}{m.coverage.energy !== null && m.coverage.energy < .99 && ' Couverture partielle : les intervalles absents ne sont pas estimés.'}{m.energy.outside_range && ' Vitesses hors des plages usuelles du calcul : estimation moins sûre.'}</p></Disclosure>
     <Disclosure title={`Événements · ${data.events.length}`}><ol>{data.events.slice(0, eventCount).map((event, i) => <li key={i} className="report-event"><time className="num shrink-0 text-footnote text-label-2">{clock(event.t)}</time><span className="min-w-0 break-words text-footnote">{eventLabel(event)}</span></li>)}</ol>
       {data.events.length > eventCount && <button onClick={() => setEventCount(n => n + 50)} className="pressable min-h-11 w-full text-subhead text-accent">Événements suivants</button>}
     </Disclosure>
@@ -198,10 +198,11 @@ export function Report({ profile, id }: { profile: string; id: string }) {
           <div className={cx('report-duration', clock(m.active_s).length > 6 && 'is-long', clock(m.active_s).length > 8 && 'is-very-long')}><Metric label="Durée active" value={clock(m.active_s)} color={color('time')} size="lg" /></div>
           <StatGrid compact stats={[
             { label: 'Distance', value: m.distance_m === null ? null : dec2(m.distance_m / 1000), unit: 'km', color: color('distance') },
-            { label: 'Kcal actives', value: m.energy.active_kcal === null ? null : `≈ ${Math.round(m.energy.active_kcal)}`, unit: 'kcal', color: color('energy') },
+            { label: 'Kcal actives', value: calories(m.energy), unit: 'kcal', color: color('energy') },
             { label: 'Vitesse moy.', value: m.speed_avg === null ? null : dec1(m.speed_avg), unit: 'km/h', color: color('speed') },
             { label: 'Pente moy.', value: m.incline_avg === null ? null : dec1(m.incline_avg), unit: '%', color: color('incline') },
           ]} />
+          {m.energy.movement_ambiguous && calories(m.energy) && <p className="mt-2 px-1 text-footnote text-label-2">Deux estimations selon marche ou course · voir Calories estimées</p>}
           {(m.distance_quality === 'partial' || (m.coverage.energy !== null && m.coverage.energy < .99) || (m.coverage.speed !== null && m.coverage.speed < .99)) && <p className="mt-2 px-1 text-footnote text-orange">Mesures partielles · voir Données et qualité</p>}
           <Feeling profile={profile} data={data} />
         </div>

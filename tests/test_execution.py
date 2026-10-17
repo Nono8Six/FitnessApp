@@ -230,9 +230,58 @@ class ExecutionTests(unittest.IsolatedAsyncioTestCase):
         await self.start_running()
         self.e.owner_seen -= 13
         self.e.heartbeat(OBSERVER)
-        await self.wait("stopped", keep_alive=False)
+        await self.wait("paused", keep_alive=False)
         self.assertTrue(self.e.stop_confirmed)
         self.assertIn("absent", self.e.reason)
+        frozen = self.e.active_time()
+        await asyncio.sleep(.3)
+        self.assertEqual(self.e.phase, "paused")
+        self.assertEqual(self.e.active_time(), frozen)
+        self.assertEqual(self.c.sim_speed, 0)
+        self.assertEqual(self.e.recorder.status()["status"], "recording")
+        await self.e.resume(OWNER)
+        await self.wait("running")
+        self.assertGreaterEqual(self.e.active_time(), frozen)
+
+    async def test_orphaned_pause_can_be_resumed_explicitly_from_a_new_screen(self):
+        await self.start_running()
+        self.e.request_halt(pause=True)
+        await self.wait("paused")
+        self.assertFalse(self.e.snapshot(OBSERVER)["can_resume"])
+        self.e.request_halt("Écran quitté une seconde fois", pause=True)
+        self.assertEqual(self.e.phase, "paused")
+        self.assertIsNone(self.e.requested)
+        with self.assertRaises(ControllerError):
+            await self.e.resume(OBSERVER)
+        self.e.owner_seen -= 13
+        self.assertTrue(self.e.snapshot(OBSERVER)["can_resume"])
+        await self.e.resume(OBSERVER)
+        self.assertEqual(self.e.owner, OBSERVER)
+        self.assertFalse(self.e.snapshot(OWNER)["owned_by_me"])
+        self.e.heartbeat(OBSERVER)
+        await self.wait("running", keep_alive=False)
+
+    async def test_owner_loss_during_real_exchange_pauses_without_replaying(self):
+        await self.real()
+        await self.start_running()
+        self.client.delay = .2
+        before = len(self.client.writes)
+        self.e.adjust(OWNER, .5, 0)
+        while not self.c.command_lock.locked():
+            await asyncio.sleep(.01)
+        self.e.owner_seen -= 13
+        await self.wait("paused", keep_alive=False)
+        self.assertEqual(self.client.writes[before:], [ftms.encode_command("speed", 2.5), b"\x08\x02"])
+        self.assertTrue(self.e.stop_confirmed)
+        self.assertFalse(self.c.desynchronized)
+
+    async def test_owner_absence_does_not_make_hardware_stop_resumable(self):
+        await self.start_running()
+        self.c.armed_until = 0
+        self.e.owner_seen -= 13
+        await self.wait("stopped", keep_alive=False)
+        self.assertIn("signalé un arrêt", self.e.reason)
+        self.assertFalse(self.e.snapshot(OWNER)["can_resume"])
 
     async def test_expiry_and_pause_budget_are_not_renewed(self):
         await self.start_running()
@@ -587,6 +636,14 @@ class ExecutionApiTests(unittest.TestCase):
                     self.assertEqual(response.status_code, 200, response.text)
                     self.assertEqual(response.json()["session"]["offsets"], {"speed": .5, "incline": .5})
                 self.assertEqual(client.post("/api/execution/stop", json={"client_id": OBSERVER, "session_id": "f" * 32}).status_code, 409)
+                release = {"client_id": OWNER, "session_id": session["id"]}
+                self.assertEqual(client.post("/api/execution/release", json={**release, "client_id": OBSERVER}).status_code, 409)
+                response = client.post("/api/execution/release", json=release)
+                self.assertEqual(response.status_code, 200)
+                self.assertEqual(response.json()["session"]["phase"], "pausing")
+                self.assertEqual(app.state.execution.requested, "pause")
+                self.assertEqual(app.state.execution.id, session["id"])
+                self.assertFalse(app.state.execution.recorder.finalized)
                 self.assertEqual(client.post("/api/execution/stop", json={"client_id": OBSERVER, "session_id": session["id"]}).status_code, 200)
                 self.assertEqual(app.state.device.controller.armed_until, 0)
 

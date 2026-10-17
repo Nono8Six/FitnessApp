@@ -1,3 +1,4 @@
+import type { CalorieEstimate } from './format'
 import { api, isRecord } from './api'
 import { isWorkout, type Workout } from './workouts'
 import type { LiveSample } from './execution'
@@ -19,7 +20,7 @@ export interface Recording extends RecordedBrief {
     speed_avg: number | null; incline_avg: number | null
     coverage: { speed: number | null; incline: number | null; energy: number | null }
     valid_s: { speed: number; incline: number; energy: number }
-    energy: { active_kcal: number | null; total_kcal: number | null; weight_kg: number | null; outside_range: boolean; movement_ambiguous?: boolean }
+    energy: CalorieEstimate & { total_kcal: number | null; weight_kg: number | null; outside_range: boolean }
     blocks: BlockResult[]
   }
 }

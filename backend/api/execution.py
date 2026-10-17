@@ -135,8 +135,8 @@ async def act(body, request, action):
         if action == "recover":
             await engine.recover()
         else:
-            engine.request_halt("Écran propriétaire fermé · arrêt demandé" if action == "release" else
-                                "Pause demandée" if action == "pause" else "Arrêt demandé", pause=action == "pause")
+            engine.request_halt("Écran propriétaire quitté · séance mise en pause" if action == "release" else
+                                "Pause demandée" if action == "pause" else "Arrêt demandé", pause=action in {"pause", "release"})
         request.app.state.device.publish()
         return event(request, body.client_id)
     except ControllerError as exc:

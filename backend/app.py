@@ -42,7 +42,7 @@ DIST = ROOT / "frontend" / "dist"
 BODY_METHODS = {"POST", "PUT", "PATCH", "DELETE"}
 MAX_BODY = 16000
 
-CSP = ("default-src 'self'; script-src 'self'; style-src 'self'; connect-src 'self'; img-src 'self' data:; "
+CSP = ("default-src 'self'; script-src 'self'; style-src 'self'; connect-src 'self'; img-src 'self' data:; media-src 'self' data:; "
        "font-src 'self'; frame-ancestors 'none'; base-uri 'none'; form-action 'self'")
 
 MISSING_BUILD_STYLE = """body{margin:0;min-height:100vh;display:grid;place-items:center;background:#000;color:#fff;

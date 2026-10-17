@@ -4,6 +4,26 @@ const nf2 = new Intl.NumberFormat('fr-FR', { minimumFractionDigits: 2, maximumFr
 export const dec1 = (v: number) => nf1.format(v)
 export const dec2 = (v: number) => nf2.format(v)
 
+export interface CalorieEstimate {
+  active_kcal: number | null
+  total_kcal?: number | null
+  movement_ambiguous?: boolean
+  active_kcal_low?: number | null
+  active_kcal_high?: number | null
+  total_kcal_low?: number | null
+  total_kcal_high?: number | null
+}
+
+/** Deux scénarios marche/course restent visibles lorsqu'aucune valeur unique n'est justifiée. */
+export function calories(energy: CalorieEstimate, total = false): string | null {
+  const value = total ? energy.total_kcal : energy.active_kcal
+  if (value != null) return `≈ ${Math.round(value)}`
+  const low = total ? energy.total_kcal_low : energy.active_kcal_low
+  const high = total ? energy.total_kcal_high : energy.active_kcal_high
+  return energy.movement_ambiguous && low != null && high != null
+    ? `≈ ${Math.round(low)}–${Math.round(high)}` : null
+}
+
 /** 1044 -> "17:24", 3725 -> "1:02:05" */
 export function clock(totalSeconds: number) {
   const s = Math.max(0, Math.round(totalSeconds))

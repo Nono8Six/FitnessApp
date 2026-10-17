@@ -2,7 +2,7 @@ import { Bluetooth, Check, ChevronDown, Minus, Pause, Play, Plus, Square, X } fr
 import { memo, useEffect, useMemo, useState } from 'react'
 import { nearest, ProgrammeMini, TimeChart, type Series } from '../components/charts'
 import { Button, cx, Disclosure, Facts, Group, Sheet } from '../components/ui'
-import { clock, dec1, dec2, pace } from '../lib/format'
+import { calories, clock, dec1, dec2, pace } from '../lib/format'
 import { currentMeasurement, inProgress, phaseLabel, prepareExecution, useExecution, type LiveSample, type Preparation } from '../lib/execution'
 import { errorMessage } from '../lib/api'
 import { href, navigate } from '../lib/router'
@@ -51,7 +51,7 @@ export function ExecutionSheets() {
   const limits = resume ? s?.limits : prepared?.limits
   const live = e.status === 'live' && e.now - e.receivedAt < 5000
   const connected = live && e.feed?.device.phase === 'connected'
-  const ready = resume ? s?.phase === 'paused' && s.owned_by_me && s.restart_delay_s === 0 && currentMeasurement(e, 'speed_kmh') === 0
+  const ready = resume ? s?.phase === 'paused' && (s.can_resume ?? s.owned_by_me) && s.restart_delay_s === 0 && currentMeasurement(e, 'speed_kmh') === 0
     : prepared?.ready && e.feed?.device.phase === 'connected' && currentMeasurement(e, 'speed_kmh') === 0
   const message = issue ?? e.error ?? (resume ? s?.restart_delay_s ? `La bande se stabilise · encore ${s.restart_delay_s} s` : undefined : prepared?.issue)
   const settings = () => { e.setPreparing(false); e.setConfirmingResume(false); navigate(href.treadmill) }
@@ -73,7 +73,7 @@ export function ExecutionSheets() {
       {!resume && <Button variant="plain" size="md" disabled={checking} onClick={() => setRevision(v => v + 1)}>Revérifier</Button>}
     </div>}
     <Confirmations keyReady={keyReady} clear={clear} setKey={setKey} setClear={setClear} />
-    <p className="mt-4 px-1 text-footnote text-label-2">Gardez cet écran ouvert. Si le téléphone suspend la page, le PC demandera l’arrêt après 12 s sans contact.</p>
+    <p className="mt-4 px-1 text-footnote text-label-2">L’écran reste allumé pendant la séance si le navigateur l’autorise. Après 12 s sans contact, le PC demande une pause. Revenez dans Direct et confirmez Reprendre ; la pause est limitée à 15 min au total.</p>
     <Disclosure title="Périmètre de la séance" className="mt-4"><Facts rows={[
       ['Vitesse maximale', limits ? `${dec1(limits.speed)} km/h` : 'En cours de vérification'],
       ['Pente maximale', limits ? `${dec1(limits.incline)} %` : 'En cours de vérification'],
@@ -105,7 +105,7 @@ export function Activity({ desktop = false }: { desktop?: boolean }) {
       <p className="truncate text-subhead font-semibold">{block.label}</p>
       <p className="num text-footnote text-label-2"><span className="text-time">{clock(Math.floor(s.active_s))}</span> · <span className={speed === null ? 'text-label-3' : 'text-speed'}>{speed === null ? '--' : dec1(speed)}</span> km/h</p>
     </a>
-    <button type="button" disabled={!(paused ? s.owned_by_me && live && !e.pending : canPause)}
+    <button type="button" disabled={!(paused ? (s.can_resume ?? s.owned_by_me) && live && !e.pending : canPause)}
       aria-label={paused ? 'Reprendre la séance' : 'Mettre la séance en pause'}
       onClick={() => paused ? e.setConfirmingResume(true) : void e.act('pause')}
       className={cx('pressable mr-3 grid size-11 shrink-0 place-items-center rounded-full bg-fill-3 disabled:text-label-3', paused ? 'text-green' : 'text-yellow')}>
@@ -224,7 +224,8 @@ export function Direct() {
     : s.phase === 'unknown' ? s.error ?? 'État de la bande inconnu. Utilisez le STOP physique, puis reconnectez.'
     : e.error ?? s.error ?? (speed === null || incline === null ? 'Mesures anciennes ou absentes. Les valeurs actuelles sont indisponibles.' : undefined)
   const canPause = available && ['running', 'transitioning', 'adjusting'].includes(s.phase)
-  const canResume = available && paused && s.owned_by_me && s.restart_delay_s === 0 && speed === 0
+  const canResume = available && paused && (s.can_resume ?? s.owned_by_me) && s.restart_delay_s === 0 && speed === 0
+  const kcal = calories(s.totals.energy)
   const canStop = available && !finished && s.phase !== 'unknown' && s.phase !== 'stopping'
   return <div className="live-screen">
     <header className="live-header">
@@ -250,9 +251,11 @@ export function Direct() {
           <div className="live-secondary">
             <div><span className="text-footnote text-label-2">Distance{ s.distance_quality === 'partial' ? ' · partielle' : ''}</span><p className={cx('num', available && ['fresh','partial'].includes(s.distance_quality) ? 'text-distance' : 'text-label-3')}>{available && ['fresh','partial'].includes(s.distance_quality) && s.distance_m !== null ? dec2(s.distance_m / 1000) : '--'}<small>KM</small></p></div>
             <div><span className="text-footnote text-label-2">Pente mesurée</span><p className={cx('num', incline === null ? 'text-label-3' : 'text-incline')}>{incline === null ? '--' : dec1(incline)}<small>%</small></p></div>
-            <div><span className="text-footnote text-label-2">Calories actives</span><p className={cx('num', available && s.totals.energy.active_kcal !== null ? 'text-energy' : 'text-label-3')}>{available && s.totals.energy.active_kcal !== null ? `≈ ${Math.round(s.totals.energy.active_kcal)}` : '--'}<small>KCAL</small></p></div>
+            <div><span className="text-footnote text-label-2">Calories actives</span><p data-long-value={kcal && kcal.length >= 8 ? 'true' : undefined} className={cx('num', available && kcal !== null ? 'text-energy' : 'text-label-3')}>{available ? kcal ?? '--' : '--'}<small>KCAL</small></p></div>
             <div><span className="text-footnote text-label-2">Vitesse moyenne</span><p className={cx('num', available && s.totals.speed_avg !== null ? 'text-speed' : 'text-label-3')}>{available && s.totals.speed_avg !== null ? dec1(s.totals.speed_avg) : '--'}<small>KM/H</small></p></div>
           </div>
+          {available && s.totals.energy.movement_ambiguous && kcal && <p className="mt-1 text-caption text-label-2">Deux estimations selon marche ou course · voir les détails</p>}
+          {available && s.totals.energy.weight_kg === null && <p className="mt-1 text-caption text-orange">Poids absent au départ : calories indisponibles pour cette séance.</p>}
           {available && ((s.totals.coverage.speed !== null && s.totals.coverage.speed < .99) || (s.totals.coverage.energy !== null && s.totals.coverage.energy < .99)) && <p className="mt-1 text-caption text-orange">Moyenne et estimation sur les mesures disponibles</p>}
         </div>
         <div className="live-controls-wrap">
@@ -261,7 +264,9 @@ export function Direct() {
             {s.recording.status === 'error' ? `${s.recording.error} Données conservées jusqu’à ${clock(s.recording.persisted_s)} depuis le départ.` : s.recording.status === 'saved' ? 'Enregistré' : `Enregistrement · conservé jusqu’à ${clock(s.recording.persisted_s)}`}
           </p>}
           {finished && s.recording?.status === 'error' && <a href={href.report(s.id)} className="pressable mb-3 flex min-h-11 items-center text-subhead text-accent">Consulter les données conservées</a>}
-          {paused && <p className="live-action-hint text-label-2">{!s.owned_by_me ? 'Reprise sur l’écran qui a démarré la séance' : s.restart_delay_s ? `Stabilisation · ${s.restart_delay_s} s` : `Point conservé · pause ${clock(Math.floor(s.pause_s))}`}</p>}
+          {paused && s.reason && <p role="status" className="mb-2 text-footnote text-yellow">{s.reason}</p>}
+          {s.owned_by_me && !finished && <p className="mb-2 text-footnote text-label-2">{e.screenAwake.status === 'active' ? 'Écran maintenu allumé' : e.screenAwake.status === 'requesting' ? 'Maintien de l’écran en cours…' : <button type="button" className="pressable min-h-11 text-orange underline" onClick={() => void e.screenAwake.request()}>Écran susceptible de se verrouiller · activer l’anti-veille</button>}</p>}
+          {paused && <p className="live-action-hint text-label-2">{!(s.can_resume ?? s.owned_by_me) ? 'Reprise sur l’écran qui a démarré la séance' : s.restart_delay_s ? `Stabilisation · ${s.restart_delay_s} s` : `Point conservé · pause ${clock(Math.floor(s.pause_s))}`}</p>}
           {s.phase === 'unknown' && <Button variant="plain" className="mb-2 w-full" onClick={() => navigate(href.treadmill)}>Reconnecter dans Réglages</Button>}
           {s.phase === 'unknown' && e.feed?.device.read_only && e.feed.device.phase === 'connected' && speed === 0 && <Button variant="gray" className="mb-3 w-full" onClick={() => void e.act('recover')}>Clore la séance interrompue</Button>}
           {finished ? <div className="live-finish">
@@ -297,7 +302,7 @@ export function Direct() {
             ['Calories actives', 'Estimation ACSM · poids figé au départ'],
             ['Couverture calories', s.totals.coverage.energy === null ? '--' : `${Math.round(s.totals.coverage.energy * 100)} % du temps actif`],
             ['Couverture vitesse moyenne', s.totals.coverage.speed === null ? '--' : `${Math.round(s.totals.coverage.speed * 100)} % du temps actif`],
-            ['Limite du calcul', s.totals.energy.movement_ambiguous ? 'Déplacement marche/course ambigu · aucune estimation unique' : s.totals.energy.outside_range ? 'Vitesse hors des plages usuelles ACSM · estimation moins sûre' : 'Calories estimées, pas une mesure physiologique'],
+            ['Limite du calcul', s.totals.energy.movement_ambiguous ? 'Deux scénarios marche/course · pas une mesure ni un intervalle garanti' : s.totals.energy.outside_range ? 'Vitesse hors des plages usuelles ACSM · estimation moins sûre' : 'Calories estimées, pas une mesure physiologique'],
             ['Autorisation restante', clock(s.authorization_remaining_s)],
             ...(['speed_kmh', 'incline_pct'] as const).map(key => {
               const m = e.feed!.device.measurements[key]

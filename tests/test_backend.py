@@ -58,6 +58,7 @@ class BackendTests(unittest.TestCase):
         self.assertIn("Fitness", index.text)
         self.assertEqual(index.headers["cache-control"], "no-store")
         self.assertIn("default-src 'self'", index.headers["content-security-policy"])
+        self.assertIn("media-src 'self' data:", index.headers["content-security-policy"])
         asset = client.get("/assets/index-abc.js")
         self.assertEqual(asset.status_code, 200)
         self.assertIn("immutable", asset.headers["cache-control"])

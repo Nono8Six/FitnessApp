@@ -1,17 +1,16 @@
 import { ChevronRight, RefreshCw } from 'lucide-react'
 import { ProgrammeChart } from './charts'
 import { Disclosure, Facts, Skeleton, StatGrid, type Stat } from './ui'
-import { clock, dec1 } from '../lib/format'
+import { calories, clock, dec1 } from '../lib/format'
 import { href } from '../lib/router'
 import type { Preview } from '../lib/workouts'
 
 /** Prévisions du serveur, avec la couleur de rôle de chaque mesure ; le signe ≈ marque l'estimation. */
 export function workoutStats(s: Preview['summary']): Stat[] {
-  const kcal = s.energy.active_kcal
   return [
     { label: 'Durée', value: clock(s.sec), color: 'var(--color-time)' },
     { label: 'Distance', value: dec1(s.km), unit: 'km', color: 'var(--color-distance)' },
-    { label: 'Kcal actives', value: kcal === null ? null : `≈ ${Math.round(kcal)}`, unit: 'kcal', color: 'var(--color-energy)' },
+    { label: 'Kcal actives', value: calories(s.energy), unit: 'kcal', color: 'var(--color-energy)' },
     { label: 'Dénivelé équiv.', value: String(Math.round(s.ascent_m)), unit: 'm', color: 'var(--color-incline)' },
   ]
 }
@@ -33,7 +32,7 @@ export function WorkoutSummary({ data, editing = false, compact = false }: { dat
       : <WeightLink className="mt-3" />
       : <Disclosure title="Comprendre l’estimation" className="mt-3">
         <Facts rows={[
-          ['Total avec repos', energy.total_kcal === null ? '--' : `≈ ${Math.round(energy.total_kcal)} kcal`],
+          ['Total avec repos', calories(energy, true) === null ? '--' : `${calories(energy, true)} kcal`],
           ['Poids du profil', `${dec1(energy.weight_kg)} kg`],
           ['Méthode', 'ACSM'],
           ['Déplacement', energy.movement_ambiguous ? 'Marche ou course à préciser' : 'Hypothèse du programme et de l’allure'],
