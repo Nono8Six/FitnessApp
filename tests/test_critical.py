@@ -72,6 +72,15 @@ class ControllerTests(unittest.IsolatedAsyncioTestCase):
         with self.assertRaises(ControllerError):
             await self.controller.command("owner-2", "speed", 2)
 
+    async def test_manual_arm_keeps_phone_lease_even_after_session_control(self):
+        self.controller.session_limits = {"speed": 16, "incline": 10}
+        await self.controller.arm("owner-1")
+        self.assertIsNone(self.controller.session_limits)
+        self.controller.owner_heartbeat -= 13
+        with self.assertRaises(ControllerError):
+            self.controller._ensure_ready("owner-1")
+        self.assertFalse(self.controller.snapshot()["armed"])
+
     async def test_absent_stale_and_malformed_measurements_block(self):
         self.controller.received_at["speed_kmh"] = time.monotonic() - 10
         before = self.controller.received_at["speed_kmh"]

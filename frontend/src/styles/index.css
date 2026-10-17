@@ -237,6 +237,8 @@ dd[data-long-value] span { font-size: 13px; }
 .live-screen { position: fixed; inset: 0; z-index: 45; display: flex; flex-direction: column; height: 100dvh; background: var(--color-bg); }
 .live-header { display: flex; align-items: center; gap: 12px; flex: none; min-height: 64px; padding: max(env(safe-area-inset-top), 8px) 16px 8px; }
 .live-mode { color: var(--color-orange); background: rgb(255 159 10 / .15); border-radius: 20px; padding: 4px 8px; font-size: 11px; line-height: 16px; font-weight: 600; }
+.live-view-toolbar { flex: none; padding: 0 20px 12px; }
+.live-view-toolbar > div { width: 230px; margin-inline: auto; }
 .live-layout { display: flex; flex: 1; min-height: 0; flex-direction: column; position: relative; overflow: hidden; }
 .live-primary { display: contents; }
 .live-glance { flex: none; padding: 4px 20px 20px; }
@@ -299,6 +301,74 @@ dd[data-long-value] span { font-size: 13px; }
 .live-activity-desktop button { margin-right: 8px; }
 .has-live-activity { padding-bottom: 100px; }
 .has-live-activity .coach-composer { bottom: calc(168px + max(env(safe-area-inset-bottom), 14px)); }
+
+/* Course : mesure dominante et aperçu limité au bloc suivant. */
+.is-graph .live-layout { display: block; overflow-y: auto; overscroll-behavior: contain; scrollbar-width: thin; padding: 0 20px calc(216px + env(safe-area-inset-bottom)); }
+.is-graph .live-glance { padding: 0; }
+.is-graph .live-detail { overflow: visible; padding: 0; }
+.is-graph .live-controls-wrap { position: fixed; padding-top: 16px; }
+.is-graph .live-controls-wrap > p { margin-bottom: 6px; font-size: 12px; line-height: 16px; }
+.is-graph .live-notice { position: static; }
+.course-view { padding-top: 10px; }
+.course-hero { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.course-eyebrow { color: var(--color-label-2); font-size: 12px; line-height: 18px; }
+.course-pace { display: flex; align-items: baseline; gap: 5px; color: var(--color-speed); font-size: 76px; line-height: 1.08; font-weight: 650; letter-spacing: -.055em; white-space: nowrap; }
+.course-pace.is-long { font-size: 60px; }
+.course-pace.is-missing { color: var(--color-label-3); }
+.course-pace > span { font-family: var(--font-sans); color: var(--color-label-2); font-size: 13px; font-weight: 500; letter-spacing: 0; }
+.course-measured { display: flex; gap: 18px; margin-top: 4px; color: var(--color-label-2); font-size: 13px; line-height: 20px; }
+.course-remaining { flex-shrink: 0; text-align: right; }
+.course-remaining strong { display: block; color: var(--color-time); font-size: 30px; line-height: 40px; font-weight: 600; letter-spacing: -.025em; }
+.course-block-heading { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; margin-top: 16px; }
+.course-block-heading h2 { font-size: 18px; line-height: 24px; font-weight: 600; }
+.course-block-heading > span { flex-shrink: 0; color: var(--color-label-2); font-size: 12px; }
+.course-progress { height: 3px; margin-top: 10px; overflow: hidden; background: var(--color-surface-3); border-radius: 3px; }
+.course-progress > span { display: block; height: 100%; background: var(--color-speed); transition: width 300ms linear; }
+.course-chart { position: relative; margin-top: 18px; }
+.course-legend { display: flex; align-items: center; gap: 16px; margin-bottom: 8px; color: var(--color-label-2); font-size: 11px; line-height: 16px; }
+.course-legend > span { display: inline-flex; align-items: center; gap: 6px; }
+.course-legend > span:last-child { margin-left: auto; }
+.course-legend i { display: inline-block; width: 14px; height: 2px; background: var(--color-speed); }
+.course-legend > span:nth-child(2) i { height: 0; border-top: 1.5px dashed var(--color-label-2); background: none; }
+.course-chart-empty { position: absolute; inset: 48px 20px auto 0; padding: 10px; text-align: center; color: var(--color-label-2); font-size: 12px; background: rgb(0 0 0 / .75); }
+.course-next { margin-top: 12px; border-top: .5px solid var(--color-sep); border-bottom: .5px solid var(--color-sep); padding: 12px 0; }
+.course-next-meta { display: flex; justify-content: space-between; color: var(--color-label-2); font-size: 11px; line-height: 16px; }
+.course-next-meta > span:first-child { color: var(--color-label); font-weight: 600; text-transform: uppercase; letter-spacing: .1em; }
+.course-next-content { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: 6px; }
+.course-next-content h3 { font-size: 20px; line-height: 26px; font-weight: 600; overflow-wrap: anywhere; }
+.course-next-content > div > p { margin-top: 3px; color: var(--color-label-2); font-size: 12px; line-height: 18px; }
+.course-next-pace { flex-shrink: 0; font-size: 28px; line-height: 34px; font-weight: 600; letter-spacing: -.025em; }
+.course-next-pace span { display: block; text-align: right; color: var(--color-label-2); font-family: var(--font-sans); font-size: 11px; line-height: 14px; font-weight: 400; letter-spacing: 0; }
+.course-totals { display: grid; grid-template-columns: .9fr .8fr 1.2fr; gap: 12px; padding: 12px 0 0; }
+.course-totals dt { color: var(--color-label-2); font-size: 11px; line-height: 16px; }
+.course-totals dd { margin-top: 4px; font-size: 20px; line-height: 26px; font-weight: 600; white-space: nowrap; }
+.course-totals dd small { margin-left: 3px; font-family: var(--font-sans); font-size: 10px; font-weight: 500; }
+.course-footnote { color: var(--color-label-2); font-size: 11px; line-height: 16px; margin-top: 6px; }
+.course-adjustments { margin-top: 20px; }
+.course-adjustments .live-adjustments { margin: 0; padding: 4px 16px 12px; }
+@media (max-width: 389px) {
+  .is-graph .live-layout { padding-inline: 16px; }
+  .course-pace { font-size: 68px; }
+  .course-pace.is-long { font-size: 52px; }
+  .course-remaining strong { font-size: 27px; }
+  .course-totals dd { font-size: 18px; }
+}
+@media (min-width: 900px) {
+  .live-view-toolbar { max-width: 1260px; width: 100%; margin-inline: auto; padding-inline: 40px; }
+  .live-view-toolbar > div { margin-inline: 0; }
+  .is-graph .live-layout { display: grid; grid-template-columns: minmax(0, 1fr) 320px; gap: 64px; padding: 8px 40px 32px; overflow-y: auto; }
+  .is-graph .live-primary { display: flex; flex-direction: column; justify-content: start; }
+  .is-graph .live-controls-wrap { position: fixed; left: auto; right: max(40px, calc((100vw - 1180px) / 2)); bottom: 24px; width: 320px; padding: 20px 0 0; margin-top: 0; }
+  .is-graph .live-detail { overflow-y: visible; padding: 20px 0 200px; }
+  .course-view { padding-top: 14px; }
+  .course-pace { font-size: 96px; }
+  .course-pace.is-long { font-size: 76px; }
+  .course-remaining strong { font-size: 40px; line-height: 48px; }
+  .course-block-heading { margin-top: 24px; }
+  .course-next-content h3 { font-size: 24px; }
+  .course-totals { padding-top: 20px; }
+  .course-totals dd { font-size: 26px; }
+}
 @media (max-width: 389px) {
   .live-glance { padding: 0 16px 12px; }
   .live-header { gap: 8px; }

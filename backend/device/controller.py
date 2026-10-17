@@ -132,7 +132,8 @@ class Controller:
         if viewer and viewer == self.owner:
             self.owner_heartbeat = now
         ages = {key: round(now - timestamp, 1) for key, timestamp in self.received_at.items()}
-        armed = bool(self.owner and self.armed_until > now and now - self.owner_heartbeat <= LEASE_SECONDS)
+        armed = bool(self.owner and self.armed_until > now and (
+            self.session_limits is not None or now - self.owner_heartbeat <= LEASE_SECONDS))
         restart_delay = math.ceil(max(0, self.restart_after - now))
         restart_ready = not restart_delay and (not self.restart_after or (
             self.telemetry.get("speed_kmh") == 0 and
@@ -384,7 +385,10 @@ class Controller:
         now = time.monotonic()
         if self.phase != "connected":
             raise ControllerError("Tapis déconnecté")
-        if owner != self.owner or now >= self.armed_until or now - self.owner_heartbeat > LEASE_SECONDS:
+        # Une séance validée est exécutée par le PC jusqu'à son échéance absolue.
+        # Le bail navigateur reste obligatoire pour les commandes manuelles du POC.
+        if owner != self.owner or now >= self.armed_until or (
+                self.session_limits is None and now - self.owner_heartbeat > LEASE_SECONDS):
             raise ControllerError("Activer le contrôle depuis cet écran, à proximité du tapis")
         if self.audit_error:
             raise ControllerError(self.audit_error)
@@ -422,6 +426,7 @@ class Controller:
         if self.desynchronized or self.audit_error:
             raise ControllerError(self.audit_error or "Reconnexion nécessaire après une réponse incertaine")
         self._ensure_restart_ready()
+        self.session_limits = None
         self.owner = owner
         self.owner_heartbeat = time.monotonic()
         self.armed_until = time.monotonic() + 600

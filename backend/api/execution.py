@@ -134,9 +134,12 @@ async def act(body, request, action):
             raise ControllerError("Cet écran observe la séance ; il ne possède pas son démarrage.")
         if action == "recover":
             await engine.recover()
+        elif action == "release":
+            engine.release(body.client_id)
+        elif action == "claim":
+            engine.claim(body.client_id)
         else:
-            engine.request_halt("Écran propriétaire quitté · séance mise en pause" if action == "release" else
-                                "Pause demandée" if action == "pause" else "Arrêt demandé", pause=action in {"pause", "release"})
+            engine.request_halt("Pause demandée" if action == "pause" else "Arrêt demandé", pause=action == "pause")
         request.app.state.device.publish()
         return event(request, body.client_id)
     except ControllerError as exc:
@@ -161,6 +164,11 @@ async def release(body: ClientRequest, request: Request):
 @router.post("/recover")
 async def recover(body: ClientRequest, request: Request):
     return await act(body, request, "recover")
+
+
+@router.post("/claim")
+async def claim(body: ClientRequest, request: Request):
+    return await act(body, request, "claim")
 
 
 @router.websocket("/events")

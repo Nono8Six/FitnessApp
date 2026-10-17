@@ -16,7 +16,7 @@ export const phaseLabel: Record<Phase, string> = {
 export const inProgress = (phase?: Phase) => !!phase && !['idle', 'stopped', 'completed', 'cancelled'].includes(phase)
 export interface LiveSample extends Sample { seq: number; active_s: number; target_incline: number; phase: Phase }
 export interface Session {
-  id: string | null; phase: Phase; mode: 'simulation' | 'reel'; owned_by_me: boolean; can_resume?: boolean
+  id: string | null; phase: Phase; mode: 'simulation' | 'reel'; owned_by_me: boolean; can_resume?: boolean; can_claim?: boolean
   profile: { id: string; name: string } | null; workout: Workout | null
   targets: { speed: number; incline: number }[]; offsets: { speed: number; incline: number }
   adjustment_bounds: { speed: AdjustmentRange; incline: AdjustmentRange } | null
@@ -80,7 +80,7 @@ interface State {
   changeAdjustment: (action: 'speed' | 'incline', direction: number) => void
   select: (profile: string, workout: Workout) => void; setPreparing: (value: boolean) => void; clearSelected: () => void
   setConfirmingResume: (value: boolean) => void
-  act: (action: 'start' | 'pause' | 'stop' | 'resume' | 'recover' | 'adjust', confirmation?: boolean, offsets?: Session['offsets']) => Promise<boolean>
+  act: (action: 'start' | 'pause' | 'stop' | 'resume' | 'recover' | 'adjust' | 'claim', confirmation?: boolean, offsets?: Session['offsets']) => Promise<boolean>
 }
 const Context = createContext<State | null>(null)
 
@@ -156,7 +156,7 @@ export function ExecutionProvider({ children }: { children: ReactNode }) {
       const s = last.current?.session
       if (!s?.owned_by_me || !inProgress(s.phase)) return
       void fetch('/api/execution/release', { method: 'POST', keepalive: true, headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ client_id: client, session_id: s.id }) }).catch(error => console.warn('Fitness : pause à la fermeture non transmise ; surveillance PC active', error))
+        body: JSON.stringify({ client_id: client, session_id: s.id }) }).catch(error => console.warn('Fitness : départ de l’écran non signalé ; séance toujours pilotée par le PC', error))
     }
     const visible = () => {
       if (document.visibilityState !== 'visible') return
@@ -187,11 +187,11 @@ export function ExecutionProvider({ children }: { children: ReactNode }) {
   }, [accept, client, clearAdjustment])
   const act: State['act'] = async (action, confirmation = false, offsets) => {
     if (action !== 'adjust') clearAdjustment()
-    const movement = ['start', 'resume', 'adjust'].includes(action)
-    if (movement && starting.current) return false
-    if (movement) starting.current = true
+    const exclusive = ['start', 'resume', 'adjust', 'claim'].includes(action)
+    if (exclusive && starting.current) return false
+    if (exclusive) starting.current = true
     // Le repli HTTP doit démarrer dans le geste utilisateur, avant toute requête réseau.
-    if (action === 'start' || action === 'resume') void screenAwake.request()
+    if (action === 'start' || action === 'resume' || action === 'claim') void screenAwake.request()
     const number = ++requestNumber.current
     setPending(action); setError(undefined)
     const body = action === 'start' && selected ? {
@@ -207,13 +207,13 @@ export function ExecutionProvider({ children }: { children: ReactNode }) {
       }
       return true
     } catch (e) {
-      if (!inProgress(last.current?.session.phase)) screenAwake.release()
+      if (!inProgress(last.current?.session.phase) || !last.current?.session.owned_by_me) screenAwake.release()
       console.warn(`Fitness : demande ${action} impossible`, e)
       if (mounted.current && requestNumber.current === number) setError(e instanceof ApiError && e.kind === 'network'
         ? 'Réponse du PC non reçue. Vérifiez l’état dans Direct ; aucune demande ne sera répétée.' : errorMessage(e))
       return false
     } finally {
-      if (movement) starting.current = false
+      if (exclusive) starting.current = false
       if (mounted.current && requestNumber.current === number) setPending(undefined)
     }
   }

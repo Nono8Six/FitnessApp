@@ -53,9 +53,11 @@ Une seule procédure FTMS attend sa réponse à la fois. Pause/STOP bloquent imm
 
 ## Propriétaire et récupération
 
-Un identifiant aléatoire propre au document possède démarrage et reprise. Le contact propriétaire passe par heartbeat toutes les 3 s, indépendamment de l’observation. Les autres écrans peuvent demander Pause/STOP mais ne prolongent pas cette présence. Naviguer ou réduire conserve le propriétaire. Recharger ouvre un nouvel observateur. Une pause peut être reprise après perte du propriétaire : une fois ses 12 s de présence expirées, le nouvel écran peut confirmer la clé et la bande, puis reprendre explicitement. Le transfert du contrôle ne se fait qu’après validation serveur, à bande arrêtée ; un propriétaire encore présent ne peut pas être remplacé.
+Le PC exécute la séance et conserve son horloge, les changements de bloc et l’enregistrement, indépendamment des navigateurs. Changer d’application, verrouiller le téléphone, fermer sa page ou perdre son Wi-Fi ne demande ni pause ni STOP. Les contrôles de mesures fraîches, de Bluetooth, de stockage, de résultat des commandes et l’échéance absolue restent actifs. Le diagnostic POC conserve son bail navigateur de 12 s ; sa commande d’activation rétablit explicitement ce bail après un éventuel contrôle de séance.
 
-Quitter le propriétaire demande une pause par `pagehide` ; si la requête n’arrive pas, 12 s de silence déclenchent la pause côté PC. Un téléphone verrouillé/suspendu peut cesser ses heartbeats : le PC arrête alors la bande en pause, même si un observateur reste ouvert. La séance, le bloc, les réglages et son enregistrement restent ouverts ; aucun mouvement ne reprend au retour du téléphone. Reprendre exige une action et deux nouvelles confirmations. Une commande incertaine, une perte BLE ou une autorisation expirée gardent le traitement protecteur existant, sans reprise possible tant que l’état est inconnu. **L’arrêt matériel n’est pas garanti si le PC ou le Bluetooth est perdu.** Le STOP physique et la clé restent nécessaires dans ce cas. L’échéance absolue et le budget total de pause de 15 min ne sont jamais renouvelés par heartbeat.
+Un identifiant aléatoire propre au document possède les réglages et la reprise. Les contacts toutes les 3 s servent seulement à savoir quel écran utilise ces commandes ; ils ne conditionnent plus la course et ne renouvellent aucune autorisation. Les autres écrans gardent Pause/STOP. Après fermeture du propriétaire ou plus de 12 s sans contact, « Reprendre le contrôle sur cet écran » transfère explicitement les boutons, sans commande de mouvement et sans changer le point du programme. Un propriétaire présent ne peut pas être remplacé. Une pause volontaire conserve son point et exige toujours les deux confirmations avant reprise.
+
+**L’arrêt matériel n’est pas garanti si le PC ou le Bluetooth est perdu.** Le STOP physique et la clé restent nécessaires dans ce cas. L’échéance absolue et le budget total de pause de 15 min ne sont jamais renouvelés par les navigateurs.
 
 Pendant une séance possédée par cet écran, le frontend demande le maintien de l’écran allumé. Wake Lock est utilisé en HTTPS/localhost ; sur l’adresse Wi-Fi HTTP, NoSleep.js 0.12.0 utilise sa vidéo embarquée, sans serveur externe. La politique de contenu autorise les médias locaux et `data:`. La demande démarre dans le clic Démarrer/Reprendre, est relancée au retour au premier plan et est libérée en fin de séance. Le Direct affiche son état et permet de réessayer si le navigateur refuse. Cela ne maintient pas Chrome en exécution lorsque Android suspend l’application et ne neutralise pas le bouton de verrouillage.
 
@@ -63,13 +65,21 @@ Les kcal du Direct, des prévisions et des bilans affichent les deux scénarios 
 
 Après résultat inconnu : STOP physique → déconnexion/reconnexion passive dans Réglages → mesures fraîches à zéro et stabilisation → Clore la séance interrompue. Cette clôture n’envoie aucune commande et ne transforme pas l’ancien arrêt inconnu en arrêt confirmé. Un nouveau départ exige une nouvelle préparation complète.
 
+## Vue graphique pendant la course
+
+Direct propose Données et Graphique, sans interrompre la séance. Graphique affiche l’allure actuelle en min/km, vitesse et pente mesurées, temps restant et progression du bloc, puis une courbe de vitesse sur le temps actif (mesure continue, consigne prévue pointillée). La fenêtre garde au plus 90 s du bloc courant et 120 s d’aperçu ; elle ne projette que le bloc actuel et le suivant. Un seul bloc à suivre apparaît sous le graphique, avec son allure, sa durée et sa pente ; le dernier bloc annonce la fin du programme.
+
+Durée active, distance et kcal partagent les mesures du Direct existant. Pause/Reprendre et Arrêter restent accessibles ; les ajustements sont dans « Ajuster la séance ». Les mesures absentes restent `--`, les coupures ne sont pas interpolées et les contrôles ne dépendent pas du mode d’affichage. La courbe mesure une vitesse, pas une allure physiologique. Un état non reçu n’est jamais présenté comme actuel.
+
 ## API et vérification
 
 - `POST /api/execution/prepare` : profil, séance et version ; compatibilité/préconditions.
 - `POST /start` : mêmes champs, identifiant client, deux booléens stricts vrais.
 - `POST /resume` : propriétaire (ou nouvel écran si le propriétaire est absent depuis plus de 12 s), identifiant de séance et deux nouvelles confirmations. `can_resume` dans le snapshot indique l’éligibilité de cet écran ; toutes les préconditions restent revérifiées à la demande.
 - `POST /adjust` : propriétaire, identifiant de séance, `speed_offset` et `incline_offset` numériques stricts, finis ; compteurs absolus des décalages communs, dont la différence au dernier état est appliquée aux cibles restantes. Snapshot : `targets`, `offsets`, `adjustment_bounds`, `adjustment_note` ; phase `adjusting` jusqu’à l’effet observé.
-- `POST /pause`, `/stop`, `/release`, `/recover` : identifiants client et séance ; une ancienne séance ne peut pas agir sur la suivante.
+- `POST /pause`, `/stop`, `/recover` : identifiants client et séance ; une ancienne séance ne peut pas agir sur la suivante.
+- `POST /release` : signale seulement le départ du propriétaire, sans pause ni arrêt.
+- `POST /claim` : reprend les commandes sur un nouvel écran si le propriétaire est absent ; aucun mouvement envoyé. Le snapshot fournit `can_claim`. Le transfert est limité aux phases stables En cours/En pause et exige des mesures fraîches.
 - `GET /state`, `WS /events?client_id=…` : état, instance et séquence, mesures avec qualité/âge, échantillons incrémentaux ; première lecture/reconnexion = snapshot borné. Le WebSocket accepte uniquement le heartbeat et ne commande aucun mouvement. Origine HTTP/WS contrôlée par les protections de l’application.
 
 Vérifications logicielles : 52 tests ciblés (16 moteur/API, 9 tapis, 20 POC, 7 serveur) et `npm run build` réussis. Le faux transport Bleak teste la branche réelle, ses notifications et réponses, les refus, la sérialisation de STOP, le timeout, le STOP accepté sans zéro et la récupération passive. La simulation utilise des données extérieures distinctes sur le port 4331. `scripts/verify_execution_simulation.py` observe passivement une séance de 30 min, exige deux pauses et 1 800 s actives sans accélération ; il ne fournit aucun heartbeat propriétaire.

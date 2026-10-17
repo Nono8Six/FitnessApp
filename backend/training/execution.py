@@ -24,10 +24,6 @@ MAX_PAUSE_SECONDS = 900
 STOP_CONFIRM_TIMEOUT = 15
 
 
-class OwnerAbsent(ControllerError):
-    """Perte de l'écran : pause protectrice, sans terminer la réalisation."""
-
-
 class Execution:
     def __init__(self, device, database):
         self.device = device
@@ -197,6 +193,28 @@ class Execution:
             if self.controller.owner == viewer:
                 self.controller.owner_heartbeat = self.owner_seen
 
+    def release(self, viewer):
+        if viewer != self.owner:
+            raise ControllerError("Cet écran ne possède pas les commandes de la séance.")
+        self.owner_seen = 0.0
+        self.recorder.add("screen", {"label": "Écran quitté · séance poursuivie sur le PC"})
+
+    def can_claim(self, viewer):
+        return bool(viewer and viewer != self.owner and self.phase in {"running", "paused"}
+                    and time.monotonic() - self.owner_seen > LEASE_SECONDS)
+
+    def claim(self, viewer):
+        if not self.can_claim(viewer):
+            raise ControllerError("Les commandes sont encore utilisées par un autre écran. Attendez son retour ou 12 s sans contact.")
+        self._fresh()
+        previous = self.owner
+        self.owner = viewer
+        self.owner_seen = time.monotonic()
+        if self.controller.owner == previous:
+            self.controller.owner = viewer
+            self.controller.owner_heartbeat = self.owner_seen
+        self.recorder.add("screen", {"label": "Commandes récupérées sur un nouvel écran · aucun mouvement envoyé"})
+
     def active_time(self):
         return min(self.workout["summary"]["sec"] if self.workout else 0,
                    self.elapsed + (time.monotonic() - self.active_since if self.active_since is not None else 0))
@@ -343,8 +361,6 @@ class Execution:
                 raise ControllerError("Le tapis a retiré le contrôle. État de la bande à vérifier sur la console.")
             if self.controller.armed_until == 0:
                 raise ControllerError("Le tapis a signalé un arrêt. Aucune reprise automatique.")
-        if self.phase != "paused" and now - self.owner_seen > LEASE_SECONDS:
-            raise OwnerAbsent("Écran propriétaire absent · séance mise en pause. Revenez dans Direct pour reprendre.")
         if not rest:
             self.controller._ensure_ready(self.owner)
 
@@ -480,35 +496,32 @@ class Execution:
                 return
             self.phase = "starting"
             while self.phase not in TERMINAL and self.phase != "unknown":
-                try:
-                    if self.requested in ("stop", "pause"):
-                        await self._halt(self.requested == "pause")
-                    elif self.phase == "starting":
-                        self.requested = None
-                        await self._launch()
-                    elif self.phase == "paused":
-                        self._alive(rest=True)
-                    elif self.phase in ("running", "transitioning", "adjusting"):
-                        self._alive()
-                        if self.controller.telemetry["speed_kmh"] <= 0:
-                            raise ControllerError("Le tapis s'est arrêté. Aucune reprise automatique.")
-                        active = self.active_time()
-                        if active >= self.workout["summary"]["sec"]:
-                            self.request_halt("Programme terminé · arrêt demandé")
-                        elif active >= self.workout["blocks"][self.block]["end"]:
-                            self._sample(final=True)
-                            self.block += 1
-                            self.phase = "transitioning"
-                            self._sample(final=True)
-                            if await self._target():
-                                self.phase = "running"
-                        elif self.phase in ("adjusting", "transitioning"):
-                            actions = tuple(a for a in ("incline", "speed") if self.applied_targets[a] != self.targets[self.block][a])
-                            if await self._target(actions):
-                                self.markers.append({"t": round(time.monotonic() - self.began, 2), "label": "Ajustement"})
-                                self.phase = "running"
-                except OwnerAbsent as exc:
-                    self.request_halt(str(exc), pause=True)
+                if self.requested in ("stop", "pause"):
+                    await self._halt(self.requested == "pause")
+                elif self.phase == "starting":
+                    self.requested = None
+                    await self._launch()
+                elif self.phase == "paused":
+                    self._alive(rest=True)
+                elif self.phase in ("running", "transitioning", "adjusting"):
+                    self._alive()
+                    if self.controller.telemetry["speed_kmh"] <= 0:
+                        raise ControllerError("Le tapis s'est arrêté. Aucune reprise automatique.")
+                    active = self.active_time()
+                    if active >= self.workout["summary"]["sec"]:
+                        self.request_halt("Programme terminé · arrêt demandé")
+                    elif active >= self.workout["blocks"][self.block]["end"]:
+                        self._sample(final=True)
+                        self.block += 1
+                        self.phase = "transitioning"
+                        self._sample(final=True)
+                        if await self._target():
+                            self.phase = "running"
+                    elif self.phase in ("adjusting", "transitioning"):
+                        actions = tuple(a for a in ("incline", "speed") if self.applied_targets[a] != self.targets[self.block][a])
+                        if await self._target(actions):
+                            self.markers.append({"t": round(time.monotonic() - self.began, 2), "label": "Ajustement"})
+                            self.phase = "running"
                 await asyncio.sleep(.1)
         except asyncio.CancelledError:
             # Uniquement à la fermeture du serveur, après le STOP borné.
@@ -537,6 +550,7 @@ class Execution:
             "owned_by_me": bool(self.owner and viewer == self.owner),
             "can_resume": self.phase == "paused" and bool(viewer) and (
                 viewer == self.owner or time.monotonic() - self.owner_seen > LEASE_SECONDS),
+            "can_claim": self.can_claim(viewer),
             "profile": self.profile, "workout": self.workout,
             "targets": self.targets, "offsets": self.offsets, "adjustment_bounds": self.adjustment_bounds(),
             "adjustment_note": self.adjustment_note,

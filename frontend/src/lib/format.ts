@@ -21,7 +21,7 @@ export function calories(energy: CalorieEstimate, total = false): string | null 
   const low = total ? energy.total_kcal_low : energy.active_kcal_low
   const high = total ? energy.total_kcal_high : energy.active_kcal_high
   return energy.movement_ambiguous && low != null && high != null
-    ? `≈ ${Math.round(low)}–${Math.round(high)}` : null
+    ? `≈ ${Math.round(low)}${Math.round(low) === Math.round(high) ? '' : `–${Math.round(high)}`}` : null
 }
 
 /** 1044 -> "17:24", 3725 -> "1:02:05" */

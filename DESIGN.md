@@ -119,6 +119,10 @@ Formats : virgule décimale, espace insécable avant `:` `?` `%` et à l’inté
 - **Anneau.** Trait de 11 px, piste à 22 %, extrémités arrondies.
 - **Bandeau d’état.** Fond de la couleur de rôle à 15 %, icône et une phrase.
 
+### Direct · Vue graphique de course
+
+Le segmenté Données/Graphique garde les mêmes commandes et le même état de séance. Graphique met l’allure actuelle en min/km au premier plan, le temps restant à droite, puis le bloc actuel et sa progression. Courbe de vitesse mesurée en accent, consigne pointillée et aperçu limité au bloc suivant ; aucune suite de blocs ni nouveau tableau de bord. Un seul « Ensuite » affiche allure, durée, vitesse et pente. Durée active, distance et kcal restent secondaires. Les ajustements sont repliables ; Pause/Reprendre et Arrêter restent ancrés, sur téléphone comme sur PC. Le PC continue quand le téléphone passe dans une autre application.
+
 ## 7. Graphiques
 
 Composants SVG maison. ECharts n’est envisagé qu’à la brique 14 si le volume l’exige, avec ce même langage visuel.
