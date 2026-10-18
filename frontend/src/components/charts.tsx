@@ -359,10 +359,10 @@ export function TimeChart({
             {markers.map((m, i) => (
               <g key={`${m.t}:${i}`}><title>{m.label}</title>
                 {present !== undefined ? <>
-                  <defs><linearGradient id={`${gradId}-block-${i}`} gradientUnits="userSpaceOnUse" x1={x(m.t) - 8} x2={x(m.t) + 12}>
-                    <stop offset="0" stopColor="white" stopOpacity={0} /><stop offset="1" stopColor="white" stopOpacity={.045} />
-                  </linearGradient></defs>
-                  <rect x={x(m.t) - 8} y={padT} width={Math.max(0, pw - x(m.t) + 8)} height={ph} fill={`url(#${gradId}-block-${i})`} />
+                  <rect x={x(m.t)} y={padT} width={Math.max(0, pw - x(m.t))} height={ph} fill="rgb(255 255 255 / .045)" />
+                  <line data-block-start={m.t} x1={x(m.t)} x2={x(m.t)} y1={padT} y2={padT + ph}
+                    stroke="#8e9097" strokeWidth={1} opacity={.7} />
+                  <path d={`M${x(m.t)},${padT + 4}v-4h7`} fill="none" stroke="#b1b3b9" strokeWidth={1.5} strokeLinejoin="round" />
                 </> : <>
                 {m.sec !== undefined && <rect x={x(m.t)} y={padT} width={Math.max(0, x(m.t + m.sec) - x(m.t))} height={ph} fill={m.color ?? 'var(--color-yellow)'} opacity={.1} />}
                 <line x1={x(m.t)} x2={x(m.t)} y1={padT} y2={padT + ph} stroke={m.color ?? 'var(--color-yellow)'} strokeWidth={1} strokeDasharray="3 3" />
@@ -377,11 +377,8 @@ export function TimeChart({
                   const left = seg[0][0], right = seg.at(-1)![0], cy = seg[0][1]
                   const span = right - left
                   if (span <= 0) return null
-                  // Un léger retrait sépare les blocs sans pointillés ni raccord vertical.
-                  const inset = Math.min(1.5, span / 8)
                   return <g key={i}>
-                    <line x1={left + inset} x2={right - inset} y1={cy} y2={cy} stroke={s.color} strokeWidth={1.4} strokeLinecap="round" />
-                    {span >= 12 && <circle cx={left + Math.min(5, span / 2)} cy={cy} r={2.5} fill="#191c20" stroke={s.color} strokeWidth={1.2} />}
+                    <line x1={left} x2={right} y1={cy} y2={cy} stroke={s.color} strokeWidth={1.4} strokeLinecap="round" />
                     {s.axis !== 'secondary' && span >= 40 && cy - padT >= 16 && <text x={left + span / 2} y={cy - 8}
                       textAnchor="middle" fontSize={10} fontWeight={500} fill={s.color} className="num">{dec1(y1 - (cy - padT) / ph * (y1 - y0))}</text>}
                   </g>
