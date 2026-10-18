@@ -261,15 +261,24 @@ export function Direct() {
       <section className="live-primary" aria-label="Mesures et commandes actuelles">
         <div className="live-glance">
           {view === 'graph' ? <CourseView session={s} samples={e.feed?.samples ?? []} blocks={blocks} speed={speed} incline={incline} available={available} /> : <>
-          <button type="button" className={cx('live-speed num', showPace && 'is-pace')} onClick={() => setShowPace(v => !v)} aria-label={showPace ? 'Afficher la vitesse en km/h' : 'Afficher l’allure par kilomètre'}>
-            <span className={cx('live-speed-value', speed === null || (showPace && speed === 0) ? 'text-label-3' : 'text-speed')}>{speed === null ? '--' : showPace ? pace(speed) : dec1(speed)}</span>
-            <span className="live-speed-unit text-label-2">{showPace ? '/ KM' : 'KM/H'}</span>
-          </button>
-          <p className="live-measure-label">{showPace ? 'Allure mesurée' : 'Vitesse mesurée'}</p>
-          <div className="live-duration"><strong className="num text-time">{clock(Math.floor(s.active_s))}</strong><span className="text-footnote text-label-2">Durée active{!available && ' · dernière reçue'}</span></div>
+          <div className="live-metrics-hero">
+            <div>
+              <p className="live-measure-label">{showPace ? 'Allure mesurée' : 'Vitesse mesurée'}</p>
+              <button type="button" className={cx('live-speed num', showPace && 'is-pace')} onClick={() => setShowPace(v => !v)} aria-label={showPace ? 'Afficher la vitesse en km/h' : 'Afficher l’allure par kilomètre'}>
+                <span className={cx('live-speed-value', speed === null || (showPace && speed === 0) ? 'text-label-3' : 'text-speed')}>{speed === null ? '--' : showPace ? pace(speed) : dec1(speed)}</span>
+                <span className="live-speed-unit text-label-2">{showPace ? 'min/km' : 'km/h'}</span>
+              </button>
+            </div>
+            <div>
+              <p className="live-measure-label">Pente mesurée</p>
+              <p className={cx('live-incline-value num', incline === null ? 'text-label-3' : 'text-incline')}>
+                <span>{incline === null ? '--' : dec1(incline)}</span><small className="live-speed-unit text-label-2">%</small>
+              </p>
+            </div>
+          </div>
           <div className="live-secondary">
+            <div><span className="text-footnote text-label-2">Durée active{!available && ' · dernière reçue'}</span><p data-long-value={s.active_s >= 3600 ? 'true' : undefined} className="num text-time">{clock(Math.floor(s.active_s))}</p></div>
             <div><span className="text-footnote text-label-2">Distance{ s.distance_quality === 'partial' ? ' · partielle' : ''}</span><p className={cx('num', available && ['fresh','partial'].includes(s.distance_quality) ? 'text-distance' : 'text-label-3')}>{available && ['fresh','partial'].includes(s.distance_quality) && s.distance_m !== null ? dec2(s.distance_m / 1000) : '--'}<small>KM</small></p></div>
-            <div><span className="text-footnote text-label-2">Pente mesurée</span><p className={cx('num', incline === null ? 'text-label-3' : 'text-incline')}>{incline === null ? '--' : dec1(incline)}<small>%</small></p></div>
             <div><span className="text-footnote text-label-2">Calories actives</span><p data-long-value={kcal && kcal.length >= 8 ? 'true' : undefined} className={cx('num', available && kcal !== null ? 'text-energy' : 'text-label-3')}>{available ? kcal ?? '--' : '--'}<small>KCAL</small></p></div>
             <div><span className="text-footnote text-label-2">Vitesse moyenne</span><p className={cx('num', available && s.totals.speed_avg !== null ? 'text-speed' : 'text-label-3')}>{available && s.totals.speed_avg !== null ? dec1(s.totals.speed_avg) : '--'}<small>KM/H</small></p></div>
           </div>

@@ -85,6 +85,8 @@ Allure dominante avec unité min/km et chiffres longs stabilisés, vitesse et pe
 
 **Libellé du bloc suivant et accès au test (18 octobre) :** « Bloc suivant » centré au-dessus de sa séparation, remplaçant le compte à rebours ; « Maintenant » reste en dessous de son propre repère. Position bornée aux bords et mention Mesures masquée si elle risque de chevaucher le libellé. Hauteur inchangée à 152 px sur téléphone. Build TypeScript/Vite et Chrome 360 × 660 : libellé et règle à la même abscisse, aucun pointillé ni débordement, console sans erreur. Test ouvert à la demande dans le navigateur intégré à Codex, sur `http://127.0.0.1:4330/test-course/#/test`, avec son runtime de simulation séparé.
 
+**Rééquilibrage du mode Données (18 octobre) :** vitesse/allure et pente mesurées côte à côte en haut, unités alignées sous les chiffres ; durée, distance, calories et vitesse moyenne regroupées en grille de deux colonnes. Retrait de la ligne de durée isolée et de ses anciens styles. La pente occupe le vide à droite sans ajouter d’information ni de cartes. Build TypeScript/Vite et Chrome en 360 × 660 / 1366 × 900, ainsi que la fenêtre intégrée de 716 px : bascule vitesse/allure, allure longue 12′00″ tenant dans sa colonne, état de pause, commandes visibles et aucun débordement ni erreur console. Vérifications en simulation uniquement ; fenêtre intégrée laissée en mode Données.
+
 ## 1. Méthode
 
 1. **Une brique = une fonction réelle.** À la fin, Arnaud peut l’utiliser lui-même dans l’app. Si ce n’est pas utilisable, ce n’est pas terminé.

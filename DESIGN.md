@@ -119,6 +119,10 @@ Formats : virgule décimale, espace insécable avant `:` `?` `%` et à l’inté
 - **Anneau.** Trait de 11 px, piste à 22 %, extrémités arrondies.
 - **Bandeau d’état.** Fond de la couleur de rôle à 15 %, icône et une phrase.
 
+### Direct · Vue Données
+
+Les mesures actuelles occupent deux colonnes sans cartes : vitesse/allure interactive à gauche, pente mesurée à droite. Libellés au-dessus, unités sous les chiffres et alignées ; la pente occupe l’espace auparavant vide. Durée active, distance, calories actives et vitesse moyenne forment une grille compacte de deux colonnes, séparée des mesures principales par un trait discret. La durée n’a plus de ligne isolée. Basculer vitesse/allure conserve la hauteur du bandeau ; les chiffres sont adaptés à la largeur disponible, y compris les allures longues. Valeurs absentes, qualité partielle et limites des estimations restent explicites. La disposition réutilise les mesures et calculs existants ; consignes, courbes et commandes gardent leur fonctionnement.
+
 ### Direct · Vue graphique de course
 
 Accès temporaire pour le travail UI/UX : bouton secondaire « Tester le mode course » dans Aujourd’hui, sous l’action de démarrage, avec la mention « Simulation sans tapis ni bilan réel ». Il ouvre le Direct existant dans un espace simulé isolé ; le lien orange « Simulation · Quitter le test » garde le mode et le retour à l’application visibles. Ce raccourci ne change pas l’action Commencer. Adresse locale directe : `http://127.0.0.1:4330/test-course/#/test` ; elle retrouve le test actif ou démarre une nouvelle simulation si le précédent est terminé.
