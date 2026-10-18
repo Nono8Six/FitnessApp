@@ -1,5 +1,5 @@
 import { Bluetooth, Check, ChevronDown, Minus, Pause, Play, Plus, Square, X } from 'lucide-react'
-import { memo, useEffect, useMemo, useState } from 'react'
+import { memo, useEffect, useLayoutEffect, useMemo, useState, type CSSProperties } from 'react'
 import { nearest, ProgrammeMini, TimeChart, type Series } from '../components/charts'
 import { Button, cx, Disclosure, Facts, Group, Segmented, Sheet } from '../components/ui'
 import { calories, clock, dec1, dec2, pace } from '../lib/format'
@@ -206,6 +206,14 @@ export function Direct() {
   const e = useExecution(), s = e.feed?.session, profile = useCurrentProfile()
   const [showPace, setShowPace] = useState(profile?.speed_unit === 'pace')
   const [view, setView] = useState<'metrics' | 'graph'>('graph')
+  const [dock, setDock] = useState<HTMLDivElement | null>(null)
+  const [dockHeight, setDockHeight] = useState(96)
+  useLayoutEffect(() => {
+    if (!dock) return
+    const observer = new ResizeObserver(() => setDockHeight(Math.ceil(dock.getBoundingClientRect().height)))
+    observer.observe(dock)
+    return () => observer.disconnect()
+  }, [dock])
   useEffect(() => { window.scrollTo(0, 0) }, [])
   const speed = currentMeasurement(e, 'speed_kmh'), incline = currentMeasurement(e, 'incline_pct')
   const available = e.status === 'live' && (e.now - e.receivedAt) < 5000
@@ -230,14 +238,17 @@ export function Direct() {
   const canResume = available && paused && (s.can_resume ?? s.owned_by_me) && s.restart_delay_s === 0 && speed === 0
   const kcal = calories(s.totals.energy)
   const canStop = available && !finished && s.phase !== 'unknown' && s.phase !== 'stopping'
-  return <div className={cx('live-screen', view === 'graph' && 'is-graph')}>
+  return <div className={cx('live-screen', view === 'graph' && 'is-graph', paused && 'is-paused')} style={{ '--live-dock-height': `${dockHeight}px` } as CSSProperties}>
     <header className="live-header">
       <button type="button" aria-label="Réduire le Direct" onClick={reduce} className="pressable grid size-11 shrink-0 place-items-center rounded-full bg-fill-3"><ChevronDown size={25} /></button>
-      <div className="min-w-0 flex-1"><h1 className="truncate text-headline">{s.workout.name}</h1><p className="truncate text-footnote text-label-2">{s.profile?.name} · Version {s.workout.version}</p></div>
-      {courseTest ? <a href="/#/" className="pressable flex min-h-11 flex-col justify-center text-right text-footnote text-orange"><span>Simulation</span><span>Quitter le test ↗</span></a>
+      <div className="live-heading min-w-0 flex-1"><h1 className="truncate text-headline">{s.workout.name}</h1><p className="truncate text-footnote text-label-2">{s.profile?.name} · Version {s.workout.version}</p></div>
+      {courseTest ? <a href="/#/" className="live-test-exit pressable flex min-h-11 flex-col justify-center text-right text-footnote text-orange"><span>Simulation</span><span>Quitter le test ↗</span></a>
         : s.mode === 'simulation' && <span className="live-mode">Simulation</span>}
     </header>
-    <div className="live-view-toolbar"><Segmented label="Affichage du Direct" value={view} onChange={setView} options={[{ value: 'metrics', label: 'Données' }, { value: 'graph', label: 'Graphique' }]} /></div>
+    <div className="live-view-toolbar">
+      {view === 'graph' && <p role="status" className={cx('live-status', statusTone)}><span className="size-1.5 rounded-full bg-current" />{available ? phaseLabel[s.phase] : 'Hors ligne'}</p>}
+      <Segmented label="Affichage du Direct" value={view} onChange={setView} options={[{ value: 'metrics', label: 'Données' }, { value: 'graph', label: 'Graphique' }]} />
+    </div>
     {s.phase === 'countdown' ? <div className="live-countdown">
       <p className="text-title3">Prêt à démarrer</p><strong key={s.countdown} className="num animate-pop">{s.countdown}</strong>
       <p className="text-subhead text-label-2">{block?.label} · cible {dec1(block?.speed ?? 0)} km/h</p>
@@ -246,7 +257,7 @@ export function Direct() {
     </div> : <div className="live-layout">
       <section className="live-primary" aria-label="Mesures et commandes actuelles">
         <div className="live-glance">
-          <p role="status" className={cx('live-status', statusTone)}><span className="size-2 rounded-full bg-current" />{available ? phaseLabel[s.phase] : 'Observation interrompue'}</p>
+          {view === 'metrics' && <p role="status" className={cx('live-status', statusTone)}><span className="size-2 rounded-full bg-current" />{available ? phaseLabel[s.phase] : 'Observation interrompue'}</p>}
           {view === 'graph' ? <CourseView session={s} samples={e.feed?.samples ?? []} blocks={blocks} speed={speed} incline={incline} available={available} /> : <>
           <button type="button" className={cx('live-speed num', showPace && 'is-pace')} onClick={() => setShowPace(v => !v)} aria-label={showPace ? 'Afficher la vitesse en km/h' : 'Afficher l’allure par kilomètre'}>
             <span className={cx('live-speed-value', speed === null || (showPace && speed === 0) ? 'text-label-3' : 'text-speed')}>{speed === null ? '--' : showPace ? pace(speed) : dec1(speed)}</span>
@@ -265,15 +276,15 @@ export function Direct() {
           {available && ((s.totals.coverage.speed !== null && s.totals.coverage.speed < .99) || (s.totals.coverage.energy !== null && s.totals.coverage.energy < .99)) && <p className="mt-1 text-caption text-orange">Moyenne et estimation sur les mesures disponibles</p>}
           </>}
         </div>
-        <div className="live-controls-wrap">
+        <div className="live-controls-wrap" ref={setDock}>
           {error && <p role="alert" className={cx('live-notice', s.phase === 'unknown' && 'is-urgent')}>{error}</p>}
           {s.recording && (view === 'metrics' || s.recording.status === 'error') && <p role={s.recording.status === 'error' ? 'alert' : 'status'} className={cx('mb-3 text-footnote', s.recording.status === 'error' ? 'text-red' : 'text-label-2')}>
             {s.recording.status === 'error' ? `${s.recording.error} Données conservées jusqu’à ${clock(s.recording.persisted_s)} depuis le départ.` : s.recording.status === 'saved' ? 'Enregistré' : `Enregistrement · conservé jusqu’à ${clock(s.recording.persisted_s)}`}
           </p>}
           {finished && s.recording?.status === 'error' && <a href={href.report(s.id)} className="pressable mb-3 flex min-h-11 items-center text-subhead text-accent">Consulter les données conservées</a>}
           {s.can_claim && <Button variant="gray" className="mb-3 w-full" disabled={!available || !!e.pending} onClick={() => void e.act('claim')}>Reprendre le contrôle sur cet écran</Button>}
-          {paused && s.reason && <p role="status" className="mb-2 text-footnote text-yellow">{s.reason}</p>}
-          {s.owned_by_me && !finished && (view === 'metrics' || e.screenAwake.status !== 'active') && <p className="mb-2 text-footnote text-label-2">{e.screenAwake.status === 'active' ? 'Écran maintenu allumé' : e.screenAwake.status === 'requesting' ? 'Maintien de l’écran en cours…' : <button type="button" className="pressable min-h-11 text-orange underline" onClick={() => void e.screenAwake.request()}>Écran susceptible de se verrouiller · activer l’anti-veille</button>}</p>}
+          {paused && s.reason && (view === 'metrics' || s.reason !== 'Pause demandée') && <p role="status" className="mb-2 text-footnote text-yellow">{s.reason}</p>}
+          {s.owned_by_me && !finished && (view === 'metrics' || e.screenAwake.status !== 'active') && <p className="mb-2 text-footnote text-label-2">{e.screenAwake.status === 'active' ? 'Écran maintenu allumé' : e.screenAwake.status === 'requesting' ? 'Maintien de l’écran en cours…' : <button type="button" className="pressable min-h-11 text-orange underline" aria-label="Écran susceptible de se verrouiller : activer l’anti-veille" onClick={() => void e.screenAwake.request()}>{view === 'graph' ? 'Activer l’anti-veille' : 'Écran susceptible de se verrouiller · activer l’anti-veille'}</button>}</p>}
           {paused && <p className="live-action-hint text-label-2">{!(s.can_resume ?? s.owned_by_me) ? 'Reprise sur l’écran qui a démarré la séance' : s.restart_delay_s ? `Stabilisation · ${s.restart_delay_s} s` : `Point conservé · pause ${clock(Math.floor(s.pause_s))}`}</p>}
           {s.phase === 'unknown' && <Button variant="plain" className="mb-2 w-full" onClick={() => navigate(href.treadmill)}>Reconnecter dans Réglages</Button>}
           {s.phase === 'unknown' && e.feed?.device.read_only && e.feed.device.phase === 'connected' && speed === 0 && <Button variant="gray" className="mb-3 w-full" onClick={() => void e.act('recover')}>Clore la séance interrompue</Button>}

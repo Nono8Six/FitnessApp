@@ -63,6 +63,12 @@ Aujourd’hui propose « Tester le mode course ». Le bouton ouvre le vrai Direc
 
 **Vérifications :** neuf tests ciblés serveur/isolation réussis (refus du départ de test sur l’API normale, absence d’appels BLE réels, données séparées, WebSocket, origine, ouverture répétée et nettoyage), build TypeScript/Vite et Chrome 390 × 844 : ouverture depuis Aujourd’hui, Direct graphique, calories, pause et retour à l’application. Le serveur déjà lancé doit être redémarré depuis le lanceur pour charger cet accès ; aucun essai sur le S25 physique effectué par l’agent.
 
+### Finition du mode course pour téléphone — 18 octobre 2026
+
+Allure dominante avec unité min/km et chiffres longs stabilisés, vitesse et pente mesurées juste dessous ; temps restant rattaché au bloc actuel. Courbe compacte avec mesure, cible pointillée et point actif ; un seul bloc suivant, puis durée active, distance et calories. En-tête et état resserrés, surfaces et typographie retravaillées, réglages discrets. Commandes fixes en boutons de 56 px, cibles tactiles d’au moins 44 px. La hauteur réelle des messages réserve une zone de défilement séparée : rien ne passe derrière les commandes. Pause volontaire adaptée aux écrans courts ; messages d’incident conservés. Réutilisation des composants et du moteur, aucune nouvelle dépendance ni modification des calculs ou commandes du tapis.
+
+**Vérifications :** build TypeScript/Vite et Chrome avec le simulateur réel de l’application, en 360 × 640, 360 × 660, 390 × 844 et 1366 × 900. Course, changements de blocs, allures à deux chiffres, dernier bloc, pause/reprise confirmée, récupération des commandes après rechargement, bascule Données/Graphique et défilement des réglages vérifiés. Mesures DOM : cumuls visibles sur écran court en course/pause volontaire, limite du défilement exactement au-dessus des commandes, pas de débordement horizontal. Console sans erreur durant le parcours normal ; arrêt du seul serveur de vérification : état hors ligne, mesures indisponibles, commandes désactivées et bandeau d’erreur sans recouvrement. Aucun essai sur le S25 physique par l’agent ; rechargement du navigateur nécessaire pour recevoir le nouveau frontend.
+
 ## 1. Méthode
 
 1. **Une brique = une fonction réelle.** À la fin, Arnaud peut l’utiliser lui-même dans l’app. Si ce n’est pas utilisable, ce n’est pas terminé.
