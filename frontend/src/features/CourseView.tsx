@@ -82,13 +82,7 @@ export function CourseView({ session, samples, blocks, speed, incline, available
         markers={markers} />
       {!measured.some(p => p.speed !== null || p.incline != null) && <p className="course-chart-empty" role="status">{available ? 'En attente des premières mesures' : 'Mesures actuelles indisponibles'}</p>}
     </div>
-    <section className="course-next" aria-label="Prochain bloc">
-      <div className="course-next-meta"><span>{next ? 'Bloc suivant' : 'Dernier bloc'}</span><span className="num">{next ? `Durée ${clock(next.sec)}` : 'Puis fin de séance'}</span></div>
-      <div className="course-next-content">
-        <div><h3>{next?.label ?? 'Fin du programme'}</h3><p className="num">{next ? `${dec1(next.speed)} km/h · ${dec1(next.incline)} %` : 'Arrêt automatique du tapis'}</p></div>
-        {next && <p className="course-next-pace num">{pace(next.speed)}<span>min/km</span></p>}
-      </div>
-    </section>
+    <NextBlock next={next} />
     <dl className="course-totals">
       <div><dt>Durée active</dt><dd className="num text-time">{clock(Math.floor(active))}</dd></div>
       <div><dt>Distance{session.distance_quality === 'partial' && ' · partielle'}</dt><dd className={`num ${distance === null ? 'text-label-3' : 'text-distance'}`}>{distance ?? '--'}<small>km</small></dd></div>
@@ -97,4 +91,17 @@ export function CourseView({ session, samples, blocks, speed, incline, available
     {available && session.totals.energy.movement_ambiguous && kcal && <p className="course-footnote">Calories : deux estimations selon marche ou course.</p>}
     {available && session.totals.energy.weight_kg === null && <p className="course-footnote text-orange">Poids absent au départ : calories indisponibles.</p>}
   </div>
+}
+
+/** Aperçu partagé du prochain bloc ; les valeurs sont les cibles du programme. */
+export function NextBlock({ next, startsIn }: { next?: Block; startsIn?: number }) {
+  return (
+    <section className="course-next" aria-label="Prochain bloc">
+      <div className="course-next-meta"><span>{next ? 'Bloc suivant' : 'Dernier bloc'}</span><span className="num">{next ? startsIn === undefined ? `Durée ${clock(next.sec)}` : `Dans ${clock(startsIn)}` : 'Puis fin de séance'}</span></div>
+      <div className="course-next-content">
+        <div><h3>{next?.label ?? 'Fin du programme'}</h3><p className="num">{next ? `${dec1(next.speed)} km/h · ${dec1(next.incline)} %${startsIn === undefined ? '' : ` · ${clock(next.sec)}`}` : 'Arrêt automatique du tapis'}</p></div>
+        {next && <p className="course-next-pace num">{pace(next.speed)}<span>min/km</span></p>}
+      </div>
+    </section>
+  )
 }
