@@ -266,6 +266,8 @@ export function TimeChart({
   const pw = Math.max(1, w - padL - padR)
   const ph = height - padB - padT
   const x = useCallback((t: number) => ((t - x0) / (x1 - x0 || 1)) * pw, [x0, x1, pw])
+  const nextMarker = present === undefined ? undefined : markers.find(m => m.t >= present && m.t >= x0 && m.t <= x1)
+  const nextLabelX = nextMarker ? Math.max(36, Math.min(pw - 36, x(nextMarker.t))) : 0
   const y = useCallback((v: number) => padT + ph - ((v - y0) / (y1 - y0 || 1)) * ph, [y0, y1, ph, padT])
   const secondaryY = (v: number) => padT + ph - ((v - (secondary?.y0 ?? 0)) / ((secondary?.y1 ?? 1) - (secondary?.y0 ?? 0) || 1)) * ph
   const seriesY = (s: Series) => s.axis === 'secondary' && secondary ? secondaryY : y
@@ -332,10 +334,13 @@ export function TimeChart({
             <rect x={0} y={padT} width={pw} height={ph} rx={4} fill="#0b0d0b" />
             <rect x={x(present)} y={padT} width={Math.max(0, pw - x(present))} height={ph} fill="#191c20" />
             <g fill="var(--color-label-2)" fontSize={10} fontWeight={500}>
-              <line x1={0} x2={11} y1={10} y2={10} stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" />
-              <circle cx={6} cy={10} r={2.5} fill="currentColor" />
-              <text x={17} y={13}>Mesures</text>
-              <text x={pw} y={13} textAnchor="end">{markers.length ? `Suivant dans ${clock(Math.max(0, markers[0].t - present))}` : 'Consignes'}</text>
+              {(!nextMarker || nextLabelX >= 108) && <>
+                <line x1={0} x2={11} y1={10} y2={10} stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" />
+                <circle cx={6} cy={10} r={2.5} fill="currentColor" />
+                <text x={17} y={13}>Mesures</text>
+              </>}
+              {nextMarker ? <text data-next-block-label x={nextLabelX} y={13} textAnchor="middle" fill="#c7c9ce">Bloc suivant</text>
+                : <text x={pw} y={13} textAnchor="end">Consignes</text>}
             </g>
           </>}
           {yTicks.map((v) => (

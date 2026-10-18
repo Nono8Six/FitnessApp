@@ -83,6 +83,8 @@ Allure dominante avec unité min/km et chiffres longs stabilisés, vitesse et pe
 
 **Début du bloc suivant et raccords nettoyés (18 octobre) :** suppression des ronds permanents placés après le départ des paliers et du retrait des traits. Une seule règle verticale grise continue, un petit angle en haut et un changement de fond à droite identifient le prochain bloc, sans pointillés ni raccord vertical coloré. Les traits de vitesse et de pente commencent/finissent sur la même abscisse exacte que cette règle. Build TypeScript/Vite et Chrome 360 × 660 vérifiés : repère à 60 s, coordonnées identiques pour les deux paires de traits, aucun rond permanent dans les consignes, zéro pointillé, hauteur globale maintenue à 152 px, lecture future/retour au direct et console sans erreur. Simulation isolée uniquement ; rechargement du navigateur nécessaire.
 
+**Libellé du bloc suivant et accès au test (18 octobre) :** « Bloc suivant » centré au-dessus de sa séparation, remplaçant le compte à rebours ; « Maintenant » reste en dessous de son propre repère. Position bornée aux bords et mention Mesures masquée si elle risque de chevaucher le libellé. Hauteur inchangée à 152 px sur téléphone. Build TypeScript/Vite et Chrome 360 × 660 : libellé et règle à la même abscisse, aucun pointillé ni débordement, console sans erreur. Test ouvert à la demande dans le navigateur intégré à Codex, sur `http://127.0.0.1:4330/test-course/#/test`, avec son runtime de simulation séparé.
+
 ## 1. Méthode
 
 1. **Une brique = une fonction réelle.** À la fin, Arnaud peut l’utiliser lui-même dans l’app. Si ce n’est pas utilisable, ce n’est pas terminé.
