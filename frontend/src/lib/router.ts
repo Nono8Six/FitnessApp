@@ -1,13 +1,14 @@
 import { useEffect, useState } from 'react'
 
 /** Les routes apparaissent avec la brique qui construit leur écran. */
-export type Route = { name: 'today' } | { name: 'settings'; treadmill?: boolean } | { name: 'direct' }
+export type Route = { name: 'today' } | { name: 'settings'; treadmill?: boolean } | { name: 'direct' } | { name: 'test' }
   | { name: 'coach'; conversationId?: string; target?: { workout_id: string; version: number }; createWorkout?: boolean }
   | { name: 'library'; view?: 'discover' | 'mine' } | { name: 'editor'; id?: string; proposalId?: string }
   | { name: 'workout'; id: string; version?: number }
   | { name: 'recordings'; workoutId?: string } | { name: 'report'; id: string }
 
 export function parse(hash: string): Route {
+  if (hash === '#/test') return { name: 'test' }
   if (hash === href.recordings) return { name: 'recordings' }
   const reports = /^#\/bilans\?seance=([a-f0-9]{32})$/.exec(hash)
   if (reports) return { name: 'recordings', workoutId: reports[1] }

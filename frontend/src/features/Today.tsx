@@ -1,4 +1,4 @@
-import { ChevronRight } from 'lucide-react'
+import { ChevronRight, FlaskConical } from 'lucide-react'
 import { ProgrammeMini } from '../components/charts'
 import { RunIcon } from '../components/Icons'
 import { Page } from '../components/Shell'
@@ -8,6 +8,7 @@ import { useToday } from '../lib/date'
 import { href } from '../lib/router'
 import { useLibrary } from '../lib/workouts'
 import { StartButton } from './Direct'
+import { courseTest, courseTestUrl } from '../lib/environment'
 
 export function Today({ profile }: { profile: string }) {
   const today = useToday()
@@ -35,6 +36,13 @@ export function Today({ profile }: { profile: string }) {
             <p className="mt-4 text-title3">Aucune séance prévue</p>
             <a href={href.library} className="pressable mt-6 inline-flex h-[52px] items-center rounded-[14px] bg-accent px-6 text-headline text-on-accent">Choisir une séance</a>
           </section>}
+        <div className="mt-5">
+          <a href={courseTestUrl} className="pressable flex min-h-[52px] items-center justify-center gap-2 rounded-[14px] bg-fill-3 px-4 text-headline">
+            <FlaskConical size={20} aria-hidden="true" />Tester le mode course
+          </a>
+          <p className="mt-2 px-1 text-center text-footnote text-label-2">Bouton temporaire · Simulation sans tapis ni bilan réel</p>
+          {courseTest && <a href="/#/" className="pressable mt-2 flex min-h-11 items-center justify-center text-subhead text-accent">Quitter le test</a>}
+        </div>
         <Group className="mt-7"><Row title="Bilans" href={href.recordings} /></Group>
       </div>
     </Page>

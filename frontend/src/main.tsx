@@ -3,6 +3,7 @@ import { createRoot } from 'react-dom/client'
 import { Shell } from './components/Shell'
 import { Settings } from './features/Settings'
 import { Today } from './features/Today'
+import { CourseTest } from './features/CourseTest'
 import { Library } from './features/Library'
 import { Editor } from './features/Editor'
 import { Workout } from './features/Workout'
@@ -30,7 +31,7 @@ function App() {
   return (
     <Shell route={route}>
       <div key={`${profile?.id}:${JSON.stringify(route)}`}>
-        {route.name === 'direct' ? <Direct /> : route.name === 'settings' ? <Settings treadmillOpen={route.treadmill} /> : !profile ? <Page title="Fitness"><p className="text-label-2" role="status">Chargement du profil…</p></Page>
+        {route.name === 'test' ? <CourseTest /> : route.name === 'direct' ? <Direct /> : route.name === 'settings' ? <Settings treadmillOpen={route.treadmill} /> : !profile ? <Page title="Fitness"><p className="text-label-2" role="status">Chargement du profil…</p></Page>
           : route.name === 'library' ? <Library profile={profile.id} initialView={route.view} />
           : route.name === 'editor' ? <Editor profile={profile.id} id={route.id} proposalId={route.proposalId} />
           : route.name === 'workout' ? <Workout profile={profile.id} id={route.id} requestedVersion={route.version} />

@@ -1,5 +1,6 @@
 import { useSyncExternalStore } from 'react'
 import { api, ApiError, errorMessage, isRecord } from './api'
+import { courseTest } from './environment'
 
 /** Profil du serveur. Le choix du profil n’est pas une authentification. */
 export interface Profile {
@@ -25,7 +26,7 @@ export type ProfilesState =
   | { status: 'ok'; profiles: Profile[] }
   | { status: 'error'; profiles?: Profile[]; message: string }
 
-const STORAGE_KEY = 'fitness.profile.v1'
+const STORAGE_KEY = courseTest ? 'fitness.test.profile.v1' : 'fitness.profile.v1'
 
 const isDate = (value: unknown) => typeof value === 'string' && Number.isFinite(Date.parse(value))
 

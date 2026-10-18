@@ -57,6 +57,12 @@ Direct propose Données et Graphique : allure mesurée dominante, fenêtre de vi
 
 **Vérifications :** 72 tests ciblés moteur/API/Bluetooth/POC/enregistrement réussis, compilation TypeScript/Vite et quatre contrôles de format des calories. Chrome 390 × 844, 360 × 640 et PC 1366 × 900 : changement de vue, suspension JavaScript pendant le passage de blocs sans pause, rechargement puis récupération des commandes sans mouvement, pause volontaire et commandes fixes visibles. Aucun mouvement du RUN500 réel ; réception sur le S25 physique encore à confirmer. Le serveur existant doit être relancé depuis le lanceur pour charger ce nouveau comportement.
 
+### Bouton temporaire de test du Direct — 18 octobre 2026
+
+Aujourd’hui propose « Tester le mode course ». Le bouton ouvre le vrai Direct avec le contrôleur simulé existant : programme de 4 min en cinq blocs, changements d’allure et de pente, calories avec un poids fictif de 80 kg, commandes habituelles et lien « Quitter le test ». L’espace `/test-course/` utilise le même port réseau, une autre base et un autre runtime ; il ne connecte jamais le RUN500. Ses données jetables sont supprimées à l’arrêt du serveur ; aucun profil, programme ou bilan réel n’est modifié. Une nouvelle ouverture retrouve le test en cours sans le redémarrer. Le bouton reste volontairement visible jusqu’à la fin du travail UI/UX.
+
+**Vérifications :** neuf tests ciblés serveur/isolation réussis (refus du départ de test sur l’API normale, absence d’appels BLE réels, données séparées, WebSocket, origine, ouverture répétée et nettoyage), build TypeScript/Vite et Chrome 390 × 844 : ouverture depuis Aujourd’hui, Direct graphique, calories, pause et retour à l’application. Le serveur déjà lancé doit être redémarré depuis le lanceur pour charger cet accès ; aucun essai sur le S25 physique effectué par l’agent.
+
 ## 1. Méthode
 
 1. **Une brique = une fonction réelle.** À la fin, Arnaud peut l’utiliser lui-même dans l’app. Si ce n’est pas utilisable, ce n’est pas terminé.

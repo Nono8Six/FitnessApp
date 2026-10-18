@@ -1,4 +1,5 @@
 import { api, ApiError, isRecord } from './api'
+import { apiPath } from './environment'
 import { isPreview, isWorkout, isWorkoutInput, type Preview, type Workout, type WorkoutInput } from './workouts'
 
 export interface WorkoutTarget { workout_id: string; version: number }
@@ -81,7 +82,7 @@ export const confirmMemory = (profile: string, id: string) => api(`${coachUrl(pr
 export async function sendMessage(profile: string, conversation: string, text: string, requestId: string,
   signal: AbortSignal, onTurn: (turn: Turn) => void, target?: WorkoutTarget) {
   const path = `${coachUrl(profile)}/conversations/${conversation}/messages`
-  const response = await fetch(path, { method: 'POST', signal, cache: 'no-store',
+  const response = await fetch(apiPath(path), { method: 'POST', signal, cache: 'no-store',
     headers: { 'content-type': 'application/json', accept: 'text/event-stream' }, body: JSON.stringify({ text, request_id: requestId, workout_target: target }) })
   if (!response.ok || !response.body) {
     let message = 'Le serveur n’a pas accepté le message. Votre saisie est conservée.'

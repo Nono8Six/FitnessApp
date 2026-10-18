@@ -1,3 +1,4 @@
+import asyncio
 import base64
 import hashlib
 import os
@@ -34,6 +35,7 @@ from .config import data_dir as resolve_data_dir
 from .config import StartupError
 from .storage import StorageError, open_database
 from .training.profiles import ensure_default_profiles
+from .course_test import CourseTest
 
 ROOT = Path(__file__).resolve().parent.parent
 DIST = ROOT / "frontend" / "dist"
@@ -70,7 +72,10 @@ def check_body(request: Request) -> JSONResponse | None:
 
 
 def create_app(*, simulation: bool = False, data_root: Path | None = None, dist: Path = DIST,
-               network_enabled: bool = False) -> FastAPI:
+               network_enabled: bool = False, course_test: bool = False) -> FastAPI:
+    if course_test and not simulation:
+        raise ValueError("Le test UI exige le contrôleur simulé.")
+    test_runtime = None if course_test else CourseTest(dist)
     data = resolve_data_dir(simulation=simulation, root=data_root)
     addresses = phone_addresses()[0] if network_enabled else []
     started_at = datetime.now(timezone.utc).isoformat(timespec="seconds")
@@ -99,8 +104,12 @@ def create_app(*, simulation: bool = False, data_root: Path | None = None, dist:
             yield
         finally:
             try:
-                await _app.state.execution.close()
-                await _app.state.device.close()
+                try:
+                    if test_runtime:
+                        await test_runtime.close()
+                finally:
+                    await _app.state.execution.close()
+                    await _app.state.device.close()
             finally:
                 await _app.state.coach.close()
                 _app.state.chatgpt.close()
@@ -111,6 +120,9 @@ def create_app(*, simulation: bool = False, data_root: Path | None = None, dist:
     app = FastAPI(title="Fitness", docs_url=None, redoc_url=None, openapi_url=None, lifespan=lifespan)
     app.state.data_dir = data
     app.state.database = database
+    app.state.course_test = course_test
+    app.state.course_test_lock = asyncio.Lock()
+    app.state.course_test_workout = None
     app.state.phone_addresses = addresses
     app.state.instance_id = instance_id
     app.state.chatgpt = Connection(data / "chatgpt")
@@ -128,7 +140,8 @@ def create_app(*, simulation: bool = False, data_root: Path | None = None, dist:
     @app.middleware("http")
     async def protect(request: Request, call_next):
         response = None
-        if request.url.path.startswith("/api/"):
+        route_path = request.url.path.removeprefix(request.scope.get("root_path", ""))
+        if route_path.startswith("/api/"):
             origin = request.headers.get("origin")
             if origin and urlparse(origin).netloc != request.headers.get("host"):
                 response = JSONResponse({"detail": "Origine non autorisée"}, status_code=403)
@@ -182,6 +195,9 @@ def create_app(*, simulation: bool = False, data_root: Path | None = None, dist:
     app.include_router(device_api.router)
     app.include_router(execution_api.router)
     app.include_router(recordings_api.router)
+
+    if test_runtime:
+        app.mount("/test-course", test_runtime)
 
     @app.api_route("/api/{_path:path}", methods=["GET", "POST", "PUT", "PATCH", "DELETE"])
     async def unknown_api(_path: str):

@@ -121,6 +121,8 @@ Formats : virgule décimale, espace insécable avant `:` `?` `%` et à l’inté
 
 ### Direct · Vue graphique de course
 
+Accès temporaire pour le travail UI/UX : bouton secondaire « Tester le mode course » dans Aujourd’hui, sous l’action de démarrage, avec la mention « Simulation sans tapis ni bilan réel ». Il ouvre le Direct existant dans un espace simulé isolé ; le lien orange « Simulation · Quitter le test » garde le mode et le retour à l’application visibles. Ce raccourci ne change pas l’action Commencer.
+
 Le segmenté Données/Graphique garde les mêmes commandes et le même état de séance. Graphique met l’allure actuelle en min/km au premier plan, le temps restant à droite, puis le bloc actuel et sa progression. Courbe de vitesse mesurée en accent, consigne pointillée et aperçu limité au bloc suivant ; aucune suite de blocs ni nouveau tableau de bord. Un seul « Ensuite » affiche allure, durée, vitesse et pente. Durée active, distance et kcal restent secondaires. Les ajustements sont repliables ; Pause/Reprendre et Arrêter restent ancrés, sur téléphone comme sur PC. Le PC continue quand le téléphone passe dans une autre application.
 
 ## 7. Graphiques

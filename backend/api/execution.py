@@ -11,8 +11,9 @@ from sqlalchemy.exc import SQLAlchemyError
 
 from .device import EmptyRequest
 from ..device.controller import ControllerError
-from ..training.profiles import ProfileNotFound
-from ..training.workouts import WorkoutNotFound
+from ..training.execution import ACTIVE
+from ..training.profiles import ProfileNotFound, ProfileUpdate, update_profile
+from ..training.workouts import WorkoutNotFound, WorkoutInput, create_workout
 
 router = APIRouter(prefix="/api/execution")
 CLIENT_PATTERN = r"^[a-f0-9-]{32,36}$"
@@ -99,6 +100,45 @@ async def start(body: StartRequest, request: Request):
     except SQLAlchemyError:
         LOGGER.exception("Démarrage de séance : base indisponible")
         raise HTTPException(503, "Base de données indisponible. Réessayez dans quelques instants.") from None
+
+
+@router.post("/demo")
+async def demo(body: ClientRequest, request: Request):
+    state = request.app.state
+    if not state.course_test or not state.device.controller.simulation:
+        raise HTTPException(404, "Le test est disponible uniquement dans l'espace de simulation.")
+    try:
+        async with state.course_test_lock:
+            engine = state.execution
+            # Une ouverture répétée observe la course existante, sans redémarrage.
+            if engine.phase in ACTIVE:
+                return event(request, body.client_id, full=True)
+            if state.device.controller.phase == "disconnected":
+                await state.device.perform("scan")
+                await state.device.perform("connect", "SIMULATION")
+            if state.course_test_workout is None:
+                with state.database.write() as session:
+                    update_profile(session, "arnaud", ProfileUpdate(name="Test UI", weight_kg=80))
+                    workout = create_workout(session, "arnaud", WorkoutInput.model_validate({
+                        "name": "Test du mode course",
+                        "items": [
+                            {"kind": "run", "sec": 60, "speed": 8.5, "incline": 0.5, "movement": "run"},
+                            {"kind": "run", "sec": 45, "speed": 10, "incline": 1, "movement": "run"},
+                            {"kind": "recover", "sec": 30, "speed": 6, "incline": 0, "movement": "walk"},
+                            {"kind": "run", "sec": 60, "speed": 9, "incline": 2, "movement": "run"},
+                            {"kind": "cooldown", "sec": 45, "speed": 5, "incline": 0, "movement": "walk"},
+                        ],
+                    }))
+                state.course_test_workout = workout
+            workout = state.course_test_workout
+            await engine.start(body.client_id, "arnaud", workout["id"], workout["version"])
+            state.device.publish()
+            return event(request, body.client_id, full=True)
+    except (ControllerError, WorkoutNotFound, ProfileNotFound) as exc:
+        raise conflict(exc) from exc
+    except SQLAlchemyError:
+        LOGGER.exception("Test de course : stockage temporaire indisponible")
+        raise HTTPException(503, "Stockage du test indisponible. Réessayez dans quelques instants.") from None
 
 
 @router.post("/resume")

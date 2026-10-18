@@ -6,6 +6,7 @@ import { href, navigate } from './router'
 import type { Sample } from './types'
 import { useScreenAwake } from './screenAwake'
 import type { CalorieEstimate } from './format'
+import { apiPath } from './environment'
 
 export type Phase = 'idle' | 'countdown' | 'starting' | 'running' | 'transitioning' | 'adjusting' | 'pausing' | 'paused' | 'stopping' | 'stopped' | 'completed' | 'cancelled' | 'unknown'
 export const phaseLabel: Record<Phase, string> = {
@@ -80,7 +81,7 @@ interface State {
   changeAdjustment: (action: 'speed' | 'incline', direction: number) => void
   select: (profile: string, workout: Workout) => void; setPreparing: (value: boolean) => void; clearSelected: () => void
   setConfirmingResume: (value: boolean) => void
-  act: (action: 'start' | 'pause' | 'stop' | 'resume' | 'recover' | 'adjust' | 'claim', confirmation?: boolean, offsets?: Session['offsets']) => Promise<boolean>
+  act: (action: 'start' | 'pause' | 'stop' | 'resume' | 'recover' | 'adjust' | 'claim' | 'demo', confirmation?: boolean, offsets?: Session['offsets']) => Promise<boolean>
 }
 const Context = createContext<State | null>(null)
 
@@ -128,7 +129,7 @@ export function ExecutionProvider({ children }: { children: ReactNode }) {
     let disposed = false, socket: WebSocket, retry: number | undefined, deadline: number | undefined, backoff = 1000
     const connect = () => {
       if (disposed) return
-      socket = new WebSocket(`${location.protocol === 'https:' ? 'wss:' : 'ws:'}//${location.host}/api/execution/events?client_id=${client}`)
+      socket = new WebSocket(`${location.protocol === 'https:' ? 'wss:' : 'ws:'}//${location.host}${apiPath('/api/execution/events')}?client_id=${client}`)
       const watch = () => { window.clearTimeout(deadline); deadline = window.setTimeout(() => socket.close(), 8000) }
       watch()
       socket.onmessage = message => {
@@ -155,7 +156,7 @@ export function ExecutionProvider({ children }: { children: ReactNode }) {
     const release = () => {
       const s = last.current?.session
       if (!s?.owned_by_me || !inProgress(s.phase)) return
-      void fetch('/api/execution/release', { method: 'POST', keepalive: true, headers: { 'content-type': 'application/json' },
+      void fetch(apiPath('/api/execution/release'), { method: 'POST', keepalive: true, headers: { 'content-type': 'application/json' },
         body: JSON.stringify({ client_id: client, session_id: s.id }) }).catch(error => console.warn('Fitness : départ de l’écran non signalé ; séance toujours pilotée par le PC', error))
     }
     const visible = () => {
@@ -187,11 +188,11 @@ export function ExecutionProvider({ children }: { children: ReactNode }) {
   }, [accept, client, clearAdjustment])
   const act: State['act'] = async (action, confirmation = false, offsets) => {
     if (action !== 'adjust') clearAdjustment()
-    const exclusive = ['start', 'resume', 'adjust', 'claim'].includes(action)
+    const exclusive = ['start', 'resume', 'adjust', 'claim', 'demo'].includes(action)
     if (exclusive && starting.current) return false
     if (exclusive) starting.current = true
     // Le repli HTTP doit démarrer dans le geste utilisateur, avant toute requête réseau.
-    if (action === 'start' || action === 'resume' || action === 'claim') void screenAwake.request()
+    if (action === 'start' || action === 'resume' || action === 'claim' || action === 'demo') void screenAwake.request()
     const number = ++requestNumber.current
     setPending(action); setError(undefined)
     const body = action === 'start' && selected ? {
@@ -203,7 +204,7 @@ export function ExecutionProvider({ children }: { children: ReactNode }) {
       const next = await api(`/api/execution/${action}`, { method: 'POST', body, validate: isFeed, timeout: 8000 })
       if (mounted.current) {
         accept(next)
-        if (action === 'start' || action === 'resume') { setPreparing(false); setConfirmingResume(false); setSelected(undefined); navigate(href.direct) }
+        if (action === 'start' || action === 'resume' || action === 'demo') { setPreparing(false); setConfirmingResume(false); setSelected(undefined); navigate(href.direct) }
       }
       return true
     } catch (e) {

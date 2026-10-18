@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
+import { apiPath } from './environment'
 import { api, errorMessage, isRecord } from './api'
 
 export const measurementKeys = ['speed_kmh', 'incline_pct', 'distance_m', 'elapsed_s', 'heart_rate_bpm', 'energy_kcal'] as const
@@ -78,7 +79,7 @@ export function useDevice() {
     let backoff = 1000
     const connect = () => {
       if (disposed) return
-      socket = new WebSocket(`${location.protocol === 'https:' ? 'wss:' : 'ws:'}//${location.host}/api/device/events`)
+      socket = new WebSocket(`${location.protocol === 'https:' ? 'wss:' : 'ws:'}//${location.host}${apiPath('/api/device/events')}`)
       const watchdog = () => {
         window.clearTimeout(deadline)
         deadline = window.setTimeout(() => socket.close(), 12_000)

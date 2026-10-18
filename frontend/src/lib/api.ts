@@ -1,4 +1,5 @@
 /** Client commun du serveur du PC : délai borné, messages lisibles, réponses vérifiées. */
+import { apiPath } from './environment'
 
 const TIMEOUT_MS = 4_000
 
@@ -45,7 +46,7 @@ export async function api<T>(path: string, { method = 'GET', body, validate, tim
   try {
     let res: Response
     try {
-      res = await fetch(path, {
+      res = await fetch(apiPath(path), {
         method,
         signal: ctrl.signal,
         cache: 'no-store',

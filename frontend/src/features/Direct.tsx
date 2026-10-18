@@ -10,6 +10,7 @@ import { useCurrentProfile } from '../lib/profiles'
 import type { Workout } from '../lib/workouts'
 import type { Block } from '../lib/types'
 import { CourseView } from './CourseView'
+import { courseTest } from '../lib/environment'
 
 export function StartButton({ profile, workout, className }: { profile: string; workout: Workout; className?: string }) {
   const e = useExecution()
@@ -233,7 +234,8 @@ export function Direct() {
     <header className="live-header">
       <button type="button" aria-label="Réduire le Direct" onClick={reduce} className="pressable grid size-11 shrink-0 place-items-center rounded-full bg-fill-3"><ChevronDown size={25} /></button>
       <div className="min-w-0 flex-1"><h1 className="truncate text-headline">{s.workout.name}</h1><p className="truncate text-footnote text-label-2">{s.profile?.name} · Version {s.workout.version}</p></div>
-      {s.mode === 'simulation' && <span className="live-mode">Simulation</span>}
+      {courseTest ? <a href="/#/" className="pressable flex min-h-11 flex-col justify-center text-right text-footnote text-orange"><span>Simulation</span><span>Quitter le test ↗</span></a>
+        : s.mode === 'simulation' && <span className="live-mode">Simulation</span>}
     </header>
     <div className="live-view-toolbar"><Segmented label="Affichage du Direct" value={view} onChange={setView} options={[{ value: 'metrics', label: 'Données' }, { value: 'graph', label: 'Graphique' }]} /></div>
     {s.phase === 'countdown' ? <div className="live-countdown">
