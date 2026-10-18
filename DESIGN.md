@@ -127,6 +127,8 @@ Le segmenté Données/Graphique garde les mêmes commandes et le même état de 
 
 Finition téléphone du 18 octobre : en-tête compact, état et segmenté sur une seule ligne ; allure de 94 px, réduite à 74–78 px avec les barres de Chrome, chiffres longs ajustés sans décaler la suite. Cibles tactiles d’au moins 44 px, commandes Pause/Reprendre et Arrêter en boutons de 56 px ; Pause jaune, Reprendre vert, Arrêter rouge sur fond discret. La hauteur réelle des commandes et de leurs messages détermine la limite de défilement : aucune information ne passe derrière le bandeau. Sur écran court, la pause réduit la place de l’allure indisponible et conserve les cumuls visibles. Réglages et état restent repliables, avec des séparateurs simples. Le PC garde deux colonnes, avec les commandes à droite. Le PC continue quand le téléphone passe dans une autre application.
 
+Sélecteur du Direct : variante dédiée du composant segmenté, fond presque noir et contour fin, icônes vitesse/courbe, sélection vert accent sur fond teinté. Piste et boutons partagent réellement une hauteur de 44 px ; le fond actif reste centré derrière le texte. Position et dimensions identiques en Données et Graphique, y compris l’en-tête. Animation courte, supprimée si les mouvements sont réduits. Les autres segmentés conservent leur apparence.
+
 ## 7. Graphiques
 
 Composants SVG maison. ECharts n’est envisagé qu’à la brique 14 si le volume l’exige, avec ce même langage visuel.

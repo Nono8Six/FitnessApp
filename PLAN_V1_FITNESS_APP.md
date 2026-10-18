@@ -69,6 +69,8 @@ Allure dominante avec unité min/km et chiffres longs stabilisés, vitesse et pe
 
 **Vérifications :** build TypeScript/Vite et Chrome avec le simulateur réel de l’application, en 360 × 640, 360 × 660, 390 × 844 et 1366 × 900. Course, changements de blocs, allures à deux chiffres, dernier bloc, pause/reprise confirmée, récupération des commandes après rechargement, bascule Données/Graphique et défilement des réglages vérifiés. Mesures DOM : cumuls visibles sur écran court en course/pause volontaire, limite du défilement exactement au-dessus des commandes, pas de débordement horizontal. Console sans erreur durant le parcours normal ; arrêt du seul serveur de vérification : état hors ligne, mesures indisponibles, commandes désactivées et bandeau d’erreur sans recouvrement. Aucun essai sur le S25 physique par l’agent ; rechargement du navigateur nécessaire pour recevoir le nouveau frontend.
 
+**Finition du sélecteur Direct (18 octobre) :** piste et boutons réalignés à 44 px, icônes discrètes, actif vert, contour fin et focus visible ; sélecteur fixe au même emplacement dans les deux vues. Variante du composant partagé, sans modifier les autres segmentés. Build TypeScript/Vite et Chrome 360 × 640 / PC réussis : deux états et clics, Tab/Entrée, absence de débordement, cumuls visibles sur écran court, géométrie identique entre vues et console sans erreur. Essai simulé uniquement.
+
 ## 1. Méthode
 
 1. **Une brique = une fonction réelle.** À la fin, Arnaud peut l’utiliser lui-même dans l’app. Si ce n’est pas utilisable, ce n’est pas terminé.

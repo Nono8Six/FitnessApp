@@ -310,22 +310,25 @@ export function Segmented<T extends string>({
   label,
   disabled,
   className,
+  variant = 'default',
 }: {
-  options: { value: T; label: string }[]
+  options: { value: T; label: string; icon?: ReactNode }[]
   value: T
   onChange: (v: T) => void
   label: string
   disabled?: boolean
   className?: string
+  variant?: 'default' | 'course'
 }) {
   const idx = options.findIndex((o) => o.value === value)
+  const inset = variant === 'course' ? 0 : 2
   return (
-    <div role="radiogroup" aria-label={label} className={cx('relative grid h-8 rounded-[9px] bg-fill-3 p-0.5', className)}
+    <div role="radiogroup" aria-label={label} className={cx('relative grid', variant === 'course' ? 'live-view-switch' : 'h-8 rounded-[9px] bg-fill-3 p-0.5', className)}
       style={{ gridTemplateColumns: `repeat(${options.length}, minmax(0, 1fr))` }}>
       <span
         aria-hidden
-        className="absolute top-0.5 bottom-0.5 rounded-[7px] bg-[#636366] shadow-[0_3px_8px_rgba(0,0,0,.12),0_3px_1px_rgba(0,0,0,.04)] transition-transform duration-300 ease-ios"
-        style={{ left: 2, width: `calc((100% - 4px) / ${options.length})`, transform: `translateX(${idx * 100}%)` }}
+        className={variant === 'course' ? 'live-view-switch-thumb' : 'absolute top-0.5 bottom-0.5 rounded-[7px] bg-[#636366] shadow-[0_3px_8px_rgba(0,0,0,.12),0_3px_1px_rgba(0,0,0,.04)] transition-transform duration-300 ease-ios'}
+        style={{ left: inset, width: `calc((100% - ${inset * 2}px) / ${options.length})`, transform: `translateX(${idx * 100}%)` }}
       />
       {options.map((o) => (
         <button
@@ -334,11 +337,10 @@ export function Segmented<T extends string>({
           aria-checked={o.value === value}
           disabled={disabled}
           onClick={() => o.value !== value && onChange(o.value)}
-          // La piste mesure 32 px comme sur iOS ; la zone de toucher déborde jusqu’à 44 px.
-          className={cx("relative z-10 px-2 text-footnote font-medium transition-colors after:absolute after:inset-x-0 after:-inset-y-2 after:content-['']",
+          className={variant === 'course' ? 'live-view-switch-option' : cx("relative z-10 px-2 text-footnote font-medium transition-colors after:absolute after:inset-x-0 after:-inset-y-2 after:content-['']",
             o.value === value ? 'font-semibold text-label' : 'text-label', 'disabled:text-label-3')}
         >
-          {o.label}
+          {o.icon}{o.label}
         </button>
       ))}
     </div>

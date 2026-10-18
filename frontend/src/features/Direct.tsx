@@ -1,4 +1,4 @@
-import { Bluetooth, Check, ChevronDown, Minus, Pause, Play, Plus, Square, X } from 'lucide-react'
+import { Bluetooth, ChartNoAxesCombined, Check, ChevronDown, Gauge, Minus, Pause, Play, Plus, Square, X } from 'lucide-react'
 import { memo, useEffect, useLayoutEffect, useMemo, useState, type CSSProperties } from 'react'
 import { nearest, ProgrammeMini, TimeChart, type Series } from '../components/charts'
 import { Button, cx, Disclosure, Facts, Group, Segmented, Sheet } from '../components/ui'
@@ -246,8 +246,11 @@ export function Direct() {
         : s.mode === 'simulation' && <span className="live-mode">Simulation</span>}
     </header>
     <div className="live-view-toolbar">
-      {view === 'graph' && <p role="status" className={cx('live-status', statusTone)}><span className="size-1.5 rounded-full bg-current" />{available ? phaseLabel[s.phase] : 'Hors ligne'}</p>}
-      <Segmented label="Affichage du Direct" value={view} onChange={setView} options={[{ value: 'metrics', label: 'Données' }, { value: 'graph', label: 'Graphique' }]} />
+      <p role="status" className={cx('live-status', statusTone)}><span className="size-1.5 shrink-0 rounded-full bg-current" />{available ? phaseLabel[s.phase] : 'Hors ligne'}</p>
+      <Segmented variant="course" label="Affichage du Direct" value={view} onChange={setView} options={[
+        { value: 'metrics', label: 'Données', icon: <Gauge size={15} aria-hidden="true" /> },
+        { value: 'graph', label: 'Graphique', icon: <ChartNoAxesCombined size={15} aria-hidden="true" /> },
+      ]} />
     </div>
     {s.phase === 'countdown' ? <div className="live-countdown">
       <p className="text-title3">Prêt à démarrer</p><strong key={s.countdown} className="num animate-pop">{s.countdown}</strong>
@@ -257,7 +260,6 @@ export function Direct() {
     </div> : <div className="live-layout">
       <section className="live-primary" aria-label="Mesures et commandes actuelles">
         <div className="live-glance">
-          {view === 'metrics' && <p role="status" className={cx('live-status', statusTone)}><span className="size-2 rounded-full bg-current" />{available ? phaseLabel[s.phase] : 'Observation interrompue'}</p>}
           {view === 'graph' ? <CourseView session={s} samples={e.feed?.samples ?? []} blocks={blocks} speed={speed} incline={incline} available={available} /> : <>
           <button type="button" className={cx('live-speed num', showPace && 'is-pace')} onClick={() => setShowPace(v => !v)} aria-label={showPace ? 'Afficher la vitesse en km/h' : 'Afficher l’allure par kilomètre'}>
             <span className={cx('live-speed-value', speed === null || (showPace && speed === 0) ? 'text-label-3' : 'text-speed')}>{speed === null ? '--' : showPace ? pace(speed) : dec1(speed)}</span>
