@@ -71,6 +71,8 @@ Allure dominante avec unité min/km et chiffres longs stabilisés, vitesse et pe
 
 **Finition du sélecteur Direct (18 octobre) :** piste et boutons réalignés à 44 px, icônes discrètes, actif vert, contour fin et focus visible ; sélecteur fixe au même emplacement dans les deux vues. Variante du composant partagé, sans modifier les autres segmentés. Build TypeScript/Vite et Chrome 360 × 640 / PC réussis : deux états et clics, Tab/Entrée, absence de débordement, cumuls visibles sur écran court, géométrie identique entre vues et console sans erreur. Essai simulé uniquement.
 
+**Graphique de course approfondi (18 octobre) :** sélecteur visuel ramené à 184 × 32 px sur téléphone, toucher de 44 px conservé. Graphique récent/prévu séparé, repère Maintenant, échelle stable 0–16 km/h, trois horaires lisibles et passage au bloc suivant. Historique et objectifs passés conservés au changement de bloc ; prévision bornée, coupures non interpolées, lecture d’un point au clic/toucher/clavier et retour au direct. Build TypeScript/Vite, trois contrôles de chronologie (historique/coupure, prévision bornée, fin du programme) et Chrome 360 × 640 / 360 × 660 / 390 × 844 / PC réussis : lecture passée et prévue, retour au direct, pause, dernier bloc, nouveau départ et console sans erreur. Sur les écrans les plus courts, les cumuls restent accessibles par défilement au-dessus des commandes ; aucun recouvrement ni débordement horizontal. Essais simulés uniquement ; rechargement du frontend nécessaire.
+
 ## 1. Méthode
 
 1. **Une brique = une fonction réelle.** À la fin, Arnaud peut l’utiliser lui-même dans l’app. Si ce n’est pas utilisable, ce n’est pas terminé.

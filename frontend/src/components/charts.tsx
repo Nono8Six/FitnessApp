@@ -244,26 +244,27 @@ function niceTicks(lo: number, hi: number, count = 3) {
 
 export function TimeChart({
   series, x0, x1, y0, y1, height = 200, unit, markers = [], gaps = [], cursor, onCursor, label, yFormat = (v) => String(v).replace('.', ','),
-  live,
+  live, present,
 }: {
   series: Series[]; x0: number; x1: number; y0: number; y1: number; height?: number; unit: string
   markers?: Marker[]; gaps?: [number, number][]; cursor?: number | null; onCursor?: (t: number | null) => void; label: string
-  yFormat?: (v: number) => string; live?: boolean
+  yFormat?: (v: number) => string; live?: boolean; present?: number
 }) {
   const [ref, w] = useWidth<HTMLDivElement>()
-  const padR = 34, padB = 22, padT = 8
+  const padR = present === undefined ? 34 : 28, padB = 22, padT = present === undefined ? 8 : 24
   const pw = Math.max(1, w - padR)
   const ph = height - padB - padT
   const x = useCallback((t: number) => ((t - x0) / (x1 - x0 || 1)) * pw, [x0, x1, pw])
   const y = useCallback((v: number) => padT + ph - ((v - y0) / (y1 - y0 || 1)) * ph, [y0, y1, ph])
-  const yTicks = useMemo(() => niceTicks(y0, y1, 3), [y0, y1])
+  const yTicks = useMemo(() => present === undefined ? niceTicks(y0, y1, 3) : Array.from({ length: 5 }, (_, i) => y0 + (y1 - y0) * i / 4), [y0, y1, present === undefined])
   const xTicks = useMemo(() => {
+    if (present !== undefined) return [x0, (x0 + x1) / 2, x1]
     const span = x1 - x0
     const step = [15, 30, 60, 120, 300, 600, 900, 1800, 3600, 7200, 14400, 28800, 86400].find((s) => span / s <= (w < 480 ? 4 : 6)) ?? Math.ceil(span / 4)
     const out: number[] = []
     for (let t = Math.ceil(x0 / step) * step; t <= x1; t += step) out.push(t)
     return out
-  }, [x0, x1, w])
+  }, [x0, x1, w, present === undefined])
   const gradId = useId()
 
   const tFromEvent = (e: PointerEvent) => {
@@ -280,7 +281,7 @@ export function TimeChart({
   }
   const onMove = (e: PointerEvent) => {
     if (!onCursor) return
-    if (dragging.current || e.pointerType === 'mouse') onCursor(tFromEvent(e))
+    if (dragging.current || (e.pointerType === 'mouse' && present === undefined)) onCursor(tFromEvent(e))
   }
   const onUp = () => {
     dragging.current = false
@@ -313,6 +314,13 @@ export function TimeChart({
             </linearGradient>
             <clipPath id={`${gradId}-clip`}><rect x={0} y={0} width={pw} height={height} /></clipPath>
           </defs>
+          {present !== undefined && <>
+            <rect x={0} y={padT} width={pw} height={ph} rx={6} fill="rgb(255 255 255 / .025)" />
+            <rect x={x(present)} y={padT} width={Math.max(0, pw - x(present))} height={ph} fill="rgb(255 255 255 / .035)" />
+            <line x1={x(present)} x2={x(present)} y1={padT - 5} y2={padT + ph} stroke="rgb(255 255 255 / .25)" strokeWidth={1} />
+            <text x={Math.max(30, Math.min(pw - 30, x(present)))} y={12} fontSize={9} fontWeight={500} fill="var(--color-label-2)" textAnchor="middle">Maintenant</text>
+            {pw - x(present) > 80 && <text x={pw} y={12} fontSize={9} fill="var(--color-label-2)" textAnchor="end">À venir</text>}
+          </>}
           {yTicks.map((v) => (
             <g key={v}>
               <line x1={0} x2={pw} y1={y(v)} y2={y(v)} stroke="var(--color-sep)" strokeWidth={0.5} />
@@ -321,8 +329,8 @@ export function TimeChart({
           ))}
           {xTicks.map((t) => (
             <g key={t}>
-              <line x1={x(t)} x2={x(t)} y1={padT} y2={padT + ph} stroke="var(--color-sep)" strokeWidth={0.5} strokeDasharray="1 3" />
-              <text x={x(t)} y={height - 5} fontSize={11} fill="var(--color-label-2)" textAnchor={t === x0 ? 'start' : 'middle'} className="num">{fmtT(t)}</text>
+              {present === undefined && <line x1={x(t)} x2={x(t)} y1={padT} y2={padT + ph} stroke="var(--color-sep)" strokeWidth={0.5} strokeDasharray="1 3" />}
+              <text x={x(t)} y={height - 5} fontSize={present === undefined ? 11 : 10} fill="var(--color-label-2)" textAnchor={present === undefined ? t === x0 ? 'start' : 'middle' : x(t) < 20 ? 'start' : x(t) > pw - 20 ? 'end' : 'middle'} className="num">{fmtT(t)}</text>
             </g>
           ))}
           <g clipPath={`url(#${gradId}-clip)`}>
@@ -331,9 +339,10 @@ export function TimeChart({
             ))}
             {markers.map((m, i) => (
               <g key={`${m.t}:${i}`}><title>{m.label}</title>
-                {m.sec !== undefined && <rect x={x(m.t)} y={padT} width={Math.max(0, x(m.t + m.sec) - x(m.t))} height={ph} fill={m.color ?? 'var(--color-yellow)'} opacity={.1} />}
+                {m.sec !== undefined && present === undefined && <rect x={x(m.t)} y={padT} width={Math.max(0, x(m.t + m.sec) - x(m.t))} height={ph} fill={m.color ?? 'var(--color-yellow)'} opacity={.1} />}
                 <line x1={x(m.t)} x2={x(m.t)} y1={padT} y2={padT + ph} stroke={m.color ?? 'var(--color-yellow)'} strokeWidth={1} strokeDasharray="3 3" />
-                <rect x={x(m.t) - 4} y={padT} width={8} height={8} rx={2} fill={m.color ?? 'var(--color-yellow)'} />
+                {present === undefined ? <rect x={x(m.t) - 4} y={padT} width={8} height={8} rx={2} fill={m.color ?? 'var(--color-yellow)'} />
+                  : <path d={`M${x(m.t) - 3},${padT - 5} L${x(m.t) + 3},${padT - 5} L${x(m.t)},${padT - 1} Z`} fill="var(--color-label-2)" />}
               </g>
             ))}
             {series.map((s) => {
@@ -348,7 +357,7 @@ export function TimeChart({
             {live && (() => {
               const main = series[0]
               const lastS = [...main.data].reverse().find((p) => main.value(p) !== null)
-              if (!lastS) return null
+              if (!lastS || (present !== undefined && Math.abs(lastS.t - present) > 2)) return null
               return (
                 <g>
                   <circle cx={x(lastS.t)} cy={y(main.value(lastS)!)} r={9} fill={main.color} opacity={0.22} className="animate-pulse-dot" />
@@ -372,7 +381,7 @@ export function TimeChart({
           {onCursor && (
             <rect x={0} y={0} width={pw} height={height} fill="transparent"
               onPointerDown={onDown} onPointerMove={onMove} onPointerUp={onUp} onPointerCancel={onUp}
-              onPointerLeave={(e) => e.pointerType === 'mouse' && onCursor(null)} style={{ cursor: 'crosshair' }} />
+              onPointerLeave={(e) => e.pointerType === 'mouse' && present === undefined && onCursor(null)} style={{ cursor: 'crosshair' }} />
           )}
         </svg>
       )}

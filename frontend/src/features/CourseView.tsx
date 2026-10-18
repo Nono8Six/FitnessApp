@@ -1,9 +1,10 @@
-import { useMemo } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Gauge, Mountain } from 'lucide-react'
-import { TimeChart, useWidth, type Series } from '../components/charts'
+import { nearest, TimeChart, useWidth, type Series } from '../components/charts'
 import { calories, clock, dec1, dec2, pace } from '../lib/format'
 import type { LiveSample, Session } from '../lib/execution'
-import type { Block, Sample } from '../lib/types'
+import type { Block } from '../lib/types'
+import { courseTimeline } from '../lib/courseTimeline'
 
 /** Vue d'effort : mesure actuelle, fenêtre glissante et un seul bloc à venir. */
 export function CourseView({ session, samples, blocks, speed, incline, available }: {
@@ -13,25 +14,28 @@ export function CourseView({ session, samples, blocks, speed, incline, available
   const block = blocks[session.block_index], next = blocks[session.block_index + 1]
   const active = session.active_s
   const remaining = Math.max(0, Math.ceil(block.end - active))
-  const x0 = Math.max(block.start, Math.floor(active) - 90)
-  const x1 = Math.max(x0 + 30, Math.min(next?.end ?? block.end, active + 120))
-  const measured = useMemo(() => samples
-    .filter(p => p.active_s >= x0 - 2 && p.active_s <= x1 && ['running', 'transitioning', 'adjusting'].includes(p.phase))
-    .map(p => ({ ...p, t: p.active_s })), [samples, x0, x1])
-  const planned: Sample[] = [
-    { t: x0, target: block.speed, speed: null, incline: null },
-    ...(next && block.end <= x1 ? [{ t: block.end, target: next.speed, speed: null, incline: null }] : []),
-    { t: x1, target: next && x1 >= block.end ? next.speed : block.speed, speed: null, incline: null },
-  ]
+  const { x0, x1, measured, forecast, gaps } = useMemo(() => courseTimeline(samples, blocks, session.block_index, active), [samples, blocks, session.block_index, active])
+  const [selected, setSelected] = useState<number | null>(null)
+  useEffect(() => { setSelected(null) }, [session.id])
+  const cursor = selected !== null && selected >= x0 && selected <= x1 ? selected : null
+  const point = cursor !== null && cursor <= active ? nearest(measured, cursor) : null
+  let readout: string | null = null
+  if (cursor !== null) {
+    if (cursor > (next?.end ?? block.end)) readout = 'Fin du programme'
+    else if (cursor > active) readout = `Prévu ${clock(cursor)} · ${dec1(next && cursor >= block.end ? next.speed : block.speed)} km/h`
+    else readout = point && point.speed !== null && Math.abs(point.t - cursor) <= 2
+      ? `${dec1(point.speed)} km/h · ${clock(point.t)}` : 'Mesure absente'
+  }
   const series: Series[] = [
-    { key: 'measured', data: measured, value: p => p.speed, color: 'var(--color-speed)', width: 3, area: true, maxGap: 2 },
-    { key: 'planned', data: planned, value: p => p.target, color: 'rgb(255 255 255 / .6)', width: 1.5, dash: '5 5', step: true, maxGap: Infinity },
+    { key: 'measured', data: measured, value: p => p.speed, color: 'var(--color-speed)', width: 2.5, area: true, maxGap: 2 },
+    { key: 'previous-targets', data: measured, value: p => p.target, color: 'rgb(255 255 255 / .35)', width: 1, dash: '4 4', step: true, maxGap: 2 },
+    { key: 'forecast', data: forecast, value: p => p.target, color: 'rgb(255 255 255 / .65)', width: 1.5, dash: '4 4', step: true, maxGap: Infinity },
   ]
   const kcal = available ? calories(session.totals.energy) : null
   const distance = available && session.distance_m !== null ? dec2(session.distance_m / 1000) : null
   const currentPace = speed === null || speed === 0 ? '--' : pace(speed)
   const moving = ['running', 'transitioning', 'adjusting'].includes(session.phase)
-  const maximum = Math.max(4, Math.ceil(Math.max(block.speed, next?.speed ?? 0, ...measured.map(p => p.speed ?? 0)) / 2) * 2)
+  const maximum = Math.max(16, Math.ceil(Math.max(block.speed, next?.speed ?? 0, ...measured.map(p => p.speed ?? 0)) / 4) * 4)
   return <div ref={ref} className="course-view" aria-label="Vue course graphique">
     <div className="course-hero">
       <div>
@@ -55,11 +59,14 @@ export function CourseView({ session, samples, blocks, speed, incline, available
       <span style={{ width: `${Math.max(0, Math.min(100, (active - block.start) / block.sec * 100))}%` }} />
     </div>
     <div className="course-chart" aria-label="Vitesse mesurée et aperçu des consignes">
-      <div className="course-legend"><span>Vitesse <small>km/h</small></span><span><i />Mesurée</span><span><i />Cible</span></div>
-      <TimeChart series={series} x0={x0} x1={x1} y0={0} y1={maximum} height={width >= 600 ? 200 : 108} unit="km/h"
+      <div className="course-legend"><span>{readout ?? <>Vitesse <small>km/h</small></>}</span>
+        {cursor === null ? <><span><i />Mesurée</span><span><i />Objectif</span></> : <button type="button" onClick={() => setSelected(null)} className="course-chart-live">Retour au direct</button>}
+      </div>
+      <TimeChart series={series} x0={x0} x1={x1} y0={0} y1={maximum} height={width >= 600 ? 220 : 132} unit="km/h"
         label="Vitesse mesurée et consigne, bloc actuel et suivant"
-        live={available && speed !== null && moving}
-        markers={next ? [{ t: block.end, sec: next.sec, label: next.label, color: 'var(--color-label-2)' }] : []} />
+        present={active} cursor={cursor} onCursor={setSelected} gaps={gaps}
+        live={available && speed !== null && moving && cursor === null}
+        markers={next ? [{ t: block.end, label: `Bloc suivant · ${next.label}`, color: 'var(--color-label-2)' }] : []} />
       {!measured.some(p => p.speed !== null) && <p className="course-chart-empty" role="status">{available ? 'En attente des premières mesures' : 'Mesures actuelles indisponibles'}</p>}
     </div>
     <section className="course-next" aria-label="Prochain bloc">
