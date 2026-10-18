@@ -204,8 +204,8 @@ export interface Series {
   joinSteps?: boolean
   showPoint?: boolean
   axis?: 'secondary'
-  /** Un palier creux encode une consigne, son centre indique la valeur exacte. */
-  shape?: 'rail'
+  /** Les consignes sont des traits fins avec repères creux, distincts des mesures pleines. */
+  shape?: 'target'
 }
 
 export interface Marker { t: number; label: string; sec?: number; color?: string }
@@ -335,8 +335,7 @@ export function TimeChart({
               <line x1={0} x2={11} y1={10} y2={10} stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" />
               <circle cx={6} cy={10} r={2.5} fill="currentColor" />
               <text x={17} y={13}>Mesures</text>
-              <rect x={pw - 68} y={7} width={12} height={6} rx={1.5} fill="none" stroke="currentColor" strokeWidth={1.2} />
-              <text x={pw} y={13} textAnchor="end">Consignes</text>
+              <text x={pw} y={13} textAnchor="end">{markers.length ? `Suivant dans ${clock(Math.max(0, markers[0].t - present))}` : 'Consignes'}</text>
             </g>
           </>}
           {yTicks.map((v) => (
@@ -373,18 +372,16 @@ export function TimeChart({
             ))}
             {series.map((s) => {
               const segs = segments(s.data.filter((p) => p.t >= x0 - 10 && p.t <= x1 + 10), s.value, x, seriesY(s), s.step, s.maxGap, s.joinSteps)
-              if (s.shape === 'rail') return <g key={s.key} data-series={s.key} data-shape="target" opacity={s.opacity ?? 1}>
+              if (s.shape === 'target') return <g key={s.key} data-series={s.key} data-shape="target" opacity={s.opacity ?? 1}>
                 {segs.map((seg, i) => {
                   const left = seg[0][0], right = seg.at(-1)![0], cy = seg[0][1]
                   const span = right - left
                   if (span <= 0) return null
-                  const railHeight = s.axis === 'secondary' ? 4 : 8
                   // Un léger retrait sépare les blocs sans pointillés ni raccord vertical.
                   const inset = Math.min(1.5, span / 8)
                   return <g key={i}>
-                    {s.axis !== 'secondary' && <rect x={left} y={cy} width={span} height={Math.max(0, padT + ph - cy)} fill={s.color} opacity={.065} />}
-                    <rect x={left + inset} y={cy - railHeight / 2} width={span - inset * 2} height={railHeight} rx={1.5}
-                      fill="#191c20" stroke={s.color} strokeWidth={1.3} />
+                    <line x1={left + inset} x2={right - inset} y1={cy} y2={cy} stroke={s.color} strokeWidth={1.4} strokeLinecap="round" />
+                    {span >= 12 && <circle cx={left + Math.min(5, span / 2)} cy={cy} r={2.5} fill="#191c20" stroke={s.color} strokeWidth={1.2} />}
                     {s.axis !== 'secondary' && span >= 40 && cy - padT >= 16 && <text x={left + span / 2} y={cy - 8}
                       textAnchor="middle" fontSize={10} fontWeight={500} fill={s.color} className="num">{dec1(y1 - (cy - padT) / ph * (y1 - y0))}</text>}
                   </g>
@@ -418,12 +415,12 @@ export function TimeChart({
             <g pointerEvents="none">
               <line x1={x(cursor)} x2={x(cursor)} y1={padT} y2={padT + ph} stroke="var(--color-label-2)" strokeWidth={1} />
               {series.map(s => {
-                if (s.shape === 'rail') {
+                if (s.shape === 'target') {
                   if (present === undefined || cursor <= present || cursor > (s.data.at(-1)?.t ?? -Infinity)) return null
                   const p = [...s.data].reverse().find(p => p.t <= cursor)
                   const v = p && s.value(p)
-                  return v != null ? <rect key={s.key} x={x(cursor) - 3.5} y={seriesY(s)(v) - 3.5}
-                    width={7} height={7} rx={1} fill="#191c20" stroke={s.color} strokeWidth={1.8} /> : null
+                  return v != null ? <circle key={s.key} cx={x(cursor)} cy={seriesY(s)(v)}
+                    r={3.5} fill="#191c20" stroke={s.color} strokeWidth={1.8} /> : null
                 }
                 if (s.dash || s.showPoint === false || (present !== undefined && cursor > present)) return null
                 const p = nearest(s.data, cursor)

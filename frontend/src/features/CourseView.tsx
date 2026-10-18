@@ -28,8 +28,8 @@ export function CourseView({ session, samples, blocks, speed, incline, available
   const series: Series[] = [
     { key: 'measured-speed', data: measured, value: p => p.speed, color: 'var(--color-speed)', width: 3, area: true, maxGap: 2 },
     { key: 'measured-incline', data: measured, value: p => p.incline, color: 'var(--color-incline)', width: 2, step: true, maxGap: 2, axis: 'secondary' },
-    { key: 'planned-speed', data: forecast, value: p => p.target, color: 'var(--color-speed)', shape: 'rail', step: true, joinSteps: false, showPoint: false, maxGap: Infinity },
-    { key: 'planned-incline', data: forecast, value: p => p.target_incline ?? null, color: 'var(--color-incline)', shape: 'rail', step: true, joinSteps: false, showPoint: false, maxGap: Infinity, axis: 'secondary' },
+    { key: 'planned-speed', data: forecast, value: p => p.target, color: 'var(--color-speed)', shape: 'target', step: true, joinSteps: false, showPoint: false, maxGap: Infinity },
+    { key: 'planned-incline', data: forecast, value: p => p.target_incline ?? null, color: 'var(--color-incline)', shape: 'target', step: true, joinSteps: false, showPoint: false, maxGap: Infinity, axis: 'secondary' },
   ]
   const kcal = available ? calories(session.totals.energy) : null
   const distance = available && session.distance_m !== null ? dec2(session.distance_m / 1000) : null

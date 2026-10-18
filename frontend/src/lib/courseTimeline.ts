@@ -1,12 +1,12 @@
 import type { LiveSample } from './execution'
 import type { Block, Sample } from './types'
 
-/** Temps actif réel : une minute de recul, 30 s de prévision, jamais au-delà du bloc suivant. */
+/** Temps actif réel : une minute de recul et le bloc suivant entier, sur une échelle proportionnelle. */
 export function courseTimeline(samples: LiveSample[], blocks: Block[], index: number, active: number) {
   const block = blocks[index], next = blocks[index + 1]
   const x0 = Math.max(0, Math.floor(active) - 60)
   const end = next?.end ?? block.end
-  const x1 = Math.max(active + 1, Math.min(end, active + 30))
+  const x1 = Math.max(active + 1, end)
   const measured = samples
     .filter(p => p.active_s >= x0 - 2 && p.active_s <= active && ['running', 'transitioning', 'adjusting'].includes(p.phase))
     .map(p => ({ ...p, t: p.active_s }))
