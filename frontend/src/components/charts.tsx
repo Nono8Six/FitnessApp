@@ -201,13 +201,15 @@ export interface Series {
   area?: boolean
   opacity?: number
   maxGap?: number
+  joinSteps?: boolean
+  showPoint?: boolean
 }
 
 export interface Marker { t: number; label: string; sec?: number; color?: string }
 
 type Pt = [number, number]
 
-function segments(data: Sample[], value: (s: Sample) => number | null, x: (t: number) => number, y: (v: number) => number, step = false, maxGap = 12) {
+function segments(data: Sample[], value: (s: Sample) => number | null, x: (t: number) => number, y: (v: number) => number, step = false, maxGap = 12, joinSteps = true) {
   const segs: Pt[][] = []
   let cur: Pt[] = []
   let prev: Sample | null = null
@@ -220,7 +222,11 @@ function segments(data: Sample[], value: (s: Sample) => number | null, x: (t: nu
       if (v === null) continue
     }
     const X = x(s.t), Y = y(v)
-    if (step && cur.length) cur.push([X, cur[cur.length - 1][1]])
+    if (step && cur.length) {
+      const previousY = cur[cur.length - 1][1]
+      cur.push([X, previousY])
+      if (!joinSteps && previousY !== Y) { segs.push(cur); cur = [] }
+    }
     cur.push([X, Y])
     prev = s
   }
@@ -244,19 +250,20 @@ function niceTicks(lo: number, hi: number, count = 3) {
 
 export function TimeChart({
   series, x0, x1, y0, y1, height = 200, unit, markers = [], gaps = [], cursor, onCursor, label, yFormat = (v) => String(v).replace('.', ','),
-  live, present,
+  live, present, stack,
 }: {
   series: Series[]; x0: number; x1: number; y0: number; y1: number; height?: number; unit: string
   markers?: Marker[]; gaps?: [number, number][]; cursor?: number | null; onCursor?: (t: number | null) => void; label: string
   yFormat?: (v: number) => string; live?: boolean; present?: number
+  stack?: 'top' | 'bottom'
 }) {
   const [ref, w] = useWidth<HTMLDivElement>()
-  const padR = present === undefined ? 34 : 28, padB = 22, padT = present === undefined ? 8 : 24
+  const padR = present === undefined ? 34 : 28, padB = stack === 'top' ? 6 : 22, padT = stack === 'bottom' ? 6 : stack === 'top' ? 20 : present === undefined ? 8 : 24
   const pw = Math.max(1, w - padR)
   const ph = height - padB - padT
   const x = useCallback((t: number) => ((t - x0) / (x1 - x0 || 1)) * pw, [x0, x1, pw])
   const y = useCallback((v: number) => padT + ph - ((v - y0) / (y1 - y0 || 1)) * ph, [y0, y1, ph])
-  const yTicks = useMemo(() => present === undefined ? niceTicks(y0, y1, 3) : Array.from({ length: 5 }, (_, i) => y0 + (y1 - y0) * i / 4), [y0, y1, present === undefined])
+  const yTicks = useMemo(() => present === undefined ? niceTicks(y0, y1, 3) : Array.from({ length: stack === 'bottom' ? 3 : 5 }, (_, i) => y0 + (y1 - y0) * i / (stack === 'bottom' ? 2 : 4)), [y0, y1, present === undefined, stack])
   const xTicks = useMemo(() => {
     if (present !== undefined) return [x0, (x0 + x1) / 2, x1]
     const span = x1 - x0
@@ -309,8 +316,8 @@ export function TimeChart({
           className="touch-pan-y outline-none focus-visible:outline-2 focus-visible:outline-accent">
           <defs>
             <linearGradient id={gradId} x1="0" x2="0" y1="0" y2="1">
-              <stop offset="0" stopColor="var(--color-accent)" stopOpacity={0.28} />
-              <stop offset="1" stopColor="var(--color-accent)" stopOpacity={0} />
+              <stop offset="0" stopColor={series[0]?.color ?? 'var(--color-accent)'} stopOpacity={0.28} />
+              <stop offset="1" stopColor={series[0]?.color ?? 'var(--color-accent)'} stopOpacity={0} />
             </linearGradient>
             <clipPath id={`${gradId}-clip`}><rect x={0} y={0} width={pw} height={height} /></clipPath>
           </defs>
@@ -318,8 +325,10 @@ export function TimeChart({
             <rect x={0} y={padT} width={pw} height={ph} rx={6} fill="rgb(255 255 255 / .025)" />
             <rect x={x(present)} y={padT} width={Math.max(0, pw - x(present))} height={ph} fill="rgb(255 255 255 / .035)" />
             <line x1={x(present)} x2={x(present)} y1={padT - 5} y2={padT + ph} stroke="rgb(255 255 255 / .25)" strokeWidth={1} />
-            <text x={Math.max(30, Math.min(pw - 30, x(present)))} y={12} fontSize={9} fontWeight={500} fill="var(--color-label-2)" textAnchor="middle">Maintenant</text>
-            {pw - x(present) > 80 && <text x={pw} y={12} fontSize={9} fill="var(--color-label-2)" textAnchor="end">À venir</text>}
+            {stack !== 'bottom' && <>
+              <text x={Math.max(30, Math.min(pw - 30, x(present)))} y={12} fontSize={9} fontWeight={500} fill="var(--color-label-2)" textAnchor="middle">Maintenant</text>
+              {pw - x(present) > 80 && <text x={pw} y={12} fontSize={9} fill="var(--color-label-2)" textAnchor="end">À venir</text>}
+            </>}
           </>}
           {yTicks.map((v) => (
             <g key={v}>
@@ -327,7 +336,7 @@ export function TimeChart({
               <text x={pw + 6} y={y(v) + 4} fontSize={11} fill="var(--color-label-2)" className="num">{yFormat(v)}</text>
             </g>
           ))}
-          {xTicks.map((t) => (
+          {stack !== 'top' && xTicks.map((t) => (
             <g key={t}>
               {present === undefined && <line x1={x(t)} x2={x(t)} y1={padT} y2={padT + ph} stroke="var(--color-sep)" strokeWidth={0.5} strokeDasharray="1 3" />}
               <text x={x(t)} y={height - 5} fontSize={present === undefined ? 11 : 10} fill="var(--color-label-2)" textAnchor={present === undefined ? t === x0 ? 'start' : 'middle' : x(t) < 20 ? 'start' : x(t) > pw - 20 ? 'end' : 'middle'} className="num">{fmtT(t)}</text>
@@ -339,14 +348,20 @@ export function TimeChart({
             ))}
             {markers.map((m, i) => (
               <g key={`${m.t}:${i}`}><title>{m.label}</title>
-                {m.sec !== undefined && present === undefined && <rect x={x(m.t)} y={padT} width={Math.max(0, x(m.t + m.sec) - x(m.t))} height={ph} fill={m.color ?? 'var(--color-yellow)'} opacity={.1} />}
+                {present !== undefined ? <>
+                  <defs><linearGradient id={`${gradId}-block-${i}`} gradientUnits="userSpaceOnUse" x1={x(m.t) - 8} x2={x(m.t) + 12}>
+                    <stop offset="0" stopColor="white" stopOpacity={0} /><stop offset="1" stopColor="white" stopOpacity={.045} />
+                  </linearGradient></defs>
+                  <rect x={x(m.t) - 8} y={padT} width={Math.max(0, pw - x(m.t) + 8)} height={ph} fill={`url(#${gradId}-block-${i})`} />
+                </> : <>
+                {m.sec !== undefined && <rect x={x(m.t)} y={padT} width={Math.max(0, x(m.t + m.sec) - x(m.t))} height={ph} fill={m.color ?? 'var(--color-yellow)'} opacity={.1} />}
                 <line x1={x(m.t)} x2={x(m.t)} y1={padT} y2={padT + ph} stroke={m.color ?? 'var(--color-yellow)'} strokeWidth={1} strokeDasharray="3 3" />
-                {present === undefined ? <rect x={x(m.t) - 4} y={padT} width={8} height={8} rx={2} fill={m.color ?? 'var(--color-yellow)'} />
-                  : <path d={`M${x(m.t) - 3},${padT - 5} L${x(m.t) + 3},${padT - 5} L${x(m.t)},${padT - 1} Z`} fill="var(--color-label-2)" />}
+                <rect x={x(m.t) - 4} y={padT} width={8} height={8} rx={2} fill={m.color ?? 'var(--color-yellow)'} />
+                </>}
               </g>
             ))}
             {series.map((s) => {
-              const segs = segments(s.data.filter((p) => p.t >= x0 - 10 && p.t <= x1 + 10), s.value, x, y, s.step, s.maxGap)
+              const segs = segments(s.data.filter((p) => p.t >= x0 - 10 && p.t <= x1 + 10), s.value, x, y, s.step, s.maxGap, s.joinSteps)
               return (
                 <g key={s.key} opacity={s.opacity ?? 1}>
                   {s.area && <path d={area(segs, padT + ph)} fill={`url(#${gradId})`} />}
@@ -360,8 +375,8 @@ export function TimeChart({
               if (!lastS || (present !== undefined && Math.abs(lastS.t - present) > 2)) return null
               return (
                 <g>
-                  <circle cx={x(lastS.t)} cy={y(main.value(lastS)!)} r={9} fill={main.color} opacity={0.22} className="animate-pulse-dot" />
-                  <circle cx={x(lastS.t)} cy={y(main.value(lastS)!)} r={4} fill={main.color} stroke="#000" strokeWidth={1.5} />
+                  <circle cx={x(lastS.t)} cy={y(main.value(lastS)!)} r={stack === 'bottom' ? 6 : 9} fill={main.color} opacity={0.22} className="animate-pulse-dot" />
+                  <circle cx={x(lastS.t)} cy={y(main.value(lastS)!)} r={stack === 'bottom' ? 3 : 4} fill={main.color} stroke="#000" strokeWidth={1.5} />
                 </g>
               )
             })()}
@@ -369,7 +384,7 @@ export function TimeChart({
           {cursor != null && cursor >= x0 && cursor <= x1 && (
             <g pointerEvents="none">
               <line x1={x(cursor)} x2={x(cursor)} y1={padT - 8} y2={padT + ph} stroke="var(--color-label-2)" strokeWidth={1} />
-              {series.filter((s) => !s.dash).map((s) => {
+              {series.filter((s) => !s.dash && s.showPoint !== false).map((s) => {
                 const p = nearest(s.data, cursor)
                 const v = p && s.value(p)
                 return v != null && Math.abs(p!.t - cursor) < (s.maxGap ?? 12) ? (

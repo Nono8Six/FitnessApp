@@ -16,6 +16,7 @@ export interface Block {
 export interface Sample {
   t: number
   target: number
+  target_incline?: number
   speed: number | null
   incline: number | null
 }

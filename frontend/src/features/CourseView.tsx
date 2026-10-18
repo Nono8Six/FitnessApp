@@ -19,23 +19,36 @@ export function CourseView({ session, samples, blocks, speed, incline, available
   useEffect(() => { setSelected(null) }, [session.id])
   const cursor = selected !== null && selected >= x0 && selected <= x1 ? selected : null
   const point = cursor !== null && cursor <= active ? nearest(measured, cursor) : null
+  const observed = point && cursor !== null && Math.abs(point.t - cursor) <= 2 ? point : null
+  const planned = cursor !== null && next && cursor >= block.end ? next : block
   let readout: string | null = null
   if (cursor !== null) {
     if (cursor > (next?.end ?? block.end)) readout = 'Fin du programme'
-    else if (cursor > active) readout = `Prévu ${clock(cursor)} · ${dec1(next && cursor >= block.end ? next.speed : block.speed)} km/h`
-    else readout = point && point.speed !== null && Math.abs(point.t - cursor) <= 2
-      ? `${dec1(point.speed)} km/h · ${clock(point.t)}` : 'Mesure absente'
+    else if (cursor > active) readout = `Prévu ${clock(cursor)} · ${dec1(planned.speed)} km/h`
+    else readout = observed && observed.speed !== null
+      ? `${dec1(observed.speed)} km/h · ${clock(observed.t)}` : 'Mesure absente'
   }
+  const inclineReadout = cursor === null ? (available && incline !== null ? `${dec1(incline)} %` : '-- %')
+    : cursor > (next?.end ?? block.end) ? '-- %'
+    : cursor > active ? `Prévu · ${dec1(planned.incline)} %`
+    : observed?.incline != null ? `${dec1(observed.incline)} %` : 'Mesure absente'
   const series: Series[] = [
     { key: 'measured', data: measured, value: p => p.speed, color: 'var(--color-speed)', width: 2.5, area: true, maxGap: 2 },
-    { key: 'previous-targets', data: measured, value: p => p.target, color: 'rgb(255 255 255 / .35)', width: 1, dash: '4 4', step: true, maxGap: 2 },
-    { key: 'forecast', data: forecast, value: p => p.target, color: 'rgb(255 255 255 / .65)', width: 1.5, dash: '4 4', step: true, maxGap: Infinity },
+    { key: 'previous-targets', data: measured, value: p => p.target, color: 'rgb(255 255 255 / .25)', width: 1, step: true, joinSteps: false, showPoint: false, maxGap: 2 },
+    { key: 'forecast', data: forecast, value: p => p.target, color: 'rgb(255 255 255 / .55)', width: 1.3, step: true, joinSteps: false, showPoint: false, maxGap: Infinity },
+  ]
+  const inclineSeries: Series[] = [
+    { key: 'incline', data: measured, value: p => p.incline, color: 'var(--color-incline)', width: 2, step: true, area: true, maxGap: 2 },
+    { key: 'previous-inclines', data: measured, value: p => p.target_incline ?? null, color: 'var(--color-incline)', opacity: .25, width: 1, step: true, joinSteps: false, showPoint: false, maxGap: 2 },
+    { key: 'forecast-incline', data: forecast, value: p => p.target_incline ?? null, color: 'var(--color-incline)', opacity: .55, width: 1.3, step: true, joinSteps: false, showPoint: false, maxGap: Infinity },
   ]
   const kcal = available ? calories(session.totals.energy) : null
   const distance = available && session.distance_m !== null ? dec2(session.distance_m / 1000) : null
   const currentPace = speed === null || speed === 0 ? '--' : pace(speed)
   const moving = ['running', 'transitioning', 'adjusting'].includes(session.phase)
   const maximum = Math.max(16, Math.ceil(Math.max(block.speed, next?.speed ?? 0, ...measured.map(p => p.speed ?? 0)) / 4) * 4)
+  const inclineMaximum = Math.max(2, Math.ceil(Math.max(block.incline, next?.incline ?? 0, ...measured.map(p => p.incline ?? 0)) / 2) * 2)
+  const markers = next ? [{ t: block.end, label: `Bloc suivant · ${next.label}` }] : []
   return <div ref={ref} className="course-view" aria-label="Vue course graphique">
     <div className="course-hero">
       <div>
@@ -58,16 +71,24 @@ export function CourseView({ session, samples, blocks, speed, incline, available
       aria-valuenow={Math.round(Math.max(0, Math.min(block.sec, active - block.start)))}>
       <span style={{ width: `${Math.max(0, Math.min(100, (active - block.start) / block.sec * 100))}%` }} />
     </div>
-    <div className="course-chart" aria-label="Vitesse mesurée et aperçu des consignes">
+    <div className="course-chart" aria-label="Vitesse et inclinaison mesurées et prévues">
       <div className="course-legend"><span>{readout ?? <>Vitesse <small>km/h</small></>}</span>
         {cursor === null ? <><span><i />Mesurée</span><span><i />Objectif</span></> : <button type="button" onClick={() => setSelected(null)} className="course-chart-live">Retour au direct</button>}
       </div>
-      <TimeChart series={series} x0={x0} x1={x1} y0={0} y1={maximum} height={width >= 600 ? 220 : 132} unit="km/h"
+      <TimeChart series={series} x0={x0} x1={x1} y0={0} y1={maximum} height={width >= 600 ? 152 : width >= 340 ? 112 : 96} unit="km/h" stack="top"
         label="Vitesse mesurée et consigne, bloc actuel et suivant"
         present={active} cursor={cursor} onCursor={setSelected} gaps={gaps}
         live={available && speed !== null && moving && cursor === null}
-        markers={next ? [{ t: block.end, label: `Bloc suivant · ${next.label}`, color: 'var(--color-label-2)' }] : []} />
+        markers={markers} />
       {!measured.some(p => p.speed !== null) && <p className="course-chart-empty" role="status">{available ? 'En attente des premières mesures' : 'Mesures actuelles indisponibles'}</p>}
+      <div className="course-incline-heading"><span>Inclinaison <small>%</small></span><strong className="num">{inclineReadout}</strong></div>
+      <div className="course-incline-plot">
+        <TimeChart series={inclineSeries} x0={x0} x1={x1} y0={0} y1={inclineMaximum} height={width >= 600 ? 80 : 64} unit="%" stack="bottom"
+          label="Inclinaison mesurée et prévue, même instant que la vitesse"
+          present={active} cursor={cursor} onCursor={setSelected} gaps={gaps} markers={markers}
+          live={available && incline !== null && moving && cursor === null} />
+        {!measured.some(p => p.incline != null) && <p className="course-incline-empty" role="status">{available ? 'En attente de la pente' : 'Pente actuelle indisponible'}</p>}
+      </div>
     </div>
     <section className="course-next" aria-label="Prochain bloc">
       <div className="course-next-meta"><span>{next ? 'Bloc suivant' : 'Dernier bloc'}</span><span className="num">{next ? `Durée ${clock(next.sec)}` : 'Puis fin de séance'}</span></div>

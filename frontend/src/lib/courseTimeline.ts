@@ -11,9 +11,10 @@ export function courseTimeline(samples: LiveSample[], blocks: Block[], index: nu
     .filter(p => p.active_s >= x0 - 2 && p.active_s <= active && ['running', 'transitioning', 'adjusting'].includes(p.phase))
     .map(p => ({ ...p, t: p.active_s }))
   const forecast: Sample[] = [
-    { t: active, target: block.speed, speed: null, incline: null },
-    ...(next && block.end >= active && block.end <= x1 ? [{ t: block.end, target: next.speed, speed: null, incline: null }] : []),
-    { t: Math.min(x1, end), target: next && x1 >= block.end ? next.speed : block.speed, speed: null, incline: null },
+    { t: active, target: block.speed, target_incline: block.incline, speed: null, incline: null },
+    ...(next && block.end >= active && block.end <= x1 ? [{ t: block.end, target: next.speed, target_incline: next.incline, speed: null, incline: null }] : []),
+    { t: Math.min(x1, end), target: next && x1 >= block.end ? next.speed : block.speed,
+      target_incline: next && x1 >= block.end ? next.incline : block.incline, speed: null, incline: null },
   ]
   const gaps: [number, number][] = []
   for (let i = 1; i < measured.length; i++) {
