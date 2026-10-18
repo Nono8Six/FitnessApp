@@ -21,24 +21,16 @@ export function CourseView({ session, samples, blocks, speed, incline, available
   const point = cursor !== null && cursor <= active ? nearest(measured, cursor) : null
   const observed = point && cursor !== null && Math.abs(point.t - cursor) <= 2 ? point : null
   const planned = cursor !== null && next && cursor >= block.end ? next : block
-  let readout: string | null = null
-  if (cursor !== null) {
-    if (cursor > (next?.end ?? block.end)) readout = 'Fin du programme'
-    else if (cursor > active) readout = `Prévu ${clock(cursor)} · ${dec1(planned.speed)} km/h`
-    else readout = observed && observed.speed !== null
-      ? `${dec1(observed.speed)} km/h · ${clock(observed.t)}` : 'Mesure absente'
-  }
-  const inclineReadout = cursor === null ? (available && incline !== null ? `${dec1(incline)} %` : '-- %')
-    : cursor > (next?.end ?? block.end) ? '-- %'
-    : cursor > active ? `Prévu · ${dec1(planned.incline)} %`
-    : observed?.incline != null ? `${dec1(observed.incline)} %` : 'Mesure absente'
+  const future = cursor !== null && cursor > active && cursor <= (next?.end ?? block.end)
+  const selectedSpeed = future ? planned.speed : observed?.speed
+  const selectedIncline = future ? planned.incline : observed?.incline
   const series: Series[] = [
     { key: 'measured', data: measured, value: p => p.speed, color: 'var(--color-speed)', width: 2.5, area: true, maxGap: 2 },
     { key: 'previous-targets', data: measured, value: p => p.target, color: 'rgb(255 255 255 / .25)', width: 1, step: true, joinSteps: false, showPoint: false, maxGap: 2 },
     { key: 'forecast', data: forecast, value: p => p.target, color: 'rgb(255 255 255 / .55)', width: 1.3, step: true, joinSteps: false, showPoint: false, maxGap: Infinity },
   ]
   const inclineSeries: Series[] = [
-    { key: 'incline', data: measured, value: p => p.incline, color: 'var(--color-incline)', width: 2, step: true, area: true, maxGap: 2 },
+    { key: 'incline', data: measured, value: p => p.incline, color: 'var(--color-incline)', width: 2, step: true, maxGap: 2 },
     { key: 'previous-inclines', data: measured, value: p => p.target_incline ?? null, color: 'var(--color-incline)', opacity: .25, width: 1, step: true, joinSteps: false, showPoint: false, maxGap: 2 },
     { key: 'forecast-incline', data: forecast, value: p => p.target_incline ?? null, color: 'var(--color-incline)', opacity: .55, width: 1.3, step: true, joinSteps: false, showPoint: false, maxGap: Infinity },
   ]
@@ -72,23 +64,24 @@ export function CourseView({ session, samples, blocks, speed, incline, available
       <span style={{ width: `${Math.max(0, Math.min(100, (active - block.start) / block.sec * 100))}%` }} />
     </div>
     <div className="course-chart" aria-label="Vitesse et inclinaison mesurées et prévues">
-      <div className="course-legend"><span>{readout ?? <>Vitesse <small>km/h</small></>}</span>
-        {cursor === null ? <><span><i />Mesurée</span><span><i />Objectif</span></> : <button type="button" onClick={() => setSelected(null)} className="course-chart-live">Retour au direct</button>}
+      <div className="course-legend">
+        <span><i />Vitesse <small>km/h</small></span>
+        <span><i />Inclinaison <small>%</small></span>
       </div>
-      <TimeChart series={series} x0={x0} x1={x1} y0={0} y1={maximum} height={width >= 600 ? 152 : width >= 340 ? 112 : 96} unit="km/h" stack="top"
-        label="Vitesse mesurée et consigne, bloc actuel et suivant"
+      {cursor !== null && <div className="course-chart-reading num" aria-live="polite">
+        <span>{future ? 'Prévu' : cursor > (next?.end ?? block.end) ? 'Fin' : 'Mesuré'} · {clock(cursor)}</span>
+        <strong>{selectedSpeed != null ? dec1(selectedSpeed) : '--'} <small>km/h</small></strong>
+        <strong>{selectedIncline != null ? dec1(selectedIncline) : '--'} <small>%</small></strong>
+        <button type="button" onClick={() => setSelected(null)} className="course-chart-live" aria-label="Retour au direct">Direct</button>
+      </div>}
+      <TimeChart series={[...series, ...inclineSeries.map(s => ({ ...s, axis: 'secondary' as const }))]}
+        x0={x0} x1={x1} y0={0} y1={maximum} height={width >= 600 ? 200 : 132} unit="km/h"
+        secondary={{ y0: 0, y1: inclineMaximum, unit: '%', color: 'var(--color-incline)' }}
+        label="Vitesse et inclinaison mesurées et prévues, bloc actuel et suivant"
         present={active} cursor={cursor} onCursor={setSelected} gaps={gaps}
-        live={available && speed !== null && moving && cursor === null}
+        live={available && (speed !== null || incline !== null) && moving && cursor === null}
         markers={markers} />
-      {!measured.some(p => p.speed !== null) && <p className="course-chart-empty" role="status">{available ? 'En attente des premières mesures' : 'Mesures actuelles indisponibles'}</p>}
-      <div className="course-incline-heading"><span>Inclinaison <small>%</small></span><strong className="num">{inclineReadout}</strong></div>
-      <div className="course-incline-plot">
-        <TimeChart series={inclineSeries} x0={x0} x1={x1} y0={0} y1={inclineMaximum} height={width >= 600 ? 80 : 64} unit="%" stack="bottom"
-          label="Inclinaison mesurée et prévue, même instant que la vitesse"
-          present={active} cursor={cursor} onCursor={setSelected} gaps={gaps} markers={markers}
-          live={available && incline !== null && moving && cursor === null} />
-        {!measured.some(p => p.incline != null) && <p className="course-incline-empty" role="status">{available ? 'En attente de la pente' : 'Pente actuelle indisponible'}</p>}
-      </div>
+      {!measured.some(p => p.speed !== null || p.incline != null) && <p className="course-chart-empty" role="status">{available ? 'En attente des premières mesures' : 'Mesures actuelles indisponibles'}</p>}
     </div>
     <section className="course-next" aria-label="Prochain bloc">
       <div className="course-next-meta"><span>{next ? 'Bloc suivant' : 'Dernier bloc'}</span><span className="num">{next ? `Durée ${clock(next.sec)}` : 'Puis fin de séance'}</span></div>

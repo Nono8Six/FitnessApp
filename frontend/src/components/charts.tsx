@@ -203,6 +203,7 @@ export interface Series {
   maxGap?: number
   joinSteps?: boolean
   showPoint?: boolean
+  axis?: 'secondary'
 }
 
 export interface Marker { t: number; label: string; sec?: number; color?: string }
@@ -250,20 +251,23 @@ function niceTicks(lo: number, hi: number, count = 3) {
 
 export function TimeChart({
   series, x0, x1, y0, y1, height = 200, unit, markers = [], gaps = [], cursor, onCursor, label, yFormat = (v) => String(v).replace('.', ','),
-  live, present, stack,
+  live, present, secondary,
 }: {
   series: Series[]; x0: number; x1: number; y0: number; y1: number; height?: number; unit: string
   markers?: Marker[]; gaps?: [number, number][]; cursor?: number | null; onCursor?: (t: number | null) => void; label: string
   yFormat?: (v: number) => string; live?: boolean; present?: number
-  stack?: 'top' | 'bottom'
+  secondary?: { y0: number; y1: number; unit: string; color: string }
 }) {
   const [ref, w] = useWidth<HTMLDivElement>()
-  const padR = present === undefined ? 34 : 28, padB = stack === 'top' ? 6 : 22, padT = stack === 'bottom' ? 6 : stack === 'top' ? 20 : present === undefined ? 8 : 24
-  const pw = Math.max(1, w - padR)
+  const padL = secondary ? 26 : 0
+  const padR = present === undefined ? 34 : 28, padB = 22, padT = present === undefined ? 8 : 24
+  const pw = Math.max(1, w - padL - padR)
   const ph = height - padB - padT
   const x = useCallback((t: number) => ((t - x0) / (x1 - x0 || 1)) * pw, [x0, x1, pw])
-  const y = useCallback((v: number) => padT + ph - ((v - y0) / (y1 - y0 || 1)) * ph, [y0, y1, ph])
-  const yTicks = useMemo(() => present === undefined ? niceTicks(y0, y1, 3) : Array.from({ length: stack === 'bottom' ? 3 : 5 }, (_, i) => y0 + (y1 - y0) * i / (stack === 'bottom' ? 2 : 4)), [y0, y1, present === undefined, stack])
+  const y = useCallback((v: number) => padT + ph - ((v - y0) / (y1 - y0 || 1)) * ph, [y0, y1, ph, padT])
+  const secondaryY = (v: number) => padT + ph - ((v - (secondary?.y0 ?? 0)) / ((secondary?.y1 ?? 1) - (secondary?.y0 ?? 0) || 1)) * ph
+  const seriesY = (s: Series) => s.axis === 'secondary' && secondary ? secondaryY : y
+  const yTicks = useMemo(() => present === undefined ? niceTicks(y0, y1, 3) : Array.from({ length: secondary ? 3 : 5 }, (_, i) => y0 + (y1 - y0) * i / (secondary ? 2 : 4)), [y0, y1, present === undefined, !!secondary])
   const xTicks = useMemo(() => {
     if (present !== undefined) return [x0, (x0 + x1) / 2, x1]
     const span = x1 - x0
@@ -310,10 +314,11 @@ export function TimeChart({
   return (
     <div ref={ref} style={{ height }} className="select-none">
       {w > 0 && (
-        <svg width={w} height={height} role={onCursor ? 'slider' : 'img'} aria-label={`${label} (${unit})`} tabIndex={onCursor ? 0 : undefined} onKeyDown={onKey}
+        <svg width={w} height={height} role={onCursor ? 'slider' : 'img'} aria-label={`${label} (${unit}${secondary ? ` et ${secondary.unit}` : ''})`} tabIndex={onCursor ? 0 : undefined} onKeyDown={onKey}
           aria-valuemin={onCursor ? x0 : undefined} aria-valuemax={onCursor ? x1 : undefined} aria-valuenow={onCursor ? cursor ?? x0 : undefined}
           aria-valuetext={onCursor ? `Lecture à ${clock(cursor ?? x0)}` : undefined}
           className="touch-pan-y outline-none focus-visible:outline-2 focus-visible:outline-accent">
+          <g transform={`translate(${padL},0)`}>
           <defs>
             <linearGradient id={gradId} x1="0" x2="0" y1="0" y2="1">
               <stop offset="0" stopColor={series[0]?.color ?? 'var(--color-accent)'} stopOpacity={0.28} />
@@ -325,18 +330,18 @@ export function TimeChart({
             <rect x={0} y={padT} width={pw} height={ph} rx={6} fill="rgb(255 255 255 / .025)" />
             <rect x={x(present)} y={padT} width={Math.max(0, pw - x(present))} height={ph} fill="rgb(255 255 255 / .035)" />
             <line x1={x(present)} x2={x(present)} y1={padT - 5} y2={padT + ph} stroke="rgb(255 255 255 / .25)" strokeWidth={1} />
-            {stack !== 'bottom' && <>
               <text x={Math.max(30, Math.min(pw - 30, x(present)))} y={12} fontSize={9} fontWeight={500} fill="var(--color-label-2)" textAnchor="middle">Maintenant</text>
               {pw - x(present) > 80 && <text x={pw} y={12} fontSize={9} fill="var(--color-label-2)" textAnchor="end">À venir</text>}
-            </>}
           </>}
           {yTicks.map((v) => (
             <g key={v}>
               <line x1={0} x2={pw} y1={y(v)} y2={y(v)} stroke="var(--color-sep)" strokeWidth={0.5} />
-              <text x={pw + 6} y={y(v) + 4} fontSize={11} fill="var(--color-label-2)" className="num">{yFormat(v)}</text>
+              <text x={secondary ? -6 : pw + 6} textAnchor={secondary ? 'end' : 'start'} y={y(v) + 4} fontSize={secondary ? 10 : 11} fill={secondary ? series[0]?.color : 'var(--color-label-2)'} className="num">{yFormat(v)}</text>
             </g>
           ))}
-          {stack !== 'top' && xTicks.map((t) => (
+          {secondary && [secondary.y0, (secondary.y0 + secondary.y1) / 2, secondary.y1].map(v =>
+            <text key={`secondary-${v}`} x={pw + 6} y={secondaryY(v) + 4} fontSize={10} fill={secondary.color} className="num">{yFormat(v)}</text>)}
+          {xTicks.map((t) => (
             <g key={t}>
               {present === undefined && <line x1={x(t)} x2={x(t)} y1={padT} y2={padT + ph} stroke="var(--color-sep)" strokeWidth={0.5} strokeDasharray="1 3" />}
               <text x={x(t)} y={height - 5} fontSize={present === undefined ? 11 : 10} fill="var(--color-label-2)" textAnchor={present === undefined ? t === x0 ? 'start' : 'middle' : x(t) < 20 ? 'start' : x(t) > pw - 20 ? 'end' : 'middle'} className="num">{fmtT(t)}</text>
@@ -361,7 +366,7 @@ export function TimeChart({
               </g>
             ))}
             {series.map((s) => {
-              const segs = segments(s.data.filter((p) => p.t >= x0 - 10 && p.t <= x1 + 10), s.value, x, y, s.step, s.maxGap, s.joinSteps)
+              const segs = segments(s.data.filter((p) => p.t >= x0 - 10 && p.t <= x1 + 10), s.value, x, seriesY(s), s.step, s.maxGap, s.joinSteps)
               return (
                 <g key={s.key} opacity={s.opacity ?? 1}>
                   {s.area && <path d={area(segs, padT + ph)} fill={`url(#${gradId})`} />}
@@ -369,17 +374,16 @@ export function TimeChart({
                 </g>
               )
             })}
-            {live && (() => {
-              const main = series[0]
+            {live && (secondary ? series.filter(s => s.showPoint !== false && !s.dash) : series.slice(0, 1)).map(main => {
               const lastS = [...main.data].reverse().find((p) => main.value(p) !== null)
               if (!lastS || (present !== undefined && Math.abs(lastS.t - present) > 2)) return null
               return (
-                <g>
-                  <circle cx={x(lastS.t)} cy={y(main.value(lastS)!)} r={stack === 'bottom' ? 6 : 9} fill={main.color} opacity={0.22} className="animate-pulse-dot" />
-                  <circle cx={x(lastS.t)} cy={y(main.value(lastS)!)} r={stack === 'bottom' ? 3 : 4} fill={main.color} stroke="#000" strokeWidth={1.5} />
+                <g key={main.key}>
+                  <circle cx={x(lastS.t)} cy={seriesY(main)(main.value(lastS)!)} r={main.axis === 'secondary' ? 6 : 9} fill={main.color} opacity={0.22} className="animate-pulse-dot" />
+                  <circle cx={x(lastS.t)} cy={seriesY(main)(main.value(lastS)!)} r={main.axis === 'secondary' ? 3 : 4} fill={main.color} stroke="#000" strokeWidth={1.5} />
                 </g>
               )
-            })()}
+            })}
           </g>
           {cursor != null && cursor >= x0 && cursor <= x1 && (
             <g pointerEvents="none">
@@ -388,7 +392,7 @@ export function TimeChart({
                 const p = nearest(s.data, cursor)
                 const v = p && s.value(p)
                 return v != null && Math.abs(p!.t - cursor) < (s.maxGap ?? 12) ? (
-                  <circle key={s.key} cx={x(p!.t)} cy={y(v)} r={4.5} fill={s.color} stroke="#000" strokeWidth={2} />
+                  <circle key={s.key} cx={x(p!.t)} cy={seriesY(s)(v)} r={4.5} fill={s.color} stroke="#000" strokeWidth={2} />
                 ) : null
               })}
             </g>
@@ -398,6 +402,7 @@ export function TimeChart({
               onPointerDown={onDown} onPointerMove={onMove} onPointerUp={onUp} onPointerCancel={onUp}
               onPointerLeave={(e) => e.pointerType === 'mouse' && present === undefined && onCursor(null)} style={{ cursor: 'crosshair' }} />
           )}
+          </g>
         </svg>
       )}
     </div>
