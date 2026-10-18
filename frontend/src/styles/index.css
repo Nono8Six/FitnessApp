@@ -362,12 +362,13 @@ dd[data-long-value] span { font-size: 13px; }
 .course-chart { position: relative; margin-top: 18px; }
 .course-chart-live { position: relative; margin-left: auto; color: var(--color-accent); font-size: 10px; line-height: 16px; }
 .course-chart-live::after { content: ''; position: absolute; inset: -14px -4px; }
-.course-legend { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 6px; font-size: 11px; line-height: 16px; }
+.course-chart-heading { height: 20px; }
+.course-legend { display: flex; align-items: center; justify-content: space-between; gap: 12px; height: 20px; font-size: 11px; line-height: 20px; }
 .course-legend > span { display: inline-flex; align-items: center; gap: 5px; color: var(--color-speed); }
 .course-legend > span:last-child { color: var(--color-incline); }
 .course-legend small { font-size: 10px; font-weight: 400; }
 .course-legend i { display: inline-block; width: 12px; height: 2px; border-radius: 2px; background: currentColor; }
-.course-chart-reading { display: flex; align-items: center; gap: 8px; margin-bottom: 4px; font-size: 10px; line-height: 20px; color: var(--color-label-2); }
+.course-chart-reading { display: flex; align-items: center; gap: 8px; height: 20px; font-size: 10px; line-height: 20px; color: var(--color-label-2); }
 .course-chart-reading strong { color: var(--color-speed); font-weight: 500; white-space: nowrap; }
 .course-chart-reading strong:nth-of-type(2) { color: var(--color-incline); }
 .course-chart-reading small { font-size: 9px; }
@@ -407,7 +408,6 @@ dd[data-long-value] span { font-size: 13px; }
   .course-pace.is-long { font-size: 64px; }
   .course-block-heading { margin-top: 10px; }
   .course-chart { margin-top: 10px; }
-  .course-legend { margin-bottom: 6px; }
   .course-next { margin-top: 10px; padding-block: 8px; }
   .course-next-content { margin-top: 4px; }
   .course-next-content h3 { font-size: 17px; line-height: 22px; }
@@ -423,7 +423,6 @@ dd[data-long-value] span { font-size: 13px; }
   .course-chart { margin-top: 4px; }
   .course-totals { padding-top: 8px; }
   .course-view { padding-top: 0; }
-  .course-legend { margin-bottom: 4px; }
   .is-graph.is-paused .course-pace { font-size: 56px; min-height: 56px; }
   .is-graph.is-paused .course-view { padding-top: 4px; }
   .is-graph.is-paused .course-block-heading { margin-top: 6px; }

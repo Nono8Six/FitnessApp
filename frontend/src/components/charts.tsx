@@ -204,6 +204,8 @@ export interface Series {
   joinSteps?: boolean
   showPoint?: boolean
   axis?: 'secondary'
+  /** Un palier creux encode une consigne, son centre indique la valeur exacte. */
+  shape?: 'rail'
 }
 
 export interface Marker { t: number; label: string; sec?: number; color?: string }
@@ -251,11 +253,11 @@ function niceTicks(lo: number, hi: number, count = 3) {
 
 export function TimeChart({
   series, x0, x1, y0, y1, height = 200, unit, markers = [], gaps = [], cursor, onCursor, label, yFormat = (v) => String(v).replace('.', ','),
-  live, present, secondary,
+  live, present, secondary, cursorDescription,
 }: {
   series: Series[]; x0: number; x1: number; y0: number; y1: number; height?: number; unit: string
   markers?: Marker[]; gaps?: [number, number][]; cursor?: number | null; onCursor?: (t: number | null) => void; label: string
-  yFormat?: (v: number) => string; live?: boolean; present?: number
+  yFormat?: (v: number) => string; live?: boolean; present?: number; cursorDescription?: string
   secondary?: { y0: number; y1: number; unit: string; color: string }
 }) {
   const [ref, w] = useWidth<HTMLDivElement>()
@@ -269,7 +271,7 @@ export function TimeChart({
   const seriesY = (s: Series) => s.axis === 'secondary' && secondary ? secondaryY : y
   const yTicks = useMemo(() => present === undefined ? niceTicks(y0, y1, 3) : Array.from({ length: secondary ? 3 : 5 }, (_, i) => y0 + (y1 - y0) * i / (secondary ? 2 : 4)), [y0, y1, present === undefined, !!secondary])
   const xTicks = useMemo(() => {
-    if (present !== undefined) return [x0, (x0 + x1) / 2, x1]
+    if (present !== undefined) return [x0, x1]
     const span = x1 - x0
     const step = [15, 30, 60, 120, 300, 600, 900, 1800, 3600, 7200, 14400, 28800, 86400].find((s) => span / s <= (w < 480 ? 4 : 6)) ?? Math.ceil(span / 4)
     const out: number[] = []
@@ -315,8 +317,8 @@ export function TimeChart({
     <div ref={ref} style={{ height }} className="select-none">
       {w > 0 && (
         <svg width={w} height={height} role={onCursor ? 'slider' : 'img'} aria-label={`${label} (${unit}${secondary ? ` et ${secondary.unit}` : ''})`} tabIndex={onCursor ? 0 : undefined} onKeyDown={onKey}
-          aria-valuemin={onCursor ? x0 : undefined} aria-valuemax={onCursor ? x1 : undefined} aria-valuenow={onCursor ? cursor ?? x0 : undefined}
-          aria-valuetext={onCursor ? `Lecture à ${clock(cursor ?? x0)}` : undefined}
+          aria-valuemin={onCursor ? x0 : undefined} aria-valuemax={onCursor ? x1 : undefined} aria-valuenow={onCursor ? cursor ?? present ?? x0 : undefined}
+          aria-valuetext={onCursor ? cursorDescription ?? `Lecture à ${clock(cursor ?? present ?? x0)}` : undefined}
           className="touch-pan-y outline-none focus-visible:outline-2 focus-visible:outline-accent">
           <g transform={`translate(${padL},0)`}>
           <defs>
@@ -327,11 +329,15 @@ export function TimeChart({
             <clipPath id={`${gradId}-clip`}><rect x={0} y={0} width={pw} height={height} /></clipPath>
           </defs>
           {present !== undefined && <>
-            <rect x={0} y={padT} width={pw} height={ph} rx={6} fill="rgb(255 255 255 / .025)" />
-            <rect x={x(present)} y={padT} width={Math.max(0, pw - x(present))} height={ph} fill="rgb(255 255 255 / .035)" />
-            <line x1={x(present)} x2={x(present)} y1={padT - 5} y2={padT + ph} stroke="rgb(255 255 255 / .25)" strokeWidth={1} />
-              <text x={Math.max(30, Math.min(pw - 30, x(present)))} y={12} fontSize={9} fontWeight={500} fill="var(--color-label-2)" textAnchor="middle">Maintenant</text>
-              {pw - x(present) > 80 && <text x={pw} y={12} fontSize={9} fill="var(--color-label-2)" textAnchor="end">À venir</text>}
+            <rect x={0} y={padT} width={pw} height={ph} rx={4} fill="#0b0d0b" />
+            <rect x={x(present)} y={padT} width={Math.max(0, pw - x(present))} height={ph} fill="#191c20" />
+            <g fill="var(--color-label-2)" fontSize={10} fontWeight={500}>
+              <line x1={0} x2={11} y1={10} y2={10} stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" />
+              <circle cx={6} cy={10} r={2.5} fill="currentColor" />
+              <text x={17} y={13}>Mesures</text>
+              <rect x={pw - 68} y={7} width={12} height={6} rx={1.5} fill="none" stroke="currentColor" strokeWidth={1.2} />
+              <text x={pw} y={13} textAnchor="end">Consignes</text>
+            </g>
           </>}
           {yTicks.map((v) => (
             <g key={v}>
@@ -341,7 +347,7 @@ export function TimeChart({
           ))}
           {secondary && [secondary.y0, (secondary.y0 + secondary.y1) / 2, secondary.y1].map(v =>
             <text key={`secondary-${v}`} x={pw + 6} y={secondaryY(v) + 4} fontSize={10} fill={secondary.color} className="num">{yFormat(v)}</text>)}
-          {xTicks.map((t) => (
+          {xTicks.filter(t => present === undefined || (t === x0 ? x(present) > 66 : pw - x(present) > 70)).map((t) => (
             <g key={t}>
               {present === undefined && <line x1={x(t)} x2={x(t)} y1={padT} y2={padT + ph} stroke="var(--color-sep)" strokeWidth={0.5} strokeDasharray="1 3" />}
               <text x={x(t)} y={height - 5} fontSize={present === undefined ? 11 : 10} fill="var(--color-label-2)" textAnchor={present === undefined ? t === x0 ? 'start' : 'middle' : x(t) < 20 ? 'start' : x(t) > pw - 20 ? 'end' : 'middle'} className="num">{fmtT(t)}</text>
@@ -367,8 +373,25 @@ export function TimeChart({
             ))}
             {series.map((s) => {
               const segs = segments(s.data.filter((p) => p.t >= x0 - 10 && p.t <= x1 + 10), s.value, x, seriesY(s), s.step, s.maxGap, s.joinSteps)
+              if (s.shape === 'rail') return <g key={s.key} data-series={s.key} data-shape="target" opacity={s.opacity ?? 1}>
+                {segs.map((seg, i) => {
+                  const left = seg[0][0], right = seg.at(-1)![0], cy = seg[0][1]
+                  const span = right - left
+                  if (span <= 0) return null
+                  const railHeight = s.axis === 'secondary' ? 4 : 8
+                  // Un léger retrait sépare les blocs sans pointillés ni raccord vertical.
+                  const inset = Math.min(1.5, span / 8)
+                  return <g key={i}>
+                    {s.axis !== 'secondary' && <rect x={left} y={cy} width={span} height={Math.max(0, padT + ph - cy)} fill={s.color} opacity={.065} />}
+                    <rect x={left + inset} y={cy - railHeight / 2} width={span - inset * 2} height={railHeight} rx={1.5}
+                      fill="#191c20" stroke={s.color} strokeWidth={1.3} />
+                    {s.axis !== 'secondary' && span >= 40 && cy - padT >= 16 && <text x={left + span / 2} y={cy - 8}
+                      textAnchor="middle" fontSize={10} fontWeight={500} fill={s.color} className="num">{dec1(y1 - (cy - padT) / ph * (y1 - y0))}</text>}
+                  </g>
+                })}
+              </g>
               return (
-                <g key={s.key} opacity={s.opacity ?? 1}>
+                <g key={s.key} data-series={s.key} data-shape="line" opacity={s.opacity ?? 1}>
                   {s.area && <path d={area(segs, padT + ph)} fill={`url(#${gradId})`} />}
                   <path d={line(segs)} fill="none" stroke={s.color} strokeWidth={s.width ?? 2} strokeDasharray={s.dash} strokeLinejoin="round" strokeLinecap="round" />
                 </g>
@@ -385,10 +408,24 @@ export function TimeChart({
               )
             })}
           </g>
+          {present !== undefined && <g pointerEvents="none">
+            <line x1={x(present)} x2={x(present)} y1={padT - 2} y2={padT + ph + 2} stroke="#e8e9eb" strokeWidth={1.2} />
+            <path d={`M${x(present) - 3.5},${padT - 4}h7l-3.5,5Z`} fill="#e8e9eb" />
+            <text x={Math.max(30, Math.min(pw - 30, x(present)))} y={height - 5} textAnchor="middle"
+              fontSize={9} fontWeight={600} fill="#e8e9eb">Maintenant</text>
+          </g>}
           {cursor != null && cursor >= x0 && cursor <= x1 && (
             <g pointerEvents="none">
-              <line x1={x(cursor)} x2={x(cursor)} y1={padT - 8} y2={padT + ph} stroke="var(--color-label-2)" strokeWidth={1} />
-              {series.filter((s) => !s.dash && s.showPoint !== false).map((s) => {
+              <line x1={x(cursor)} x2={x(cursor)} y1={padT} y2={padT + ph} stroke="var(--color-label-2)" strokeWidth={1} />
+              {series.map(s => {
+                if (s.shape === 'rail') {
+                  if (present === undefined || cursor <= present || cursor > (s.data.at(-1)?.t ?? -Infinity)) return null
+                  const p = [...s.data].reverse().find(p => p.t <= cursor)
+                  const v = p && s.value(p)
+                  return v != null ? <rect key={s.key} x={x(cursor) - 3.5} y={seriesY(s)(v) - 3.5}
+                    width={7} height={7} rx={1} fill="#191c20" stroke={s.color} strokeWidth={1.8} /> : null
+                }
+                if (s.dash || s.showPoint === false || (present !== undefined && cursor > present)) return null
                 const p = nearest(s.data, cursor)
                 const v = p && s.value(p)
                 return v != null && Math.abs(p!.t - cursor) < (s.maxGap ?? 12) ? (

@@ -24,15 +24,12 @@ export function CourseView({ session, samples, blocks, speed, incline, available
   const future = cursor !== null && cursor > active && cursor <= (next?.end ?? block.end)
   const selectedSpeed = future ? planned.speed : observed?.speed
   const selectedIncline = future ? planned.incline : observed?.incline
+  const reading = cursor === null ? null : `${future ? 'Consigne' : cursor > (next?.end ?? block.end) ? 'Fin' : observed ? 'Mesuré' : 'Absent'} · ${clock(observed?.t ?? cursor)}`
   const series: Series[] = [
-    { key: 'measured', data: measured, value: p => p.speed, color: 'var(--color-speed)', width: 2.5, area: true, maxGap: 2 },
-    { key: 'previous-targets', data: measured, value: p => p.target, color: 'rgb(255 255 255 / .25)', width: 1, step: true, joinSteps: false, showPoint: false, maxGap: 2 },
-    { key: 'forecast', data: forecast, value: p => p.target, color: 'rgb(255 255 255 / .55)', width: 1.3, step: true, joinSteps: false, showPoint: false, maxGap: Infinity },
-  ]
-  const inclineSeries: Series[] = [
-    { key: 'incline', data: measured, value: p => p.incline, color: 'var(--color-incline)', width: 2, step: true, maxGap: 2 },
-    { key: 'previous-inclines', data: measured, value: p => p.target_incline ?? null, color: 'var(--color-incline)', opacity: .25, width: 1, step: true, joinSteps: false, showPoint: false, maxGap: 2 },
-    { key: 'forecast-incline', data: forecast, value: p => p.target_incline ?? null, color: 'var(--color-incline)', opacity: .55, width: 1.3, step: true, joinSteps: false, showPoint: false, maxGap: Infinity },
+    { key: 'measured-speed', data: measured, value: p => p.speed, color: 'var(--color-speed)', width: 3, area: true, maxGap: 2 },
+    { key: 'measured-incline', data: measured, value: p => p.incline, color: 'var(--color-incline)', width: 2, step: true, maxGap: 2, axis: 'secondary' },
+    { key: 'planned-speed', data: forecast, value: p => p.target, color: 'var(--color-speed)', shape: 'rail', step: true, joinSteps: false, showPoint: false, maxGap: Infinity },
+    { key: 'planned-incline', data: forecast, value: p => p.target_incline ?? null, color: 'var(--color-incline)', shape: 'rail', step: true, joinSteps: false, showPoint: false, maxGap: Infinity, axis: 'secondary' },
   ]
   const kcal = available ? calories(session.totals.energy) : null
   const distance = available && session.distance_m !== null ? dec2(session.distance_m / 1000) : null
@@ -64,21 +61,23 @@ export function CourseView({ session, samples, blocks, speed, incline, available
       <span style={{ width: `${Math.max(0, Math.min(100, (active - block.start) / block.sec * 100))}%` }} />
     </div>
     <div className="course-chart" aria-label="Vitesse et inclinaison mesurées et prévues">
-      <div className="course-legend">
-        <span><i />Vitesse <small>km/h</small></span>
-        <span><i />Inclinaison <small>%</small></span>
+      <div className="course-chart-heading">
+        {cursor === null ? <div className="course-legend">
+          <span><i />Vitesse <small>km/h</small></span>
+          <span><i />Inclinaison <small>%</small></span>
+        </div> : <div className="course-chart-reading num" aria-live="polite">
+          <span>{reading}</span>
+          <strong>{selectedSpeed != null ? dec1(selectedSpeed) : '--'} <small>km/h</small></strong>
+          <strong>{selectedIncline != null ? dec1(selectedIncline) : '--'} <small>%</small></strong>
+          <button type="button" onClick={() => setSelected(null)} className="course-chart-live" aria-label="Retour au direct">Direct</button>
+        </div>}
       </div>
-      {cursor !== null && <div className="course-chart-reading num" aria-live="polite">
-        <span>{future ? 'Prévu' : cursor > (next?.end ?? block.end) ? 'Fin' : 'Mesuré'} · {clock(cursor)}</span>
-        <strong>{selectedSpeed != null ? dec1(selectedSpeed) : '--'} <small>km/h</small></strong>
-        <strong>{selectedIncline != null ? dec1(selectedIncline) : '--'} <small>%</small></strong>
-        <button type="button" onClick={() => setSelected(null)} className="course-chart-live" aria-label="Retour au direct">Direct</button>
-      </div>}
-      <TimeChart series={[...series, ...inclineSeries.map(s => ({ ...s, axis: 'secondary' as const }))]}
+      <TimeChart series={series}
         x0={x0} x1={x1} y0={0} y1={maximum} height={width >= 600 ? 200 : 132} unit="km/h"
         secondary={{ y0: 0, y1: inclineMaximum, unit: '%', color: 'var(--color-incline)' }}
         label="Vitesse et inclinaison mesurées et prévues, bloc actuel et suivant"
         present={active} cursor={cursor} onCursor={setSelected} gaps={gaps}
+        cursorDescription={reading ? `${reading}, ${selectedSpeed != null ? `${dec1(selectedSpeed)} km/h` : 'vitesse absente'}, ${selectedIncline != null ? `${dec1(selectedIncline)} %` : 'pente absente'}` : undefined}
         live={available && (speed !== null || incline !== null) && moving && cursor === null}
         markers={markers} />
       {!measured.some(p => p.speed !== null || p.incline != null) && <p className="course-chart-empty" role="status">{available ? 'En attente des premières mesures' : 'Mesures actuelles indisponibles'}</p>}
