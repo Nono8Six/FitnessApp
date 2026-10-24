@@ -9,6 +9,7 @@ import { calories, clock, dec1, dec2 } from '../lib/format'
 import { href } from '../lib/router'
 import { phaseLabel, useExecution, type Phase } from '../lib/execution'
 import { readRecording, recordingDate, recordingLabel, saveFeeling, type Recording, type RecordedEvent } from '../lib/recordings'
+import { AppleHealthExport } from './AppleHealthExport'
 
 const percent = (v: number | null) => v === null ? '--' : `${Math.round(v * 100)} %`
 const measured = (v: number | null, unit: string) => v === null ? '--' : `${dec1(v)} ${unit}`
@@ -205,6 +206,7 @@ export function Report({ profile, id }: { profile: string; id: string }) {
           {m.energy.movement_ambiguous && calories(m.energy) && <p className="mt-2 px-1 text-footnote text-label-2">Deux estimations selon marche ou course · voir Calories estimées</p>}
           {(m.distance_quality === 'partial' || (m.coverage.energy !== null && m.coverage.energy < .99) || (m.coverage.speed !== null && m.coverage.speed < .99)) && <p className="mt-2 px-1 text-footnote text-orange">Mesures partielles · voir Données et qualité</p>}
           <Feeling profile={profile} data={data} />
+          {data.id === id && data.profile.id === profile && <AppleHealthExport key={`${profile}:${data.id}`} data={data} />}
         </div>
         <div className="report-exploration"><Curves data={data} /><Blocks data={data} /></div>
         <div className="report-details"><Details data={data} /></div>

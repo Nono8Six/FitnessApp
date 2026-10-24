@@ -25,6 +25,16 @@ Une seule brique en cours dans le périmètre demandé. Les cases indiquent les 
 - [ ] **Brique 16 · Usage quotidien Windows** : lanceur, démarrage simple, hors ligne, performances.
 - [ ] **Brique 17 · Réception finale** : parcours complet sur les vrais appareils.
 
+### Apple Santé par Raccourcis — 24 octobre 2026
+
+À la demande d’Arnaud, extension gratuite du bilan, sans compte Strava ni application mobile FitnessApp. **Bouton et transmission côté web livrés ; configuration du raccourci et réception dans Santé sur iPhone restantes.** Cette extension ne clôture pas la brique 15.
+
+- Le bilan propose « Envoyer vers Apple Santé », un récapitulatif et l’aide de création du raccourci « Fitness vers Santé ». L’ouverture est disponible sur iPhone/iPad, après confirmation du profil et de l’absence de doublon. Aucun envoi automatique.
+- Reprise des calculs du bilan : durée active, distance complète et kcal actives uniquement lorsqu’une valeur unique complète existe. Aucune estimation de pas, aucun poids ni nom de profil transmis. Simulations, séances non clôturées ou arrêt incertain, pertes de données et durée nulle exclus.
+- Pas de faux statut « synchronisé » : Chrome ne reçoit pas de confirmation Santé. Chronologie des pauses non conservée par l’action Apple ; limitation affichée. Le raccourci doit être créé sur l’iPhone, aucun fichier non signé fourni. Contrat et configuration dans [Apple Santé](docs/APPLE_SANTE.md).
+
+**Vérifications :** quatre tests ciblés du contrat d’export et build TypeScript/Vite réussis. Chrome sur le bilan réel, PC et 390 × 844 : récapitulatif, aide, lien local Apple décodé sans le lancer, kcal ambiguës omises et absence de débordement horizontal ; aucune erreur console observée. **Aucune écriture dans Santé ni réception sur iPhone physique effectuée.** Recharger Chrome pour recevoir le bouton.
+
 ### Revue et corrections du 13 octobre 2026
 
 Revue des fonctions déjà livrées : calculs ACSM et dénivelé, expansion des répétitions, adaptation du catalogue, temps actif/pause, distances et moyennes, commandes FTMS, sauvegarde, profils, Coach, interface et lanceur. Les briques restantes ci-dessus gardent leur périmètre.
