@@ -10,6 +10,7 @@ import { href } from '../lib/router'
 import { phaseLabel, useExecution, type Phase } from '../lib/execution'
 import { readRecording, recordingDate, recordingLabel, saveFeeling, type Recording, type RecordedEvent } from '../lib/recordings'
 import { AppleHealthExport } from './AppleHealthExport'
+import { FitnessSyncerExport } from './FitnessSyncerExport'
 
 const percent = (v: number | null) => v === null ? '--' : `${Math.round(v * 100)} %`
 const measured = (v: number | null, unit: string) => v === null ? '--' : `${dec1(v)} ${unit}`
@@ -25,7 +26,7 @@ const eventLabel = (event: RecordedEvent) => {
   return String(d.label ?? d.message ?? 'Événement')
 }
 
-function Feeling({ profile, data }: { profile: string; data: Recording }) {
+function Feeling({ profile, data, onSaved }: { profile: string; data: Recording; onSaved: (feeling: number | null, at: string) => void }) {
   const [value, setValue] = useState(data.feeling), [saved, setSaved] = useState(data.feeling)
   const [open, setOpen] = useState(false), [state, setState] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle'), [error, setError] = useState('')
   const alive = useRef(false), busy = useRef(false)
@@ -35,7 +36,7 @@ function Feeling({ profile, data }: { profile: string; data: Recording }) {
     busy.current = true; setValue(next); setState('saving'); setError('')
     try {
       const response = await saveFeeling(profile, data.id, next)
-      if (alive.current) { setSaved(response.feeling); setState('saved') }
+      if (alive.current) { setSaved(response.feeling); setState('saved'); onSaved(response.feeling, response.updated_at) }
     } catch (e) {
       if (alive.current) { setState('error'); setError(`${errorMessage(e)}. Votre saisie est conservée ; réessayez.`) }
     } finally { busy.current = false }
@@ -205,8 +206,14 @@ export function Report({ profile, id }: { profile: string; id: string }) {
           ]} />
           {m.energy.movement_ambiguous && calories(m.energy) && <p className="mt-2 px-1 text-footnote text-label-2">Deux estimations selon marche ou course · voir Calories estimées</p>}
           {(m.distance_quality === 'partial' || (m.coverage.energy !== null && m.coverage.energy < .99) || (m.coverage.speed !== null && m.coverage.speed < .99)) && <p className="mt-2 px-1 text-footnote text-orange">Mesures partielles · voir Données et qualité</p>}
-          <Feeling profile={profile} data={data} />
-          {data.id === id && data.profile.id === profile && <AppleHealthExport key={`${profile}:${data.id}`} data={data} />}
+          <Feeling key={`feeling:${profile}:${data.id}`} profile={profile} data={data} onSaved={(feeling, at) => {
+            setData(current => current?.id === data.id && current.profile.id === profile
+              ? { ...current, feeling, feeling_updated_at: at } : current)
+          }} />
+          {data.id === id && data.profile.id === profile && <div key={`${profile}:${data.id}`}>
+            <FitnessSyncerExport data={data} />
+            <AppleHealthExport data={data} />
+          </div>}
         </div>
         <div className="report-exploration"><Curves data={data} /><Blocks data={data} /></div>
         <div className="report-details"><Details data={data} /></div>

@@ -25,6 +25,15 @@ Une seule brique en cours dans le périmètre demandé. Les cases indiquent les 
 - [ ] **Brique 16 · Usage quotidien Windows** : lanceur, démarrage simple, hors ligne, performances.
 - [ ] **Brique 17 · Réception finale** : parcours complet sur les vrais appareils.
 
+### Apple Santé par FitnessSyncer — 25 octobre 2026
+
+À la demande d’Arnaud, le bilan prépare une séance dans le Notebook gratuit FitnessSyncer depuis PC ou téléphone, avec choix Marche/Course et valeurs à comparer avant sauvegarde. **Préparation web livrée ; compte connecté et carnet observés, mais réception du formulaire et de Santé/Forme sur iPhone non vérifiée.** Cette extension ne clôture pas la brique 15.
+
+- Réutilisation des contrôles d’export Raccourcis : séances réelles clôturées avec arrêt confirmé, durée active, distance complète ; aucun pas inventé ni profil/poids transmis. Dates UTC avec fuseau, unités km/secondes et encodage contrôlés.
+- Calories actives obligatoires et complètes : estimation unique incluse, choix explicite de la borne basse/haute en cas de plage, incertitude conservée en note ; correspondance énergie active Apple encore à vérifier. Vitesses moyenne/maximale mesurées et ressenti ajoutés ; pente moyenne en note. Courbes et chronologie des pauses non transportées.
+- Connexion préalable nécessaire : l’accès déconnecté peut perdre les champs du formulaire. Confirmation du compte et de l’absence de doublon, repère local d’ouverture, jamais de faux statut « synchronisé ». Le parcours Raccourcis reste accessible.
+- **Vérifications :** douze tests ciblés du contrat, build TypeScript/Vite, Chrome PC et 390 × 844 sur le bilan réel, choix des calories, aide, unités/fuseau du lien décodé et repère d'ouverture persistant. Premier onglet ouvert avant l'ajout des calories ; inspection du destinataire refusée par le contrôle automatique du navigateur (adresse signalée invalide). Aucun appel REST authentifié, enregistrement FitnessSyncer ni transfert Santé testé. [Configuration et limites](docs/FITNESS_SYNCER.md).
+
 ### Apple Santé par Raccourcis — 24 octobre 2026
 
 À la demande d’Arnaud, extension gratuite du bilan, sans compte Strava ni application mobile FitnessApp. **Bouton et transmission côté web livrés ; configuration du raccourci et réception dans Santé sur iPhone restantes.** Cette extension ne clôture pas la brique 15.

@@ -41,7 +41,7 @@ export function AppleHealthExport({ data }: { data: Recording }) {
   const close = () => { setOpen(false); setConfirmed(false) }
 
   return <section className="mt-5" aria-label="Export Apple Santé">
-    <Button variant="gray" className="w-full" onClick={() => setOpen(true)}><Heart size={18} aria-hidden="true" />Envoyer vers Apple Santé</Button>
+    <Button variant="gray" className="w-full" onClick={() => setOpen(true)}><Heart size={18} aria-hidden="true" />Utiliser Raccourcis Apple</Button>
     <Sheet open={open} onClose={close} title="Apple Santé"
       leading={<button className="pressable min-h-11 text-subhead text-accent" onClick={close}>Fermer</button>}
       footer={<div className="space-y-2">
