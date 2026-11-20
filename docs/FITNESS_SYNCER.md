@@ -1,6 +1,6 @@
 # Préparer une séance FitnessApp dans FitnessSyncer
 
-Le bilan propose **Envoyer avec FitnessSyncer** sur PC et téléphone. Il ouvre le formulaire Notebook officiel prérempli. L'utilisateur vérifie puis enregistre la séance ; l'application FitnessSyncer de l'iPhone effectue ensuite l'écriture dans Santé.
+Le bouton quotidien est décrit dans [Enregistrer une séance dans Santé](ENREGISTREMENT_SANTE.md). Sur PC et téléphone, **Autres méthodes d’export → Envoyer avec FitnessSyncer** ouvre le formulaire Notebook officiel prérempli. L'utilisateur vérifie puis enregistre la séance ; l'application FitnessSyncer de l'iPhone effectue ensuite l'écriture dans Santé.
 
 **État au 25 octobre 2026 : préparation locale vérifiée ; réception du formulaire et de Santé/Forme non vérifiée.** La connexion au compte et un carnet vide ont été observés dans Chrome. Un premier lien sans calories a ouvert un onglet ; son inspection automatique a été refusée par la politique du navigateur (adresse signalée invalide). La version finale inclut obligatoirement les calories ; son lien a été contrôlé localement. Ne pas confondre cette préparation avec une séance enregistrée ou synchronisée.
 

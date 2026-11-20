@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict'
 import test from 'node:test'
 import { fitnessSyncerCalorieOptions, fitnessSyncerDraft, fitnessSyncerExportIssue, fitnessSyncerUrl } from '../src/lib/fitnessSyncer.ts'
+import { detectPhone, phoneSaveUrl } from '../src/lib/phoneHealth.ts'
 
 const recording = () => ({
   id: 'session-1', mode: 'reel', closed: true, phase: 'completed', lost_entries: 0,
@@ -12,6 +13,50 @@ const recording = () => ({
   metrics: { active_s: 900.4, pause_s: 120, wall_s: 1020.4, distance_m: 1520.5,
     distance_quality: 'complete', coverage: { energy: 1, speed: 1, incline: 1 }, speed_avg: 7.2, incline_avg: 2,
     energy: { active_kcal: 83.6, total_kcal: 105.1, movement_ambiguous: false } },
+})
+
+test('le bouton Santé transmet le bilan au système du téléphone associé, par lien local', () => {
+  const r = recording()
+  const setup = { profile: r.profile.id, token: 'a'.repeat(64), system: 'android', activity: 'Running', calories: 'low' }
+  const origin = 'http://192.168.1.2:4330'
+  const android = phoneSaveUrl(r, setup, origin)
+  assert.match(android, /^intent:\/\/save#Intent;scheme=fitnessappsante;package=fr\.fitnessapp\.sante;/)
+  const extras = Object.fromEntries(android.split(';').filter(s => s.startsWith('S.')).map(s => {
+    const i = s.indexOf('=')
+    return [s.slice(2, i), decodeURIComponent(s.slice(i + 1))]
+  }))
+  assert.equal(extras.browser_fallback_url, origin + '/#/reglages')
+  assert.equal(extras.pair, setup.token)
+  const payload = JSON.parse(extras.workout)
+  assert.equal(payload.profil, r.profile.id)
+  assert.equal(payload.seance, r.id)
+  assert.equal(payload.activite, 'Running')
+  assert.equal(payload.calories_actives, 84)
+  const ios = new URL(phoneSaveUrl(r, { ...setup, system: 'iphone' }, origin))
+  assert.equal(ios.protocol, 'shortcuts:')
+  assert.equal(ios.hostname, 'run-shortcut')
+  assert.equal(ios.searchParams.get('name'), 'FitnessApp Course')
+  assert.equal(ios.searchParams.get('input'), 'text')
+  assert.deepEqual(JSON.parse(ios.searchParams.get('text')), {
+    debut: '2026-10-24T08:30:01.000Z', duree_secondes: 900, distance_metres: 1520.5, calories_actives: 84,
+  })
+  assert.throws(() => phoneSaveUrl(r, { ...setup, profile: 'autre' }, origin), /autre profil/)
+  assert.throws(() => phoneSaveUrl({ ...r, mode: 'simulation' }, setup, origin), /simulées/)
+})
+
+test('le téléphone conserve le choix calorique et omet une distance incomplète', () => {
+  const r = recording()
+  r.metrics.distance_quality = 'partial'
+  r.metrics.energy = { movement_ambiguous: true, active_kcal_low: 393.6, active_kcal_high: 460.8 }
+  const setup = { system: 'iphone', activity: 'Walking', calories: 'high', profile: r.profile.id }
+  const url = new URL(phoneSaveUrl(r, setup, 'http://localhost'))
+  assert.equal(url.searchParams.get('name'), 'FitnessApp Marche')
+  const payload = JSON.parse(url.searchParams.get('text'))
+  assert.equal('distance_metres' in payload, false)
+  assert.equal(payload.calories_actives, 461)
+  assert.equal(detectPhone('Mozilla/5.0 (Linux; Android 14)', '', 5), 'android')
+  assert.equal(detectPhone('Mozilla/5.0 (iPhone)', 'iPhone', 5), 'iphone')
+  assert.equal(detectPhone('Mozilla/5.0 (Windows NT)', 'Win32', 0), null)
 })
 
 test('prépare secondes, kilomètres, millisecondes UTC et calories actives obligatoires', () => {

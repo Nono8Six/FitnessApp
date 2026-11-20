@@ -1,6 +1,7 @@
 import { useRef, useState } from 'react'
 import { Page } from '../components/Shell'
 import { Button, ControlRow, Group, Row, Segmented, Sheet, Stepper } from '../components/ui'
+import { PhoneHealth } from './PhoneHealth'
 import { errorMessage } from '../lib/api'
 import {
   deleteProfile, NAME_MAX, saveProfile, useCurrentProfile, useProfiles, WEEKLY_GOAL_MAX, WEEKLY_GOAL_MIN,
@@ -210,6 +211,7 @@ export function Settings({ treadmillOpen }: { treadmillOpen?: boolean }) {
       <div className="desk:max-w-[760px]">
         {/* Une clé par profil : changer de profil abandonne la saisie et les messages du précédent. */}
         {current && <ProfileSettings key={current.id} profile={current} readOnly={readOnly} />}
+        {current && <PhoneHealth key={`sante:${current.id}`} profile={current} />}
         {/* Le dernier profil ne peut pas être supprimé : la ligne n’apparaît qu’avec au moins deux profils. */}
         {current && count > 1 && <DeleteProfile key={`${current.id}:suppression`} profile={current} readOnly={readOnly} />}
         <TreadmillSettings readOnly={readOnly} initialOpen={treadmillOpen} />

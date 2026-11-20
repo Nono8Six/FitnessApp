@@ -25,6 +25,13 @@ Une seule brique en cours dans le périmètre demandé. Les cases indiquent les 
 - [ ] **Brique 16 · Usage quotidien Windows** : lanceur, démarrage simple, hors ligne, performances.
 - [ ] **Brique 17 · Réception finale** : parcours complet sur les vrais appareils.
 
+### Enregistrer la séance sur son téléphone — 20 novembre 2026
+
+- [x] Depuis le bilan réel, **Enregistrer la séance** utilise le profil associé à ce navigateur, l’activité habituelle et la préférence calorique choisie dans Réglages. L’app du PC continue de conserver le bilan.
+- [x] Compagnon Android 14+ signé, installé depuis le serveur local. Écriture de l’exercice, de la distance complète disponible et des kcal actives via Santé Connect. Installation, autorisations et relecture des trois données vérifiées sur Android 15 émulé, y compris après un deuxième envoi.
+- [x] Sur iPhone, préparation des données et ouverture du raccourci Apple pour l’activité choisie. Création initiale du raccourci et réception de la première séance dans Santé à effectuer sur l’iPhone. L’installation et le parcours complet sur les deux téléphones physiques restent à vérifier.
+- Les anciens exports restent disponibles dans **Autres méthodes d’export**. [Configuration du téléphone](docs/ENREGISTREMENT_SANTE.md).
+
 ### Apple Santé par FitnessSyncer — 25 octobre 2026
 
 À la demande d’Arnaud, le bilan prépare une séance dans le Notebook gratuit FitnessSyncer depuis PC ou téléphone, avec choix Marche/Course et valeurs à comparer avant sauvegarde. **Préparation web livrée ; compte connecté et carnet observés, mais réception du formulaire et de Santé/Forme sur iPhone non vérifiée.** Cette extension ne clôture pas la brique 15.

@@ -2,7 +2,7 @@
 
 ## Utilisation
 
-Dans Chrome sur l’iPhone : **Bilans → séance → Envoyer vers Apple Santé**.
+Le bouton quotidien est décrit dans [Enregistrer une séance dans Santé](ENREGISTREMENT_SANTE.md). Pour utiliser cette méthode manuelle sur l’iPhone, ouvrez **Bilans → séance → Autres méthodes d’export → Envoyer vers Apple Santé**.
 La feuille affiche les valeurs qui seront transmises. Ouvrir **Configurer le
 raccourci sur l’iPhone** pour créer le raccourci gratuit **Fitness vers Santé**.
 Après configuration, vérifier le profil et l’absence de cette séance dans Santé,
