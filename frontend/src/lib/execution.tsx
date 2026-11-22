@@ -187,6 +187,7 @@ export function ExecutionProvider({ children }: { children: ReactNode }) {
     }
   }, [accept, client, clearAdjustment])
   const act: State['act'] = async (action, confirmation = false, offsets) => {
+    const origin = location.hash
     if (action !== 'adjust') clearAdjustment()
     const exclusive = ['start', 'resume', 'adjust', 'claim', 'demo'].includes(action)
     if (exclusive && starting.current) return false
@@ -204,7 +205,14 @@ export function ExecutionProvider({ children }: { children: ReactNode }) {
       const next = await api(`/api/execution/${action}`, { method: 'POST', body, validate: isFeed, timeout: 8000 })
       if (mounted.current) {
         accept(next)
-        if (action === 'start' || action === 'resume' || action === 'demo') { setPreparing(false); setConfirmingResume(false); setSelected(undefined); navigate(href.direct) }
+        if (action === 'start' || action === 'resume' || action === 'demo') {
+          setPreparing(false); setConfirmingResume(false); setSelected(undefined)
+          if (location.hash === origin) {
+            // Le retour navigateur doit ouvrir l’accueil, pas relancer le test.
+            if (action === 'demo' && origin === href.courseTest) history.replaceState(history.state, '', href.today)
+            navigate(href.direct)
+          }
+        }
       }
       return true
     } catch (e) {

@@ -42,7 +42,7 @@ Couleurs de rôle, une seule signification chacune :
 | Distance | `#2FB4FF` | Distance prévue ou mesurée |
 | Énergie | `#FF375F` | Kcal actives estimées avant et après effort |
 | Pente | `#BF5AF2` | Valeur et courbe de pente, dénivelé équivalent |
-| Arrêt / erreur | `#FF453A` | Bouton Arrêter, canal perdu, commande inconnue, erreurs de saisie |
+| Arrêt / erreur | `#FF453A` | Bouton Terminer, canal perdu, commande inconnue, erreurs de saisie |
 | Alerte | `#FF9F0A` | Mesures anciennes, arrêt demandé, coupure de mesure dans les courbes |
 | Confirmé | `#30D158` | Connecté, interrupteurs, Reprendre, arrêt confirmé |
 | Comparaison | `#64D2FF` | Seconde séance dans le bilan |
@@ -85,10 +85,10 @@ Formats : virgule décimale, espace insécable avant `:` `?` `%` et à l’inté
 
 | | Téléphone | PC |
 |---|---|---|
-| Principale | Capsule flottante translucide centrée en bas, quatre cibles de même largeur et sélection teintée de vert : Aujourd’hui, Séances, Bilans, Coach | Barre latérale de 248 px : les mêmes onglets plus Direct |
+| Principale | Capsule flottante translucide centrée en bas, quatre cibles de même largeur et sélection teintée de vert : Aujourd’hui, Séances, Bilans, Coach | Barre latérale de 248 px avec les mêmes onglets |
 | Profil | Avatar à droite du grand titre, puis feuille de choix | Bas de la barre latérale |
-| Séance en cours | Capsule « activité en direct » au-dessus des onglets : bloc, durée, vitesse, Pause | Carte compacte dans la barre latérale ; point vert animé sur Direct |
-| Direct | Plein écran avec chevron pour réduire et commandes en bas | Bloc et allure à gauche, graphique ou données à droite, commandes en bas |
+| Séance en cours | Capsule « Revenir au Direct » au-dessus des onglets avec état, bloc, durée, vitesse et Pause/Reprendre | Même accès dans la barre latérale |
+| Direct | Plein écran avec « Accueil » en haut et commandes en bas | Même retour en haut, commandes en bas |
 | En-tête | Grand titre qui se replie en barre floutée au défilement ; date ou version en `label-2` sous le titre ; boutons d’écran (+) à côté de l’avatar, puis dans la barre repliée | Identique, sans avatar |
 
 L’accueil met en avant la prochaine séance avec un visuel WebP local, puis le dernier bilan du profil et les accès au tapis. Sur PC, le bilan et le tapis occupent la colonne de droite. Dans la bibliothèque et les fiches, le sélecteur Graphique / Segments donne accès aux consignes sans traverser tout le graphique. L’éditeur présente les blocs avant l’aperçu sur téléphone.
@@ -117,13 +117,13 @@ L’accueil met en avant la prochaine séance avec un visuel WebP local, puis le
 - **Tapis.** Ligne dans Réglages : nom de l’appareil et état avec pastille colorée (vert connecté, orange pulsé pendant recherche ou connexion, rouge si l’état est indisponible). La feuille s’ouvre sur l’appareil (icône Bluetooth, nom, état, capsule « Lecture seule ») ; puis appareils trouvés avec Connecter, recherche, mesures en grille de deux colonnes, fraîcheur repliable, capacités lues (plages et pas) et Déconnecter en ligne de liste. Simulation reste dans le titre fixe de la feuille. Mesure absente, cardio invalide ou mesure ancienne : `--`, avec âge et état explicites. Perdre l'observation ne reconnecte pas le tapis.
   Pendant une séance, la capsule décrit le contrôle actif et la déconnexion reste désactivée ; l’observation seule n’autorise aucun mouvement.
 - **Explication repliable.** Faits en lignes courtes libellé / valeur, une seule phrase de limite. Jamais de paragraphes.
-- **Consignes du Direct.** Vitesse et pente en deux lignes ; − / + de 44 px encadrent la cible colorée. Vitesse par pas de 0,5 km/h, pente par pas de 0,5 % sur le RUN500 (compatibles avec le pas Bluetooth lu). Les appuis se cumulent sans désactiver les boutons pendant l’ajustement ; la cible demandée s’affiche immédiatement, puis les mesures confirment l’effet. Les changements signalés par la console du tapis actualisent aussi les cibles, la suite et le profil du programme. Une ligne précise l’attente ou la reprise du réglage physique ; les mesures reçues restent distinctes. Commandes de protection accessibles pendant l’application ; réglages désactivés en pause, en observation seule et sans mesures fraîches. Les grandes valeurs gardent un interligne de 1,2, sans marge négative sur le libellé ; le format court en hauteur conserve les deux réglages au-dessus de Pause/Arrêter.
+- **Consignes du Direct.** Vitesse et pente en deux lignes ; − / + de 44 px encadrent la cible colorée. Vitesse par pas de 0,5 km/h, pente par pas de 0,5 % sur le RUN500 (compatibles avec le pas Bluetooth lu). Les appuis se cumulent sans désactiver les boutons pendant l’ajustement ; la cible demandée s’affiche immédiatement, puis les mesures confirment l’effet. Les changements signalés par la console du tapis actualisent aussi les cibles, la suite et le profil du programme. Une ligne précise l’attente ou la reprise du réglage physique ; les mesures reçues restent distinctes. Commandes de protection accessibles pendant l’application ; réglages désactivés en pause, en observation seule et sans mesures fraîches. Les grandes valeurs gardent un interligne de 1,2, sans marge négative sur le libellé ; le format court en hauteur conserve les deux réglages au-dessus de Pause et Terminer.
 - **Anneau.** Trait de 11 px, piste à 22 %, extrémités arrondies.
 - **Bandeau d’état.** Fond de la couleur de rôle à 15 %, icône et une phrase.
 
 ### Direct pendant la course
 
-Le tableau tient dans la hauteur visible du navigateur. En portrait, il réunit le bloc en cours, l’allure, le temps restant, le graphique, le bloc suivant et les cumuls. En paysage, les chiffres et le graphique se partagent la largeur. La barre inférieure donne toujours accès à Pause ou Reprendre, Arrêter et aux outils de course.
+Le tableau tient dans la hauteur visible du navigateur. En portrait, il réunit le bloc en cours, l’allure, le temps restant, le graphique, le bloc suivant et les cumuls. En paysage, les chiffres et le graphique se partagent la largeur. La barre inférieure donne toujours accès à Pause ou Reprendre, Terminer et aux outils de course. « Accueil » laisse le PC poursuivre la séance. « Terminer » demande l’arrêt de la séance.
 
 **Graphique** s’ouvre par défaut. Vitesse et pente se superposent sur le même axe du temps. La vitesse apparaît en vert sur l’axe gauche en km/h, la pente en violet sur l’axe droit en %. Les valeurs reçues restent visibles au-dessus du tracé. Les courbes épaisses représentent les mesures, les paliers fins à droite du repère Direct les cibles prévues. Une minute d’historique et le bloc suivant partagent une échelle de temps proportionnelle. Une interruption laisse un trou dans la courbe. Au toucher ou au clavier, le curseur indique les deux valeurs à l’instant choisi.
 
@@ -167,13 +167,13 @@ Courbe `cubic-bezier(.32, .72, 0, 1)`.
 | Anneau | 700 ms |
 | Pression | 160 ms |
 
-Le compte à rebours 3-2-1 a un effet « pop ». Pause et Arrêter agissent immédiatement, sans animation préalable. Avec `prefers-reduced-motion`, toutes les animations sont ramenées à 1 ms.
+Le compte à rebours 3-2-1 a un effet « pop ». Pause et Terminer agissent immédiatement, sans animation préalable. Avec `prefers-reduced-motion`, toutes les animations sont ramenées à 1 ms.
 
 ## 9. Règles de texte
 
 Textes conservés, car chacun porte un fait ou une action :
 
-« Commencer », « Avant de démarrer », « Clé de sécurité en place », « Bande libre », « Démarrer », « Pause », « Reprendre », « Arrêter », « Arrêt demandé », « Arrêt confirmé », « Aucune mesure depuis N s », « Dernière mesure X km/h, il y a N s », « Tapis déconnecté. État de la bande inconnu : utilisez le STOP physique. », « Résultat de la dernière commande inconnu. Utilisez le STOP physique, puis reconnectez. », « Coach hors ligne. Séances et historique restent disponibles. »
+« Commencer », « Avant de démarrer », « Clé de sécurité en place », « Bande libre », « Démarrer », « Pause », « Reprendre », « Terminer », « Arrêt demandé », « Arrêt confirmé », « Aucune mesure depuis N s », « Dernière mesure X km/h, il y a N s », « Tapis déconnecté. État de la bande inconnu : utilisez le STOP physique. », « Résultat de la dernière commande inconnu. Utilisez le STOP physique, puis reconnectez. », « Coach hors ligne. Séances et historique restent disponibles. »
 
 Interdits : sous-titres marketing, mentions « démonstration » ou « fictif », identifiants techniques (G01…) dans l’interface, signatures, rappels « facultatif », phrases qui répètent une valeur déjà affichée.
 

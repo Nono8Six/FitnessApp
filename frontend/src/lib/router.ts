@@ -9,7 +9,7 @@ export type Route = { name: 'today' } | { name: 'settings'; treadmill?: boolean 
   | { name: 'fouleeTransfer'; query: string }
 
 export function parse(hash: string): Route {
-  if (hash === '#/test') return { name: 'test' }
+  if (hash === href.courseTest) return { name: 'test' }
   if (hash === href.recordings) return { name: 'recordings' }
   const reports = /^#\/bilans\?seance=([a-f0-9]{32})$/.exec(hash)
   if (reports) return { name: 'recordings', workoutId: reports[1] }
@@ -44,6 +44,7 @@ export const href = {
   settings: '#/reglages',
   treadmill: '#/reglages?tapis=1',
   direct: '#/direct',
+  courseTest: '#/test',
   recordings: '#/bilans',
   report: (id: string) => `#/bilans/${id}`,
   workoutReports: (id: string) => `#/bilans?seance=${id}`,

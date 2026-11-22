@@ -10,11 +10,10 @@ import { useCurrentProfile } from '../lib/profiles'
 import type { Workout } from '../lib/workouts'
 import type { Block } from '../lib/types'
 import { BlockReadings, CourseChart, CourseData, CourseReadout, NextBlock } from './CourseView'
-import { courseTest } from '../lib/environment'
 
 export function StartButton({ profile, workout, className }: { profile: string; workout: Workout; className?: string }) {
   const e = useExecution()
-  return <Button className={className} onClick={() => e.select(profile, workout)}>{inProgress(e.feed?.session.phase) ? 'Retrouver le Direct' : 'Commencer'}</Button>
+  return <Button className={className} onClick={() => e.select(profile, workout)}>{inProgress(e.feed?.session.phase) ? 'Revenir au Direct' : 'Commencer'}</Button>
 }
 
 function Confirmations({ keyReady, clear, setKey, setClear }: { keyReady: boolean; clear: boolean; setKey: (v: boolean) => void; setClear: (v: boolean) => void }) {
@@ -102,11 +101,16 @@ export function Activity({ desktop = false }: { desktop?: boolean }) {
   const live = e.status === 'live' && e.now - e.receivedAt < 5000
   const canPause = live && ['running', 'transitioning', 'adjusting'].includes(s.phase)
   return <div className={desktop ? 'live-activity-desktop' : 'live-activity-mobile'}>
-    <a href={href.direct} className="min-w-0 flex-1 py-2 pl-4">
-      <span className="flex items-center gap-1.5 text-footnote font-semibold"><span className={cx('size-1.5 rounded-full', paused ? 'bg-yellow' : s.phase === 'unknown' ? 'bg-red' : 'bg-green')} />
-        {live ? phaseLabel[s.phase] : 'Observation interrompue'}{s.mode === 'simulation' && <span className="text-orange"> · Simulation</span>}</span>
-      <p className="truncate text-subhead font-semibold">{block.label}</p>
-      <p className="num text-footnote text-label-2"><span className="text-time">{clock(Math.floor(s.active_s))}</span> · <span className={speed === null ? 'text-label-3' : 'text-speed'}>{speed === null ? '--' : dec1(speed)}</span> km/h</p>
+    <a href={href.direct} className="pressable min-w-0 flex-1 py-2 pl-4">
+      <span className="text-subhead font-semibold text-accent">Revenir au Direct</span>
+      <p className="truncate text-footnote text-label-2">
+        <span aria-hidden className={cx('mr-1.5 inline-block size-1.5 rounded-full align-middle', !live ? 'bg-orange' : paused ? 'bg-yellow' : s.phase === 'unknown' ? 'bg-red' : 'bg-green')} />
+        {live ? phaseLabel[s.phase] : 'Hors ligne'} · {block.label}
+      </p>
+      <p className="num truncate text-footnote text-label-2">
+        <span className="text-time">{clock(Math.floor(s.active_s))}</span> · <span className={speed === null ? 'text-label-3' : 'text-speed'}>{speed === null ? '--' : dec1(speed)}</span> km/h
+        {s.mode === 'simulation' && <span className="text-orange"> · Simulation</span>}
+      </p>
     </a>
     <button type="button" disabled={!(paused ? (s.can_resume ?? s.owned_by_me) && live && !e.pending : canPause)}
       aria-label={paused ? 'Reprendre la séance' : 'Mettre la séance en pause'}
@@ -264,7 +268,6 @@ export function Direct() {
   }, [finished, s?.id, s?.recording?.status, s?.profile?.id, profile?.id, e.status])
   const paused = s?.phase === 'paused'
   const statusTone = !available ? 'text-orange' : s?.phase === 'unknown' ? 'text-red' : paused ? 'text-yellow' : 'text-green'
-  const reduce = () => navigate(href.today)
   if (!s || !s.workout || !s.id) return <div className="live-screen"><div className="live-empty">
     <h1 className="text-title1">Direct</h1><p className="mt-3 text-label-2" role="status">{e.status === 'loading' ? 'Chargement de la séance…' : e.status === 'offline' ? 'État de séance indisponible. Attendez la reconnexion au PC.' : 'Aucune séance en cours'}</p>
     <Button className="mt-6" onClick={() => navigate(href.today)}>Aujourd’hui</Button>
@@ -284,20 +287,19 @@ export function Direct() {
     <div><dt>Durée active</dt><dd className="num text-time" data-long={duration.length > 5 || undefined}>{duration}</dd></div>
     <div><dt>Distance{s.distance_quality === 'partial' && ' partielle'}</dt><dd className="num text-distance" data-long={distance.length > 5 || undefined}>{distance}<small>km</small></dd></div>
   </>
-  const canStop = available && !finished && s.phase !== 'unknown' && s.phase !== 'stopping'
+  const canStop = available && !finished && s.phase !== 'unknown' && s.phase !== 'stopping' && e.pending !== 'stop'
   return <div className="live-screen">
     <header className="live-header">
-      <button type="button" aria-label="Réduire le Direct" onClick={reduce} className="live-icon-button"><ChevronDown size={23} /></button>
+      <a href={href.today} className="pressable live-home"><ChevronDown size={18} aria-hidden />Accueil</a>
       <div className="live-heading"><h1>{s.workout.name}</h1>
         <p role="status" className={cx('live-status', statusTone)}><span />{available ? phaseLabel[s.phase] : 'Hors ligne'}</p>
       </div>
-      {courseTest ? <a href="/#/" aria-label="Quitter le test et revenir à l’application" className="live-test-exit"><span>Simulation</span><X size={15} aria-hidden /></a>
-        : s.mode === 'simulation' && <span className="live-mode">Simulation</span>}
+      {s.mode === 'simulation' && <span className="live-mode">Simulation</span>}
     </header>
     {s.phase === 'countdown' ? <div className="live-countdown">
       <strong key={s.countdown} className="num animate-pop" aria-label={`Départ dans ${s.countdown} secondes`}>{s.countdown}</strong>
       <p className="text-subhead text-label-2">{block?.label} · cible {dec1(block?.speed ?? 0)} km/h</p>
-      <Button variant="gray" className="mt-8 min-w-48" onClick={() => void e.act('stop')}>Annuler le démarrage</Button>
+      <Button variant="gray" className="mt-8 min-w-48" disabled={!canStop} onClick={() => void e.act('stop')}>Annuler le démarrage</Button>
       {e.error && <p role="alert" className="mt-4 text-red">{e.error}</p>}
     </div> : <div className="live-layout">
       {interrupted ? null : toolsOpen ? <section className="course-tools" aria-label="Réglages de course">
@@ -342,14 +344,13 @@ export function Direct() {
         </div>
         {finished ? <div className="live-finish">
           <p role="status" className="text-subhead text-green">{s.stop_confirmed ? 'Arrêt confirmé · 0,0 km/h' : s.phase === 'cancelled' ? 'Aucun mouvement demandé' : s.reason}</p>
-          <Button className="mt-3 w-full" variant="gray" onClick={reduce}>Terminer</Button>
         </div> : <div className="live-controls">
           <button type="button" className={cx('live-control', paused ? 'resume' : 'pause')} disabled={!(paused ? canResume && !e.pending : canPause)}
             onClick={() => paused ? e.setConfirmingResume(true) : void e.act('pause')}>
             <span>{paused ? <Play size={28} fill="currentColor" /> : <Pause size={28} fill="currentColor" />}</span><b>{paused ? 'Reprendre' : 'Pause'}</b>
           </button>
           <button type="button" className="live-control stop" disabled={!canStop} onClick={() => void e.act('stop')}>
-            <span><Square size={23} fill="currentColor" /></span><b>{s.phase === 'stopping' ? 'Arrêt demandé' : 'Arrêter'}</b>
+            <span><Square size={23} fill="currentColor" /></span><b>{s.phase === 'stopping' || e.pending === 'stop' ? 'Arrêt demandé' : 'Terminer'}</b>
           </button>
           <button type="button" className="live-control tools" aria-label={toolsOpen ? 'Revenir au Direct' : 'Ajuster et consulter la séance'} aria-pressed={toolsOpen && !interrupted} disabled={interrupted}
             onClick={() => setToolsOpen(v => !v)}>{toolsOpen && !interrupted ? <X size={22} /> : <SlidersHorizontal size={22} />}</button>

@@ -25,6 +25,11 @@ Une seule brique en cours dans le périmètre demandé. Les cases indiquent les 
 - [ ] **Brique 16 · Usage quotidien Windows** : lanceur, démarrage simple, hors ligne, performances.
 - [ ] **Brique 17 · Réception finale** : parcours complet sur les vrais appareils.
 
+### Navigation pendant une séance — 22 novembre 2026
+
+- [x] « Accueil » réduit le Direct. « Revenir au Direct » reste visible au-dessus des onglets ou dans la barre latérale pendant la course et la pause. « Terminer » demande l’arrêt et le bilan s’ouvre après confirmation et enregistrement. Le programme garde sa fin prévue et le tapis ses protections.
+- Build et Chrome vérifiés à 360 × 640 et sur PC. Même séance et durée croissante pendant les allers-retours entre Direct, Aujourd’hui, Séances et Bilans. Pause conservée pendant la navigation, reprise après les deux confirmations, puis arrêt confirmé à zéro avec bilan enregistré. Le retour navigateur du test de course retrouve aussi l’accueil de la simulation. Essais sans RUN500 physique.
+
 ### Direct sans défilement — 22 novembre 2026
 
 - [x] Bloc, temps restant, prochain bloc, cumuls et commandes réunis sur un écran. Le graphique superpose la vitesse et la pente dès l’ouverture. En mode Données, la durée active et la distance dominent. L’allure, le temps restant, la vitesse et la pente se lisent simultanément et les deux cibles tiennent sur une ligne. Les outils de réglage et de consultation remplacent temporairement le tableau.
