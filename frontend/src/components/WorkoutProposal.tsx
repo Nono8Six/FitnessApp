@@ -31,9 +31,9 @@ export function WorkoutDifferences({ before, after }: { before: Preview; after: 
       {rows.map(([label, old, next]) => {
         const changed = old !== next
         return <div key={label} className="g-row pl-4">
-          <div className="row-sep flex min-h-11 items-center gap-3 py-2 pr-4">
+          <div className="row-sep flex min-h-12 flex-wrap items-center gap-x-3 gap-y-1 py-2 pr-4">
             <dt className="min-w-0 flex-1">{label}</dt>
-            <dd className="num flex shrink-0 flex-wrap items-center justify-end gap-x-1.5 text-right">
+            <dd className="num flex max-w-full flex-wrap items-center justify-end gap-x-1.5 text-right">
               {changed && <><span className="text-label-2 line-through decoration-label-3">{old}</span><ArrowRight size={13} className="text-label-3" aria-label="devient" /></>}
               <span className={cx(changed ? 'font-semibold text-label' : 'text-label-2')}>{next}</span>
             </dd>

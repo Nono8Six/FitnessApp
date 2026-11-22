@@ -4,15 +4,16 @@ import { errorMessage } from '../lib/api'
 import { chooseProfile, createProfile, loadProfiles, NAME_MAX, useCurrentProfile, useProfiles, type Profile } from '../lib/profiles'
 import { checkServer, useServer } from '../lib/server'
 import { href, navigate, type Route } from '../lib/router'
-import { CoachIcon, LibraryIcon, TodayIcon } from './Icons'
-import { Avatar, cx, Group, Row, Sheet, Tile } from './ui'
+import { CoachIcon, HistoryIcon, LibraryIcon, TodayIcon } from './Icons'
+import { Avatar, cx, Group, Row, Sheet, Skeleton, Tile } from './ui'
 import { Activity, ReturnToPreparation } from '../features/Direct'
 import { inProgress, useExecution } from '../lib/execution'
 
 /** Destinations réellement construites. Chaque brique ajoute la sienne. */
 const TABS = [
-  { key: 'today', label: 'Aujourd’hui', href: href.today, Icon: TodayIcon, match: ['today', 'recordings', 'report'] },
-  { key: 'library', label: 'Séances', href: href.library, Icon: LibraryIcon, match: ['library', 'workout', 'editor'] },
+  { key: 'today', label: 'Aujourd’hui', href: href.today, Icon: TodayIcon, match: ['today'] },
+  { key: 'library', label: 'Séances', href: href.library, Icon: LibraryIcon, match: ['library', 'workout', 'editor', 'fouleeTransfer'] },
+  { key: 'recordings', label: 'Bilans', href: href.recordings, Icon: HistoryIcon, match: ['recordings', 'report'] },
   { key: 'coach', label: 'Coach', href: href.coach, Icon: CoachIcon, match: ['coach'] },
 ] as const
 
@@ -44,6 +45,8 @@ function ProfileSheet() {
   return (
     <Sheet open={open} onClose={close} title="Profil"
       trailing={<button type="button" onClick={close} className="pressable -mr-2 h-11 min-w-11 px-2 text-headline text-accent">OK</button>}>
+      {profiles.status === 'loading' && <Skeleton label="Chargement des profils" />}
+      {(server.status === 'down' || profiles.status === 'error') && <p role="alert" className="mb-3 text-subhead text-orange">{server.status === 'down' ? server.message : profiles.status === 'error' && profiles.message}</p>}
       {list && (
         <Group>
           {list.map((p) => (
@@ -240,39 +243,42 @@ export function Page({
   children: ReactNode
 }) {
   const scrolled = useScrolled(back ? 30 : 44)
-  const width = 'max-w-[680px] desk:max-w-[1180px]'
+  const width = 'page-inset max-w-[680px] desk:max-w-[1180px]'
+  const rootPage = !back && !trailing
   return (
     <div className="animate-enter">
       <header
         className={cx(
           'sticky top-0 z-30 pt-safe transition-[background-color,box-shadow] duration-200',
+          rootPage && 'page-root-bar',
+          rootPage && !scrolled && 'invisible',
           scrolled ? 'material hairline-b' : 'bg-transparent',
         )}
       >
-        <div className={cx('mx-auto grid h-11 grid-cols-3 items-center gap-2 px-4 desk:px-10', width)}>
-          <div className="min-w-0">
+        <div className={cx('mx-auto flex min-h-12 items-center gap-2', width)}>
+          <div className="min-w-0 shrink-0">
             {back && (
-              <a href={back.href} className="pressable -ml-2 flex h-11 max-w-full items-center pr-2 text-body text-accent">
+              <a href={back.href} className="pressable -ml-2 inline-flex min-h-11 items-center pr-1 text-body text-accent">
                 <ChevronLeft size={28} strokeWidth={2.2} className="-mr-0.5 shrink-0" />
-                <span className="truncate">{back.label}</span>
+                <span>{back.label}</span>
               </a>
             )}
           </div>
-          <div className={cx('min-w-0 truncate text-center text-headline transition-opacity duration-200', scrolled ? 'opacity-100' : 'opacity-0')} aria-hidden>
+          <div className={cx('min-w-0 flex-1 truncate text-headline transition-opacity duration-200', back && 'text-center', scrolled ? 'opacity-100' : 'opacity-0')} aria-hidden>
             {title}
           </div>
-          <div className="flex items-center gap-3 justify-self-end">
+          <div className="flex shrink-0 items-center gap-1">
             {trailing}
             {scrolled && actions}
             {scrolled && showAvatar && <span className="desk:hidden"><ProfileButton size={30} /></span>}
           </div>
         </div>
       </header>
-      <div className={cx('mx-auto px-4 desk:px-10 desk:pb-16', HAS_TAB_BAR ? 'pb-36' : 'pb-[calc(48px+env(safe-area-inset-bottom))]', width)}>
-        <div className="flex items-start justify-between gap-4 pt-1 pb-5">
+      <div className={cx('page-body mx-auto', rootPage && 'page-root-body', width)}>
+        <div className="flex items-start justify-between gap-2 pt-2 pb-5 desk:pb-7">
           <div className="min-w-0">
             <h1 className="text-largetitle break-words">{title}</h1>
-            <div className="flex flex-wrap items-center gap-x-2 gap-y-1 empty:hidden">
+            <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 empty:hidden">
               {subtitle && <div className="text-subhead text-label-2">{subtitle}</div>}
               <SimulationBadge />
               <ConnectingHint />
@@ -280,7 +286,7 @@ export function Page({
           </div>
           {(actions || showAvatar) && (
             // Repliés dans la barre de navigation au défilement : une seule copie reste atteignable.
-            <div inert={scrolled} className={cx('mt-1 flex shrink-0 items-center gap-3 transition-opacity duration-200', scrolled && 'opacity-0')}>
+            <div inert={scrolled} className={cx('flex shrink-0 items-center gap-1', scrolled && 'invisible')}>
               {actions}
               {showAvatar && <span className="desk:hidden"><ProfileButton /></span>}
             </div>
@@ -299,17 +305,17 @@ export function Page({
 function TabBar({ route }: { route: Route }) {
   if (!HAS_TAB_BAR) return null
   return (
-    <nav className="pointer-events-none fixed inset-x-0 bottom-0 z-40 flex justify-center px-4 pb-[max(env(safe-area-inset-bottom),14px)] desk:hidden"
+    <nav className="mobile-nav pointer-events-none fixed inset-x-0 bottom-0 z-40 flex justify-center desk:hidden"
       aria-label="Navigation principale">
-      <div className="material pointer-events-auto flex gap-1 rounded-full p-1 shadow-[0_8px_32px_rgba(0,0,0,.55),inset_0_0_0_0.5px_rgb(255_255_255/.12)]">
+      <div className="mobile-nav-track material pointer-events-auto grid w-full max-w-[460px] grid-cols-4 rounded-full p-1">
         {TABS.map(({ key, label, href: to, Icon, match }) => {
           const active = (match as readonly string[]).includes(route.name)
           return (
             <a key={key} href={to} aria-current={active ? 'page' : undefined}
-              className={cx('pressable flex h-[54px] min-w-[104px] flex-col items-center justify-center gap-0.5 rounded-full px-4 transition-colors duration-300',
-                active ? 'bg-fill-3 text-accent' : 'text-label')}>
-              <Icon size={24} active={active} />
-              <span className="text-[10px] leading-3 font-semibold tracking-[0.01em]">{label}</span>
+              className={cx('pressable flex min-h-[52px] min-w-0 flex-col items-center justify-center gap-1 rounded-full transition-colors',
+                active ? 'bg-accent/12 text-accent' : 'text-label-2')}>
+              <Icon size={21} active={active} />
+              <span className="text-caption2 font-semibold">{label}</span>
             </a>
           )
         })}
@@ -335,7 +341,7 @@ function Sidebar({ route }: { route: Route }) {
   const execution = useExecution()
   return (
     <aside className="fixed inset-y-0 left-0 z-40 hidden w-[248px] flex-col bg-[#0c0c0d] px-3 py-5 shadow-[inset_-0.5px_0_0_var(--color-sep)] desk:flex">
-      <div className="mb-5 px-2.5 text-title3 font-bold">Fitness</div>
+      <div className="mb-8 flex items-center gap-2.5 px-2.5 text-title2 font-bold"><TodayIcon size={27} className="text-accent" />Fitness</div>
       <nav className="flex flex-col gap-0.5" aria-label="Navigation principale">
         {TABS.map(({ key, label, href: to, Icon, match }) => {
           const active = (match as readonly string[]).includes(route.name)
@@ -362,6 +368,22 @@ export function Shell({ route, children }: { route: Route; children: ReactNode }
   const direct = route.name === 'direct'
   const e = useExecution()
   const active = inProgress(e.feed?.session.phase)
+  useEffect(() => {
+    const viewport = window.visualViewport
+    if (!viewport) return
+    const syncKeyboard = () => {
+      const inset = viewport.scale === 1 ? Math.max(0, window.innerHeight - viewport.height - viewport.offsetTop) : 0
+      document.documentElement.style.setProperty('--keyboard-inset', `${inset}px`)
+    }
+    syncKeyboard()
+    viewport.addEventListener('resize', syncKeyboard)
+    viewport.addEventListener('scroll', syncKeyboard)
+    return () => {
+      viewport.removeEventListener('resize', syncKeyboard)
+      viewport.removeEventListener('scroll', syncKeyboard)
+      document.documentElement.style.removeProperty('--keyboard-inset')
+    }
+  }, [])
   return (
     <>
       {!direct && <Sidebar route={route} />}

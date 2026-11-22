@@ -4,7 +4,7 @@ import { Button, Chip, cx } from './ui'
 import type { Question } from '../lib/coach'
 
 type Answer = { choice?: string; other?: string }
-const chip = 'h-auto min-h-9 py-1.5 text-left whitespace-normal'
+const chip = 'max-w-full min-h-11 py-2 text-left whitespace-normal wrap-anywhere'
 
 /**
  * Questions du coach en capsules, comme les filtres d'Apple Fitness : un choix par question, « Autre » pour
@@ -47,7 +47,7 @@ export function CoachQuestions({ questions, onSubmit, disabled }: {
           {a.other !== undefined && <input autoFocus value={a.other} maxLength={200} aria-label={`${q.label} : votre réponse`}
             placeholder="Précise ta réponse" onChange={e => set(index, { other: e.target.value })}
             onKeyDown={e => { if (e.key === 'Enter' && !e.nativeEvent.isComposing) { e.preventDefault(); submit() } }}
-            className="mt-2.5 h-10 w-full rounded-full bg-fill-3 px-4 text-subhead outline-none placeholder:text-label-3 focus-visible:shadow-[inset_0_0_0_1px_var(--color-label-3)]" />}
+            className="mt-2.5 h-12 w-full rounded-[12px] bg-fill-3 px-4 text-body outline-none placeholder:text-label-2 focus-visible:ring-1 focus-visible:ring-accent" />}
         </fieldset>
       })}
     </div>

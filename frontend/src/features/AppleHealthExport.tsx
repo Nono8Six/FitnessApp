@@ -56,7 +56,7 @@ export function AppleHealthExport({ data }: { data: Recording }) {
           : <Button className="w-full" disabled>Ouvrir Raccourcis</Button>}
         {!appleDevice && <p className="text-center text-footnote text-label-2">Ouvrez ce bilan dans Chrome sur votre iPhone.</p>}
       </div>}>
-      <div className="space-y-5 px-4 pb-5">
+      <div className="space-y-5 pb-2">
         <p className="text-subhead text-label-2">Envoi gratuit avec Raccourcis Apple, à configurer une fois ci-dessous.</p>
         {issue ? <p role="status" className="rounded-[12px] bg-orange/15 p-3 text-subhead text-orange">{issue}</p> : workout && <>
           <Facts rows={[

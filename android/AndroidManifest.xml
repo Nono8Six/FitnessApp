@@ -1,10 +1,10 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android" package="fr.fitnessapp.sante"
-    android:versionCode="1" android:versionName="1.0">
+    android:versionCode="2" android:versionName="1.1">
     <uses-sdk android:minSdkVersion="34" android:targetSdkVersion="35" />
     <uses-permission android:name="android.permission.health.WRITE_EXERCISE" />
     <uses-permission android:name="android.permission.health.WRITE_DISTANCE" />
     <uses-permission android:name="android.permission.health.WRITE_ACTIVE_CALORIES_BURNED" />
-    <application android:label="FitnessApp Santé" android:allowBackup="false" android:theme="@android:style/Theme.Material.Light.NoActionBar">
+    <application android:label="FitnessApp Santé" android:allowBackup="false" android:theme="@style/FitnessHealth">
         <activity android:name=".SaveWorkout" android:exported="true" android:excludeFromRecents="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />

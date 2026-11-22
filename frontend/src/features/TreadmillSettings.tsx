@@ -54,13 +54,13 @@ export function TreadmillSettings({ readOnly, initialOpen = false }: { readOnly:
     </Group>
     <Sheet open={open} onClose={() => setOpen(false)} title={s?.mode === 'simulation' ? 'Tapis · Simulation' : 'Tapis'}
       trailing={<button type="button" onClick={() => setOpen(false)} className="pressable -mr-2 min-h-11 min-w-11 px-2 text-headline text-accent">OK</button>}>
-      <div className="flex flex-col items-center pt-2 pb-5 text-center">
-        <span className="grid size-16 place-items-center rounded-[18px] bg-blue/18 text-blue">
+      <div className="mb-4 grid grid-cols-[auto_1fr] items-center gap-x-3 gap-y-2">
+        <span className="row-span-2 grid size-12 place-items-center rounded-[14px] bg-blue/18 text-blue">
           {busy ? <BluetoothSearching size={30} className="animate-pulse-dot" /> : <Bluetooth size={30} />}
         </span>
-        <h3 className="mt-3 text-title3">{s?.device_name ?? 'RUN500'}</h3>
-        <p role="status" className="mt-1 text-subhead">{status}</p>
-        <p className="mt-2 inline-flex items-center gap-1.5 rounded-full bg-fill-3 px-3 py-1 text-footnote text-label-2"><Lock size={12} strokeWidth={2.6} />{s?.control_active ? 'Séance en cours · pilotage dans Direct' : 'Observation · démarrage depuis une séance'}</p>
+        <h3 className="text-title3 wrap-anywhere">{s?.device_name ?? 'RUN500'}</h3>
+        <p role="status" className="text-subhead text-label-2">{status}</p>
+        <p className="col-span-2 mt-1 inline-flex items-center gap-2 text-footnote text-label-2"><Lock size={14} className="shrink-0" />{s?.control_active ? 'Séance en cours · pilotage dans Direct' : 'Observation · démarrage depuis une séance'}</p>
       </div>
       {device.error && <p role="alert" className="mb-3 rounded-[12px] bg-red/15 px-4 py-2.5 text-subhead text-red">{device.error}</p>}
       {!s && <div role="status" className="h-[52px] animate-pulse rounded-[14px] bg-fill-3"><span className="sr-only">Chargement de l’état du tapis</span></div>}

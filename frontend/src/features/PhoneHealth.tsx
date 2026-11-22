@@ -1,6 +1,6 @@
 import { useState, type MouseEvent } from 'react'
 import { Heart } from 'lucide-react'
-import { Button, Disclosure, Segmented, Sheet } from '../components/ui'
+import { Button, Disclosure, Group, Row, Segmented, Sheet, Tile } from '../components/ui'
 import { fitnessSyncerExportIssue, type FitnessSyncerActivity } from '../lib/fitnessSyncer'
 import { detectPhone, phoneAttemptKey, phoneSaveUrl, phoneSetupKey, readPhoneSetup, shortcutName } from '../lib/phoneHealth'
 import type { Recording } from '../lib/recordings'
@@ -83,10 +83,13 @@ export function PhoneHealth({ profile, data }: { profile: { id: string; name: st
   }
 
   return <section className="mt-5 space-y-1" aria-label="Enregistrement sur le téléphone">
-    {data && issue ? <p className="text-footnote text-label-2">{issue}</p> : data && href && !(device === 'iphone' && attempted)
+    {!data ? <Group header="Santé sur ce téléphone">
+      <Row title={matches ? 'Enregistrement configuré' : 'Configurer l’enregistrement'} onClick={configure}
+        leading={<Tile color="var(--color-energy)"><Heart size={18} /></Tile>} subtitle={matches ? `${profile.name} · ${destination}` : 'Activité et calories à enregistrer'} />
+    </Group> : issue ? <p className="text-footnote text-label-2">{issue}</p> : href && !(device === 'iphone' && attempted)
       ? <a className={actionStyle} href={href} onClick={markLaunch}><Heart size={18} aria-hidden="true" />Enregistrer la séance</a>
-      : (!data || !matches) && <Button className="w-full" variant={data ? 'primary' : 'gray'} onClick={configure}>
-          <Heart size={18} aria-hidden="true" />{matches ? 'Réglages de l’enregistrement Santé' : 'Configurer l’enregistrement Santé'}
+      : !matches && <Button className="w-full" onClick={configure}>
+          <Heart size={18} aria-hidden="true" />Configurer l’enregistrement Santé
         </Button>}
     {data && matches && !issue && <div className="flex flex-wrap items-center justify-between gap-x-2">
       <span className="text-footnote text-label-2">{profile.name} · {destination} · {setup.activity === 'Running' ? 'Course' : 'Marche'}{data.metrics.energy.movement_ambiguous && ` · estimation ${setup.calories === 'low' ? 'basse' : 'haute'}`}</span>

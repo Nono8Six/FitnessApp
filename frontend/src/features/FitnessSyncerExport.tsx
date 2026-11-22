@@ -80,7 +80,7 @@ export function FitnessSyncerExport({ data }: { data: Recording }) {
           <fieldset>
             <legend className="mb-2 text-subhead font-semibold">Activité réalisée sur le tapis</legend>
             <div className="grid grid-cols-2 gap-2">
-              {FITNESS_SYNCER_ACTIVITIES.map(option => <label key={option.value} className="flex min-h-[52px] cursor-pointer items-center gap-2 rounded-[12px] bg-fill-3 px-3 text-subhead">
+              {FITNESS_SYNCER_ACTIVITIES.map(option => <label key={option.value} className="flex min-h-[52px] cursor-pointer items-center gap-2 rounded-[12px] bg-fill-3 px-3 text-subhead has-checked:bg-accent/12">
                 <input type="radio" name={`fitness-activity-${data.id}`} checked={activity === option.value}
                   onChange={() => { setActivity(option.value); setConfirmed(false) }} className="size-4 shrink-0 accent-accent" />
                 {option.value === 'Walking' ? 'Marche' : 'Course'}
@@ -91,7 +91,7 @@ export function FitnessSyncerExport({ data }: { data: Recording }) {
             <legend className="mb-2 text-subhead font-semibold">Calories actives à envoyer</legend>
             <p className="mb-3 text-footnote text-label-2">Le bilan donne une plage car le mouvement marche/course reste incertain. Choisissez une estimation ; la plage et votre choix seront aussi indiqués dans la note.</p>
             <div className="grid grid-cols-2 gap-2">
-              {calorieOptions.map(option => <label key={option.value} className="flex min-h-[64px] cursor-pointer items-center gap-2 rounded-[12px] bg-fill-3 px-3 py-2 text-subhead">
+              {calorieOptions.map(option => <label key={option.value} className="flex min-h-[64px] cursor-pointer items-center gap-2 rounded-[12px] bg-fill-3 px-3 py-2 text-subhead has-checked:bg-accent/12">
                 <input type="radio" name={`fitness-calories-${data.id}`} checked={selectedCalories?.value === option.value}
                   onChange={() => { setCalorieChoice(option.value); setConfirmed(false) }} className="size-4 shrink-0 accent-accent" />
                 <span>{option.label}<strong className="block text-energy">≈ {option.kcal} kcal</strong></span>

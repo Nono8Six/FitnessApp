@@ -2,14 +2,14 @@ import { Bluetooth, ChartNoAxesCombined, Check, ChevronDown, Gauge, Minus, Pause
 import { memo, useEffect, useMemo, useState } from 'react'
 import { nearest, ProgrammeMini, TimeChart, type Series } from '../components/charts'
 import { Button, cx, Disclosure, Facts, Group, Segmented, Sheet } from '../components/ui'
-import { calories, clock, dec1, dec2, pace } from '../lib/format'
+import { calories, clock, dec1, dec2 } from '../lib/format'
 import { currentMeasurement, inProgress, phaseLabel, prepareExecution, useExecution, type LiveSample, type Preparation } from '../lib/execution'
 import { errorMessage } from '../lib/api'
 import { href, navigate } from '../lib/router'
 import { useCurrentProfile } from '../lib/profiles'
 import type { Workout } from '../lib/workouts'
 import type { Block } from '../lib/types'
-import { CourseView, NextBlock } from './CourseView'
+import { CourseChart, CourseReadout, NextBlock } from './CourseView'
 import { courseTest } from '../lib/environment'
 
 export function StartButton({ profile, workout, className }: { profile: string; workout: Workout; className?: string }) {
@@ -75,12 +75,11 @@ export function ExecutionSheets() {
       {!resume && <Button variant="plain" size="md" disabled={checking} onClick={() => setRevision(v => v + 1)}>Revérifier</Button>}
     </div>}
     <Confirmations keyReady={keyReady} clear={clear} setKey={setKey} setClear={setClear} />
-    <p className="mt-4 px-1 text-footnote text-label-2">Le PC pilote la séance : vous pouvez changer d’application ou verrouiller le téléphone sans interrompre la course. Le PC doit rester allumé et connecté au tapis. Toute reprise après une pause reste à confirmer.</p>
-    <Disclosure title="Périmètre de la séance" className="mt-4"><Facts rows={[
+    <Disclosure title="Tapis et limites" className="mt-4"><Facts rows={[
+      ['Pilotage', 'Gardez le PC allumé et connecté au tapis.'],
       ['Vitesse maximale', limits ? `${dec1(limits.speed)} km/h` : 'En cours de vérification'],
       ['Pente maximale', limits ? `${dec1(limits.incline)} %` : 'En cours de vérification'],
       ['Mode', mode === 'simulation' ? 'Simulation' : mode === 'reel' ? 'RUN500 réel' : 'En cours de vérification'],
-      ['Présence', 'Nouvelle confirmation à chaque reprise'],
     ]} /></Disclosure>
   </Sheet>
 }
@@ -198,7 +197,7 @@ function LiveAdjustments() {
       </div>
     })}
     <p className="live-adjust-hint" role="status">{e.adjustment || s.phase === 'adjusting' ? 'Cible demandée · effet attendu' : !s.owned_by_me && inProgress(s.phase) ? 'Réglages sur l’écran qui a démarré la séance'
-      : s.adjustment_note ?? limitHint ?? 'Cibles · réglages sur les blocs restants'}</p>
+      : s.adjustment_note ?? limitHint ?? 'Appliqué aux blocs restants'}</p>
   </div>
 }
 
@@ -223,18 +222,19 @@ export function Direct() {
     <h1 className="text-title1">Direct</h1><p className="mt-3 text-label-2" role="status">{e.status === 'loading' ? 'Chargement de la séance…' : e.status === 'offline' ? 'État de séance indisponible. Attendez la reconnexion au PC.' : 'Aucune séance en cours'}</p>
     <Button className="mt-6" onClick={() => navigate(href.today)}>Aujourd’hui</Button>
   </div></div>
-  const error = !available ? 'Contact avec le PC perdu. Reconnexion en cours ; l’état actuel du tapis est indisponible.'
+  const error = !available ? 'PC déconnecté. État du tapis inconnu. Utilisez le STOP physique si nécessaire.'
     : s.phase === 'unknown' ? s.error ?? 'État de la bande inconnu. Utilisez le STOP physique, puis reconnectez.'
-    : e.error ?? s.error ?? (speed === null || incline === null ? 'Mesures anciennes ou absentes. Les valeurs actuelles sont indisponibles.' : undefined)
+    : e.error ?? s.error ?? (speed === null || incline === null ? 'Mesures du tapis indisponibles.' : undefined)
   const canPause = available && ['running', 'transitioning', 'adjusting'].includes(s.phase)
   const canResume = available && paused && (s.can_resume ?? s.owned_by_me) && s.restart_delay_s === 0 && speed === 0
   const kcal = calories(s.totals.energy)
+  const distance = available && (s.distance_quality === 'fresh' || s.distance_quality === 'partial') && s.distance_m !== null ? dec2(s.distance_m / 1000) : '—'
   const canStop = available && !finished && s.phase !== 'unknown' && s.phase !== 'stopping'
   return <div className={cx('live-screen', view === 'graph' && 'is-graph', paused && 'is-paused')}>
     <header className="live-header">
       <button type="button" aria-label="Réduire le Direct" onClick={reduce} className="pressable grid size-11 shrink-0 place-items-center rounded-full bg-fill-3"><ChevronDown size={25} /></button>
-      <div className="live-heading min-w-0 flex-1"><h1 className="truncate text-headline">{s.workout.name}</h1><p className="truncate text-footnote text-label-2">{s.profile?.name} · Version {s.workout.version}</p></div>
-      {courseTest ? <a href="/#/" className="live-test-exit pressable flex min-h-11 flex-col justify-center text-right text-footnote text-orange"><span>Simulation</span><span>Quitter le test ↗</span></a>
+      <div className="live-heading min-w-0 flex-1"><h1 className="truncate text-headline">{s.workout.name}</h1></div>
+      {courseTest ? <a href="/#/" aria-label="Quitter le test et revenir à l’application" className="live-test-exit pressable"><span>Simulation</span><X size={16} aria-hidden /></a>
         : s.mode === 'simulation' && <span className="live-mode">Simulation</span>}
     </header>
     <div className="live-view-toolbar">
@@ -245,72 +245,47 @@ export function Direct() {
       ]} />
     </div>
     {s.phase === 'countdown' ? <div className="live-countdown">
-      <p className="text-title3">Prêt à démarrer</p><strong key={s.countdown} className="num animate-pop">{s.countdown}</strong>
+      <strong key={s.countdown} className="num animate-pop" aria-label={`Départ dans ${s.countdown} secondes`}>{s.countdown}</strong>
       <p className="text-subhead text-label-2">{block?.label} · cible {dec1(block?.speed ?? 0)} km/h</p>
       <Button variant="gray" className="mt-8 min-w-48" onClick={() => void e.act('stop')}>Annuler le démarrage</Button>
       {e.error && <p role="alert" className="mt-4 text-red">{e.error}</p>}
     </div> : <div className="live-layout">
       <div className="live-content" key={view}>
-        <section className="live-primary" aria-label="Mesures actuelles">
-          <div className="live-glance">
-            {view === 'graph' ? <CourseView session={s} samples={e.feed?.samples ?? []} blocks={blocks} speed={speed} incline={incline} available={available} /> : <>
-            <div className="live-metrics-hero">
-              <div>
-                <p className="live-measure-label">{showPace ? 'Allure mesurée' : 'Vitesse mesurée'}</p>
-                <button type="button" className={cx('live-speed num', showPace && 'is-pace')} onClick={() => setShowPace(v => !v)} aria-label={showPace ? 'Afficher la vitesse en km/h' : 'Afficher l’allure par kilomètre'}>
-                  <span className={cx('live-speed-value', speed === null || (showPace && speed === 0) ? 'text-label-3' : 'text-speed')}>{speed === null ? '--' : showPace ? pace(speed) : dec1(speed)}</span>
-                  <span className="live-speed-unit text-label-2">{showPace ? 'min/km' : 'km/h'}</span>
-                </button>
-              </div>
-              <div>
-                <p className="live-measure-label">Pente mesurée</p>
-                <p className={cx('live-incline-value num', incline === null ? 'text-label-3' : 'text-incline')}>
-                  <span>{incline === null ? '--' : dec1(incline)}</span><small className="live-speed-unit text-label-2">%</small>
-                </p>
-              </div>
-            </div>
-            <div className="live-secondary">
-              <div><span className="text-footnote text-label-2">Durée active{!available && ' · dernière reçue'}</span><p data-long-value={s.active_s >= 3600 ? 'true' : undefined} className="num text-time">{clock(Math.floor(s.active_s))}</p></div>
-              <div><span className="text-footnote text-label-2">Distance{ s.distance_quality === 'partial' ? ' · partielle' : ''}</span><p className={cx('num', available && ['fresh','partial'].includes(s.distance_quality) ? 'text-distance' : 'text-label-3')}>{available && ['fresh','partial'].includes(s.distance_quality) && s.distance_m !== null ? dec2(s.distance_m / 1000) : '--'}<small>KM</small></p></div>
-              <div><span className="text-footnote text-label-2">Calories actives</span><p data-long-value={kcal && kcal.length >= 8 ? 'true' : undefined} className={cx('num', available && kcal !== null ? 'text-energy' : 'text-label-3')}>{available ? kcal ?? '--' : '--'}<small>KCAL</small></p></div>
-              <div><span className="text-footnote text-label-2">Vitesse moyenne</span><p className={cx('num', available && s.totals.speed_avg !== null ? 'text-speed' : 'text-label-3')}>{available && s.totals.speed_avg !== null ? dec1(s.totals.speed_avg) : '--'}<small>KM/H</small></p></div>
-            </div>
-            {available && s.totals.energy.movement_ambiguous && kcal && <p className="mt-1 text-caption text-label-2">Deux estimations selon marche ou course · voir les détails</p>}
-            {available && s.totals.energy.weight_kg === null && <p className="mt-1 text-caption text-orange">Poids absent au départ : calories indisponibles pour cette séance.</p>}
-            {available && ((s.totals.coverage.speed !== null && s.totals.coverage.speed < .99) || (s.totals.coverage.energy !== null && s.totals.coverage.energy < .99)) && <p className="mt-1 text-caption text-orange">Moyenne et estimation sur les mesures disponibles</p>}
-            </>}
-          </div>
+        <section className="live-primary" aria-label="Mesures de la séance">
+          <CourseReadout block={block} index={s.block_index} count={blocks.length} active={s.active_s} available={available}
+            speed={speed} incline={incline} showPace={view === 'graph' || showPace} onToggle={view === 'metrics' ? () => setShowPace(v => !v) : undefined} />
+          <NextBlock next={next} />
+          {view === 'graph' && <CourseChart session={s} samples={e.feed!.samples} blocks={blocks} available={available} hasMeasurement={speed !== null || incline !== null} />}
+          <dl className="course-totals" data-columns={view === 'metrics' ? 2 : 3}>
+            <div><dt>Durée active</dt><dd className="num text-time">{available ? clock(Math.floor(s.active_s)) : '—'}</dd></div>
+            <div><dt>Distance{s.distance_quality === 'partial' && ' partielle'}</dt><dd className="num text-distance">{distance}<small>km</small></dd></div>
+            <div><dt>Kcal estimées</dt><dd className="num text-energy" data-long-value={!!kcal && kcal.length > 7 || undefined}>{available ? kcal ?? '—' : '—'}</dd></div>
+            {view === 'metrics' && <div><dt>Vitesse moyenne</dt><dd className="num text-speed">{available && s.totals.speed_avg !== null ? dec1(s.totals.speed_avg) : '—'}<small>km/h</small></dd></div>}
+          </dl>
         </section>
         <div className="live-detail">
-          {view === 'graph' ? <Disclosure title="Ajuster la séance" className="course-adjustments"><LiveAdjustments /></Disclosure> : <>
-          <section className="live-block" aria-label="Bloc actuel et consignes">
-            <div className="live-block-heading">
-              <div><p className="course-eyebrow">Bloc {s.block_index + 1} sur {blocks.length}</p><h2>{block?.label}</h2></div>
-              <div className="course-remaining"><strong className="num">{clock(Math.ceil(Math.max(0, (block?.end ?? 0) - s.active_s)))}</strong><span className="course-eyebrow">restantes</span></div>
-            </div>
-            <p className="live-current-target num">Cibles · <span>{dec1(block.speed)} km/h</span> · <span>{dec1(block.incline)} %</span></p>
-            <div className="live-block-progress" role="progressbar" aria-label="Progression du bloc" aria-valuemin={0} aria-valuemax={block.sec} aria-valuenow={Math.round(Math.max(0, Math.min(block.sec, s.active_s - block.start)))}><span style={{width: `${Math.max(0, Math.min(100, (s.active_s - block.start) / block.sec * 100))}%`}} /></div>
-          </section>
-          <NextBlock next={next} startsIn={Math.ceil(Math.max(0, block.end - s.active_s))} />
-          {blocks.length > s.block_index + 2 && <Disclosure className="live-panel" title={`Suite du programme · ${blocks.length - s.block_index - 2} ${blocks.length - s.block_index - 2 === 1 ? 'bloc' : 'blocs'}`}>
-            <ol className="live-upcoming">
-              {blocks.slice(s.block_index + 2).map(b => <li key={b.index}>
-                <span className="live-upcoming-index num">{b.index + 1}</span>
-                <div><h3>{b.label}</h3><p className="num">{dec1(b.speed)} km/h · {dec1(b.incline)} %</p></div>
-                <span className="num text-time">{clock(b.sec)}</span>
-              </li>)}
-            </ol>
-          </Disclosure>}
           <Disclosure title="Ajuster la séance" className="live-panel"><LiveAdjustments /></Disclosure>
-          <Disclosure title="Programme complet" className="live-panel">
-            <section className="live-programme" aria-label="Progression du programme"><div className="mb-2 flex justify-between gap-2 text-footnote text-label-2"><span>Programme</span><span className="num">{clock(Math.floor(s.active_s))} / {clock(total)}</span></div><Progress blocks={blocks} active={s.active_s} /></section>
-          </Disclosure>
-          <Disclosure title="Historique des mesures" className="live-panel">
-            <LiveCurves samples={e.feed?.samples ?? []} markers={e.feed?.markers ?? []} wall={s.wall_s} startedAt={s.started_at} live={available && canPause} />
-          </Disclosure>
+          {view === 'metrics' && <>
+            {blocks.length > s.block_index + 2 && <Disclosure className="live-panel" title={`Suite du programme · ${blocks.length - s.block_index - 2} ${blocks.length - s.block_index - 2 === 1 ? 'bloc' : 'blocs'}`}>
+              <ol className="live-upcoming">
+                {blocks.slice(s.block_index + 2).map(b => <li key={b.index}>
+                  <span className="live-upcoming-index num">{b.index + 1}</span>
+                  <div><h3>{b.label}</h3><p className="num">{dec1(b.speed)} km/h · {dec1(b.incline)} %</p></div>
+                  <span className="num text-time">{clock(b.sec)}</span>
+                </li>)}
+              </ol>
+            </Disclosure>}
+
+            <Disclosure title="Programme complet" className="live-panel">
+              <section className="live-programme" aria-label="Progression du programme"><p className="num mb-2 text-footnote text-label-2">{clock(Math.floor(s.active_s))} / {clock(total)}</p><Progress blocks={blocks} active={s.active_s} /></section>
+            </Disclosure>
+            <Disclosure title="Historique des mesures" className="live-panel">
+              <LiveCurves samples={e.feed?.samples ?? []} markers={e.feed?.markers ?? []} wall={s.wall_s} startedAt={s.started_at} live={available && canPause} />
+            </Disclosure>
           </>}
-          <Disclosure title="État du tapis et des mesures" className="mt-5">
+          <Disclosure title="État du tapis" className="live-panel">
             <Facts rows={[
+              ['Profil', `${s.profile?.name} · Version ${s.workout.version}`],
               ['Pilotage', 'PC · indépendant du téléphone'],
               ['Enregistrement', s.recording.status === 'error' ? s.recording.error ?? 'Erreur' : s.recording.status === 'saved' ? 'Enregistré' : `En cours · conservé jusqu’à ${clock(s.recording.persisted_s)}`],
               ['Écran allumé', e.screenAwake.status === 'active' ? 'Anti-veille actif' : 'Selon les réglages du téléphone'],
@@ -318,7 +293,7 @@ export function Direct() {
               ['Tapis', e.feed?.device.phase === 'connected' ? 'Connecté' : 'Déconnecté · bande inconnue'],
               ['Commande', s.command ? `${s.command.status === 'sent' ? 'Envoyée' : s.command.status === 'accepted' ? 'Acceptée · effet attendu' : s.command.status === 'observed' ? 'Effet observé' : s.command.status === 'unknown' ? 'Résultat inconnu' : 'Refusée'}` : 'Aucune'],
               ['Pause cumulée', clock(Math.floor(s.pause_s))],
-              ['Calories actives', 'Estimation ACSM · poids figé au départ'],
+              ['Calories actives', s.totals.energy.weight_kg === null ? 'Poids absent au départ' : 'Estimation ACSM'],
               ['Couverture calories', s.totals.coverage.energy === null ? '--' : `${Math.round(s.totals.coverage.energy * 100)} % du temps actif`],
               ['Couverture vitesse moyenne', s.totals.coverage.speed === null ? '--' : `${Math.round(s.totals.coverage.speed * 100)} % du temps actif`],
               ['Limite du calcul', s.totals.energy.movement_ambiguous ? 'Deux scénarios marche/course · pas une mesure ni un intervalle garanti' : s.totals.energy.outside_range ? 'Vitesse hors des plages usuelles ACSM · estimation moins sûre' : 'Calories estimées, pas une mesure physiologique'],
@@ -330,20 +305,22 @@ export function Direct() {
               }),
             ]} />
           </Disclosure>
+          {s.owned_by_me && !finished && e.screenAwake.status !== 'active' && <button type="button" className="pressable min-h-11 text-subhead text-orange" disabled={e.screenAwake.status === 'requesting'} onClick={() => void e.screenAwake.request()}>{e.screenAwake.status === 'requesting' ? 'Activation de l’anti-veille…' : 'Activer l’anti-veille'}</button>}
         </div>
       </div>
       <div className="live-controls-wrap" role="region" aria-label="Commandes de la séance">
-        {error && <p role="alert" className={cx('live-notice', s.phase === 'unknown' && 'is-urgent')}>{error}</p>}
-        {s.recording && s.recording.status === 'error' && <p role="alert" className="mb-3 text-footnote text-red">
-          {`${s.recording.error ?? 'Enregistrement interrompu.'} Données conservées jusqu’à ${clock(s.recording.persisted_s)} depuis le départ.`}
-        </p>}
-        {finished && s.recording?.status === 'error' && <a href={href.report(s.id)} className="pressable mb-3 flex min-h-11 items-center text-subhead text-accent">Consulter les données conservées</a>}
-        {s.can_claim && <Button variant="gray" className="mb-3 w-full" disabled={!available || !!e.pending} onClick={() => void e.act('claim')}>Reprendre le contrôle sur cet écran</Button>}
-        {paused && s.reason && s.reason !== 'Pause demandée' && <p role="status" className="mb-2 text-footnote text-yellow">{s.reason}</p>}
-        {s.owned_by_me && !finished && e.screenAwake.status !== 'active' && <p className="mb-2 text-footnote text-label-2">{e.screenAwake.status === 'requesting' ? 'Maintien de l’écran en cours…' : <button type="button" className="pressable min-h-11 text-orange underline" aria-label="Écran susceptible de se verrouiller : activer l’anti-veille" onClick={() => void e.screenAwake.request()}>Activer l’anti-veille</button>}</p>}
-        {paused && <p className="live-action-hint text-label-2">{!(s.can_resume ?? s.owned_by_me) ? 'Reprise sur l’écran qui a démarré la séance' : s.restart_delay_s ? `Stabilisation · ${s.restart_delay_s} s` : `Point conservé · pause ${clock(Math.floor(s.pause_s))}`}</p>}
-        {s.phase === 'unknown' && <Button variant="plain" className="mb-2 w-full" onClick={() => navigate(href.treadmill)}>Reconnecter dans Réglages</Button>}
-        {s.phase === 'unknown' && e.feed?.device.read_only && e.feed.device.phase === 'connected' && speed === 0 && <Button variant="gray" className="mb-3 w-full" onClick={() => void e.act('recover')}>Clore la séance interrompue</Button>}
+        <div className="live-control-messages">
+          {error && <p role="alert" className={cx('live-notice', s.phase === 'unknown' && 'is-urgent')}>{error}</p>}
+          {s.recording && s.recording.status === 'error' && <p role="alert" className="mb-3 text-footnote text-red">
+            {`${s.recording.error ?? 'Enregistrement interrompu.'} Données conservées jusqu’à ${clock(s.recording.persisted_s)} depuis le départ.`}
+          </p>}
+          {finished && s.recording?.status === 'error' && <a href={href.report(s.id)} className="pressable mb-3 flex min-h-11 items-center text-subhead text-accent">Consulter les données conservées</a>}
+          {s.can_claim && <Button variant="gray" className="mb-3 w-full" disabled={!available || !!e.pending} onClick={() => void e.act('claim')}>Reprendre le contrôle sur cet écran</Button>}
+          {paused && s.reason && s.reason !== 'Pause demandée' && <p role="status" className="mb-2 text-footnote text-yellow">{s.reason}</p>}
+          {paused && (!(s.can_resume ?? s.owned_by_me) || s.restart_delay_s > 0) && <p className="live-action-hint text-label-2">{!(s.can_resume ?? s.owned_by_me) ? 'Reprise depuis l’écran de départ' : `Stabilisation · ${s.restart_delay_s} s`}</p>}
+          {s.phase === 'unknown' && <Button variant="plain" className="mb-2 w-full" onClick={() => navigate(href.treadmill)}>Reconnecter dans Réglages</Button>}
+          {s.phase === 'unknown' && e.feed?.device.read_only && e.feed.device.phase === 'connected' && speed === 0 && <Button variant="gray" className="mb-3 w-full" onClick={() => void e.act('recover')}>Clore la séance interrompue</Button>}
+        </div>
         {finished ? <div className="live-finish">
           <p role="status" className="text-subhead text-green">{s.stop_confirmed ? 'Arrêt confirmé · 0,0 km/h' : s.phase === 'cancelled' ? 'Aucun mouvement demandé' : s.reason}</p>
           <Button className="mt-3 w-full" variant="gray" onClick={reduce}>Terminer</Button>

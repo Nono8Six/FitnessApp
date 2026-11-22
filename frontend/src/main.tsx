@@ -1,6 +1,7 @@
 import { lazy, StrictMode, Suspense, useEffect, useRef, useState } from 'react'
 import { createRoot } from 'react-dom/client'
-import { Shell } from './components/Shell'
+import { Page, Shell } from './components/Shell'
+import { Skeleton } from './components/ui'
 import { Settings } from './features/Settings'
 import { Today } from './features/Today'
 import { CourseTest } from './features/CourseTest'
@@ -12,13 +13,17 @@ import { Report } from './features/Report'
 import { Reports } from './features/Reports'
 import { Direct, ExecutionSheets } from './features/Direct'
 import { ExecutionProvider } from './lib/execution'
-import { useCurrentProfile } from './lib/profiles'
-import { Page } from './components/Shell'
+import { useCurrentProfile, useProfiles } from './lib/profiles'
 import { href, navigate, useRoute } from './lib/router'
 import type { WorkoutInput } from './lib/workouts'
 import './styles/index.css'
 
 const Coach = lazy(() => import('./features/Coach').then(module => ({ default: module.Coach })))
+
+function ProfileLoading() {
+  const profiles = useProfiles()
+  return <Page title="Fitness">{profiles.status === 'loading' && <Skeleton label="Chargement du profil" />}</Page>
+}
 
 function App() {
   const route = useRoute()
@@ -43,7 +48,7 @@ function App() {
   return (
     <Shell route={route}>
       <div key={`${profile?.id}:${JSON.stringify(route)}`}>
-        {route.name === 'test' ? <CourseTest /> : route.name === 'direct' ? <Direct /> : route.name === 'settings' ? <Settings treadmillOpen={route.treadmill} /> : !profile ? <Page title="Fitness"><p className="text-label-2" role="status">Chargement du profil…</p></Page>
+        {route.name === 'test' ? <CourseTest /> : route.name === 'direct' ? <Direct /> : route.name === 'settings' ? <Settings treadmillOpen={route.treadmill} /> : !profile ? <ProfileLoading />
           : route.name === 'library' ? <Library profile={profile.id} initialView={route.view} onImport={openImportedWorkout} />
           : route.name === 'fouleeTransfer' ? <FouleeTransfer profile={profile} query={route.query} onImport={openImportedWorkout} />
           : route.name === 'editor' ? editingImport && fouleeImport?.profile !== profile.id

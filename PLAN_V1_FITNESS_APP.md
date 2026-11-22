@@ -25,6 +25,12 @@ Une seule brique en cours dans le périmètre demandé. Les cases indiquent les 
 - [ ] **Brique 16 · Usage quotidien Windows** : lanceur, démarrage simple, hors ligne, performances.
 - [ ] **Brique 17 · Réception finale** : parcours complet sur les vrais appareils.
 
+### Interface mobile — 22 novembre 2026
+
+- [x] Aujourd’hui donne accès au choix ou au départ de la séance et au dernier bilan du profil. La barre du bas ouvre Aujourd’hui, Séances, Bilans et Coach. Le catalogue et l’éditeur placent les actions de préparation avant le détail des graphiques.
+- [x] Direct présente le bloc, sa progression, l’allure ou la vitesse et le temps restant, puis le bloc suivant. Les commandes restent visibles en portrait et en paysage. Les diagnostics et explications sont repliés. Les formulaires, feuilles, bilans, Coach et le compagnon Santé Android 1.1 reprennent les mêmes conventions mobiles.
+- Vérifications dans Chrome de 320 à 390 px en portrait, à 740 × 360 en paysage et à 1280 × 800 sur PC. Une course simulée a couvert le départ, la pause, la double confirmation de reprise, l’arrêt et la lecture du bilan. Les deux interfaces web compilent, les 14 tests ciblés des exports passent et le compagnon signé s’ouvre sous Android 15 émulé. Les essais sur téléphone physique et sur le RUN500 restent ouverts.
+
 ### Enregistrer la séance sur son téléphone — 20 novembre 2026
 
 - [x] Depuis le bilan réel, **Enregistrer la séance** utilise le profil associé à ce navigateur, l’activité habituelle et la préférence calorique choisie dans Réglages. L’app du PC continue de conserver le bilan.

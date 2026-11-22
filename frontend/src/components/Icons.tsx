@@ -27,8 +27,7 @@ export function LibraryIcon(p: P) {
     <Svg {...p}>
       <rect x="3" y="8" width="18" height="13" rx="3.5" fill={p.active ? 'currentColor' : 'none'} />
       <path d="M5.5 4.5h13" />
-      {p.active && <path d="M7.5 14.5h3l1.5-3 2 6 1.5-3h1" stroke="#000" strokeWidth={1.8} />}
-      {!p.active && <path d="M7.5 14.5h3l1.5-3 2 6 1.5-3h1" strokeWidth={1.8} />}
+      <path d="M7.5 14.5h3l1.5-3 2 6 1.5-3h1" stroke={p.active ? 'var(--color-on-accent)' : 'currentColor'} strokeWidth={1.8} />
     </Svg>
   )
 }
@@ -36,11 +35,8 @@ export function LibraryIcon(p: P) {
 export function HistoryIcon(p: P) {
   return (
     <Svg {...p}>
-      <g strokeWidth={p.active ? 2.5 : 2}>
-        <path d="M3.2 10.4A9 9 0 1 1 4.6 17" />
-        <path d="M3 5.5v5h5" />
-        <path d="M12 7.5V12l3 2" />
-      </g>
+      <rect x="3.5" y="3.5" width="17" height="17" rx="4" fill={p.active ? 'currentColor' : 'none'} />
+      <path d="M7.5 15.3v-2.7m4.5 2.7V8.5m4.5 6.8v-5" stroke={p.active ? 'var(--color-on-accent)' : 'currentColor'} strokeWidth={2} />
     </Svg>
   )
 }

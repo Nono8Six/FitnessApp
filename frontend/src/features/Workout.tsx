@@ -4,7 +4,6 @@ import { RunIcon } from '../components/Icons'
 import { Page } from '../components/Shell'
 import { Button, Glyph, Group, Menu, Row, Sheet, Tile } from '../components/ui'
 import { WorkoutError, WorkoutLoading, WorkoutSummary } from '../components/WorkoutSummary'
-import { WorkoutBlocks } from '../components/WorkoutBlocks'
 import { errorMessage } from '../lib/api'
 import { href, navigate } from '../lib/router'
 import { deleteWorkout, duplicateWorkout, GOALS, LEVELS, readVersions, selectWorkout, useLibrary, type Workout as WorkoutData } from '../lib/workouts'
@@ -72,9 +71,7 @@ export function Workout({ profile, id, requestedVersion }: { profile: string; id
             })} variant="gray">{selected ? 'Retirer d’Aujourd’hui' : 'Choisir pour Aujourd’hui'}</Button>
           </div>
           <section className="min-w-0 desk:col-start-1 desk:row-span-2 desk:row-start-1" aria-label="Détails de la séance">
-            <WorkoutSummary data={shown} />
-            <h2 className="mt-8 mb-2.5 px-1 text-title2">Segments</h2>
-            <WorkoutBlocks data={shown} className="" />
+            <WorkoutSummary data={shown} segments={shown} />
           </section>
           <aside className="grid gap-5 desk:col-start-2 desk:row-start-2" aria-label="Actions">
             <Group><Row title="Bilans de cette séance" href={href.workoutReports(id)} /></Group>

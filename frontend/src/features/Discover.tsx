@@ -2,7 +2,6 @@ import { ChevronDown, Flame, Gauge, Timer } from 'lucide-react'
 import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { Button, Chip, ChipRow, ControlRow, Disclosure, Group, Menu, pillClass, Segmented, Sheet, Stepper } from '../components/ui'
 import { WorkoutCard } from '../components/WorkoutCard'
-import { WorkoutBlocks } from '../components/WorkoutBlocks'
 import { WeightLink, WorkoutError, WorkoutLoading, WorkoutSummary } from '../components/WorkoutSummary'
 import { errorMessage } from '../lib/api'
 import { href, navigate } from '../lib/router'
@@ -179,13 +178,11 @@ export function Discover({ profile }: { profile: string }) {
       {selected?.message && <p role="status" className="rounded-[12px] bg-orange/15 px-4 py-3 text-subhead text-orange">{selected.message}</p>}
       {mode === 'calories' && selected?.weight_kg === null && <WeightLink className="mt-3" />}
       {shown && <>
-        <WorkoutSummary data={shown} compact />
+        <WorkoutSummary data={shown} compact segments={shown} />
         {selected?.method.dose && <div className="mt-3"><EffortBreakdown dose={selected.method.dose} total={shown.summary.sec} /></div>}
-        <h3 className="mt-7 mb-2 px-1 text-title3">Segments</h3>
-        <WorkoutBlocks data={shown} className="" />
       </>}
       {selected && <Method method={selected.method} />}
-      {shown && <p className="mt-4 px-1 text-footnote text-label-2">Le niveau décrit ces consignes, pas votre capacité physique. Vous pourrez les modifier.</p>}
+
     </Sheet>
   </>
 }

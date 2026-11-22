@@ -3,7 +3,7 @@ import { Button, Group, Row, Sheet } from '../components/ui'
 import { errorMessage } from '../lib/api'
 import { changeChatGPT, readChatGPT, type ChatGPTState } from '../lib/chatgpt'
 
-const selectStyle = 'h-11 w-full min-w-0 rounded-[8px] bg-fill-3 px-3 text-body text-label outline-none focus:ring-2 focus:ring-accent disabled:text-label-3'
+const selectStyle = 'min-h-12 w-full min-w-0 rounded-[12px] bg-fill-3 px-3 text-body text-label outline-none focus:ring-2 focus:ring-accent disabled:text-label-3'
 
 export function ChatGPTSettings({ readOnly }: { readOnly: boolean }) {
   const [data, setData] = useState<ChatGPTState>()

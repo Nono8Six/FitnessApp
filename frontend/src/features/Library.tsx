@@ -34,7 +34,7 @@ export function Library({ profile, initialView = 'discover', onImport }: {
   const needle = q.trim().toLocaleLowerCase('fr')
   const list = state.status === 'ok' ? state.data.workouts.filter(p => p.name.toLocaleLowerCase('fr').includes(needle)
     && (!goal || p.goal === goal) && (!level || p.level === level)) : []
-  const create = <Menu label="Créer une séance" className="pressable grid size-[34px] place-items-center rounded-full bg-fill-3 text-accent"
+  const create = <Menu label="Créer une séance" className="pressable grid size-11 place-items-center rounded-full bg-accent text-on-accent"
     button={<Plus size={20} strokeWidth={2.6} />}
     items={[
       { label: 'Créer avec ChatGPT', icon: <Sparkles size={18} />, onSelect: () => navigate(href.coachCreate) },
@@ -46,11 +46,11 @@ export function Library({ profile, initialView = 'discover', onImport }: {
       onChange={v => navigate(v === 'mine' ? href.myWorkouts : href.library)} options={[{ value: 'discover', label: 'Découvrir' }, { value: 'mine', label: 'Mes séances' }]} />
     {initialView === 'discover' ? <Discover profile={profile} /> : <>
       {state.status === 'loading' ? <WorkoutLoading cards={2} /> : state.status === 'error' ? <WorkoutError message={state.message} retry={reload} />
-        : state.data.workouts.length === 0 ? <section className="flex flex-col items-center rounded-[22px] bg-surface px-6 py-12 text-center">
-          <Glyph size={64}><LibraryIcon size={30} /></Glyph>
+        : state.data.workouts.length === 0 ? <section className="flex max-w-[560px] flex-col items-start rounded-[22px] bg-surface p-5 desk:p-7">
+          <Glyph size={44}><LibraryIcon size={23} /></Glyph>
           <h2 className="mt-4 text-title3">Aucune séance enregistrée</h2>
-          <p className="mt-1.5 max-w-[34ch] text-subhead text-label-2">Ajoutez un programme du catalogue ou créez le vôtre.</p>
-          <div className="mt-6 grid w-full max-w-[320px] gap-2.5">
+
+          <div className="mt-5 grid w-full gap-2.5">
             <a href={href.library} className="pressable inline-flex h-[52px] items-center justify-center rounded-[14px] bg-accent text-headline text-on-accent">Découvrir</a>
             <a href={href.coachCreate} className="pressable inline-flex h-11 items-center justify-center gap-2 rounded-[12px] bg-fill-3 text-subhead font-semibold"><Sparkles size={17} />Créer avec ChatGPT</a>
             <Button type="button" variant="gray" size="md" onClick={() => setImportOpen(true)}><FileUp size={17} />Importer depuis Foulée</Button>
@@ -69,7 +69,7 @@ export function Library({ profile, initialView = 'discover', onImport }: {
           </a>)}</div>
           {!list.length && <div className="py-10 text-center">
             <p className="text-headline">Aucun résultat</p>
-            <p className="mt-1 text-subhead text-label-2">{needle ? `Aucune séance ne contient « ${q.trim()} » avec ces filtres.` : 'Aucune séance ne correspond à ces filtres.'}</p>
+
             <button type="button" onClick={() => { setQ(''); setGoal(''); setLevel('') }} className="pressable mt-2 min-h-11 text-subhead text-accent">Effacer les filtres</button>
           </div>}
         </>}

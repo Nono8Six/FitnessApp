@@ -161,9 +161,12 @@ public final class SaveWorkout extends Activity {
     }
 
     private void showSettings(boolean launcher) {
+        String status = pairing.contains("token")
+            ? "Profil associé : " + pairing.getString("name", "")
+            : "Aucun profil associé";
         AlertDialog.Builder dialog = new AlertDialog.Builder(this).setTitle("FitnessApp Santé")
-            .setMessage("Depuis votre bilan FitnessApp, touchez Enregistrer la séance. Cette application écrit l’exercice, la distance disponible et les calories actives sur ce téléphone. Elle ne lit pas vos données et ne se connecte pas à Internet."
-                + (pairing.contains("token") ? "\n\nProfil associé : " + pairing.getString("name", "") : ""))
+            .setMessage(status + "\n\nDans le bilan FitnessApp, touchez « Enregistrer la séance »."
+                + "\n\nSanté Connect reçoit l’exercice, les calories actives et la distance disponible sur ce téléphone. FitnessApp Santé ne lit pas vos données et fonctionne hors ligne.")
             .setPositiveButton("Fermer", (d, w) -> finish()).setOnCancelListener(d -> finish());
         if (launcher && pairing.contains("token")) dialog.setNeutralButton("Dissocier", (d, w) ->
             new AlertDialog.Builder(this).setTitle("Dissocier ce navigateur ?").setMessage("Les séances déjà enregistrées restent dans Santé Connect.")

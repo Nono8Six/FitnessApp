@@ -39,7 +39,11 @@ try {
     & (Join-Path $Tools 'd8.bat') --min-api 34 --lib $androidJar --output $build $classesJar
     if ($LASTEXITCODE) { throw 'Compilation DEX en échec' }
     $unsigned = Join-Path $build 'unsigned.apk'
-    & (Join-Path $Tools 'aapt2.exe') link -I $androidJar --manifest (Join-Path $PSScriptRoot 'AndroidManifest.xml') -o $unsigned
+    $resources = Join-Path $build 'resources.zip'
+    $aapt = Join-Path $Tools 'aapt2.exe'
+    & $aapt compile --dir (Join-Path $PSScriptRoot 'res') -o $resources
+    if ($LASTEXITCODE) { throw 'Compilation du thème Android en échec' }
+    & $aapt link -I $androidJar --manifest (Join-Path $PSScriptRoot 'AndroidManifest.xml') $resources -o $unsigned
     if ($LASTEXITCODE) { throw 'Assemblage du manifeste en échec' }
     & jar uf $unsigned -C $build classes.dex
     if ($LASTEXITCODE) { throw 'Assemblage APK en échec' }

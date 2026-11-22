@@ -65,9 +65,7 @@ export default function Launcher() {
     <main className="mx-auto max-w-[720px] px-6 py-7 sm:px-8">
       <header className="flex items-start justify-between gap-3">
         <div>
-          <p className="mb-1 text-footnote font-semibold tracking-[0.12em] text-accent uppercase">Fitness</p>
-          <h1 className="text-largetitle">Votre serveur</h1>
-          <p className="mt-1 text-subhead text-label-2">Un clic pour retrouver l’application.</p>
+          <h1 className="text-largetitle">Serveur Fitness</h1>
         </div>
         <Activity size={28} strokeWidth={1.7} className="mt-2 shrink-0 text-accent" aria-hidden />
       </header>
@@ -96,11 +94,11 @@ export default function Launcher() {
       </section>
 
       <div className="mt-5 grid grid-cols-2 gap-3">
-        <Button disabled={!editable} onClick={() => void action('start_server')}><Play size={17} aria-hidden />Démarrer</Button>
+        <Button variant={ready ? 'gray' : 'primary'} disabled={!editable} onClick={() => void action('start_server')}><Play size={17} aria-hidden />Démarrer</Button>
         <Button variant={snapshot?.can_stop ? 'danger' : 'gray'} disabled={disabled || !snapshot?.can_stop || phase === 'stopping'} onClick={() => void action('stop_server')}>
           <Square size={15} aria-hidden />{phase === 'preparing' ? 'Annuler' : 'Arrêter'}
         </Button>
-        <Button variant="gray" className="col-span-2" disabled={disabled || !ready} onClick={() => void action('open_app')}>
+        <Button variant={ready ? 'primary' : 'gray'} className="col-span-2" disabled={disabled || !ready} onClick={() => void action('open_app')}>
           Ouvrir l’application<ArrowUpRight size={18} aria-hidden />
         </Button>
       </div>
@@ -125,7 +123,7 @@ export default function Launcher() {
       <section className="mt-6" aria-label="Journal du serveur">
         <div className="mb-2 flex items-center justify-between gap-3">
           <h2 className="flex items-center gap-2 text-subhead font-semibold"><Terminal size={15} aria-hidden />Journal</h2>
-          <label className="flex min-h-8 items-center gap-2 text-footnote text-label-2">
+          <label className="flex min-h-11 items-center gap-2 text-footnote text-label-2">
             <input type="checkbox" checked={follow} onChange={e => setFollow(e.target.checked)} className="accent-accent" />Suivre
           </label>
         </div>

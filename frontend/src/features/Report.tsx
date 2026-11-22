@@ -1,8 +1,8 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { X } from 'lucide-react'
+import { ChevronDown, X } from 'lucide-react'
 import { Page } from '../components/Shell'
 import { nearest, TimeChart, type Marker, type Series } from '../components/charts'
-import { Button, cx, Disclosure, Facts, Group, Metric, Skeleton, StatGrid, StatusLabel } from '../components/ui'
+import { Button, cx, Disclosure, Facts, Group, Metric, Segmented, Skeleton, StatGrid, StatusLabel } from '../components/ui'
 import { WorkoutError } from '../components/WorkoutSummary'
 import { errorMessage } from '../lib/api'
 import { calories, clock, dec1, dec2 } from '../lib/format'
@@ -96,10 +96,8 @@ function Curves({ data }: { data: Recording }) {
   return <section aria-label="Courbes de la séance" className="report-curves">
     <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-2">
       <h2 className="text-title3">Vitesse et pente</h2>
-      <div className="flex rounded-full bg-fill-3 p-1" role="group" aria-label="Fenêtre des courbes">
-        {[{ s: 0, label: 'Séance' }, { s: 300, label: '5 min' }].map(o => <button key={o.s} aria-pressed={windowS === o.s} onClick={() => { setWindowS(o.s); setEnd(wall); setCursor(null) }}
-          className={cx('pressable min-h-11 rounded-full px-3 text-footnote font-semibold', o.s === windowS && 'bg-surface-3')}>{o.label}</button>)}
-      </div>
+      <Segmented className="w-32" label="Fenêtre des courbes" value={windowS ? 'window' : 'all'} options={[{ value: 'all', label: 'Séance' }, { value: 'window', label: '5 min' }]}
+        onChange={v => { setWindowS(v === 'window' ? 300 : 0); setEnd(wall); setCursor(null) }} />
     </div>
     <div className="report-readout" aria-live="polite">
       <div className="min-w-0 flex-1">
@@ -135,16 +133,19 @@ function Blocks({ data }: { data: Recording }) {
         const lo = values.reduce((a, v) => Math.min(a, v)), hi = values.reduce((a, v) => Math.max(a, v))
         return `${dec1(lo)}${lo !== hi ? `–${dec1(hi)}` : ''} ${unit}`
       }
-      return <div key={b.index} className="report-block">
-        <div className="flex items-baseline justify-between gap-3"><h3 className="min-w-0 text-subhead font-semibold">{b.label}</h3><span className={cx('num shrink-0 text-footnote', untouched ? 'text-label-3' : 'text-time')}>{clock(m.active_s)} <span className="text-label-2">/ {clock(b.sec)}</span></span></div>
-        <p className="mt-1 text-footnote text-label-2">{untouched ? 'Non réalisé' : done ? 'Réalisé' : 'Partiellement réalisé'}</p>
+      return <details key={b.index} className="group report-block">
+        <summary className="flex min-h-12 cursor-pointer list-none items-center gap-3 [&::-webkit-details-marker]:hidden">
+          <span className="min-w-0 flex-1"><strong className="block text-subhead">{b.label}</strong><span className="text-footnote text-label-2">{untouched ? 'Non réalisé' : done ? 'Réalisé' : 'Partiellement réalisé'}</span></span>
+          <span className={cx('num text-footnote', untouched ? 'text-label-2' : 'text-time')}>{clock(m.active_s)} <span className="text-label-2">/ {clock(b.sec)}</span></span>
+          <ChevronDown size={17} className="shrink-0 text-label-2 group-open:rotate-180" />
+        </summary>
         <dl className="mt-3 grid grid-cols-[auto_1fr_1fr] gap-x-3 gap-y-1.5 text-footnote">
           <dt className="text-label-2">Initial</dt><dd className="num text-right">{dec1(b.speed)} km/h</dd><dd className="num text-right">{dec1(b.incline)} %</dd>
           <dt className="text-label-2">Appliqué</dt><dd className="num text-right">{applied('applied_speed', 'km/h')}</dd><dd className="num text-right">{applied('applied_incline', '%')}</dd>
           <dt className="text-label-2">Mesuré · moy.</dt><dd className="num text-right text-speed">{measured(m.speed_avg, 'km/h')}</dd><dd className="num text-right text-incline">{measured(m.incline_avg, '%')}</dd>
         </dl>
         {!untouched && (m.speed_coverage !== 1 || m.incline_coverage !== 1) && <p className="mt-2 text-footnote text-orange">Couverture vitesse {percent(m.speed_coverage)} · pente {percent(m.incline_coverage)}</p>}
-      </div>
+      </details>
     })}</Group>
   </section>
 }

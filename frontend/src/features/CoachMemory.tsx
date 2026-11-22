@@ -1,5 +1,5 @@
 import { Pencil, Trash2 } from 'lucide-react'
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Button, Group, Sheet } from '../components/ui'
 import { errorMessage } from '../lib/api'
 import { confirmMemory, deleteMemory, readMemories, saveMemory, type Memory, type Proposal } from '../lib/coach'
@@ -16,6 +16,7 @@ export function CoachMemory({ profile, close, proposal, saved }: {
   const [content, setContent] = useState(proposal?.value.content ?? '')
   const [confirm, setConfirm] = useState<string>()
   const [loaded, setLoaded] = useState(false)
+  const input = useRef<HTMLTextAreaElement>(null)
   const load = async (offset = 0) => {
     setError('')
     try {
@@ -37,7 +38,7 @@ export function CoachMemory({ profile, close, proposal, saved }: {
     <p className="mb-4 text-subhead text-label-2">Le coach retient vos déclarations utiles pour ce profil. Vous pouvez les corriger ou les retirer. Les restrictions sensibles demandent votre confirmation.</p>
     {proposal && content && !editing && <p className="mb-3 text-footnote text-label-2">Votre message : « {proposal.value.quote} »</p>}
     <label className="text-footnote text-label-2" htmlFor="coach-memory">{editing ? 'Corriger le souvenir' : 'Information à retenir'}</label>
-    <textarea id="coach-memory" rows={3} maxLength={500} value={content} onChange={e => setContent(e.target.value)}
+    <textarea ref={input} id="coach-memory" rows={3} maxLength={500} value={content} onChange={e => setContent(e.target.value)}
       placeholder="Par exemple : je préfère les séances courtes en semaine."
       className="mt-2 w-full resize-y rounded-[12px] bg-surface-2 p-3 text-body text-label" />
     <div className="mt-3 mb-6 flex gap-3">
@@ -57,7 +58,7 @@ export function CoachMemory({ profile, close, proposal, saved }: {
         {item.status === 'pending' && <p className="mt-2 text-footnote text-orange">Restriction à confirmer</p>}
         <div className="mt-2 flex flex-wrap gap-2">
           {item.status === 'pending' && <Button size="md" disabled={busy} onClick={() => void perform(() => confirmMemory(profile, item.id))}>Confirmer</Button>}
-          <Button size="md" variant="plain" disabled={busy} onClick={() => { setEditing(item.id); setContent(item.content) }}><Pencil size={16} />Modifier</Button>
+          <Button size="md" variant="plain" disabled={busy} onClick={() => { setEditing(item.id); setContent(item.content); input.current?.focus() }}><Pencil size={16} />Modifier</Button>
           {confirm === item.id ? <><Button size="md" variant="danger" disabled={busy} onClick={() => void perform(() => deleteMemory(profile, item.id))}>Confirmer la suppression</Button>
             <Button size="md" variant="plain" onClick={() => setConfirm(undefined)}>Annuler</Button></>
             : <Button size="md" variant="plain" disabled={busy} onClick={() => setConfirm(item.id)}><Trash2 size={16} />Supprimer</Button>}

@@ -1,9 +1,11 @@
 import { ChevronRight, RefreshCw } from 'lucide-react'
+import { useState } from 'react'
 import { ProgrammeChart } from './charts'
-import { Disclosure, Facts, Skeleton, StatGrid, type Stat } from './ui'
+import { WorkoutBlocks } from './WorkoutBlocks'
+import { Disclosure, Facts, Segmented, Skeleton, StatGrid, type Stat } from './ui'
 import { calories, clock, dec1 } from '../lib/format'
 import { href } from '../lib/router'
-import type { Preview } from '../lib/workouts'
+import type { Preview, WorkoutInput } from '../lib/workouts'
 
 /** Prévisions du serveur, avec la couleur de rôle de chaque mesure ; le signe ≈ marque l'estimation. */
 export function workoutStats(s: Preview['summary']): Stat[] {
@@ -23,8 +25,9 @@ export function WeightLink({ className }: { className?: string }) {
 }
 
 /** Mesures prévues, explication des calories, puis profil vitesse/pente interactif. */
-export function WorkoutSummary({ data, editing = false, compact = false }: { data: Preview; editing?: boolean; compact?: boolean }) {
+export function WorkoutSummary({ data, editing = false, compact = false, segments }: { data: Preview; editing?: boolean; compact?: boolean; segments?: WorkoutInput }) {
   const energy = data.summary.energy
+  const [view, setView] = useState<'chart' | 'blocks'>('chart')
   return <>
     <StatGrid stats={workoutStats(data.summary)} compact={compact} />
     {energy.weight_kg === null ? editing
@@ -41,9 +44,11 @@ export function WorkoutSummary({ data, editing = false, compact = false }: { dat
         {energy.outside_range && <p className="mx-4 mt-1 rounded-[10px] bg-orange/15 px-3 py-2 text-footnote text-orange">Vitesses hors plage fiable (marche 3–6, course dès 8 km/h) : estimation moins sûre.</p>}
         <p className="px-4 pt-2 pb-3 text-footnote text-label-2">Prévision, pas une mesure.{!editing && <> <a href={href.settings} className="text-accent">Modifier mon poids</a></>}</p>
       </Disclosure>}
-    <div className="group-bg mt-3 rounded-[22px] bg-surface p-4 desk:p-5">
+    {segments && <Segmented className="mt-5" label="Détail du programme" value={view} onChange={setView}
+      options={[{ value: 'chart', label: 'Graphique' }, { value: 'blocks', label: `Segments (${data.blocks.length})` }]} />}
+    {segments && view === 'blocks' ? <WorkoutBlocks data={segments} className="mt-3" /> : <div className="group-bg mt-4 min-w-0 rounded-[18px] bg-surface px-3 py-2 desk:p-5">
       <ProgrammeChart blocks={data.blocks} />
-    </div>
+    </div>}
   </>
 }
 
@@ -53,7 +58,7 @@ export function WorkoutLoading({ cards = 1 }: { cards?: number }) {
 
 export function WorkoutError({ message, retry }: { message: string; retry: () => void }) {
   return <div role="alert" className="flex items-center gap-3 rounded-[14px] bg-red/15 py-2.5 pr-2 pl-4 text-red">
-    <p className="flex-1 text-subhead">{message}</p>
+    <p className="min-w-0 flex-1 text-subhead wrap-anywhere">{message}</p>
     <button type="button" onClick={retry} className="pressable flex h-11 shrink-0 items-center gap-1.5 rounded-full bg-red/15 px-3.5 text-subhead font-semibold"><RefreshCw size={16} strokeWidth={2.4} />Réessayer</button>
   </div>
 }

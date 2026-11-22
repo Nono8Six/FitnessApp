@@ -12,7 +12,7 @@
 2. **Aucun texte décoratif.** Pas d’accroche, de phrase de motivation, de mention « démonstration » ni de légende qui répète ce que montre l’écran. Un texte n’apparaît que s’il porte un fait (mesure, état, limite, source) ou une action.
 3. **Les états remplacent les avertissements permanents.** Le STOP physique n’est mentionné que lorsque le canal est perdu ou incertain. L’absence de cardio s’affiche dans les données du bilan, pas sur chaque écran.
 4. **Idiomes iOS natifs.** Grands titres repliables, listes groupées en retrait, feuilles modales, contrôle segmenté, interrupteurs, barre d’onglets en capsule flottante translucide, activité en direct réduite au-dessus des onglets.
-5. **Deux formats seulement.** Téléphone, de 360 à 899 px, et PC à partir de 900 px. Aucune mise en page tablette dédiée : entre 600 et 899 px, la colonne téléphone est centrée et limitée à 680 px.
+5. **Deux formats seulement.** Téléphone, de 320 à 899 px, et PC à partir de 900 px. Aucune mise en page tablette dédiée : entre 600 et 899 px, la colonne téléphone est centrée et limitée à 680 px.
 6. **Mesures à la manière de Forme.** Chaque mesure a sa couleur de rôle, sa valeur en chiffres arrondis et son unité en capitales dans la même couleur (`2,5 KM`, `≈ 145 KCAL`). Les cartes résument, le détail est un toucher plus loin.
 
 Références observées : app Exercice d’Apple (minuteur jaune, boutons ronds Pause/Fin), Apple Fitness (anneaux, cartes noires, accent sportif), Apple Santé (en-tête du graphique remplacé par la valeur touchée), Forme pour la densité sombre. Ce sont des inspirations : aucune ressource Apple n’est redistribuée.
@@ -29,7 +29,7 @@ Fond noir pur. La profondeur vient des surfaces grises superposées, sans bordur
 | `surface-3` | `#3A3A3C` | Blocs à venir |
 | `fill-3` | `rgb(118 118 128 / .24)` | Boutons gris, champ de recherche, segmenté, stepper |
 | `label` | `#FFFFFF` | Texte principal, valeurs |
-| `label-2` | `rgb(235 235 245 / .60)` | Libellés, unités, sous-titres |
+| `label-2` | `rgb(235 235 245 / .72)` | Libellés, unités, sous-titres |
 | `label-3` | `rgb(235 235 245 / .30)` | Désactivé, valeur inconnue, placeholder |
 | `sep` | `rgb(84 84 88 / .65)` | Séparateurs 0,5 px |
 
@@ -59,7 +59,7 @@ Famille : `-apple-system, BlinkMacSystemFont, "SF Pro Text", "Inter Variable", s
 
 | Style | Taille | Graisse | Usage |
 |---|---|---|---|
-| Large title | 34 / 41, −0,025 em | 700 | Titre d’écran |
+| Large title | 36 / 40, −0,045 em | 720 | Titre d’écran |
 | Title 1 | 28 / 34 | 700 | Nom de la prochaine séance |
 | Title 2 | 22 / 28 | 700 | Réservé |
 | Title 3 | 20 / 25 | 600 | Titres de section, bloc en cours |
@@ -77,37 +77,39 @@ Formats : virgule décimale, espace insécable avant `:` `?` `%` et à l’inté
 
 - Marges : 16 px sur téléphone, 40 px sur PC. Contenu limité à 1180 px sur PC.
 - Espacement par pas de 4 px. Entre sections : 28 à 36 px ; à l’intérieur d’une carte : 16 à 20 px.
-- Rayons : carte 22 px, liste groupée 12 px, bouton 14 px (52 px de haut), bouton moyen 12 px (44 px), segmenté 9 px, feuille 14 px.
+- Rayons : carte 22 px, liste groupée 16 px, bouton 14 px (52 px de haut), bouton moyen 12 px (44 px), segmenté 14 px, feuille 24 px sur téléphone.
 - Séparateurs de liste : 0,5 px en retrait, commençant après l’icône.
-- Cibles tactiles : au moins 44 × 44 px. Pause et Arrêter : cercles de 68 px.
+- Cibles tactiles : au moins 44 × 44 px. Les commandes Pause et Arrêter occupent deux colonnes en portrait. Sur téléphone en paysage de faible hauteur, elles se placent l’une sous l’autre à droite des mesures.
 
 ## 5. Navigation
 
 | | Téléphone | PC |
 |---|---|---|
-| Principale | Capsule flottante translucide centrée en bas, onglet actif sur fond `fill-3` : Aujourd’hui, Séances, Historique, Coach | Barre latérale de 248 px : les mêmes onglets plus Direct |
+| Principale | Capsule flottante translucide centrée en bas, quatre cibles de même largeur et sélection teintée de vert : Aujourd’hui, Séances, Bilans, Coach | Barre latérale de 248 px : les mêmes onglets plus Direct |
 | Profil | Avatar à droite du grand titre, puis feuille de choix | Bas de la barre latérale |
 | Séance en cours | Capsule « activité en direct » au-dessus des onglets : bloc, durée, vitesse, Pause | Carte compacte dans la barre latérale ; point vert animé sur Direct |
 | Direct | Plein écran, sans onglets ; chevron pour réduire | Plein écran ; mesures à gauche, bloc et courbes à droite, commandes sous les mesures |
 | En-tête | Grand titre qui se replie en barre floutée au défilement ; date ou version en `label-2` sous le titre ; boutons d’écran (+) à côté de l’avatar, puis dans la barre repliée | Identique, sans avatar |
 
+L’accueil met en avant la prochaine séance avec un visuel WebP local, puis le dernier bilan du profil et les accès au tapis. Sur PC, le bilan et le tapis occupent la colonne de droite. Dans la bibliothèque et les fiches, le sélecteur Graphique / Segments donne accès aux consignes sans traverser tout le graphique. L’éditeur présente les blocs avant l’aperçu sur téléphone.
+
 ## 6. Composants
 
 - **Boutons.** Principal : accent plein avec texte noir. Gris : `fill-3`. Désactivé : `fill-3` avec texte `label-3`, jamais un accent atténué. Effet de pression : échelle 0,97.
-- **Liste groupée.** Lignes de 44 px minimum ; icône carrée de 32 px teintée à 18 % ; valeur à droite en `label-2` ; chevron `label-3`.
-- **Feuille.** Remonte du bas avec poignée sur téléphone, centrée à 480 px sur PC (640 px pour un aperçu avec graphique). Annuler à gauche, action à droite ou bouton principal fixé en bas sur un fond translucide, toujours visible pendant le défilement. Échap ferme. Dans une feuille, listes, grilles et cartes passent en `surface-2`.
-- **Segmenté.** Piste `fill-3`, curseur `#636366` qui glisse (300 ms).
-- **Capsules de filtre.** 36 px, `fill-3` ; la capsule choisie passe en blanc avec texte noir, comme les filtres d’Apple Fitness. Sur téléphone, la rangée défile horizontalement jusqu’au bord ; sur PC, elle passe à la ligne. Libellés courts (« Marche inclinée ») ; les titres de section gardent le nom complet.
+- **Liste groupée.** Lignes de navigation de 52 px minimum ; icône carrée de 32 px teintée à 18 % ; valeur à droite en `label-2` ; chevron `label-3`.
+- **Feuille.** Remonte du bas avec poignée sur téléphone, centrée à 480 px sur PC (640 px pour un aperçu avec graphique). Annuler à gauche, action à droite ou bouton principal dans un pied de feuille fixe. Le titre peut revenir à la ligne et seul le contenu central défile. Échap ferme. Dans une feuille, listes, grilles et cartes passent en `surface-2`.
+- **Segmenté.** Piste `fill-3`, sélection `surface-3`, options de 44 px minimum. Les flèches du clavier changent l’option.
+- **Capsules de filtre.** 44 px minimum, `fill-3` ; la capsule choisie passe en blanc avec texte noir, comme les filtres d’Apple Fitness. Sur téléphone, la rangée défile horizontalement jusqu’au bord ; sur PC, elle passe à la ligne. Libellés courts (« Marche inclinée ») ; les titres de section gardent le nom complet.
 - **Menu déroulant.** Remplace les sélecteurs natifs : capsule ou ligne avec la valeur et un chevron, liste flottante translucide de 220 px minimum, coche à gauche, icône à droite, séparateur épais entre groupes. Flèches, Début/Fin, Échap et clic extérieur ; le focus revient au déclencheur.
-- **Recherche.** Champ iOS de 36 px avec loupe et effacement rond, partagé par Coach et Mes séances.
+- **Recherche.** Champ de 48 px avec loupe et effacement rond, partagé par Coach et Mes séances.
 - **Repli.** Ligne de liste groupée avec chevron qui pivote (« Comprendre l’estimation », « Pourquoi ce programme ? », « Fraîcheur des mesures ») ; le contenu est fait de lignes libellé / valeur en retrait.
 - **Interrupteur.** 51 × 31 px, vert quand actif.
 - **Stepper.** Valeur saisissable au clavier, avec ses boutons − / + de 44 px. Les erreurs s’affichent en rouge sous la ligne. Enregistrer est désactivé tant qu’une valeur est hors limites.
-- **Grille de mesures.** Cellules `surface` séparées par des filets de 1 px, libellé en Subhead blanc, valeur 26 px colorée. Deux colonnes sur téléphone, une ligne sur PC. Valeur inconnue : `--` en `label-3`.
+- **Grille de mesures.** Cellules `surface` séparées par des filets de 1 px, libellé secondaire et valeur de 26 px colorée. Deux colonnes sur téléphone et dans les panneaux étroits sur PC. Valeur inconnue : `--` en `label-3`.
 - **Carte de séance.** Carte entière cliquable avec chevron : pastille ronde de l’activité (accent sur fond accent à 16 %), nom, mesures colorées, profil compact. Pas de bouton « Voir » redondant.
 - **Section.** Titre Title 2 à gauche, action en accent à droite (« Changer »), comme « Exercices / Plus de détails » dans Forme.
 - **Chargement.** Squelette de la forme du contenu (pulsation), libellé réservé aux lecteurs d’écran.
-- **Coach.** Liste façon Messages : champ de recherche iOS (36 px, loupe, effacement), segmenté Récentes/Archivées, lignes titre + date relative + archivage. Bulle de l'utilisateur à droite en `surface-2`, réponse du coach en texte libre sous sa pastille. Saisie en capsule qui grandit, bouton d'envoi rond accent, vidée dès que le serveur accepte le message. Confirmation éphémère avec Annuler au-dessus de la saisie. Questions du coach dans une carte `surface` : par question, pastille numérotée (coche accent une fois répondue), capsules de filtre qui passent à la ligne et « Autre » qui ouvre un champ en capsule ; compteur « 2/3 » et Envoyer en bouton principal. Seule la dernière réponse terminée est interactive ; les anciennes questions restent lisibles, atténuées.
+- **Coach.** Liste façon Messages : champ de recherche de 48 px avec loupe et effacement, segmenté Récentes/Archivées, lignes titre + date relative + archivage. Bulle de l'utilisateur à droite en `surface-2`, réponse du coach en texte libre sous sa pastille. Saisie en capsule qui grandit, bouton d'envoi rond accent, vidée dès que le serveur accepte le message. Confirmation éphémère avec Annuler au-dessus de la saisie. Questions du coach dans une carte `surface` : par question, pastille numérotée (coche accent une fois répondue), capsules de filtre qui passent à la ligne et « Autre » qui ouvre un champ en capsule ; compteur « 2/3 » et Envoyer en bouton principal. Seule la dernière réponse terminée est interactive ; les anciennes questions restent lisibles, atténuées.
 - **Séances.** Segmenté Découvrir/Mes séances ; le bouton + ouvre un menu Créer avec ChatGPT / Nouvelle séance. Découvrir commence par deux capsules de réglage (cible « 30 min » ou « 200 kcal », qui ouvre une feuille Cible, et difficulté en menu), puis les capsules d’objectif : les formats apparaissent dans le premier écran du téléphone. La feuille d’aperçu montre objectif et description, les réglages en liste groupée (cible, valeur avec − / +, difficulté), les prévisions, le graphique, la répartition de l’effort en barre proportionnelle avec légende, les segments, puis Pourquoi ce programme ? ; Ajouter à mes séances reste fixé en bas. Mes séances : recherche, menus Objectif/Niveau, cartes compactes, état vide avec Découvrir et Créer avec ChatGPT ; une valeur historique inconnue n’est pas catégorisée automatiquement.
 - **Détail d’une séance.** Modifier dans la barre de navigation. Pastille, objectif, niveau et version, puis l’action principale ; viennent ensuite prévisions, graphique et segments. Les actions secondaires (Ajuster avec ChatGPT, Dupliquer, Version en menu, Supprimer) suivent sur téléphone et forment la colonne de droite sur PC.
 - **Segments.** Blocs consécutifs dans une même liste groupée, chaque répétition dans la sienne avec « Répéter N fois · durée » en en-tête. Chaque ligne porte un repère vertical (accent pour l’effort, gris pour les blocs faciles), le type, vitesse et pente colorées, et la durée en jaune.
@@ -121,19 +123,19 @@ Formats : virgule décimale, espace insécable avant `:` `?` `%` et à l’inté
 
 ### Direct · Vue Données
 
-Les mesures actuelles occupent deux colonnes sans cartes : vitesse/allure interactive à gauche, pente mesurée à droite. Libellés au-dessus, unités sous les chiffres et alignées. Durée active, distance, calories actives et vitesse moyenne forment une grille compacte. Les formats longs, les données absentes, la qualité partielle et les limites des estimations restent explicites.
+Le nom et le numéro du bloc, sa progression puis le temps restant occupent la même place dans les deux vues. En Données, la mesure principale suit la préférence du profil. Toucher son unité alterne vitesse et allure. La pente mesurée et les cibles du bloc ont leurs propres libellés.
 
-Après les mesures : bloc actuel et temps restant, cibles de vitesse/pente identifiées comme telles, barre de progression, puis aperçu du prochain bloc. Cet aperçu réutilise le composant du mode Graphique et ajoute le départ dans m:ss et la durée. « Suite du programme · n blocs » révèle les autres blocs dans l’ordre, avec numéro, nom, vitesse, pente et durée ; il disparaît lorsqu’il n’y en a plus. Le dernier bloc annonce la fin du programme. Réglages, programme complet, historique des mesures et état du tapis sont accessibles dans des sections repliables plates, après l’aperçu. Aucun graphique historique ni réglage ne repousse le prochain bloc par défaut.
+L’aperçu « À suivre » indique le nom du prochain bloc, sa vitesse, sa pente et sa durée. Au dernier bloc, il annonce l’arrêt automatique. Durée active, distance, calories estimées et vitesse moyenne se lisent ensuite. Réglages, suite du programme, historique et état du tapis se déplient à la demande.
 
-Les deux modes partagent les boutons rectangulaires de 56 px : Pause jaune, Reprendre vert, Arrêter rouge sur fond discret. Le bandeau occupe une ligne propre dans la mise en page, sans position absolue ni hauteur de réserve calculée en JavaScript. Sur téléphone, l’ensemble des mesures et détails défile au-dessus de cette ligne. Changer de mode ramène la lecture en haut sans toucher à la séance ni aux commandes. Sur PC, une grille réserve les commandes sous les mesures en Données, et sous les détails de droite en Graphique ; les zones longues défilent séparément. Les alertes restent dans le bandeau et prennent leur place dans le flux. Les états normaux d’enregistrement et d’anti-veille restent consultables dans « État du tapis et des mesures », sans messages permanents au-dessus des commandes. Aucune logique de commande ou de calcul n’est modifiée.
+Pause et Arrêter restent visibles pendant le défilement. Les boutons mesurent au moins 58 px en portrait et 48 px en paysage court. Une pause stabilisée propose Reprendre avec les deux confirmations de présence. Les incidents de mesure, de commande et d’enregistrement apparaissent près des commandes. Les explications sur les estimations et le pilotage restent dans « État du tapis ».
 
 ### Direct · Vue graphique de course
 
-Accès temporaire pour le travail UI/UX : bouton secondaire « Tester le mode course » dans Aujourd’hui, sous l’action de démarrage, avec la mention « Simulation sans tapis ni bilan réel ». Il ouvre le Direct existant dans un espace simulé isolé ; le lien orange « Simulation · Quitter le test » garde le mode et le retour à l’application visibles. Ce raccourci ne change pas l’action Commencer. Adresse locale directe : `http://127.0.0.1:4330/test-course/#/test` ; elle retrouve le test actif ou démarre une nouvelle simulation si le précédent est terminé.
+« Tester le mode course » ouvre le Direct dans une simulation isolée. Le bouton orange « Simulation » avec sa croix permet de la quitter. L’adresse locale `http://127.0.0.1:4330/test-course/#/test` retrouve la simulation en cours ou en démarre une nouvelle.
 
-Le segmenté Données/Graphique garde les mêmes commandes et le même état de séance. Graphique met l’allure actuelle en min/km au premier plan, avec vitesse et pente mesurées juste dessous. Bloc actuel et temps restant sont regroupés au-dessus de leur barre de progression. Courbe de vitesse mesurée en accent avec point actif, consignes en traits fins et aperçu du bloc suivant entier ; aucune suite de blocs ni nouveau tableau de bord. Une seule surface « Bloc suivant » affiche durée, allure, vitesse et pente. Durée active, distance et kcal restent secondaires ; les unités ne rivalisent pas avec les chiffres.
+Graphique s’ouvre sur l’allure en min/km et le temps restant dans le bloc. La vitesse et la pente mesurées complètent ces deux grands chiffres. L’aperçu du prochain bloc précède les courbes pour rester lisible pendant l’effort.
 
-Finition téléphone du 18 octobre : en-tête compact, état et segmenté sur une seule ligne ; allure de 94 px, réduite à 74–78 px avec les barres de Chrome, chiffres longs ajustés sans décaler la suite. Cibles tactiles d’au moins 44 px, commandes Pause/Reprendre et Arrêter en boutons de 56 px ; Pause jaune, Reprendre vert, Arrêter rouge sur fond discret. Le bandeau et ses messages occupent une ligne séparée de la zone défilante : aucune information ne passe derrière les commandes. Sur écran court, la pause réduit la place de l’allure indisponible et conserve les cumuls visibles. Réglages et état restent repliables, avec des séparateurs simples. Le PC garde deux colonnes, avec les commandes à droite dans leur propre ligne de grille. Le PC continue quand le téléphone passe dans une autre application.
+En portrait, Pause et Arrêter restent en bas. En paysage court, les commandes se placent à droite. Les chiffres s’adaptent à la largeur disponible et gardent leur alignement lors des changements de valeur. La version de la séance se consulte dans « État du tapis ».
 
 Sélecteur du Direct : variante dédiée du composant segmenté, fond presque noir et contour fin, icônes vitesse/courbe, sélection vert accent sur fond teinté. À la demande d’Arnaud, piste visible réduite à 184 × 32 px sur téléphone, tout en conservant une zone de toucher de 44 px ; le fond actif reste centré derrière le texte. Position et dimensions identiques en Données et Graphique, y compris l’en-tête. Animation courte, supprimée si les mouvements sont réduits. Les autres segmentés conservent leur apparence.
 
@@ -167,9 +169,9 @@ Courbe `cubic-bezier(.32, .72, 0, 1)`.
 
 | Élément | Durée |
 |---|---|
-| Entrée d’écran (fondu + 8 px) | 420 ms |
-| Feuille | 460 ms |
-| Segmenté, interrupteur | 300 ms |
+| Entrée d’écran (fondu) | 180 ms |
+| Feuille | 240 ms |
+| Segmenté, interrupteur | 200 ms |
 | Anneau | 700 ms |
 | Pression | 160 ms |
 
@@ -186,4 +188,4 @@ Interdits : sous-titres marketing, mentions « démonstration » ou « fictif »
 ## 10. Limites
 
 - Mode sombre uniquement. Les jetons sont regroupés pour qu’un thème clair puisse être ajouté sans toucher aux composants.
-- Pas encore vérifié sur iPhone physique, Safari iOS, Android ni pendant un effort réel. Corriger les problèmes rencontrés à l'usage selon [AGENTS.md](AGENTS.md).
+- Les parcours web ont été vérifiés dans Chrome aux formats téléphone et PC, et le compagnon Santé sur Android 15 émulé. La lisibilité pendant l’effort, le clavier sur téléphone physique et le rendu Safari iOS restent à vérifier à l’usage.

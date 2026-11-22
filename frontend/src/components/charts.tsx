@@ -85,10 +85,10 @@ export function ProgrammeChart({ blocks, className }: {
     {!blocks.length || total <= 0 ? <p className="text-footnote text-label-2">Aucun segment</p> : <>
       <div className="mb-2 flex min-h-[60px] items-center gap-1">
         <div className="min-w-0 flex-1">
-          <p className="truncate text-subhead font-semibold">{active ? `${active.index + 1} · ${active.label}` : 'Consignes par segment'}</p>
+          <p className="text-subhead font-semibold wrap-anywhere">{active ? `${active.index + 1} · ${active.label}` : 'Consignes par segment'}</p>
           <p id={helpId} className="num mt-1 text-footnote text-label-2">{active
             ? `${clock(active.start)}–${clock(active.end)} · durée ${clock(active.sec)}`
-            : 'Survolez ou touchez un segment'}</p>
+            : 'Sélectionnez un segment pour lire ses consignes.'}</p>
         </div>
         {active && <button type="button" aria-label="Effacer la sélection du segment" onClick={clear}
           className="pressable grid size-11 shrink-0 place-items-center rounded-full text-label-2"><X size={17} /></button>}
@@ -145,7 +145,7 @@ export function ProgrammeChart({ blocks, className }: {
       </svg>}
       <div className="mt-1 flex items-center justify-between gap-2 text-footnote text-label-2">
         <span className="num">{active ? `Segment ${active.index + 1} sur ${blocks.length}` : `${blocks.length} segments`}</span>
-        <div className="flex">
+        <div className="flex rounded-[12px] bg-fill-3">
           <button type="button" aria-label="Segment précédent" disabled={selected === 0} onClick={() => select((selected ?? blocks.length) - 1)}
             className="pressable grid size-11 place-items-center rounded-[8px] hover:bg-fill-3 disabled:text-label-3"><ChevronLeft size={20} /></button>
           <button type="button" aria-label="Segment suivant" disabled={selected === blocks.length - 1} onClick={() => select((selected ?? -1) + 1)}

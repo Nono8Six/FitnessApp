@@ -63,7 +63,7 @@ export function FouleeImport({ onClose, onImport, received }: {
           event.target.value = ''
           if (file) void read(file)
         }} />
-        <Button type="button" size="md" variant="gray" disabled={reading} onClick={() => fileInput.current?.click()}>
+        <Button type="button" variant="gray" disabled={reading} onClick={() => fileInput.current?.click()}>
           <FileUp size={18} aria-hidden />{reading ? 'Lecture du fichier…' : workout ? 'Changer de fichier' : 'Choisir un fichier JSON'}
         </Button>
         {error && <p role="alert" className="text-subhead text-red">{error}</p>}

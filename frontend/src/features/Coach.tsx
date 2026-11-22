@@ -1,9 +1,9 @@
-import { Archive, ArchiveRestore, ArrowDown, ArrowUp, BookOpen, ChevronRight, List, Maximize2, Square, SquarePen } from 'lucide-react'
+import { Archive, ArchiveRestore, ArrowDown, ArrowUp, BookOpen, CalendarDays, ChevronRight, History, List, Maximize2, Square, SquarePen } from 'lucide-react'
 import { useEffect, useLayoutEffect, useRef, useState, type ReactNode } from 'react'
 import Markdown from 'react-markdown'
 import { CoachIcon, LibraryIcon } from '../components/Icons'
 import { Page } from '../components/Shell'
-import { Button, cx, Glyph, Group, Row, SearchField, Segmented, Sheet } from '../components/ui'
+import { Button, cx, Glyph, Group, Row, SearchField, Segmented, Sheet, Tile } from '../components/ui'
 import { errorMessage } from '../lib/api'
 import { readChatGPT, type ChatGPTState } from '../lib/chatgpt'
 import { archiveConversation, createConversation, MAX_COACH_MESSAGE_LENGTH, readConversations, readTurns, sendMessage, stopTurn, type Conversation, type PageData, type Proposal, type Turn, type WorkoutTarget } from '../lib/coach'
@@ -50,11 +50,15 @@ function remember(key: string, value: string) { try { sessionStorage.setItem(key
 /** Clavier physique : Entrée envoie, Maj+Entrée va à la ligne. Au toucher, Entrée reste un retour à la ligne. */
 const finePointer = () => typeof matchMedia === 'function' && matchMedia('(pointer: fine)').matches
 
-const SUGGESTIONS = ['Crée une séance : objectif, durée, difficulté et marche ou course…', 'Que me conseilles-tu aujourd’hui ?', 'Qu’avais-tu conseillé la dernière fois ?']
+const SUGGESTIONS = [
+  { label: 'Préparer une séance', draft: 'Crée une séance : ', Icon: LibraryIcon },
+  { label: 'Choisir mon effort du jour', draft: 'Que me conseilles-tu aujourd’hui ?', Icon: CalendarDays },
+  { label: 'Retrouver le dernier conseil', draft: 'Qu’avais-tu conseillé la dernière fois ?', Icon: History },
+]
 
 function IconButton({ label, onClick, disabled, children, className }: { label: string; onClick: () => void; disabled?: boolean; children: ReactNode; className?: string }) {
   return <button type="button" aria-label={label} title={label} onClick={onClick} disabled={disabled}
-    className={cx('pressable grid size-[34px] shrink-0 place-items-center rounded-full bg-fill-3 text-accent disabled:text-label-3', className)}>{children}</button>
+    className={cx('pressable grid size-11 shrink-0 place-items-center rounded-full bg-fill-3 text-label disabled:text-label-3', className)}>{children}</button>
 }
 
 export function Coach({ profile, target, conversationId, createWorkout }: { profile: string; target?: WorkoutTarget; conversationId?: string; createWorkout?: boolean }) {
@@ -294,12 +298,11 @@ export function Coach({ profile, target, conversationId, createWorkout }: { prof
           <span className="sr-only">Chargement des échanges…</span>
           <div className="ml-auto h-12 w-2/3 rounded-[20px] bg-surface" /><div className="h-4 w-1/4 rounded bg-fill-4" /><div className="h-24 rounded-[14px] bg-fill-4" />
         </div>
-          : turns.items.length === 0 ? <div className="flex flex-col items-center py-6 text-center desk:py-10">
-            <Glyph size={64}><CoachIcon size={30} /></Glyph>
-            <h2 className="mt-4 text-title2">De quoi avez-vous besoin ?</h2>
-            <p className="mt-2 max-w-[40ch] text-subhead text-label-2">Le coach s’appuie sur votre profil, vos échanges et vos séances réalisées pour personnaliser ses conseils.</p>
-            <Group className="mt-7 w-full max-w-[520px] text-left">
-              {SUGGESTIONS.map(text => <Row key={text} title={<span className="text-subhead">{text}</span>} onClick={() => { changeDraft(text); composer.current?.focus() }} />)}
+          : turns.items.length === 0 ? <div className="py-3 desk:py-6">
+            <h2 className="text-title2">Nouvelle conversation</h2>
+
+            <Group className="mt-5 w-full max-w-[560px]">
+              {SUGGESTIONS.map(({ label, draft, Icon }) => <Row key={label} title={label} leading={<Tile><Icon size={18} /></Tile>} onClick={() => { changeDraft(draft); composer.current?.focus() }} />)}
             </Group>
           </div> : <>
             {turns.next_offset !== null && <div className="mb-4 text-center"><Button variant="plain" size="md" onClick={async () => {
@@ -322,7 +325,7 @@ export function Coach({ profile, target, conversationId, createWorkout }: { prof
                 } }}>{turn.answer}</Markdown></div> : turn.status === 'running' ? <p className="text-subhead text-label-2">Le coach consulte vos données…</p> : null}
               </div>
               {turn.sources.length > 0 && <div className="mt-3 flex flex-wrap gap-2" aria-label="Séances consultées">{turn.sources.map(s => <a key={`${s.id}:${s.version}`} href={s.href}
-                className="pressable inline-flex min-h-9 items-center gap-1.5 rounded-full bg-fill-3 py-1.5 pr-3 pl-2.5 text-footnote font-medium text-accent">
+                className="pressable inline-flex min-h-11 max-w-full flex-wrap items-center gap-1.5 rounded-[12px] bg-fill-3 py-1.5 pr-3 pl-2.5 text-footnote font-medium wrap-anywhere text-accent">
                 <LibraryIcon size={15} />{s.name}<span className="text-label-2">{s.href.startsWith('#/bilans/') ? 'Bilan' : `v${s.version}`}</span></a>)}</div>}
               {turn.status !== 'running' && turn.status !== 'completed' && <div role="status" className="mt-4 rounded-[12px] bg-orange/15 px-4 py-3 text-subhead text-orange">
                 <p className="font-semibold">{turn.status === 'interrupted' ? 'Réponse interrompue' : 'Réponse échouée'} · incomplète</p>
@@ -371,7 +374,7 @@ export function Coach({ profile, target, conversationId, createWorkout }: { prof
           </div>}
           {(error || connectionError) && <p role="alert" className="mb-2 rounded-[12px] bg-red/15 px-4 py-2.5 text-subhead text-red">{error || connectionError}</p>}
           {connectionMessage && <p role="status" className="mb-2 flex items-center justify-between gap-3 rounded-[12px] bg-surface px-4 py-2 text-subhead text-label-2">
-            {connectionMessage}<a href={href.settings} className="flex min-h-9 shrink-0 items-center text-accent">Réglages</a></p>}
+            {connectionMessage}<a href={href.settings} className="flex min-h-11 shrink-0 items-center text-accent">Réglages</a></p>}
           <form onSubmit={e => { e.preventDefault(); if (!sendDisabled) void send() }} className="flex items-end gap-1 rounded-[22px] bg-surface py-1 pr-1 pl-4 shadow-[inset_0_0_0_0.5px_var(--color-sep)] focus-within:shadow-[inset_0_0_0_1px_var(--color-label-3)]">
             <textarea ref={composer} aria-label="Message au coach" aria-describedby="coach-draft-count" aria-invalid={draftTooLong} placeholder="Écrire ou coller un message" rows={1} readOnly={locked}
               value={draft} onChange={e => changeDraft(e.target.value)} onKeyDown={e => {
@@ -385,10 +388,7 @@ export function Coach({ profile, target, conversationId, createWorkout }: { prof
               : <button type="submit" aria-label="Envoyer le message" disabled={sendDisabled}
                 className="pressable grid size-11 shrink-0 place-items-center rounded-full bg-accent text-on-accent disabled:bg-fill-3 disabled:text-label-3"><ArrowUp size={20} strokeWidth={2.6} /></button>}
           </form>
-          <div className="mt-1.5 flex flex-wrap justify-between gap-x-4 gap-y-1 px-4 text-caption2 text-label-3">
-            <p>{connection?.models.find(m => m.id === connection.selected_model)?.name ?? 'ChatGPT'} · Échanges conservés sur ce PC</p>
-            <p id="coach-draft-count" className={draftTooLong ? 'text-red' : undefined}>{draftWarning || draftCount}</p>
-          </div>
+          <p id="coach-draft-count" className={cx('px-3 text-right text-caption2', draftTooLong ? 'text-red' : 'text-label-2', draftLength < MAX_COACH_MESSAGE_LENGTH * .9 && 'sr-only')}>{draftWarning || draftCount}</p>
         </div>
       </section>
     </div>

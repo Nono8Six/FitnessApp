@@ -117,13 +117,19 @@ function EditorForm({ profile, source, proposal, imported }: { profile: string; 
     trailing={<button className="pressable h-11 text-headline text-accent disabled:text-label-3" disabled={saving || preview.status !== 'ok' || (!dirty && !proposal)}
       onClick={() => void save()}>{saving ? 'Enregistrement…' : 'Enregistrer'}</button>}>
     <fieldset disabled={saving} className="grid min-w-0 gap-7 desk:grid-cols-[minmax(0,1fr)_minmax(300px,380px)] desk:items-start">
-      <label className="block min-w-0 overflow-hidden rounded-[12px] bg-surface desk:col-start-1 desk:row-start-1">
-        <span className="sr-only">Nom de la séance</span>
-        <input autoComplete="off" maxLength={80} aria-label="Nom de la séance" aria-invalid={!!errorAt(['name'])} value={name} onChange={e => setName(e.target.value)}
-          className="h-[52px] w-full bg-transparent px-4 text-headline outline-none placeholder:font-normal placeholder:text-label-3" placeholder="Nom de la séance" />
-        {errorAt(['name']) && <span className="block px-4 pb-3 text-footnote text-red">{errorAt(['name'])}</span>}
-      </label>
-      <div className="order-last grid min-w-0 gap-7 desk:order-none desk:col-start-1">
+      <div className="min-w-0 desk:col-start-1 desk:row-start-1">
+        <label className="block overflow-hidden rounded-[16px] bg-surface focus-within:ring-1 focus-within:ring-accent">
+          <span className="block px-4 pt-3 text-footnote font-semibold text-label-2">Nom de la séance</span>
+          <input autoComplete="off" maxLength={80} aria-label="Nom de la séance" aria-invalid={!!errorAt(['name'])} value={name} onChange={e => setName(e.target.value)}
+            className="h-11 w-full bg-transparent px-4 text-headline outline-none placeholder:font-normal placeholder:text-label-2" placeholder="Ex. Marche du dimanche" />
+          {errorAt(['name']) && <span className="block px-4 pb-3 text-footnote text-red">{errorAt(['name'])}</span>}
+        </label>
+        <Group className="mt-3">
+          <MenuRow title="Objectif" label="Objectif de la séance" value={goal} options={GOALS} empty="Non renseigné" onChange={setGoal} />
+          <MenuRow title="Niveau" label="Niveau de la séance" value={level} options={LEVELS} empty="Non renseigné" onChange={setLevel} />
+        </Group>
+      </div>
+      <div className="grid min-w-0 gap-5 desk:col-start-1 desk:row-start-2">
         {entries.map(({ key, value: item }, i) => <section key={key} aria-label={`Bloc ${i + 1}`}>
           <div className="mb-1 flex items-center justify-between gap-2 pl-4">
             <h2 className="flex min-w-0 items-center gap-2 text-footnote text-label-2 uppercase">
@@ -136,7 +142,7 @@ function EditorForm({ profile, source, proposal, imported }: { profile: string; 
               <button aria-label={`Supprimer le bloc ${i + 1}`} onClick={() => setEntries(list => list.filter(e => e.key !== key))} className="grid size-11 place-items-center text-label-2 hover:text-red"><Trash2 size={17} /></button>
             </div>
           </div>
-          <div className="overflow-hidden rounded-[12px] bg-surface">
+          <div className="overflow-hidden rounded-[16px] bg-surface">
             {isRepeat(item) ? <>
               <NumberField label="Répéter" unit="fois" step={1} value={item.repeat} error={errorAt(['items', i, 'repeat'])} onChange={repeat => update(i, { ...item, repeat })} />
               {item.steps.map((step, j) => <div key={j} className="border-t-8 border-bg">
@@ -158,12 +164,9 @@ function EditorForm({ profile, source, proposal, imported }: { profile: string; 
         </div>
       </div>
       <aside className="min-w-0 desk:sticky desk:top-16 desk:col-start-2 desk:row-span-2 desk:row-start-1" aria-label="Aperçu">
-        <Group className="mb-4">
-          <MenuRow title="Objectif" label="Objectif de la séance" value={goal} options={GOALS} empty="Non renseigné" onChange={setGoal} />
-          <MenuRow title="Niveau" label="Niveau de la séance" value={level} options={LEVELS} empty="Non renseigné" onChange={setLevel} />
-        </Group>
-        {preview.status === 'ok' ? <WorkoutSummary data={preview.data} editing /> : <>
-          <StatGrid stats={['Durée', 'Distance', 'Kcal actives', 'Dénivelé équiv.'].map(label => ({ label, value: null, color: '' }))} />
+        <h2 className="mb-3 text-title2">Aperçu de la séance</h2>
+        {preview.status === 'ok' ? <WorkoutSummary data={preview.data} editing compact /> : <>
+          <StatGrid compact stats={['Durée', 'Distance', 'Kcal actives', 'Dénivelé équiv.'].map(label => ({ label, value: null, color: '' }))} />
           {/* Les erreurs de champ s'affichent sous leur champ ; ici, seulement l'état et les erreurs sans champ. */}
           {preview.status === 'error' ? !(preview.issues?.length && preview.issues.every(issue => inlineError(issue.path))) && <>
             <p role="alert" className="mt-3 px-4 text-footnote text-red">{preview.message}</p>
