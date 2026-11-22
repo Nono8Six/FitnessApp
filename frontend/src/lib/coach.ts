@@ -2,6 +2,8 @@ import { api, ApiError, isRecord } from './api'
 import { apiPath } from './environment'
 import { isPreview, isWorkout, isWorkoutInput, type Preview, type Workout, type WorkoutInput } from './workouts'
 
+export const MAX_COACH_MESSAGE_LENGTH = 50_000
+
 export interface WorkoutTarget { workout_id: string; version: number }
 export interface WorkoutProposal {
   id: string; turn_id: string; conversation_id: string; explanation: string; status: 'pending' | 'accepted' | 'ignored'

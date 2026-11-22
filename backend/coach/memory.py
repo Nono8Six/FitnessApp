@@ -209,6 +209,8 @@ def confirm(session, profile, identifier):
 
 def relevant_turns(session, profile, text, conversation, limit=5):
     """Recherche automatique dans tous les échanges, y compris les conversations archivées."""
+    from .store import HISTORY_MESSAGE_EXCERPT
+
     terms = [t for t in re.findall(r'[\w]+', text.casefold()) if len(t) >= 4]
     terms = list(dict.fromkeys(terms))[:16]
     base = select(CoachTurn).where(CoachTurn.profile_id == profile, CoachTurn.status != 'running')
@@ -226,8 +228,10 @@ def relevant_turns(session, profile, text, conversation, limit=5):
     for r in unreviewed[:2] + matches + unreviewed[2:] + recent:
         if r.id not in seen:
             seen.add(r.id)
+            user_text = redacted(session, profile, r.user_text, at=r.created_at)
             result.append({'id': r.id, 'conversation_id': r.conversation_id, 'date': r.created_at,
-                           'user_text': redacted(session, profile, r.user_text, at=r.created_at),
+                           'user_text': user_text[:HISTORY_MESSAGE_EXCERPT],
+                           'user_text_partial': len(user_text) > HISTORY_MESSAGE_EXCERPT,
                            'answer_excerpt': redacted(session, profile, r.answer[:900], at=r.created_at), 'status': r.status})
     return result[:limit]
 

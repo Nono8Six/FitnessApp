@@ -9,6 +9,9 @@ from ..storage.models import CoachMemory, CoachTurn, Conversation
 from ..training.profiles import get_profile, utc_now
 from ..training.workouts import Input, Target
 
+MAX_MESSAGE_LENGTH = 50_000
+HISTORY_MESSAGE_EXCERPT = 4_000
+
 
 class CoachNotFound(Exception):
     pass
@@ -20,7 +23,7 @@ class CoachConflict(Exception):
 
 class Send(Input):
     request_id: str = Field(pattern=r"^[a-f0-9-]{32,36}$")
-    text: str = Field(min_length=1, max_length=4000)
+    text: str = Field(min_length=1, max_length=MAX_MESSAGE_LENGTH)
     workout_target: Target | None = None
 
     @field_validator("text")

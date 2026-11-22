@@ -2,6 +2,7 @@ import asyncio
 import base64
 import hashlib
 import os
+import re
 from contextlib import asynccontextmanager
 from datetime import datetime, timezone
 from pathlib import Path
@@ -31,7 +32,7 @@ from .training.execution import Execution
 from .device.runtime import DeviceRuntime
 from .coach.connection import Connection
 from .coach.runtime import Runtime
-from .coach.store import recover as recover_coach
+from .coach.store import MAX_MESSAGE_LENGTH, recover as recover_coach
 from .config import data_dir as resolve_data_dir
 from .config import StartupError
 from .storage import StorageError, open_database
@@ -41,9 +42,13 @@ from .course_test import CourseTest
 ROOT = Path(__file__).resolve().parent.parent
 DIST = ROOT / "frontend" / "dist"
 
-# Corps des requêtes qui modifient : JSON uniquement, 16 Ko au plus (règle reprise de poc/server.py).
+# Corps des requêtes qui modifient : JSON uniquement, avec une limite propre aux messages du coach.
 BODY_METHODS = {"POST", "PUT", "PATCH", "DELETE"}
 MAX_BODY = 16000
+COACH_MESSAGE_PATH = re.compile(r"/api/profiles/[^/]+/coach/conversations/[^/]+/messages")
+# Un caractère hors du plan multilingue peut nécessiter deux échappements JSON de six octets.
+MAX_COACH_BODY = 12 * MAX_MESSAGE_LENGTH + 4096
+COACH_MESSAGE_TOO_LONG = f"Le message dépasse la limite de {MAX_MESSAGE_LENGTH:,} caractères.".replace(",", "\u202f")
 
 CSP = ("default-src 'self'; script-src 'self'; style-src 'self'; connect-src 'self'; img-src 'self' data:; media-src 'self' data:; "
        "font-src 'self'; frame-ancestors 'none'; base-uri 'none'; form-action 'self'")
@@ -60,12 +65,14 @@ MISSING_BUILD = """<!doctype html><html lang="fr"><meta charset="utf-8">
 <p class="hint">Relancer <code>start-app.ps1</code> sur le PC.</p></div></body></html>"""
 
 
-def check_body(request: Request) -> JSONResponse | None:
+def check_body(request: Request, route_path: str) -> JSONResponse | None:
+    coach_message = request.method == "POST" and COACH_MESSAGE_PATH.fullmatch(route_path)
+    limit = MAX_COACH_BODY if coach_message else MAX_BODY
     try:
         size = int(request.headers.get("content-length", "0"))
     except ValueError:
-        size = MAX_BODY + 1
-    if size > MAX_BODY or request.headers.get("transfer-encoding"):
+        size = limit + 1
+    if size > limit or request.headers.get("transfer-encoding"):
         return JSONResponse({"detail": "Requête trop volumineuse"}, status_code=413)
     if request.headers.get("content-type", "").split(";")[0].strip().lower() != "application/json":
         return JSONResponse({"detail": "JSON requis"}, status_code=415)
@@ -156,7 +163,7 @@ def create_app(*, simulation: bool = False, data_root: Path | None = None, dist:
             if origin and urlparse(origin).netloc != request.headers.get("host"):
                 response = JSONResponse({"detail": "Origine non autorisée"}, status_code=403)
             elif request.method in BODY_METHODS:
-                response = check_body(request)
+                response = check_body(request, route_path)
         if response is None:
             response = await call_next(request)
         if request.url.path.startswith("/assets/") and response.status_code == 200:
@@ -192,6 +199,10 @@ def create_app(*, simulation: bool = False, data_root: Path | None = None, dist:
 
     @app.exception_handler(RequestValidationError)
     async def invalid_request(request: Request, exc: RequestValidationError):
+        if request.scope.get("endpoint") is coach_api.send and any(
+            error["loc"] == ("body", "text") and error["type"] == "string_too_long" for error in exc.errors()
+        ):
+            return JSONResponse({"detail": COACH_MESSAGE_TOO_LONG}, status_code=422)
         if "/workouts" in request.url.path or '/workout-proposals' in request.url.path:
             body = exc.body.get('edited_workout') if isinstance(exc.body, dict) and 'edited_workout' in exc.body else exc.body
             issue = workouts_api.validation_issue(list(exc.errors()), body)

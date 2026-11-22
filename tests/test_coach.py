@@ -217,6 +217,37 @@ class CoachDataTests(unittest.TestCase):
             result = client.get(url.removesuffix("/messages")).json()
             self.assertEqual((result["total"], result["items"][0]["answer"]), (1, "Bonjour Arnaud"))
 
+    def test_long_message_reaches_the_model_and_remains_available_for_follow_up(self):
+        runtime = self.app.state.coach
+        runtime.connection = Connected()
+        inputs = []
+
+        async def transport(token, payload):
+            inputs.append([message['content'] for message in payload['input'] if message.get('role') == 'user'])
+            yield {'type': 'response.output_text.delta', 'delta': 'Contexte reçu.'}
+            yield completed()
+
+        runtime.transport = capture_transport(transport)
+        last_line = '\nMoi : voici ma question, à la fin du texte.'
+        transcript = ('Moi : voici mes notes.\nChatGPT : voici la réponse 🏃.\n' * 2000)[:50_000 - len(last_line)] + last_line
+        conversation_path = f'/api/profiles/arnaud/coach/conversations/{self.conversation}'
+        with self.client as client:
+            for text in (transcript, 'Peux-tu préciser ta réponse ?'):
+                response = client.post(f'{conversation_path}/messages', json={'text': text, 'request_id': uuid4().hex})
+                self.assertEqual(response.status_code, 200)
+                self.assertIn('"status": "completed"', response.text)
+            response = client.post(f'{conversation_path}/messages', json={'text': transcript + '!', 'request_id': uuid4().hex})
+            self.assertEqual(response.status_code, 422)
+            self.assertIn('50\u202f000 caractères', response.json()['detail'])
+            turns = client.get(conversation_path).json()['items']
+        self.assertEqual(len(turns), 2)
+        self.assertEqual(turns[0]['user_text'], transcript)
+        self.assertTrue(inputs[0][0].endswith(transcript))
+        self.assertTrue(inputs[1][0].endswith(transcript))
+        history = self.tool('read_conversation', {'conversation_id': self.conversation})['items'][0]
+        self.assertTrue(history['user_text_partial'])
+        self.assertEqual(self.tool('read_message', {'turn_id': turns[0]['id']})['user_text'], transcript)
+
 
 class CoachStreamTests(unittest.IsolatedAsyncioTestCase):
     async def asyncSetUp(self):

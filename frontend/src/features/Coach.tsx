@@ -1,4 +1,4 @@
-import { Archive, ArchiveRestore, ArrowDown, ArrowUp, BookOpen, ChevronRight, List, Square, SquarePen } from 'lucide-react'
+import { Archive, ArchiveRestore, ArrowDown, ArrowUp, BookOpen, ChevronRight, List, Maximize2, Square, SquarePen } from 'lucide-react'
 import { useEffect, useLayoutEffect, useRef, useState, type ReactNode } from 'react'
 import Markdown from 'react-markdown'
 import { CoachIcon, LibraryIcon } from '../components/Icons'
@@ -6,15 +6,34 @@ import { Page } from '../components/Shell'
 import { Button, cx, Glyph, Group, Row, SearchField, Segmented, Sheet } from '../components/ui'
 import { errorMessage } from '../lib/api'
 import { readChatGPT, type ChatGPTState } from '../lib/chatgpt'
-import { archiveConversation, createConversation, readConversations, readTurns, sendMessage, stopTurn, type Conversation, type PageData, type Proposal, type Turn } from '../lib/coach'
+import { archiveConversation, createConversation, MAX_COACH_MESSAGE_LENGTH, readConversations, readTurns, sendMessage, stopTurn, type Conversation, type PageData, type Proposal, type Turn, type WorkoutTarget } from '../lib/coach'
 import { href } from '../lib/router'
 import { CoachMemory } from './CoachMemory'
 import { WorkoutProposalCard } from '../components/WorkoutProposal'
 import { CoachQuestions } from '../components/CoachQuestions'
-import type { WorkoutTarget } from '../lib/coach'
 
 const empty = <T,>(): PageData<T> => ({ items: [], total: 0, next_offset: null, partial: false })
 const date = (value: string) => new Date(value).toLocaleString('fr-FR', { dateStyle: 'short', timeStyle: 'short' })
+const count = new Intl.NumberFormat('fr-FR')
+const completeMessageClass = 'whitespace-pre-wrap [overflow-wrap:anywhere] text-body'
+
+function UserMessage({ text }: { text: string }) {
+  const bubble = 'max-w-[85%] rounded-[20px] rounded-br-[6px] bg-surface-2 px-4 py-2.5'
+  if (text.length <= 1000 && text.split('\n', 13).length <= 12) {
+    return <p className={cx(bubble, completeMessageClass)}>{text}</p>
+  }
+  return <details className={cx('group', bubble)}>
+    <summary className="cursor-pointer list-none [&::-webkit-details-marker]:hidden">
+      <span className={cx('line-clamp-3 group-open:hidden', completeMessageClass)}>{text.slice(0, 400)}</span>
+      <span className="flex min-h-11 items-center gap-1 text-subhead text-accent">
+        <span className="group-open:hidden">Afficher le message complet</span>
+        <span className="hidden group-open:inline">Réduire le message</span>
+        <ChevronRight size={15} className="shrink-0 group-open:rotate-90" />
+      </span>
+    </summary>
+    <p className={completeMessageClass}>{text}</p>
+  </details>
+}
 /** Date courte de liste, comme Messages : heure aujourd'hui, « Hier », jour de la semaine, puis date. */
 function when(value: string) {
   const d = new Date(value), now = new Date()
@@ -56,6 +75,7 @@ export function Coach({ profile, target, conversationId, createWorkout }: { prof
   const [connectionError, setConnectionError] = useState('')
   const [history, setHistory] = useState(false)
   const [memory, setMemory] = useState(false)
+  const [expanded, setExpanded] = useState(false)
   const [proposal, setProposal] = useState<{ value: Proposal; turn: string; index: number }>()
   const [notice, setNotice] = useState<{ text: string; undo?: Conversation }>()
   const [below, setBelow] = useState(false)
@@ -69,8 +89,14 @@ export function Coach({ profile, target, conversationId, createWorkout }: { prof
   const composer = useRef<HTMLTextAreaElement>(null)
   const active = turns.items.find(t => t.status === 'running')
   const locked = sending || !!active
+  const draftText = draft.trim()
+  const draftLength = Array.from(draftText).length
+  const draftTooLong = draftLength > MAX_COACH_MESSAGE_LENGTH
+  const draftCount = `${count.format(draftLength)} / ${count.format(MAX_COACH_MESSAGE_LENGTH)} caractères`
+  const draftWarning = draftTooLong ? `Retirez ${count.format(draftLength - MAX_COACH_MESSAGE_LENGTH)} caractère${draftLength - MAX_COACH_MESSAGE_LENGTH > 1 ? 's' : ''} pour envoyer le message.` : ''
   const blocked = !connection || connection.state !== 'connected' || !connection.plan_enabled || !connection.selected_model
     || !!connection.issue && !['renewal_missing', 'network', 'unavailable'].includes(connection.issue.code)
+  const sendDisabled = !draftLength || draftTooLong || locked || blocked || loading || reading
   const connectionMessage = !connection ? 'Vérification de ChatGPT…'
     : connection.issue?.message ?? (connection.state !== 'connected' ? 'Connectez ChatGPT depuis les Réglages sur le PC.'
       : !connection.plan_enabled ? 'Autorisez l’utilisation du forfait depuis le PC.'
@@ -145,24 +171,25 @@ export function Coach({ profile, target, conversationId, createWorkout }: { prof
     const timer = setTimeout(() => setNotice(undefined), 6000)
     return () => clearTimeout(timer)
   }, [notice])
-  // Saisie qui grandit avec le texte, jusqu'à huit lignes environ.
   useLayoutEffect(() => {
     const el = composer.current
-    if (!el) return
+    if (!el || expanded) return
     el.style.height = 'auto'
-    el.style.height = `${Math.min(el.scrollHeight, 184)}px`
-  }, [draft])
+    el.style.height = `${el.scrollHeight}px`
+  }, [draft, expanded])
 
   const updateTurn = (turn: Turn) => {
     if (!mounted.current) return
     setTurns(old => ({ ...old, items: old.items.some(t => t.id === turn.id) ? old.items.map(t => t.id === turn.id ? turn : t) : [...old.items, turn] }))
   }
-  const send = async (text = draft.trim()) => {
-    if (!text || busy.current || active || blocked) return
+  const send = async (text = draftText) => {
+    if (!text || busy.current || active || blocked || loading || reading) return
+    if (Array.from(text).length > MAX_COACH_MESSAGE_LENGTH) return
+    setExpanded(false)
     busy.current = true; setSending(true); setError(''); follow.current = true
     const ctrl = new AbortController(); controller.current = ctrl
     // Réponses des cases : la saisie en cours n'est pas touchée.
-    const fromDraft = text === draft.trim()
+    const fromDraft = text === draftText
     let id = conversation, accepted = false
     try {
       request.current ??= { text, id: newRequestId() }
@@ -281,7 +308,7 @@ export function Coach({ profile, target, conversationId, createWorkout }: { prof
             }}>Échanges plus anciens</Button></div>}
             {turns.items.map(turn => <article key={turn.id} className="mb-9">
               <div className="flex flex-col items-end">
-                <p className="max-w-[85%] rounded-[20px] rounded-br-[6px] bg-surface-2 px-4 py-2.5 whitespace-pre-wrap break-words text-body">{turn.user_text}</p>
+                <UserMessage text={turn.user_text} />
                 <time dateTime={turn.created_at} className="mt-1 mr-1 text-caption2 text-label-3">{date(turn.created_at)}</time>
               </div>
               <div className="mt-4">
@@ -345,20 +372,41 @@ export function Coach({ profile, target, conversationId, createWorkout }: { prof
           {(error || connectionError) && <p role="alert" className="mb-2 rounded-[12px] bg-red/15 px-4 py-2.5 text-subhead text-red">{error || connectionError}</p>}
           {connectionMessage && <p role="status" className="mb-2 flex items-center justify-between gap-3 rounded-[12px] bg-surface px-4 py-2 text-subhead text-label-2">
             {connectionMessage}<a href={href.settings} className="flex min-h-9 shrink-0 items-center text-accent">Réglages</a></p>}
-          <form onSubmit={e => { e.preventDefault(); void send() }} className="flex items-end gap-2 rounded-[22px] bg-surface py-1.5 pr-1.5 pl-4 shadow-[inset_0_0_0_0.5px_var(--color-sep)] focus-within:shadow-[inset_0_0_0_1px_var(--color-label-3)]">
-            <textarea ref={composer} aria-label="Message au coach" placeholder="Écrire au coach" rows={1} maxLength={4000} readOnly={locked}
+          <form onSubmit={e => { e.preventDefault(); if (!sendDisabled) void send() }} className="flex items-end gap-1 rounded-[22px] bg-surface py-1 pr-1 pl-4 shadow-[inset_0_0_0_0.5px_var(--color-sep)] focus-within:shadow-[inset_0_0_0_1px_var(--color-label-3)]">
+            <textarea ref={composer} aria-label="Message au coach" aria-describedby="coach-draft-count" aria-invalid={draftTooLong} placeholder="Écrire ou coller un message" rows={1} readOnly={locked}
               value={draft} onChange={e => changeDraft(e.target.value)} onKeyDown={e => {
                 if (e.key !== 'Enter' || e.shiftKey || e.nativeEvent.isComposing) return
-                if (e.ctrlKey || e.metaKey || finePointer()) { e.preventDefault(); void send() }
-              }} className="min-h-9 flex-1 resize-none self-center bg-transparent py-1.5 text-body outline-none placeholder:text-label-3 focus-visible:outline-none" />
-            {locked ? <button type="button" aria-label="Interrompre la réponse" onClick={() => void stop()} className="pressable grid size-9 shrink-0 place-items-center rounded-full bg-label text-bg"><Square size={14} fill="currentColor" /></button>
-              : <button type="submit" aria-label="Envoyer le message" disabled={!draft.trim() || blocked || loading || reading}
-                className="pressable grid size-9 shrink-0 place-items-center rounded-full bg-accent text-on-accent disabled:bg-fill-3 disabled:text-label-3"><ArrowUp size={20} strokeWidth={2.6} /></button>}
+                if (e.ctrlKey || e.metaKey || finePointer()) { e.preventDefault(); if (!sendDisabled) void send() }
+              }} className="max-h-[min(184px,25dvh)] min-h-9 min-w-0 flex-1 resize-none self-center overscroll-contain bg-transparent py-1.5 text-body outline-none placeholder:text-label-3 focus-visible:outline-none" />
+            <button type="button" aria-label="Agrandir la saisie" title="Agrandir la saisie" aria-haspopup="dialog" disabled={locked}
+              className="pressable grid size-11 shrink-0 place-items-center rounded-full text-label-2 hover:bg-fill-4 disabled:text-label-3"
+              onClick={() => setExpanded(true)}><Maximize2 size={18} /></button>
+            {locked ? <button type="button" aria-label="Interrompre la réponse" onClick={() => void stop()} className="pressable grid size-11 shrink-0 place-items-center rounded-full bg-label text-bg"><Square size={14} fill="currentColor" /></button>
+              : <button type="submit" aria-label="Envoyer le message" disabled={sendDisabled}
+                className="pressable grid size-11 shrink-0 place-items-center rounded-full bg-accent text-on-accent disabled:bg-fill-3 disabled:text-label-3"><ArrowUp size={20} strokeWidth={2.6} /></button>}
           </form>
-          <p className="mt-1.5 px-4 text-caption2 text-label-3">{connection?.models.find(m => m.id === connection.selected_model)?.name ?? 'ChatGPT'} · Échanges conservés sur ce PC</p>
+          <div className="mt-1.5 flex flex-wrap justify-between gap-x-4 gap-y-1 px-4 text-caption2 text-label-3">
+            <p>{connection?.models.find(m => m.id === connection.selected_model)?.name ?? 'ChatGPT'} · Échanges conservés sur ce PC</p>
+            <p id="coach-draft-count" className={draftTooLong ? 'text-red' : undefined}>{draftWarning || draftCount}</p>
+          </div>
         </div>
       </section>
     </div>
+    <Sheet open={expanded} onClose={() => setExpanded(false)} title="Message au coach" wide footer={
+      <div className="flex justify-end gap-2">
+        <Button size="md" variant="gray" onClick={() => setExpanded(false)}>Terminé</Button>
+        <Button size="md" disabled={sendDisabled} onClick={() => void send()}>Envoyer</Button>
+      </div>
+    }>
+      <textarea aria-label="Texte du message" aria-describedby="coach-expanded-count" aria-invalid={draftTooLong} readOnly={locked}
+        placeholder="Ajoutez votre contexte ou collez une conversation ChatGPT" value={draft} onChange={e => changeDraft(e.target.value)}
+        onKeyDown={e => {
+          if (e.key !== 'Enter' || !(e.ctrlKey || e.metaKey) || e.nativeEvent.isComposing) return
+          e.preventDefault()
+          if (!sendDisabled) void send()
+        }} className="block h-[min(52dvh,460px)] w-full resize-none overscroll-contain rounded-[12px] bg-surface-2 px-4 py-3 text-body placeholder:text-label-3" />
+      <p id="coach-expanded-count" className={cx('mt-2 px-1 text-footnote', draftTooLong ? 'text-red' : 'text-label-2')}>{draftWarning || draftCount}</p>
+    </Sheet>
     <Sheet open={history} onClose={() => setHistory(false)} title="Conversations" trailing={<button className="h-11 min-w-11 text-headline text-accent" onClick={() => setHistory(false)}>OK</button>}>
       {list}
     </Sheet>

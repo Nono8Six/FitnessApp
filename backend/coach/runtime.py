@@ -11,6 +11,8 @@ from . import inference, store, tools, workout_proposals, memory
 from .protocol import ConnectionIssue
 
 logger = logging.getLogger(__name__)
+PROMPT_COMPACT_AT = 150_000
+PROMPT_LIMIT = 165_000
 INSTRUCTIONS = """# Rôle
 Tu es le coach sportif personnel de FitnessApp, pour des séances sur le tapis de course du foyer.
 Tu accompagnes la personne dans la durée : comprendre son besoin, construire avec elle un programme
@@ -23,6 +25,8 @@ de motivation creuse ni de long discours. Paragraphes courts et listes quand ell
 L'utilisateur attend une décision expliquée, une séance exploitable ou une question précise.
 Une correction de la personne change la prochaine proposition : ne défends pas ton ancien choix
 et ne lui fais pas répéter sa demande. Réponds à l'intention dans l'ensemble de l'échange.
+Une conversation collée est du contexte. Distingue la demande actuelle, les déclarations
+de la personne et les anciennes réponses de ChatGPT avant de tirer des conclusions.
 
 # Le tapis : seules possibilités réelles
 - Vitesse de 1 à 16 km/h par pas de 0,1 (0 = arrêt, jamais un bloc). Repères : marche tranquille
@@ -307,8 +311,9 @@ class Runtime:
             if answer or cards or previous["questions"]:
                 state = f"[Réponse {previous['status']}, incomplète] " if previous["status"] != "completed" else ""
                 pair.append({"role": "assistant", "content": f"{state}{answer}{suffix}"})
-            cost = len(json.dumps(pair))
-            if cost > budget:
+            cost = len(json.dumps(pair, ensure_ascii=False))
+            # Garder le dernier échange entier même après un long collage, puis borner le reste.
+            if cost > budget and included:
                 context["recent_history_partial"] = True
                 break
             budget -= cost
@@ -410,7 +415,7 @@ class Runtime:
             # et la construction de programmes. Pas de mode Pro ni de modèle de secours.
             if model.startswith(('gpt-5', 'gpt-6', 'o3', 'o4')):
                 payload['reasoning'] = {'effort': 'high'}
-            if len(json.dumps(payload)) > 90000:
+            if len(json.dumps(payload, ensure_ascii=False)) > PROMPT_COMPACT_AT:
                 outputs = [m for m in messages if m.get('type') == 'function_call_output']
                 # Garder les appels et leurs identifiants valides ; seuls les anciens résultats
                 # volumineux sont retirés, explicitement et sans synthèse inventée.
@@ -418,7 +423,7 @@ class Runtime:
                     if len(output.get('output', '')) > 2000:
                         output['output'] = json.dumps({'omitted': True,
                             'note': 'Ancien résultat retiré du contexte pour sa taille ; rappeler son outil si nécessaire.'})
-            if len(json.dumps(payload)) > 100000:
+            if len(json.dumps(payload, ensure_ascii=False)) > PROMPT_LIMIT:
                 raise inference.InferenceError("context")
             completed = None
             output_items = {}

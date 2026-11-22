@@ -102,8 +102,8 @@ DEFINITIONS = {
     "get_workout": (Detail, "Lire une séance ou une version précise : tous les blocs, origine, dates, estimations officielles."),
     "list_versions": (Versions, "Lister les versions datées d'une séance du profil, avec pagination."),
     "search_conversations": (Search, "Retrouver les conversations par leur titre ou le contenu de tous leurs échanges, même anciens."),
-    "read_conversation": (History, "Lire les échanges précédents, datés, du plus récent vers les pages plus anciennes, avec les séances proposées. Réponses incomplètes signalées."),
-    "read_message": (MessageDetail, "Lire le texte complet d'une ancienne réponse par extraits paginés, après read_conversation."),
+    "read_conversation": (History, "Lire les échanges précédents, du plus récent vers les pages plus anciennes, avec les séances proposées. Les extraits sont signalés par user_text_partial et answer_partial."),
+    "read_message": (MessageDetail, "Lire le message utilisateur complet et la réponse par extraits paginés. Utiliser aussi pour un user_text_partial dans relevant_history ou read_conversation."),
     "search_memories": (Search, "Lire les faits et préférences sourcés du profil, dates, origine et statut. Les restrictions en attente ne sont pas des diagnostics."),
     "ask_questions": (Questions, "Afficher 1 à 3 questions à choix en cases interactives sous ta réponse ; l'utilisateur répond dans son prochain message. Une seule fois par réponse."),
     "preview_catalog": (catalog.CatalogCopy, "Construire une base de séance depuis un format FitnessApp, sans enregistrer. template_id : brisk-walk, walk-intervals, hill-plateau, hill-waves, steady-endurance, run-walk. target : durée en secondes OU kcal actives avec le poids du profil. Renvoie blocs, dose et estimations backend ; adapter ensuite à l’allure connue, valider et proposer."),
@@ -209,8 +209,11 @@ def execute(database, profile, name, arguments, *, user_text, simulation=False, 
                 return store.conversations(session, profile, **payload.model_dump())
             if name == "read_conversation":
                 result = store.turns(session, profile, payload.conversation_id, payload.offset, payload.limit)
+                for turn in result["items"]:
+                    turn['user_text'] = memory.redacted(session, profile, turn['user_text'], at=turn['created_at'])
                 result["items"] = [{k: t[k] for k in ("id", "status", "created_at")} |
-                    {'user_text': memory.redacted(session, profile, t['user_text'], at=t['created_at']),
+                    {'user_text': t['user_text'][:store.HISTORY_MESSAGE_EXCERPT],
+                     'user_text_partial': len(t['user_text']) > store.HISTORY_MESSAGE_EXCERPT,
                      "answer": memory.redacted(session, profile, t["answer"][:1500], at=t['created_at']), "answer_partial": len(t["answer"]) > 1500,
                      "workout_proposals": [workout_proposals.brief(p) for p in t["workout_proposals"]],
                      "questions": t["questions"]} for t in result["items"]]
