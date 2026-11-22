@@ -1,4 +1,4 @@
-import { lazy, StrictMode, Suspense, useEffect, useRef } from 'react'
+import { lazy, StrictMode, Suspense, useEffect, useRef, useState } from 'react'
 import { createRoot } from 'react-dom/client'
 import { Shell } from './components/Shell'
 import { Settings } from './features/Settings'
@@ -14,6 +14,7 @@ import { ExecutionProvider } from './lib/execution'
 import { useCurrentProfile } from './lib/profiles'
 import { Page } from './components/Shell'
 import { href, navigate, useRoute } from './lib/router'
+import type { WorkoutInput } from './lib/workouts'
 import './styles/index.css'
 
 const Coach = lazy(() => import('./features/Coach').then(module => ({ default: module.Coach })))
@@ -21,6 +22,8 @@ const Coach = lazy(() => import('./features/Coach').then(module => ({ default: m
 function App() {
   const route = useRoute()
   const profile = useCurrentProfile()
+  const [fouleeImport, setFouleeImport] = useState<{ profile: string; workout: WorkoutInput }>()
+  const editingImport = route.name === 'editor' && route.fromFoulee === true
   const previousProfile = useRef(profile?.id)
   useEffect(() => {
     if (previousProfile.current && previousProfile.current !== profile?.id && (route.name === 'editor' || route.name === 'workout' || route.name === 'coach')) {
@@ -28,12 +31,22 @@ function App() {
     }
     previousProfile.current = profile?.id
   }, [profile?.id, route.name])
+  useEffect(() => {
+    if (!editingImport) setFouleeImport(undefined)
+  }, [editingImport])
   return (
     <Shell route={route}>
       <div key={`${profile?.id}:${JSON.stringify(route)}`}>
         {route.name === 'test' ? <CourseTest /> : route.name === 'direct' ? <Direct /> : route.name === 'settings' ? <Settings treadmillOpen={route.treadmill} /> : !profile ? <Page title="Fitness"><p className="text-label-2" role="status">Chargement du profil…</p></Page>
-          : route.name === 'library' ? <Library profile={profile.id} initialView={route.view} />
-          : route.name === 'editor' ? <Editor profile={profile.id} id={route.id} proposalId={route.proposalId} />
+          : route.name === 'library' ? <Library profile={profile.id} initialView={route.view} onImport={workout => {
+            setFouleeImport({ profile: profile.id, workout })
+            navigate(href.fouleeWorkout)
+          }} />
+          : route.name === 'editor' ? editingImport && fouleeImport?.profile !== profile.id
+            ? <Page title="Importer depuis Foulée" back={{ label: 'Séances', href: href.myWorkouts }}>
+              <p className="text-subhead text-label-2">Sélectionnez de nouveau le fichier dans Séances pour reprendre l’import.</p>
+            </Page>
+            : <Editor profile={profile.id} id={route.id} proposalId={route.proposalId} imported={editingImport ? fouleeImport?.workout : undefined} />
           : route.name === 'workout' ? <Workout profile={profile.id} id={route.id} requestedVersion={route.version} />
           : route.name === 'report' ? <Report profile={profile.id} id={route.id} />
           : route.name === 'recordings' ? <Reports profile={profile.id} workoutId={route.workoutId} />

@@ -548,6 +548,8 @@ Le contexte fournit les cinq bilans récents, la qualité, le ressenti et le vol
 
 **Livré :** exporter une séance ou tout l’historique (CSV, JSON), importer des fichiers FIT/TCX, sauvegarder et restaurer la base.
 
+- [x] Import d’un programme tapis Foulée depuis le menu **+** de Séances. Le JSON `foulee.treadmill.v1` remplit un brouillon dans l’éditeur du profil actif. L’allure saisie complète uniquement les blocs de course sans vitesse. La date de Foulée reste dans son planning et la séance rejoint la bibliothèque après confirmation dans l’éditeur.
+
 **Fait quand :**
 - [ ] Une restauration sur une base vide retrouve toutes les séances à l’identique.
 - [ ] Un fichier importé deux fois ne crée pas de doublon.

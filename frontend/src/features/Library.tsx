@@ -1,13 +1,14 @@
-import { ChevronDown, Pencil, Plus, Sparkles } from 'lucide-react'
+import { ChevronDown, FileUp, Pencil, Plus, Sparkles } from 'lucide-react'
 import { useState } from 'react'
 import { LibraryIcon } from '../components/Icons'
 import { Page } from '../components/Shell'
-import { Glyph, Menu, pillClass, SearchField, Segmented } from '../components/ui'
+import { Button, Glyph, Menu, pillClass, SearchField, Segmented } from '../components/ui'
 import { WorkoutCard } from '../components/WorkoutCard'
 import { WeightLink, WorkoutError, WorkoutLoading } from '../components/WorkoutSummary'
 import { href, navigate } from '../lib/router'
-import { GOAL_SHORT, GOALS, LEVELS, useLibrary, type Goal, type Level, type Workout } from '../lib/workouts'
+import { GOAL_SHORT, GOALS, LEVELS, useLibrary, type Goal, type Level, type Workout, type WorkoutInput } from '../lib/workouts'
 import { Discover } from './Discover'
+import { FouleeImport } from './FouleeImport'
 
 const origin = (w: Workout) => w.origin?.kind === 'catalog' ? 'Catalogue' : w.origin?.kind === 'chatgpt' ? 'ChatGPT' : 'Création manuelle'
 
@@ -22,10 +23,13 @@ function FilterMenu<T extends string>({ label, all, value, options, onChange }: 
       ...(Object.entries(options) as [T, string][]).map(([key, text]) => ({ label: text, checked: value === key, onSelect: () => onChange(key) }))]} />
 }
 
-export function Library({ profile, initialView = 'discover' }: { profile: string; initialView?: 'discover' | 'mine' }) {
+export function Library({ profile, initialView = 'discover', onImport }: {
+  profile: string; initialView?: 'discover' | 'mine'; onImport: (draft: WorkoutInput) => void
+}) {
   const [q, setQ] = useState('')
   const [goal, setGoal] = useState<Goal | ''>('')
   const [level, setLevel] = useState<Level | ''>('')
+  const [importOpen, setImportOpen] = useState(false)
   const { state, reload } = useLibrary(profile)
   const needle = q.trim().toLocaleLowerCase('fr')
   const list = state.status === 'ok' ? state.data.workouts.filter(p => p.name.toLocaleLowerCase('fr').includes(needle)
@@ -35,6 +39,7 @@ export function Library({ profile, initialView = 'discover' }: { profile: string
     items={[
       { label: 'Créer avec ChatGPT', icon: <Sparkles size={18} />, onSelect: () => navigate(href.coachCreate) },
       { label: 'Nouvelle séance', icon: <Pencil size={17} />, onSelect: () => navigate(href.newWorkout) },
+      { label: 'Importer depuis Foulée', icon: <FileUp size={18} />, onSelect: () => setImportOpen(true) },
     ]} />
   return <Page title="Séances" actions={create}>
     <Segmented className="mb-5 desk:max-w-[400px]" label="Bibliothèque" value={initialView}
@@ -48,6 +53,7 @@ export function Library({ profile, initialView = 'discover' }: { profile: string
           <div className="mt-6 grid w-full max-w-[320px] gap-2.5">
             <a href={href.library} className="pressable inline-flex h-[52px] items-center justify-center rounded-[14px] bg-accent text-headline text-on-accent">Découvrir</a>
             <a href={href.coachCreate} className="pressable inline-flex h-11 items-center justify-center gap-2 rounded-[12px] bg-fill-3 text-subhead font-semibold"><Sparkles size={17} />Créer avec ChatGPT</a>
+            <Button type="button" variant="gray" size="md" onClick={() => setImportOpen(true)}><FileUp size={17} />Importer depuis Foulée</Button>
           </div>
         </section> : <>
           <SearchField value={q} onChange={setQ} label="Rechercher une séance" className="mb-3 desk:max-w-[400px]" maxLength={80} />
@@ -68,5 +74,6 @@ export function Library({ profile, initialView = 'discover' }: { profile: string
           </div>}
         </>}
     </>}
+    {importOpen && <FouleeImport onClose={() => setImportOpen(false)} onImport={onImport} />}
   </Page>
 }

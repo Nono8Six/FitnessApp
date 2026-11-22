@@ -5,7 +5,7 @@ import { Button, cx, Group, Menu, StatGrid } from '../components/ui'
 import { WorkoutError, WorkoutLoading, WorkoutSummary } from '../components/WorkoutSummary'
 import { errorMessage } from '../lib/api'
 import { href, navigate } from '../lib/router'
-import { GOALS, LEVELS, isHard, isRepeat, KIND_LABEL, readWorkout, saveWorkout, usePreview, type Goal, type Level, type Item, type LoadState, type Step, type Workout } from '../lib/workouts'
+import { GOALS, LEVELS, isHard, isRepeat, KIND_LABEL, readWorkout, saveWorkout, usePreview, type Goal, type Level, type Item, type LoadState, type Step, type Workout, type WorkoutInput } from '../lib/workouts'
 import { acceptWorkoutProposal, readWorkoutProposal, type WorkoutProposal } from '../lib/coach'
 import { WorkoutDifferences } from '../components/WorkoutProposal'
 
@@ -74,8 +74,8 @@ let nextKey = 0
 const entry = (value: Item) => ({ key: ++nextKey, value })
 const newStep = (): Step => ({ kind: 'steady', sec: 300, speed: 5, incline: 0 })
 
-function EditorForm({ profile, source, proposal }: { profile: string; source?: Workout; proposal?: WorkoutProposal }) {
-  const initial = proposal?.workout ?? source
+function EditorForm({ profile, source, proposal, imported }: { profile: string; source?: Workout; proposal?: WorkoutProposal; imported?: WorkoutInput }) {
+  const initial = proposal?.workout ?? source ?? imported
   const [name, setName] = useState(initial?.name ?? '')
   const [goal, setGoal] = useState<Goal | null>(initial?.goal ?? null)
   const [level, setLevel] = useState<Level | null>(initial?.level ?? null)
@@ -91,7 +91,7 @@ function EditorForm({ profile, source, proposal }: { profile: string; source?: W
   const inlineError = (path: (string | number)[]) => (path.length === 1 && path[0] === 'name')
     || (path[0] === 'items' && ((path.length === 3 && ['sec', 'speed', 'incline', 'repeat'].includes(String(path[2])))
       || (path.length === 5 && path[2] === 'steps' && ['sec', 'speed', 'incline'].includes(String(path[4])))))
-  const dirty = JSON.stringify(input) !== JSON.stringify(initial ? { name: initial.name, items: initial.items, goal: initial.goal ?? null, level: initial.level ?? null } : { name: '', items: [newStep()], goal: null, level: null })
+  const dirty = !!imported || JSON.stringify(input) !== JSON.stringify(initial ? { name: initial.name, items: initial.items, goal: initial.goal ?? null, level: initial.level ?? null } : { name: '', items: [newStep()], goal: null, level: null })
   useEffect(() => {
     if (!dirty) return
     const beforeUnload = (event: BeforeUnloadEvent) => event.preventDefault()
@@ -113,7 +113,7 @@ function EditorForm({ profile, source, proposal }: { profile: string; source?: W
       setError(errorMessage(e)); setSaving(false)
     }
   }
-  return <Page title={proposal ? 'Modifier la proposition' : source ? 'Modifier' : 'Nouvelle séance'} showAvatar={false} back={{ label: proposal ? 'Coach' : 'Séances', href: proposal ? href.coachConversation(proposal.conversation_id) : source ? href.workout(source.id) : href.myWorkouts }}
+  return <Page title={proposal ? 'Modifier la proposition' : source ? 'Modifier' : 'Nouvelle séance'} subtitle={imported ? 'Importée depuis Foulée' : undefined} showAvatar={false} back={{ label: proposal ? 'Coach' : 'Séances', href: proposal ? href.coachConversation(proposal.conversation_id) : source ? href.workout(source.id) : href.myWorkouts }}
     trailing={<button className="pressable h-11 text-headline text-accent disabled:text-label-3" disabled={saving || preview.status !== 'ok' || (!dirty && !proposal)}
       onClick={() => void save()}>{saving ? 'Enregistrement…' : 'Enregistrer'}</button>}>
     <fieldset disabled={saving} className="grid min-w-0 gap-7 desk:grid-cols-[minmax(0,1fr)_minmax(300px,380px)] desk:items-start">
@@ -184,7 +184,7 @@ function EditorForm({ profile, source, proposal }: { profile: string; source?: W
   </Page>
 }
 
-export function Editor({ profile, id, proposalId }: { profile: string; id?: string; proposalId?: string }) {
+export function Editor({ profile, id, proposalId, imported }: { profile: string; id?: string; proposalId?: string; imported?: WorkoutInput }) {
   const [source, setSource] = useState<LoadState<Workout>>({ status: 'loading' })
   const [proposal, setProposal] = useState<LoadState<WorkoutProposal>>({ status: 'loading' })
   const [revision, setRevision] = useState(0)
@@ -210,7 +210,7 @@ export function Editor({ profile, id, proposalId }: { profile: string; id?: stri
       {proposal.status === 'loading' ? <WorkoutLoading /> : <WorkoutError message={proposal.status === 'error' ? proposal.message : 'Cette proposition a déjà été enregistrée ou ignorée.'} retry={() => setRevision(v => v + 1)} />}
     </Page>
   }
-  if (!id) return <EditorForm profile={profile} />
+  if (!id) return <EditorForm profile={profile} imported={imported} />
   if (source.status === 'ok') return <EditorForm profile={profile} source={source.data} />
   return <Page title="Modifier" back={{ label: 'Séances', href: href.library }}>
     {source.status === 'loading' ? <WorkoutLoading /> : <WorkoutError message={source.message} retry={() => setRevision(v => v + 1)} />}
