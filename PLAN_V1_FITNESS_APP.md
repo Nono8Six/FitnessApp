@@ -27,7 +27,7 @@ Une seule brique en cours dans le périmètre demandé. Les cases indiquent les 
 
 ### Direct sans défilement — 22 novembre 2026
 
-- [x] Bloc, temps restant, graphique, prochain bloc, cumuls et commandes réunis sur un écran. Le graphique superpose la vitesse et la pente dès l’ouverture. Données présente chaque mesure face à sa cible. Les outils de réglage et de consultation remplacent temporairement le tableau.
+- [x] Bloc, temps restant, prochain bloc, cumuls et commandes réunis sur un écran. Le graphique superpose la vitesse et la pente dès l’ouverture. En mode Données, la durée active et la distance dominent. L’allure, le temps restant, la vitesse et la pente se lisent simultanément et les deux cibles tiennent sur une ligne. Les outils de réglage et de consultation remplacent temporairement le tableau.
 - Vérifié en simulation dans Chrome sur neuf formats, de 320 × 480 à 1280 × 800, dont trois en paysage sur téléphone. La vérification porte sur les deux vues, le défilement, les chevauchements, l’accès aux quatre outils, la lecture au clavier et le parcours pause, double confirmation de reprise, arrêt et bilan. Une interruption du flux simulé a aussi vérifié l’affichage de l’alerte et la désactivation des commandes. Essais sur téléphones physiques et RUN500 réel encore ouverts.
 
 ### Interface mobile — 22 novembre 2026

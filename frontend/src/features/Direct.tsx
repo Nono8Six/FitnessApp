@@ -9,7 +9,7 @@ import { href, navigate } from '../lib/router'
 import { useCurrentProfile } from '../lib/profiles'
 import type { Workout } from '../lib/workouts'
 import type { Block } from '../lib/types'
-import { CourseChart, CourseData, CourseReadout, NextBlock } from './CourseView'
+import { BlockReadings, CourseChart, CourseData, CourseReadout, NextBlock } from './CourseView'
 import { courseTest } from '../lib/environment'
 
 export function StartButton({ profile, workout, className }: { profile: string; workout: Workout; className?: string }) {
@@ -277,6 +277,13 @@ export function Direct() {
   const canResume = available && paused && (s.can_resume ?? s.owned_by_me) && s.restart_delay_s === 0 && speed === 0
   const kcal = calories(s.totals.energy)
   const distance = available && (s.distance_quality === 'fresh' || s.distance_quality === 'partial') && s.distance_m !== null ? dec2(s.distance_m / 1000) : '—'
+  const duration = available ? clock(Math.floor(s.active_s)) : '—'
+  const elapsed = block ? Math.max(0, Math.min(block.sec, s.active_s - block.start)) : 0
+  const blockReadings = <BlockReadings speed={speed} remaining={available && block ? clock(Math.ceil(block.sec - elapsed)) : '—'} />
+  const sessionReadings = <>
+    <div><dt>Durée active</dt><dd className="num text-time" data-long={duration.length > 5 || undefined}>{duration}</dd></div>
+    <div><dt>Distance{s.distance_quality === 'partial' && ' partielle'}</dt><dd className="num text-distance" data-long={distance.length > 5 || undefined}>{distance}<small>km</small></dd></div>
+  </>
   const canStop = available && !finished && s.phase !== 'unknown' && s.phase !== 'stopping'
   return <div className="live-screen">
     <header className="live-header">
@@ -303,18 +310,19 @@ export function Direct() {
             : tool === 'device' ? <DeviceDetails s={s} />
             : <LiveCurves samples={e.feed!.samples} markers={e.feed!.markers} wall={s.wall_s} startedAt={s.started_at} live={available && canPause} />}
         </div>
-      </section> : <section className="course-dashboard" aria-label="Mesures de la séance">
-        <CourseReadout block={block} index={s.block_index} count={blocks.length} active={s.active_s} available={available} speed={speed} />
+      </section> : <section className="course-dashboard" data-view={view} aria-label="Mesures de la séance">
+        <CourseReadout block={block} index={s.block_index} count={blocks.length} elapsed={elapsed}>
+          {view === 'data' ? sessionReadings : blockReadings}
+        </CourseReadout>
         <Segmented variant="course" className="course-view-toggle" label="Affichage du Direct" value={view} onChange={setView} options={[
           { value: 'graph', label: 'Graphique', icon: <ChartNoAxesCombined size={16} /> },
           { value: 'data', label: 'Données', icon: <List size={16} /> },
         ]} />
         {view === 'graph' ? <CourseChart session={s} samples={e.feed!.samples} blocks={blocks} available={available} speed={speed} incline={incline} />
-          : <CourseData speed={speed} incline={incline} block={block} />}
+          : <CourseData speed={speed} incline={incline} block={block}>{blockReadings}</CourseData>}
         <NextBlock next={next} />
         <dl className="course-totals">
-          <div><dt>Durée active</dt><dd className="num text-time">{available ? clock(Math.floor(s.active_s)) : '—'}</dd></div>
-          <div><dt>Distance{s.distance_quality === 'partial' && ' partielle'}</dt><dd className="num text-distance">{distance}<small>km</small></dd></div>
+          {view === 'graph' && sessionReadings}
           <div><dt>Kcal estimées</dt><dd className="num text-energy" data-long-value={!!kcal && kcal.length > 7 || undefined}>{available ? kcal ?? '—' : '—'}</dd></div>
           <div><dt>Vitesse moy.</dt><dd className="num text-speed">{available && s.totals.speed_avg !== null ? dec1(s.totals.speed_avg) : '—'}<small>km/h</small></dd></div>
         </dl>
@@ -326,7 +334,7 @@ export function Direct() {
             {`${s.recording.error ?? 'Enregistrement interrompu.'} Données conservées jusqu’à ${clock(s.recording.persisted_s)} depuis le départ.`}
           </p>}
           {finished && s.recording?.status === 'error' && <a href={href.report(s.id)} className="pressable mb-3 flex min-h-11 items-center text-subhead text-accent">Consulter les données conservées</a>}
-          {s.can_claim && <Button variant="gray" className="mb-3 w-full" disabled={!available || !!e.pending} onClick={() => void e.act('claim')}>Reprendre le contrôle sur cet écran</Button>}
+          {s.can_claim && <Button variant="gray" className="course-claim mb-3 w-full" aria-label="Reprendre le contrôle sur cet écran" disabled={!available || !!e.pending} onClick={() => void e.act('claim')}>Reprendre le contrôle</Button>}
           {paused && s.reason && s.reason !== 'Pause demandée' && <p role="status" className="mb-2 text-footnote text-yellow">{s.reason}</p>}
           {paused && (!(s.can_resume ?? s.owned_by_me) || s.restart_delay_s > 0) && <p className="live-action-hint text-label-2">{!(s.can_resume ?? s.owned_by_me) ? 'Reprise depuis l’écran de départ' : `Stabilisation · ${s.restart_delay_s} s`}</p>}
           {s.phase === 'unknown' && <Button variant="plain" className="mb-2 w-full" onClick={() => navigate(href.treadmill)}>Reconnecter dans Réglages</Button>}

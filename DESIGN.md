@@ -127,7 +127,9 @@ Le tableau tient dans la hauteur visible du navigateur. En portrait, il réunit 
 
 **Graphique** s’ouvre par défaut. Vitesse et pente se superposent sur le même axe du temps. La vitesse apparaît en vert sur l’axe gauche en km/h, la pente en violet sur l’axe droit en %. Les valeurs reçues restent visibles au-dessus du tracé. Les courbes épaisses représentent les mesures, les paliers fins à droite du repère Direct les cibles prévues. Une minute d’historique et le bloc suivant partagent une échelle de temps proportionnelle. Une interruption laisse un trou dans la courbe. Au toucher ou au clavier, le curseur indique les deux valeurs à l’instant choisi.
 
-**Données** utilise le même emplacement pour deux lignes de lecture. Chacune associe la mesure en grand, la consigne chiffrée et son repère sur une barre commune à la mesure et à la cible. Les deux vues conservent les mêmes positions pour le bloc en cours, le temps restant, le prochain bloc, les quatre cumuls et les commandes. Les outils remplacent temporairement le tableau pour ajuster la séance, parcourir les blocs, consulter les deux courbes historiques ensemble ou lire le diagnostic du tapis. La reprise exige les deux confirmations de présence.
+**Données** place la durée active et la distance côte à côte, en grands chiffres sous le nom du bloc. Deux rangées regroupent ensuite l’allure et le temps restant du bloc, puis la vitesse et la pente mesurées. Les deux cibles du bloc partagent une ligne discrète sous ces mesures. Le bloc suivant, les calories estimées et la vitesse moyenne restent visibles au-dessus des commandes. Une distance partielle est signalée dans son libellé.
+
+Les outils remplacent temporairement le tableau pour ajuster la séance, parcourir les blocs, consulter les deux courbes historiques ensemble ou lire le diagnostic du tapis. La reprise exige les deux confirmations de présence.
 
 La perte de contact ou un état de bande inconnu donne la place aux instructions de sécurité. Les commandes suivent l’état transmis par le serveur. Le lien « Tester le mode course » sur Aujourd’hui ouvre le simulateur isolé à `/test-course/#/test`.
 

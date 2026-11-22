@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useState, type ReactNode } from 'react'
 import { ArrowRight, Flag, Gauge, Mountain } from 'lucide-react'
 import { nearest, TimeChart, usePlotHeight, type Series } from '../components/charts'
 import { clock, dec1, pace } from '../lib/format'
@@ -6,12 +6,9 @@ import type { LiveSample, Session } from '../lib/execution'
 import type { Block } from '../lib/types'
 import { courseTimeline } from '../lib/courseTimeline'
 
-export function CourseReadout({ block, index, count, active, available, speed }: {
-  block: Block; index: number; count: number; active: number; available: boolean; speed: number | null
+export function CourseReadout({ block, index, count, elapsed, children }: {
+  block: Block; index: number; count: number; elapsed: number; children: ReactNode
 }) {
-  const elapsed = Math.max(0, Math.min(block.sec, active - block.start))
-  const remaining = available ? clock(Math.ceil(block.sec - elapsed)) : '—'
-  const value = speed !== null && speed > 0 ? pace(speed) : '—'
   return <section className="course-readout" aria-label="Bloc en cours">
     <div className="course-stage">
       <span className="course-stage-number num" aria-label={`Bloc ${index + 1} sur ${count}`}>{index + 1}<span>/{count}</span></span>
@@ -20,16 +17,21 @@ export function CourseReadout({ block, index, count, active, available, speed }:
     <div className="course-progress" role="progressbar" aria-label="Progression du bloc" aria-valuemin={0} aria-valuemax={block.sec} aria-valuenow={Math.round(elapsed)}>
       <span style={{ width: `${elapsed / block.sec * 100}%` }} />
     </div>
-    <dl className="course-numbers num">
-      <div><dt>Allure</dt>
-        <dd><span className="course-main-value" data-long={value.length > 5 || undefined} data-missing={value === '—' || undefined}>{value}</span>
-          <span className="course-unit">min/km</span></dd>
-      </div>
-      <div><dt>Temps restant</dt>
-        <dd className="course-timer" data-long={remaining.length > 5 || undefined}>{remaining}</dd>
-      </div>
-    </dl>
+    <dl className="course-numbers num">{children}</dl>
   </section>
+}
+
+export function BlockReadings({ speed, remaining }: { speed: number | null; remaining: string }) {
+  const value = speed !== null && speed > 0 ? pace(speed) : '—'
+  return <>
+    <div><dt>Allure</dt>
+      <dd><span className="course-main-value" data-long={value.length > 5 || undefined} data-missing={value === '—' || undefined}>{value}</span>
+        <span className="course-unit">min/km</span></dd>
+    </div>
+    <div><dt>Temps restant</dt>
+      <dd className="course-timer" data-long={remaining.length > 5 || undefined}>{remaining}</dd>
+    </div>
+  </>
 }
 
 export function CourseChart({ session, samples, blocks, available, speed, incline }: {
@@ -82,26 +84,17 @@ export function CourseChart({ session, samples, blocks, available, speed, inclin
   </section>
 }
 
-/** Mesure reçue et consigne appliquée, dans la même unité pour chaque ligne. */
-export function CourseData({ speed, incline, block }: { speed: number | null; incline: number | null; block: Block }) {
-  const metrics = [
-    { key: 'speed', label: 'Vitesse', unit: 'km/h', value: speed, target: block.speed, scale: 16, Icon: Gauge },
-    { key: 'incline', label: 'Pente', unit: '%', value: incline, target: block.incline, scale: 10, Icon: Mountain },
-  ] as const
-  return <dl className="course-data" aria-label="Mesures et cibles du bloc">
-    {metrics.map(({ key, label, unit, value, target, scale, Icon }) => {
-      const maximum = Math.max(scale, target, value ?? 0)
-      return <div className="course-data-row" data-metric={key} key={key}>
-        <dt><Icon size={18} aria-hidden />{label}</dt>
-        <dd className="course-data-measure num">{value === null ? '—' : dec1(value)}<small>{unit}</small></dd>
-        <dd className="course-data-target"><span>Cible</span><strong className="num">{dec1(target)} <small>{unit}</small></strong></dd>
-        <dd className="course-data-track" aria-hidden="true">
-          {value !== null && <span style={{ width: `${100 * value / maximum}%` }} />}
-          <i style={{ left: `${100 * target / maximum}%` }} />
-        </dd>
-      </div>
-    })}
-  </dl>
+export function CourseData({ speed, incline, block, children }: {
+  speed: number | null; incline: number | null; block: Block; children: ReactNode
+}) {
+  return <section className="course-data" aria-label="Mesures du bloc">
+    <dl className="course-data-grid num">
+      {children}
+      <div><dt>Vitesse</dt><dd className="text-speed">{speed === null ? '—' : dec1(speed)}<small>km/h</small></dd></div>
+      <div><dt>Pente</dt><dd className="text-incline">{incline === null ? '—' : dec1(incline)}<small>%</small></dd></div>
+    </dl>
+    <p className="course-data-targets"><span>Cibles du bloc</span><span className="num">{dec1(block.speed)} km/h · {dec1(block.incline)} %</span></p>
+  </section>
 }
 
 export function NextBlock({ next }: { next?: Block }) {
