@@ -133,6 +133,8 @@ Les outils remplacent temporairement le tableau pour ajuster la séance, parcour
 
 La perte de contact ou un état de bande inconnu donne la place aux instructions de sécurité. Les commandes suivent l’état transmis par le serveur. Le lien « Tester le mode course » sur Aujourd’hui ouvre le simulateur isolé à `/test-course/#/test`.
 
+« Retour au calme final » apparaît à la suite du programme et utilise le même compte à rebours qu’un bloc. Il annonce l’arrêt automatique à son terme. « Terminer » reste accessible pendant cette minute.
+
 Références de lecture : [Technogym Live](https://apps.apple.com/us/app/technogym-live/id918088000) (profils vitesse/pente et guidage par étape) et [Peloton Target Metrics](https://support.onepeloton.com/s/article/Peloton-Workouts-Target-Metrics?language=en_CA) (objectifs de vitesse et d’inclinaison). La distinction entre mesures épaisses et consignes fines est une adaptation propre à ce graphique compact, sans reproduction d’un écran de ces marques.
 
 ## 7. Graphiques

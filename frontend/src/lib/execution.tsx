@@ -32,7 +32,7 @@ export interface Session {
 }
 interface AdjustmentRange { min: number; max: number; step: number }
 interface Feed { type: 'snapshot' | 'state'; instance_id: string; sequence: number; session: Session; device: DeviceState; samples: LiveSample[]; markers: { t: number; label: string }[] }
-export interface Preparation { workout: Workout; profile: { id: string; name: string }; ready: boolean; issue: string | null; mode: 'simulation' | 'reel'; limits: { speed: number; incline: number } }
+export interface Preparation { workout: Workout; profile: { id: string; name: string }; ready: boolean; issue: string | null; mode: 'simulation' | 'reel'; limits: { speed: number; incline: number }; cooldown_s?: number }
 const finite = (v: unknown): v is number => typeof v === 'number' && Number.isFinite(v)
 const nullableNumber = (v: unknown) => v === null || finite(v)
 const nullableString = (v: unknown) => v === null || typeof v === 'string'
@@ -69,7 +69,8 @@ function isFeed(v: unknown): v is Feed {
 export const prepareExecution = (profile: string, workout: Workout) => api('/api/execution/prepare', {
   method: 'POST', body: { profile_id: profile, workout_id: workout.id, version: workout.version },
   validate: (v): v is Preparation => isRecord(v) && isWorkout(v.workout) && isProfile(v.profile) && typeof v.ready === 'boolean'
-    && nullableString(v.issue) && ['simulation', 'reel'].includes(String(v.mode)) && isLimits(v.limits),
+    && nullableString(v.issue) && ['simulation', 'reel'].includes(String(v.mode)) && isLimits(v.limits)
+    && (v.cooldown_s === undefined || (finite(v.cooldown_s) && v.cooldown_s >= 0)),
 })
 
 interface Selected { profile: string; workout: Workout; origin: string }

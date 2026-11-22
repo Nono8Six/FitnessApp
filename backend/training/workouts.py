@@ -93,17 +93,20 @@ def preview(data: WorkoutInput, weight_kg: float | None = None) -> dict:
     """Expansion ordonnée et calculs partagés par aperçu, lecture et enregistrement."""
     blocks = []
     elapsed = 0
-    distance = 0.0
     for item in data.items:
         steps = item.steps * item.repeat if isinstance(item, Repeat) else [item]
         for step in steps:
             blocks.append({**step.model_dump(), "index": len(blocks), "label": KIND_LABEL[step.kind],
                            "start": elapsed, "end": elapsed + step.sec})
             elapsed += step.sec
-            distance += step.speed * step.sec / 3600
-    return {"blocks": blocks, "summary": {"sec": elapsed, "km": round(distance, 6), "count": len(blocks),
+    return {"blocks": blocks, "summary": summarize_blocks(blocks, weight_kg)}
+
+
+def summarize_blocks(blocks, weight_kg=None):
+    distance = sum(b["speed"] * b["sec"] / 3600 for b in blocks)
+    return {"sec": blocks[-1]["end"], "km": round(distance, 6), "count": len(blocks),
             "minSpeed": min(b["speed"] for b in blocks), "maxSpeed": max(b["speed"] for b in blocks),
-            **estimate(blocks, weight_kg)}}
+            **estimate(blocks, weight_kg)}
 
 
 def _workout(session: Session, profile_id: str, workout_id: str) -> Workout:

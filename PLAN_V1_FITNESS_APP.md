@@ -25,6 +25,12 @@ Une seule brique en cours dans le périmètre demandé. Les cases indiquent les 
 - [ ] **Brique 16 · Usage quotidien Windows** : lanceur, démarrage simple, hors ligne, performances.
 - [ ] **Brique 17 · Réception finale** : parcours complet sur les vrais appareils.
 
+### Retour au calme automatique — 22 novembre 2026
+
+- [x] Après le dernier bloc prévu, le Direct ajoute 1 min de retour au calme à 5 km/h maximum, avec la pente du dernier bloc. Le tapis n’accélère pas pour atteindre 5 km/h. Cette minute démarre quand la consigne est observée, figure au bilan et se termine par l’arrêt automatique confirmé. « Terminer » demande l’arrêt immédiatement, y compris pendant le retour au calme. Le programme enregistré conserve sa durée d’origine.
+- La séance continue sur le PC quand le téléphone passe sur une autre application. Le Direct retrouve la séance au retour. Le PC doit rester allumé et connecté au tapis. La vérification matérielle sur le RUN500 reste ouverte.
+- 54 tests ciblés et build réussis. Dans Chrome au format téléphone, une course simulée de 30 s à 8,5 km/h a continué pendant que sa page était fermée. Retour à 5 km/h, 60 s actives supplémentaires, arrêt confirmé à zéro et bilan enregistré de 1:30. L’arrêt volontaire pendant cette phase est vérifié avec le transport Bluetooth de test.
+
 ### Navigation pendant une séance — 22 novembre 2026
 
 - [x] « Accueil » réduit le Direct. « Revenir au Direct » reste visible au-dessus des onglets ou dans la barre latérale pendant la course et la pause. « Terminer » demande l’arrêt et le bilan s’ouvre après confirmation et enregistrement. Le programme garde sa fin prévue et le tapis ses protections.
@@ -452,7 +458,7 @@ Contrôles de ce complément : build et 46 tests ciblés réussis (calculs, API,
 **Travail :**
 1. Horloge et transitions sur le PC ; profil, version et blocs figés. Programmes de l’application jusqu’à 120 segments, avec durée totale éventuellement supérieure à une heure pour une cible calorique, sans reprendre les limites de durée du diagnostic.
 2. Passage explicite au contrôle : abonnement aux réponses du Control Point, acquisition du contrôle, vitesse minimale, Start, mouvement observé, puis consignes. Commandes sérialisées, sans répétition ; Pause/STOP attendent l’échange déjà envoyé. Arrêt confirmé seulement après réponse acceptée, stabilisation et nouvelle mesure de zéro.
-3. Autorisation absolue : durée prévue + 30 s par bloc + 15 min de pause cumulée + 15 s. Aucun renouvellement par heartbeat. Le PC pilote la séance indépendamment du téléphone, même après fermeture/suspension de sa page. Le contact écran toutes les 3 s ne sert qu’à réserver les réglages à son propriétaire ; un nouvel écran peut les récupérer après son départ ou 12 s sans contact, sans modifier la course. Aucun renouvellement de l’échéance absolue.
+3. Autorisation absolue : durée prévue avec retour au calme + 30 s par bloc exécuté + 15 min de pause cumulée + 15 s. Aucun renouvellement par heartbeat. Le PC pilote la séance indépendamment du téléphone, même après fermeture/suspension de sa page. Le contact écran toutes les 3 s ne sert qu’à réserver les réglages à son propriétaire ; un nouvel écran peut les récupérer après son départ ou 12 s sans contact, sans modifier la course. Aucun renouvellement de l’échéance absolue.
 4. Pause demandée : temps actif figé, point conservé. Reprise réservée au propriétaire avec les deux nouvelles confirmations et préconditions revérifiées. Les pauses confirmées et la remise en mouvement sont exclues du temps actif ; les transitions entre blocs pendant l’effort y restent incluses.
 5. Direct plein écran : vitesse dominante et durée jaune ; commandes de 68 px ancrées sur téléphone, deux colonnes sur PC. Capsule mobile et activité latérale, graphiques SVG synchronisés (1 min / 5 min / séance), curseur daté souris/toucher/clavier, trous pour mesures indisponibles, buffers bornés. Valeur absente distincte de zéro ; aucun panneau cardio vide.
 6. Réel et simulation : **1–16 km/h et 0–10 %**, restreints aux plages/pas effectivement lus. Plafonds initiaux de 2,5 km/h / 1 % retirés le 7 octobre sur demande d’Arnaud. Programme incompatible refusé avec le bloc et la plage, sans correction silencieuse ; une plage inconnue bloque le démarrage. Les plafonds 4 km/h/3 % et l’autorisation de 10 min du POC restent distincts.

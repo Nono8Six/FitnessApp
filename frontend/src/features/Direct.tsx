@@ -63,6 +63,7 @@ export function ExecutionSheets() {
     <div className="course-confirm">
       <p className="truncate text-headline">{resume ? s?.workout?.name : e.selected?.workout.name}</p>
       <p className="mt-1 text-subhead text-label-2">{resume ? `${s?.profile?.name} · reprise à ${clock(Math.floor(s?.active_s ?? 0))}` : `${prepared?.profile.name ?? ''} · ${clock(e.selected?.workout.summary.sec ?? 0)}`}</p>
+      {!resume && !!prepared?.cooldown_s && <p className="mt-1 text-footnote text-label-2">Puis {clock(prepared.cooldown_s)} de retour au calme avant l’arrêt.</p>}
       {!resume && <div className="mt-1 flex min-h-8 items-center gap-2 text-subhead">
         <Bluetooth size={20} className={connected ? 'text-green' : 'text-label-2'} />
         <span className="flex-1">{e.feed?.device.device_name ?? 'Tapis non connecté'}</span>

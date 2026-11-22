@@ -149,9 +149,9 @@ class ExecutionTests(unittest.IsolatedAsyncioTestCase):
             p.stop()
         self.temp.cleanup()
 
-    async def wait(self, phase, timeout=8, keep_alive=True):
+    async def wait(self, phase, timeout=8, keep_alive=True, block=None):
         end = time.monotonic() + timeout
-        while self.e.phase != phase:
+        while self.e.phase != phase or (block is not None and self.e.block != block):
             if keep_alive:
                 self.e.heartbeat(OWNER)
             if time.monotonic() > end:
@@ -181,8 +181,9 @@ class ExecutionTests(unittest.IsolatedAsyncioTestCase):
 
     async def test_thirty_minute_snapshot_limits_and_single_owner(self):
         await self.start_running()
-        self.assertEqual(self.e.workout["summary"]["sec"], 1800)
-        self.assertGreater(self.c.armed_until - time.monotonic(), 1800)
+        self.assertEqual(self.workout["summary"]["sec"], 1800)
+        self.assertEqual(self.e.workout["summary"]["sec"], 1860)
+        self.assertGreater(self.c.armed_until - time.monotonic(), 1860)
         deadline = self.e.deadline
         self.e.heartbeat(OBSERVER)
         self.assertEqual(self.e.deadline, deadline)
@@ -217,14 +218,50 @@ class ExecutionTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(self.e.block, 1)
         self.assertEqual(self.c.telemetry["speed_kmh"], 2.5)
         self.e.active_since -= 1800
+        await self.wait("running", block=2)
+        self.assertEqual(self.e.targets[2], {"speed": 2.5, "incline": 1.0})
+        self.assertAlmostEqual(self.e.active_time(), 1800, delta=.25)
+        self.assertEqual(self.c.telemetry["speed_kmh"], 2.5)
+        self.e.active_since -= 60
         await self.wait("completed")
-        self.assertEqual(self.e.active_time(), 1800)
+        self.assertEqual(self.e.active_time(), 1860)
         self.assertTrue(self.e.stop_confirmed)
         self.assertEqual(self.c.sim_speed, 0)
         wall = self.e.snapshot()["wall_s"]
         await asyncio.sleep(.15)
         self.assertEqual(self.e.snapshot()["wall_s"], wall)
         self.assertEqual(self.e.samples[-1]["speed"], 0)
+
+    async def test_real_cooldown_slows_to_five_without_screen_and_manual_stop_has_priority(self):
+        await self.real()
+        with self.app.state.database.write() as session:
+            self.workout = create_workout(session, "arnaud", WorkoutInput(name="Course", items=[
+                {"kind": "run", "sec": 30, "speed": 8.5, "incline": 1}]))
+        await self.start_running()
+        self.e.release(OWNER)
+        self.c.owner_heartbeat -= 13
+        deadline, writes = self.e.deadline, len(self.client.writes)
+        self.client.delay = .3
+        self.e.active_since -= 30
+        await self.wait("transitioning", keep_alive=False, block=1)
+        self.assertEqual(self.e.active_time(), 30)
+        await self.wait("running", keep_alive=False, block=1)
+        self.assertEqual(self.client.writes[writes:], [ftms.encode_command("speed", 5)])
+        self.assertEqual(self.e.deadline, deadline)
+        self.assertEqual((self.client.speed, self.client.incline), (5, 1))
+        self.assertAlmostEqual(self.e.active_time(), 30, delta=.25)
+        self.assertIsNone(self.e.adjustment_bounds())
+        self.e.request_halt()
+        await self.wait("stopped", keep_alive=False)
+        self.assertTrue(self.e.stop_confirmed)
+        self.assertEqual(self.client.writes[writes:], [ftms.encode_command("speed", 5), b"\x08\x01"])
+
+    async def test_cooldown_target_respects_step_and_measured_speed(self):
+        self.c.capabilities["speed_range"].update({"min": 1, "step": .3})
+        target = {"speed": 8.5, "incline": 2}
+        self.assertEqual(self.e._cooldown_target(target), {"speed": 4.9, "incline": 2})
+        self.assertEqual(self.e._cooldown_target(target, 4.77), {"speed": 4.6, "incline": 2})
+        self.assertIsNone(self.e._cooldown_target(target, .99))
 
     async def test_pc_keeps_running_and_changes_blocks_without_phone(self):
         await self.start_running()
@@ -547,7 +584,7 @@ class ExecutionTests(unittest.IsolatedAsyncioTestCase):
         writes = len(self.client.writes)
         self.c._status_notification(None, bytes.fromhex("059a01"))  # Console : 4,1 km/h.
         self.c._status_notification(None, bytes.fromhex("060a00"))  # Console : 1 %.
-        self.assertEqual(self.e.targets, [{"speed": 4.1, "incline": 1}, {"speed": 4.6, "incline": 2}])
+        self.assertEqual(self.e.targets, [{"speed": 4.1, "incline": 1}, {"speed": 4.6, "incline": 2}, {"speed": 4.6, "incline": 2}])
         self.assertEqual(self.c.telemetry["speed_kmh"], 2)
         self.assertEqual(self.c.telemetry["incline_pct"], 0)
         self.assertEqual(len(self.client.writes), writes)

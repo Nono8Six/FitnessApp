@@ -37,8 +37,9 @@ async def observe(url):
                 if began is None:
                     if s["phase"] not in ("countdown", "starting"):
                         continue
-                    if s["workout"]["summary"]["sec"] != 1800:
-                        raise RuntimeError("Le programme doit durer exactement 30 minutes.")
+                    blocks = s["workout"]["blocks"]
+                    if blocks[-1]["label"] != "Retour au calme final" or blocks[-1]["start"] != 1800 or blocks[-1]["sec"] != 60:
+                        raise RuntimeError("Le programme doit durer 30 minutes, puis une minute de retour au calme.")
                     began = time.monotonic()
                     session_id = s["id"]
                 if s["id"] != session_id:
@@ -63,7 +64,7 @@ async def observe(url):
                     raise RuntimeError(f"Essai non terminé : {s['phase']}, {s['reason']}, {s['error']}")
                 if s["phase"] == "completed":
                     elapsed = time.monotonic() - began
-                    if elapsed < 1800 or s["active_s"] != 1800 or pause_checks != 2 or not s["stop_confirmed"]:
+                    if elapsed < 1860 or s["active_s"] != 1860 or pause_checks != 2 or not s["stop_confirmed"]:
                         raise RuntimeError(f"Critère incomplet : {elapsed=}, {pause_checks=}, {s=}")
                     report = {"result": "PASS", "session_id": session_id, "active_s": s["active_s"], "pause_s": s["pause_s"],
                               "wall_observed_s": round(elapsed, 2), "pause_checks": pause_checks,

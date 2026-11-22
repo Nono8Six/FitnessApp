@@ -8,6 +8,8 @@ Aujourd’hui ou fiche de séance → préparation (connexion, compatibilité, c
 
 Le PC fige le profil, la version et les blocs avant le compte à rebours. Le temps actif commence après l’observation de la première consigne, se fige dès une demande de Pause/STOP et reprend au point conservé après l’effet de la reprise. Les transitions entre blocs pendant l’effort comptent dans ce temps. Pause cumulée : de la confirmation du zéro jusqu’à la consigne de reprise observée. Compte à rebours, lancement et stabilisation de l’arrêt sont donc des durées distinctes ; le temps mural ne correspond pas simplement à actif + pause.
 
+À la fin du programme, le PC enchaîne un bloc de 60 s. Sa consigne respecte le pas du tapis et reste au plus à 5 km/h, à la vitesse mesurée et à la cible du dernier bloc. La pente du dernier bloc est conservée. Le chrono de ce bloc attend l’effet observé de la consigne. Si aucune vitesse compatible ne permet le retour au calme, le PC demande l’arrêt. « Terminer » demande l’arrêt à tout moment. La minute fait partie du Direct et du bilan, tandis que le programme enregistré conserve ses blocs d’origine.
+
 La distance est la somme des deltas du compteur reçu pendant l’effort et la décélération ; aucune estimation vitesse × temps ne la remplace. Direct et bilan utilisent le même accumulateur : deux extrémités valides espacées d'au plus 2 s, dernière décélération comprise. Une remise à zéro ou une coupure rend la distance partielle ; sans intervalle valide, elle reste indisponible. Les mesures instantanées absentes/anciennes restent indisponibles ; le détail expose la dernière mesure avec son âge. Le cardio n’apparaît pas sans source. Vitesse et cible sont distinctes ; l’allure à zéro est `--`.
 
 Le Direct et ses formes réduites lisent le même état. PC : mesures/commandes à gauche, bloc/progression/courbes à droite. Téléphone : plein écran sans onglets, commandes fixes de 68 px, détails défilants, capsule au-dessus des onglets. Courbes à un échantillon par seconde, au plus 9 000 points et 256 événements dans le buffer d’observation du Direct, curseur commun daté, interruptions non interpolées. Depuis la brique 9, un journal SQLite indépendant conserve les mesures et événements pendant l’exécution, sans cette limite de lecture.
@@ -41,7 +43,7 @@ Pause/STOP restent accessibles pendant cet échange et bloquent immédiatement t
 | Durée et segments | 30–3 600 s par bloc, 120 segments ; séances de plus d’une heure autorisées | 1–3 blocs de 5–60 s |
 | Vitesse/pente réelles | 1–16 km/h / 0–10 %, restreints aux plages et pas effectivement lus | Programmes 4 km/h / 3 % ; manuel jusqu’à la plage annoncée |
 | Simulation | Jusqu’à 16 km/h / 10 %, selon ses propres capacités | Plafonds existants conservés |
-| Autorisation | Durée prévue + 30 s par segment + 900 s + 15 s, échéance absolue | Activation de 10 min conservée |
+| Autorisation | Durée prévue avec retour au calme + 30 s par bloc exécuté + 900 s + 15 s, échéance absolue | Activation de 10 min conservée |
 
 Le 7 octobre 2026, Arnaud a demandé le retrait des plafonds des premiers essais (2,5 km/h / 1 %). Réel et simulation utilisent désormais les mêmes bornes de conception des séances ; les capacités du tapis peuvent les réduire. Une plage inconnue, une valeur hors plage ou un pas incompatible bloque le programme avec le bloc concerné ; aucun ajustement silencieux. Les plages annoncées du RUN500 (1–16 km/h / 0–10 %) sont autorisées sans les présenter comme physiquement reçues. La réception matérielle du parcours complet reste ouverte en brique 10.
 

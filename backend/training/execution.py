@@ -22,6 +22,8 @@ TERMINAL = {"completed", "stopped", "cancelled"}
 ACTIVE = {"countdown", "starting", "running", "transitioning", "adjusting", "pausing", "paused", "stopping", "unknown"}
 MAX_PAUSE_SECONDS = 900
 STOP_CONFIRM_TIMEOUT = 15
+COOLDOWN_SECONDS = 60
+COOLDOWN_MAX_SPEED = 5.0
 
 
 class Execution:
@@ -41,6 +43,7 @@ class Execution:
         self.adjustment_note = None
         self.profile = None
         self.block = 0
+        self.cooldown_index = None
         self.elapsed = 0.0
         self.active_since = None
         self.paused = 0.0
@@ -125,6 +128,21 @@ class Execution:
             if c.telemetry.get(key) is None or now - c.received_at.get(key, 0) > STALE_SECONDS:
                 raise ControllerError("Mesures anciennes ou absentes. Attendez de nouvelles mesures du tapis.")
 
+    def _cooldown_target(self, last_target, measured_speed=COOLDOWN_MAX_SPEED):
+        speed_range = self.controller.capabilities["speed_range"]
+        cap = min(COOLDOWN_MAX_SPEED, last_target["speed"], measured_speed, self.limits["speed"])
+        step, minimum = speed_range["step"], speed_range["min"]
+        # Arrondir vers le bas au pas du tapis, y compris quand 5 km/h est incompatible.
+        speed = round(minimum + math.floor((cap - minimum) / step + 1e-7) * step, 2)
+        if speed < max(1, minimum):
+            return None
+        ftms.validate_target(speed, speed_range, self.limits["speed"], scale=100)
+        return {"speed": speed, "incline": last_target["incline"]}
+
+    def _refresh_cooldown_target(self):
+        if self.cooldown_index is not None and self.block < self.cooldown_index:
+            self.targets[self.cooldown_index] = self._cooldown_target(self.targets[self.cooldown_index - 1])
+
     def prepare(self, profile_id, workout_id, version):
         workout, profile = self._load(profile_id, workout_id, version)
         issue = None
@@ -134,7 +152,8 @@ class Execution:
             self._ready_at_rest(workout)
         except ControllerError as exc:
             issue = str(exc)
-        return {"workout": workout, "profile": profile, "ready": issue is None,
+        cooldown_s = COOLDOWN_SECONDS if issue is None and self._cooldown_target(workout["blocks"][-1]) else 0
+        return {"workout": workout, "profile": profile, "ready": issue is None, "cooldown_s": cooldown_s,
                 "issue": issue, "mode": "simulation" if self.controller.simulation else "reel", "limits": self.limits}
 
     async def start(self, viewer, profile_id, workout_id, version):
@@ -148,6 +167,15 @@ class Execution:
             raise ControllerError("L'enregistrement précédent est encore en attente. Vérifiez le stockage dans Direct.")
         workout, profile = self._load(profile_id, workout_id, version)
         self._ready_at_rest(workout)
+        self.cooldown_index = None
+        if target := self._cooldown_target(workout["blocks"][-1]):
+            self.cooldown_index = len(workout["blocks"])
+            start = workout["summary"]["sec"]
+            step = {"kind": "cooldown", "sec": COOLDOWN_SECONDS, **target}
+            workout["items"].append(step)
+            workout["blocks"].append({**step, "index": self.cooldown_index, "label": "Retour au calme final",
+                                      "start": start, "end": start + COOLDOWN_SECONDS})
+            workout["summary"] = workouts.summarize_blocks(workout["blocks"], profile["weight_kg"])
         now = time.monotonic()
         self.id = uuid4().hex
         self.owner = viewer
@@ -216,7 +244,10 @@ class Execution:
         self.recorder.add("screen", {"label": "Commandes récupérées sur un nouvel écran · aucun mouvement envoyé"})
 
     def active_time(self):
-        return min(self.workout["summary"]["sec"] if self.workout else 0,
+        limit = self.workout["summary"]["sec"] if self.workout else 0
+        if self.cooldown_index is not None and self.block < self.cooldown_index:
+            limit = self.workout["blocks"][self.cooldown_index]["start"]
+        return min(limit,
                    self.elapsed + (time.monotonic() - self.active_since if self.active_since is not None else 0))
 
     def pause_time(self):
@@ -256,6 +287,11 @@ class Execution:
         self._ready_at_rest(self.workout)
         if time.monotonic() >= self.deadline or self.pause_time() >= MAX_PAUSE_SECONDS:
             raise ControllerError("Autorisation de séance expirée. Arrêtez cette séance avant d'en commencer une nouvelle.")
+        if self.block == self.cooldown_index:
+            target = self._cooldown_target(self.targets[self.block])
+            if target is None:
+                raise ControllerError("Aucune vitesse compatible pour reprendre le retour au calme. Terminez la séance.")
+            self.targets[self.block] = target
         self.owner = viewer
         self.owner_seen = time.monotonic()
         self.requested = "resume"
@@ -264,10 +300,10 @@ class Execution:
         self.recorder.add("request", {"label": "Reprise confirmée"})
 
     def adjustment_bounds(self):
-        if not self.workout or self.controller.phase != "connected":
+        if not self.workout or self.controller.phase != "connected" or self.block == self.cooldown_index:
             return None
         bounds = {}
-        remaining = self.targets[self.block:]
+        remaining = self.targets[self.block:self.cooldown_index]
         for action in ("speed", "incline"):
             r = self.controller.capabilities.get(f"{action}_range")
             if not r:
@@ -287,6 +323,8 @@ class Execution:
             raise ControllerError("Ajustez sur l’écran qui a démarré la séance.")
         if self.phase not in ("running", "adjusting") or self.requested:
             raise ControllerError("Attendez que la séance soit en cours avant d’ajuster les consignes.")
+        if self.block == self.cooldown_index:
+            raise ControllerError("Les réglages de l’application sont désactivés pendant le retour au calme final.")
         self._alive()
         offsets = {"speed": speed_offset, "incline": incline_offset}
         if not all(isinstance(v, (int, float)) and not isinstance(v, bool) and math.isfinite(v) for v in offsets.values()):
@@ -294,8 +332,8 @@ class Execution:
         # Tout vérifier avant de changer quoi que ce soit : pas d'écrêtage des
         # récupérations ni d'un bloc futur. Le programme enregistré reste figé.
         targets = [{action: round(b[action] + offsets[action] - self.offsets[action], 6) for action in offsets}
-                   for b in self.targets[self.block:]]
-        candidate = {"blocks": [{**b, **target} for b, target in zip(self.workout["blocks"][self.block:], targets)]}
+                   for b in self.targets[self.block:self.cooldown_index]]
+        candidate = {"blocks": [{**b, **target} for b, target in zip(self.workout["blocks"][self.block:self.cooldown_index], targets)]}
         self._compatible(candidate)
         bounds = self.adjustment_bounds()
         if bounds is None:
@@ -306,7 +344,8 @@ class Execution:
         actions = tuple(action for action in ("incline", "speed") if offsets[action] != self.offsets[action])
         if not actions:
             return
-        self.targets[self.block:] = targets
+        self.targets[self.block:self.cooldown_index] = targets
+        self._refresh_cooldown_target()
         self.offsets = offsets
         self.adjustment_revision += 1
         self.adjustment_note = None
@@ -332,17 +371,20 @@ class Execution:
         except ValueError as exc:
             self.controller.log("warning", "Consigne du tapis hors des limites de séance", action=action, value=value, detail=str(exc))
             return
-        targets = [{**b, action: round(b[action] + delta, 6)} for b in self.targets[self.block:]]
+        end = self.cooldown_index if self.block != self.cooldown_index else None
+        targets = [{**b, action: round(b[action] + delta, 6)} for b in self.targets[self.block:end]]
         try:
-            self._compatible({"blocks": [{**b, **t} for b, t in zip(self.workout["blocks"][self.block:], targets)]})
+            self._compatible({"blocks": [{**b, **t} for b, t in zip(self.workout["blocks"][self.block:end], targets)]})
         except ControllerError:
             # Le tapis a déjà changé : refléter ce bloc sans écrêter les suivants.
             self.targets[self.block] = {**self.targets[self.block], action: value}
             self.adjustment_note = "Réglage du tapis repris pour ce bloc ; limites des blocs suivants conservées."
         else:
-            self.targets[self.block:] = targets
-            self.offsets = {**self.offsets, action: round(self.offsets[action] + delta, 6)}
-            self.adjustment_note = "Réglage du tapis repris pour les blocs restants."
+            self.targets[self.block:end] = targets
+            if self.block != self.cooldown_index:
+                self.offsets = {**self.offsets, action: round(self.offsets[action] + delta, 6)}
+            self.adjustment_note = "Réglage du tapis repris pour ce bloc." if self.block == self.cooldown_index else "Réglage du tapis repris pour les blocs restants."
+        self._refresh_cooldown_target()
         self.applied_targets[action] = value
         self.adjustment_revision += 1
         self.recorder.add("adjustment", {"label": "Réglage sur le tapis", "action": action, "value": value,
@@ -403,6 +445,29 @@ class Execution:
         return await self._observe(since, lambda: abs(c.telemetry["speed_kmh"] - b["speed"]) <= .05
                                    and abs(c.telemetry["incline_pct"] - b["incline"]) <= .1, revision=revision)
 
+    def _running(self):
+        if self.active_since is None:
+            self.active_since = time.monotonic()
+        self.phase = "running"
+
+    async def _next_block(self):
+        self._sample(final=True)
+        actions = ("incline", "speed")
+        if self.block + 1 == self.cooldown_index:
+            target = self._cooldown_target(self.targets[self.block], self.controller.telemetry["speed_kmh"])
+            if target is None:
+                self.request_halt("Vitesse trop basse pour le retour au calme · arrêt demandé")
+                return
+            self._freeze()
+            self.targets[self.cooldown_index] = target
+            self.adjustment_note = "Réglages de l’application désactivés pendant le retour au calme final."
+            actions = tuple(action for action in actions if self.applied_targets[action] != target[action])
+        self.block += 1
+        self.phase = "transitioning"
+        self._sample(final=True)
+        if await self._target(actions):
+            self._running()
+
     async def _launch(self):
         self._alive(rest=True)
         self._ready_at_rest(self.workout)
@@ -424,8 +489,7 @@ class Execution:
             if self.pause_since is not None:
                 self.paused = self.pause_time()
                 self.pause_since = None
-            self.active_since = time.monotonic()
-            self.phase = "running"
+            self._running()
             self.error = None
             self._sample(final=True)
 
@@ -509,19 +573,15 @@ class Execution:
                         raise ControllerError("Le tapis s'est arrêté. Aucune reprise automatique.")
                     active = self.active_time()
                     if active >= self.workout["summary"]["sec"]:
-                        self.request_halt("Programme terminé · arrêt demandé")
+                        self.request_halt("Retour au calme terminé · arrêt demandé" if self.block == self.cooldown_index
+                                          else "Programme terminé · arrêt demandé")
                     elif active >= self.workout["blocks"][self.block]["end"]:
-                        self._sample(final=True)
-                        self.block += 1
-                        self.phase = "transitioning"
-                        self._sample(final=True)
-                        if await self._target():
-                            self.phase = "running"
+                        await self._next_block()
                     elif self.phase in ("adjusting", "transitioning"):
                         actions = tuple(a for a in ("incline", "speed") if self.applied_targets[a] != self.targets[self.block][a])
                         if await self._target(actions):
                             self.markers.append({"t": round(time.monotonic() - self.began, 2), "label": "Ajustement"})
-                            self.phase = "running"
+                            self._running()
                 await asyncio.sleep(.1)
         except asyncio.CancelledError:
             # Uniquement à la fermeture du serveur, après le STOP borné.
