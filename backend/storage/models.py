@@ -186,6 +186,7 @@ class RecordedSession(Base):
     lost_entries: Mapped[int]
     feeling: Mapped[int | None]
     feeling_updated_at: Mapped[str | None] = mapped_column(String(40))
+    foulee_sent_revision: Mapped[str | None] = mapped_column(String(40))
 
 
 class RecordedEntry(Base):

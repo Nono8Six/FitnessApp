@@ -22,3 +22,21 @@ url.hash = `#/seances/depuis-foulee?${params}`
 `fitnessAppAddress` est l’adresse affichée dans le lanceur FitnessApp. Sur le PC, l’adresse habituelle est `http://127.0.0.1:4330/`. Sur téléphone, mémoriser l’adresse Wi-Fi du PC saisie dans Foulée pour les prochaines séances. Le lien ouvre FitnessApp dans le navigateur avec le programme dans son fragment d’URL. Le PC doit être allumé et FitnessApp démarrée.
 
 FitnessApp vérifie le profil et les consignes, demande l’allure si nécessaire et remplit son éditeur. La séance rejoint la bibliothèque lorsque l’utilisateur l’enregistre. La mise en ligne du bouton se fait dans le projet Sites de Foulée.
+
+## Envoyer automatiquement les bilans vers Foulée
+
+Le serveur FitnessApp envoie le résumé des séances réelles du profil Arnaud dès que le bilan est enregistré et que l’arrêt du tapis est confirmé. Une séance terminée en avance peut aussi être envoyée. Les séances simulées, annulées et interrompues sont exclues. Le site peut être fermé.
+
+Foulée reçoit le nom, la date de début, la durée active, la distance complète quand elle est disponible et le ressenti. La séance garde le même identifiant si l’envoi doit être repris ou si le ressenti est ajouté après coup. FitnessApp attend la confirmation de Foulée. En cas de coupure, la reprise se fait aussi après un redémarrage du serveur.
+
+La réception des bilans par le site privé [Foulée](https://foulee-objectif-arnaud.nono8six.chatgpt.site/) est publiée depuis la version 8 de Sites. Elle alimente le Journal de course et la Progression d’Arnaud.
+
+### Activation sur le PC Windows
+
+Utiliser l’accès de service privé fourni par Sites pour **Foulée • Objectif 10 km**. Dans un terminal local, à la racine de FitnessApp, saisir le jeton à l’invite masquée, puis redémarrer le serveur.
+
+```powershell
+.\.venv\Scripts\python.exe -m backend.foulee activer
+```
+
+Le jeton est chiffré pour le compte Windows. L’activation couvre les nouvelles séances. Relancer la commande avec un nouveau jeton conserve les envois en attente. Pour arrêter la synchronisation, utiliser `desactiver` à la place d’`activer`, puis redémarrer FitnessApp.

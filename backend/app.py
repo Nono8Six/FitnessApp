@@ -18,6 +18,7 @@ from starlette.middleware.gzip import GZipMiddleware
 from poc.server import local_addresses, phone_addresses
 
 from . import __version__
+from . import foulee
 from .api import profiles as profiles_api
 from .api import workouts as workouts_api
 from .api import chatgpt as chatgpt_api
@@ -95,14 +96,19 @@ def create_app(*, simulation: bool = False, data_root: Path | None = None, dist:
     @asynccontextmanager
     async def lifespan(_app):
         control = getattr(_app.state, "launcher_control", None)
+        foulee_stop = asyncio.Event()
+        foulee_worker = None
         try:
             await _app.state.device.start()
             await _app.state.execution.start_runtime()
             _app.state.chatgpt.start()
+            if not simulation and (settings := foulee.read_settings(data)) is not None:
+                foulee_worker = asyncio.create_task(foulee.run(database, settings, foulee_stop))
             if control:
                 control.publish()
             yield
         finally:
+            foulee_stop.set()
             try:
                 try:
                     if test_runtime:
@@ -111,11 +117,15 @@ def create_app(*, simulation: bool = False, data_root: Path | None = None, dist:
                     await _app.state.execution.close()
                     await _app.state.device.close()
             finally:
-                await _app.state.coach.close()
-                _app.state.chatgpt.close()
-                if control:
-                    control.close()
-                database.close()
+                try:
+                    if foulee_worker is not None:
+                        await foulee_worker
+                finally:
+                    await _app.state.coach.close()
+                    _app.state.chatgpt.close()
+                    if control:
+                        control.close()
+                    database.close()
 
     app = FastAPI(title="Fitness", docs_url=None, redoc_url=None, openapi_url=None, lifespan=lifespan)
     app.state.data_dir = data
