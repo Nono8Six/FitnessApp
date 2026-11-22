@@ -5,6 +5,7 @@ type FouleeBlock = Omit<Step, 'speed'> & { speed: number | null }
 
 export interface FouleeWorkout {
   name: string
+  athlete?: string
   blocks: FouleeBlock[]
   missingSpeeds: number
 }
@@ -50,15 +51,16 @@ function readBlock(value: unknown, index: number): FouleeBlock {
   return { kind, movement, sec, incline, speed }
 }
 
-export function readFouleeWorkout(text: string): FouleeWorkout {
+export function readFouleeWorkout(text: string, receivedByLink = false): FouleeWorkout {
+  const invalidLink = 'Le programme reçu est illisible ou incompatible. Ouvrez de nouveau la séance depuis Foulée.'
   let value: unknown
   try {
     value = JSON.parse(text.replace(/^\uFEFF/, ''))
   } catch {
-    throw new Error('Ce fichier JSON est illisible. Exportez de nouveau les blocs depuis Foulée.')
+    throw new Error(receivedByLink ? invalidLink : 'Ce fichier JSON est illisible. Exportez de nouveau les blocs depuis Foulée.')
   }
   if (!isRecord(value) || value.format !== 'foulee.treadmill.v1') {
-    throw new Error('Dans Foulée, ouvrez la séance et choisissez « Exporter les blocs JSON ».')
+    throw new Error(receivedByLink ? invalidLink : 'Dans Foulée, ouvrez la séance et choisissez « Exporter les blocs JSON ».')
   }
   const name = typeof value.title === 'string' ? value.title.trim().normalize('NFC') : ''
   if (!name || [...name].length > 80 || /\p{C}/u.test(name)) {
@@ -68,7 +70,20 @@ export function readFouleeWorkout(text: string): FouleeWorkout {
     throw new Error('Une séance doit contenir entre 1 et 120 blocs.')
   }
   const blocks = value.blocks.map(readBlock)
-  return { name, blocks, missingSpeeds: blocks.filter(block => block.speed === null).length }
+  const athlete = typeof value.athlete === 'string' ? value.athlete.trim() : undefined
+  return { name, athlete, blocks, missingSpeeds: blocks.filter(block => block.speed === null).length }
+}
+
+export function readFouleeTransfer(query: string): FouleeWorkout {
+  const programs = new URLSearchParams(query).getAll('programme')
+  if (programs.length !== 1 || !programs[0] || programs[0].length > 64 * 1024) {
+    throw new Error('Le lien de la séance est incomplet. Ouvrez de nouveau la séance depuis Foulée.')
+  }
+  const workout = readFouleeWorkout(programs[0], true)
+  if (!workout.athlete || workout.athlete.length > 80 || /\p{C}/u.test(workout.athlete)) {
+    throw new Error('Le lien ne précise pas le profil Foulée. Ouvrez de nouveau la séance depuis Foulée.')
+  }
+  return workout
 }
 
 export function fouleeDraft(workout: FouleeWorkout, runningSpeed: number | null): WorkoutInput {

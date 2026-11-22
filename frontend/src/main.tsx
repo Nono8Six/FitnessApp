@@ -6,6 +6,7 @@ import { Today } from './features/Today'
 import { CourseTest } from './features/CourseTest'
 import { Library } from './features/Library'
 import { Editor } from './features/Editor'
+import { FouleeTransfer } from './features/FouleeImport'
 import { Workout } from './features/Workout'
 import { Report } from './features/Report'
 import { Reports } from './features/Reports'
@@ -34,14 +35,17 @@ function App() {
   useEffect(() => {
     if (!editingImport) setFouleeImport(undefined)
   }, [editingImport])
+  const openImportedWorkout = (workout: WorkoutInput) => {
+    if (!profile) return
+    setFouleeImport({ profile: profile.id, workout })
+    navigate(href.fouleeWorkout)
+  }
   return (
     <Shell route={route}>
       <div key={`${profile?.id}:${JSON.stringify(route)}`}>
         {route.name === 'test' ? <CourseTest /> : route.name === 'direct' ? <Direct /> : route.name === 'settings' ? <Settings treadmillOpen={route.treadmill} /> : !profile ? <Page title="Fitness"><p className="text-label-2" role="status">Chargement du profil…</p></Page>
-          : route.name === 'library' ? <Library profile={profile.id} initialView={route.view} onImport={workout => {
-            setFouleeImport({ profile: profile.id, workout })
-            navigate(href.fouleeWorkout)
-          }} />
+          : route.name === 'library' ? <Library profile={profile.id} initialView={route.view} onImport={openImportedWorkout} />
+          : route.name === 'fouleeTransfer' ? <FouleeTransfer profile={profile} query={route.query} onImport={openImportedWorkout} />
           : route.name === 'editor' ? editingImport && fouleeImport?.profile !== profile.id
             ? <Page title="Importer depuis Foulée" back={{ label: 'Séances', href: href.myWorkouts }}>
               <p className="text-subhead text-label-2">Sélectionnez de nouveau le fichier dans Séances pour reprendre l’import.</p>

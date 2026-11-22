@@ -1,17 +1,23 @@
 import { FileUp } from 'lucide-react'
 import { useId, useRef, useState } from 'react'
+import { Page, showProfiles } from '../components/Shell'
 import { Button, Sheet } from '../components/ui'
 import { clock } from '../lib/format'
-import { fouleeDraft, fouleeRunningSpeed, FOULEE_SPEED_RANGE, readFouleeWorkout, type FouleeWorkout } from '../lib/foulee'
+import { fouleeDraft, fouleeRunningSpeed, FOULEE_SPEED_RANGE, readFouleeTransfer, readFouleeWorkout, type FouleeWorkout } from '../lib/foulee'
+import type { Profile } from '../lib/profiles'
+import { href, navigate } from '../lib/router'
 import type { WorkoutInput } from '../lib/workouts'
+import { Editor } from './Editor'
 
 const MAX_FILE_BYTES = 64 * 1024
 
-export function FouleeImport({ onClose, onImport }: { onClose: () => void; onImport: (draft: WorkoutInput) => void }) {
+export function FouleeImport({ onClose, onImport, received }: {
+  onClose: () => void; onImport: (draft: WorkoutInput) => void; received?: FouleeWorkout
+}) {
   const fileInput = useRef<HTMLInputElement>(null)
   const formId = useId()
   const speedHintId = useId()
-  const [workout, setWorkout] = useState<FouleeWorkout>()
+  const [workout, setWorkout] = useState(received)
   const [speedText, setSpeedText] = useState('')
   const [error, setError] = useState('')
   const [reading, setReading] = useState(false)
@@ -49,17 +55,19 @@ export function FouleeImport({ onClose, onImport }: { onClose: () => void; onImp
       event.preventDefault()
       if (ready) onImport(fouleeDraft(workout, speed))
     }}>
-      {!workout && <p className="text-subhead text-label-2">Dans Foulée, ouvrez une séance et touchez « Exporter les blocs JSON ».</p>}
-      <input ref={fileInput} type="file" accept=".json,application/json" hidden onChange={event => {
-        const file = event.target.files?.[0]
-        // Permet de choisir à nouveau le même fichier après une erreur.
-        event.target.value = ''
-        if (file) void read(file)
-      }} />
-      <Button type="button" size="md" variant="gray" disabled={reading} onClick={() => fileInput.current?.click()}>
-        <FileUp size={18} aria-hidden />{reading ? 'Lecture du fichier…' : workout ? 'Changer de fichier' : 'Choisir un fichier JSON'}
-      </Button>
-      {error && <p role="alert" className="text-subhead text-red">{error}</p>}
+      {!received && <>
+        {!workout && <p className="text-subhead text-label-2">Dans Foulée, ouvrez une séance et touchez « Exporter les blocs JSON ».</p>}
+        <input ref={fileInput} type="file" accept=".json,application/json" hidden onChange={event => {
+          const file = event.target.files?.[0]
+          // Permet de choisir à nouveau le même fichier après une erreur.
+          event.target.value = ''
+          if (file) void read(file)
+        }} />
+        <Button type="button" size="md" variant="gray" disabled={reading} onClick={() => fileInput.current?.click()}>
+          <FileUp size={18} aria-hidden />{reading ? 'Lecture du fichier…' : workout ? 'Changer de fichier' : 'Choisir un fichier JSON'}
+        </Button>
+        {error && <p role="alert" className="text-subhead text-red">{error}</p>}
+      </>}
       {workout && <div className="min-w-0 rounded-[12px] bg-surface-2 px-4 py-3" role="status">
         <p className="break-words text-headline">{workout.name}</p>
         <p className="mt-0.5 text-subhead text-label-2">{workout.blocks.length} {workout.blocks.length === 1 ? 'bloc' : 'blocs'} · {clock(workout.blocks.reduce((sum, block) => sum + block.sec, 0))}</p>
@@ -78,4 +86,28 @@ export function FouleeImport({ onClose, onImport }: { onClose: () => void; onImp
       </div>}
     </form>
   </Sheet>
+}
+
+export function FouleeTransfer({ query, profile, onImport }: {
+  query: string; profile: Profile; onImport: (draft: WorkoutInput) => void
+}) {
+  const [result] = useState(() => {
+    try {
+      return { workout: readFouleeTransfer(query) }
+    } catch (cause) {
+      return { error: cause instanceof Error ? cause.message : 'La séance n’a pas pu être reçue.' }
+    }
+  })
+  const workout = result.workout
+  const profileMatches = workout?.athlete?.normalize('NFC').toLocaleLowerCase('fr') === profile.name.normalize('NFC').toLocaleLowerCase('fr')
+  if (workout && profileMatches && !workout.missingSpeeds) return <Editor profile={profile.id} imported={fouleeDraft(workout, null)} />
+
+  return <Page title="Séance Foulée" back={{ label: 'Séances', href: href.myWorkouts }}>
+    {result.error && <p role="alert" className="text-subhead text-red">{result.error}</p>}
+    {workout && !profileMatches && <div className="space-y-4">
+      <p className="text-subhead text-label-2">Cette séance est prévue pour {workout.athlete}. Le profil actif dans FitnessApp est {profile.name}.</p>
+      <Button type="button" size="md" variant="gray" onClick={showProfiles}>Changer de profil</Button>
+    </div>}
+    {workout && profileMatches && <FouleeImport received={workout} onImport={onImport} onClose={() => navigate(href.myWorkouts)} />}
+  </Page>
 }

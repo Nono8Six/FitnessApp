@@ -549,6 +549,8 @@ Le contexte fournit les cinq bilans récents, la qualité, le ressenti et le vol
 **Livré :** exporter une séance ou tout l’historique (CSV, JSON), importer des fichiers FIT/TCX, sauvegarder et restaurer la base.
 
 - [x] Import d’un programme tapis Foulée depuis le menu **+** de Séances. Le JSON `foulee.treadmill.v1` remplit un brouillon dans l’éditeur du profil actif. L’allure saisie complète uniquement les blocs de course sans vitesse. La date de Foulée reste dans son planning et la séance rejoint la bibliothèque après confirmation dans l’éditeur.
+- [x] Réception d’une séance par lien direct dans FitnessApp. Une séance complète ouvre l’éditeur. Si une allure manque, la feuille de saisie la demande. Le profil actif doit correspondre au profil transmis par Foulée.
+- [ ] Bouton **Ouvrir dans FitnessApp** à publier sur Foulée. [Lien à construire côté Foulée](docs/INTEGRATION_FOULEE.md).
 
 **Fait quand :**
 - [ ] Une restauration sur une base vide retrouve toutes les séances à l’identique.

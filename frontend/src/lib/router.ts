@@ -6,6 +6,7 @@ export type Route = { name: 'today' } | { name: 'settings'; treadmill?: boolean 
   | { name: 'library'; view?: 'discover' | 'mine' } | { name: 'editor'; id?: string; proposalId?: string; fromFoulee?: boolean }
   | { name: 'workout'; id: string; version?: number }
   | { name: 'recordings'; workoutId?: string } | { name: 'report'; id: string }
+  | { name: 'fouleeTransfer'; query: string }
 
 export function parse(hash: string): Route {
   if (hash === '#/test') return { name: 'test' }
@@ -27,6 +28,10 @@ export function parse(hash: string): Route {
   if (adjust) return { name: 'coach', target: { workout_id: adjust[1], version: Number(adjust[2]) } }
   const proposal = /^#\/propositions\/([a-f0-9]{32})\/modifier$/.exec(hash)
   if (proposal) return { name: 'editor', proposalId: proposal[1] }
+  if (hash === href.fouleeTransfer || hash.startsWith(`${href.fouleeTransfer}?`)) {
+    // Borne la taille avant de conserver ou décoder le contenu du lien.
+    return { name: 'fouleeTransfer', query: hash.length <= 192 * 1024 ? hash.slice(href.fouleeTransfer.length + 1) : '' }
+  }
   if (hash === href.fouleeWorkout) return { name: 'editor', fromFoulee: true }
   if (hash === href.newWorkout) return { name: 'editor' }
   const match = /^#\/seances\/([a-f0-9]{32})(\/modifier)?(?:\?version=([1-9]\d*))?$/.exec(hash)
@@ -51,6 +56,7 @@ export const href = {
   editProposal: (id: string) => `#/propositions/${id}/modifier`,
   newWorkout: '#/seances/nouvelle',
   fouleeWorkout: '#/seances/import-foulee',
+  fouleeTransfer: '#/seances/depuis-foulee',
   workout: (id: string) => `#/seances/${id}`,
   editWorkout: (id: string) => `#/seances/${id}/modifier`,
 }
