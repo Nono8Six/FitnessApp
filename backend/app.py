@@ -35,6 +35,7 @@ from .coach.runtime import Runtime
 from .coach.store import MAX_MESSAGE_LENGTH, recover as recover_coach
 from .config import data_dir as resolve_data_dir
 from .config import StartupError
+from .foulee_browser import BrowserDelivery, BrowserSettings, RECEIPT_PATH
 from .storage import StorageError, open_database
 from .training.profiles import ensure_default_profiles
 from .course_test import CourseTest
@@ -110,7 +111,9 @@ def create_app(*, simulation: bool = False, data_root: Path | None = None, dist:
             await _app.state.execution.start_runtime()
             _app.state.chatgpt.start()
             if not simulation and (settings := foulee.read_settings(data)) is not None:
-                foulee_worker = asyncio.create_task(foulee.run(database, settings, foulee_stop))
+                if isinstance(settings, BrowserSettings):
+                    _app.state.foulee_browser = BrowserDelivery(settings)
+                foulee_worker = asyncio.create_task(foulee.run(database, settings, foulee_stop, _app.state.foulee_browser))
             if control:
                 control.publish()
             yield
@@ -137,6 +140,7 @@ def create_app(*, simulation: bool = False, data_root: Path | None = None, dist:
     app = FastAPI(title="Fitness", docs_url=None, redoc_url=None, openapi_url=None, lifespan=lifespan)
     app.state.data_dir = data
     app.state.database = database
+    app.state.foulee_browser = None
     app.state.course_test = course_test
     app.state.course_test_lock = asyncio.Lock()
     app.state.course_test_workout = None
@@ -196,6 +200,17 @@ def create_app(*, simulation: bool = False, data_root: Path | None = None, dist:
         if control is None:
             return JSONResponse({"detail": "Arrêt local indisponible"}, status_code=503)
         return await control.stop(request)
+
+    @app.get(RECEIPT_PATH + "/{receipt}", include_in_schema=False)
+    async def foulee_receipt(receipt: str, request: Request):
+        browser = app.state.foulee_browser
+        if (request.client is None or request.client.host not in ("127.0.0.1", "::1")
+                or request.url.hostname not in ("127.0.0.1", "localhost", "::1")
+                or browser is None or not browser.confirm(receipt)):
+            return HTMLResponse("<!doctype html><html lang=fr><meta charset=utf-8><title>Foulée</title>"
+                                "<p>Ce reçu Foulée ne correspond à aucun envoi en cours.</p>", status_code=410)
+        return HTMLResponse("<!doctype html><html lang=fr><meta charset=utf-8><title>Foulée</title>"
+                            "<p>Séance reçue par Foulée. Tu peux fermer cet onglet.</p>")
 
     @app.exception_handler(RequestValidationError)
     async def invalid_request(request: Request, exc: RequestValidationError):

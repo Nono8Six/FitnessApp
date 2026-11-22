@@ -554,6 +554,7 @@ Le contexte fournit les cinq bilans récents, la qualité, le ressenti et le vol
 - [x] Réception d’une séance par lien direct dans FitnessApp. Une séance complète ouvre l’éditeur. Si une allure manque, la feuille de saisie la demande. Le profil actif doit correspondre au profil transmis par Foulée.
 - [ ] Bouton **Ouvrir dans FitnessApp** à publier sur Foulée. [Lien à construire côté Foulée](docs/INTEGRATION_FOULEE.md).
 - [x] Envoi des bilans réels d’Arnaud vers le journal Foulée côté FitnessApp. Envoi à la clôture confirmée, reprise après coupure et mise à jour du ressenti par identifiant de séance. [Activation de l’accès privé sur le PC](docs/INTEGRATION_FOULEE.md#activation-sur-le-pc-windows).
+- [x] Envoi automatique via le navigateur du PC connecté à Foulée. Bilan chiffré et signé par FitnessApp, réception confirmée après enregistrement dans le journal privé et reprise sans doublon.
 
 **Fait quand :**
 - [ ] Une restauration sur une base vide retrouve toutes les séances à l’identique.

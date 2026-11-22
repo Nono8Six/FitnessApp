@@ -11,11 +11,13 @@ from datetime import datetime
 from pathlib import Path
 
 import httpx2 as httpx
+from cryptography.exceptions import UnsupportedAlgorithm
 from sqlalchemy import func, or_, select
 from sqlalchemy.exc import SQLAlchemyError
 
 from .coach.vault import Vault, VaultError
 from .config import data_dir
+from .foulee_browser import BrowserDelivery, BrowserDeliveryError, BrowserSettings
 from .recording.metrics import Distance
 from .storage import Database
 from .storage.models import RecordedEntry, RecordedSession
@@ -39,21 +41,23 @@ class Settings:
             raise ValueError("Date d’activation Foulée invalide.")
 
 
-def read_settings(directory: Path) -> Settings | None:
+def read_settings(directory: Path) -> Settings | BrowserSettings | None:
     vault = Vault(directory / "foulee")
     if not vault.path.is_file():
         return None
     try:
         saved = vault.open()
+        if saved and "browser_signing_key" in saved:
+            return BrowserSettings.from_encoded(**saved)
         return Settings(**saved) if saved is not None else None
-    except (VaultError, TypeError, ValueError):
+    except (VaultError, UnsupportedAlgorithm, TypeError, ValueError):
         LOGGER.error("Configuration Foulée illisible. Reconfigurez l’accès sur le PC.")
         return None
     finally:
         vault.close()
 
 
-def next_session(database: Database, settings: Settings, deferred_ids: list[str]) -> tuple[str, dict] | None:
+def next_session(database: Database, settings: Settings | BrowserSettings, deferred_ids: list[str]) -> tuple[str, dict] | None:
     with database.transaction() as session:
         row = RecordedSession
         revision = func.max(row.closed_at, func.coalesce(row.feeling_updated_at, row.closed_at))
@@ -120,8 +124,10 @@ async def deliver(client: httpx.AsyncClient, settings: Settings, payload: dict) 
         raise DeliveryError("confirmation Foulée absente ou invalide", affects_all=True)
 
 
-async def run(database: Database, settings: Settings, stopping: asyncio.Event) -> None:
+async def run(database: Database, settings: Settings | BrowserSettings, stopping: asyncio.Event,
+              browser: BrowserDelivery | None = None) -> None:
     deferred = {}
+    browser_retry = 300
     loop = asyncio.get_running_loop()
     async with httpx.AsyncClient(timeout=8) as client:
         while not stopping.is_set():
@@ -133,9 +139,20 @@ async def run(database: Database, settings: Settings, stopping: asyncio.Event) -
                     revision, payload = item
                     session_id = payload["session_id"]
                     try:
-                        await deliver(client, settings, payload)
+                        if browser is not None:
+                            if not await browser.send(payload, stopping):
+                                break
+                        elif isinstance(settings, Settings):
+                            await deliver(client, settings, payload)
+                        else:
+                            raise BrowserDeliveryError("navigateur de transfert indisponible")
                         await asyncio.to_thread(acknowledge, database, session_id, revision)
+                        browser_retry = 300
                         LOGGER.info("Bilan %s confirmé par Foulée", session_id)
+                    except BrowserDeliveryError as exc:
+                        LOGGER.warning("Bilan %s en attente d’envoi vers Foulée : %s", session_id, exc)
+                        delay = browser_retry
+                        browser_retry = min(browser_retry * 2, 3600)
                     except DeliveryError as exc:
                         LOGGER.warning("Bilan %s en attente d’envoi vers Foulée : %s", session_id, exc)
                         if exc.affects_all:

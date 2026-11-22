@@ -29,14 +29,20 @@ Le serveur FitnessApp envoie le résumé des séances réelles du profil Arnaud 
 
 Foulée reçoit le nom, la date de début, la durée active, la distance complète quand elle est disponible et le ressenti. La séance garde le même identifiant si l’envoi doit être repris ou si le ressenti est ajouté après coup. FitnessApp attend la confirmation de Foulée. En cas de coupure, la reprise se fait aussi après un redémarrage du serveur.
 
-La réception des bilans par le site privé [Foulée](https://foulee-objectif-arnaud.nono8six.chatgpt.site/) est publiée depuis la version 8 de Sites. Elle alimente le Journal de course et la Progression d’Arnaud.
+La réception des bilans par le site privé [Foulée](https://foulee-objectif-arnaud.nono8six.chatgpt.site/) alimente le Journal de course et la Progression d’Arnaud.
 
 ### Activation sur le PC Windows
 
-Utiliser l’accès de service privé fourni par Sites pour **Foulée • Objectif 10 km**. Dans un terminal local, à la racine de FitnessApp, saisir le jeton à l’invite masquée, puis redémarrer le serveur.
+**Avec le navigateur.** Une fois le PC appairé à Foulée, FitnessApp ouvre automatiquement une page de transfert dans le navigateur par défaut quand un bilan est prêt. Le navigateur doit être connecté à Foulée avec le compte propriétaire. Il utilise sa connexion habituelle et redirige ensuite vers le serveur FitnessApp sur `127.0.0.1:4330` pour confirmer la réception. La page ne transporte le bilan que sous forme chiffrée pour le serveur Foulée. La clé de signature du PC est protégée dans le coffre Windows et seule sa clé publique est configurée côté Foulée.
+
+Si la connexion à Foulée a expiré, reconnecter le compte dans le navigateur du PC. Le bilan reste en attente et FitnessApp réessaie à intervalles croissants, sans changer son identifiant. L’appairage est propre au PC. Pour un autre PC, actualiser la clé publique autorisée dans Foulée.
+
+**Avec le jeton de service Sites.** Si le jeton est disponible, la voie serveur à serveur reste utilisable. Dans un terminal local, à la racine de FitnessApp, saisir le jeton à l’invite masquée, puis redémarrer le serveur.
 
 ```powershell
 .\.venv\Scripts\python.exe -m backend.foulee activer
 ```
 
-Le jeton est chiffré pour le compte Windows. L’activation couvre les nouvelles séances. Relancer la commande avec un nouveau jeton conserve les envois en attente. Pour arrêter la synchronisation, utiliser `desactiver` à la place d’`activer`, puis redémarrer FitnessApp.
+Le jeton est chiffré pour le compte Windows. L’activation couvre les nouvelles séances. Relancer la commande avec un nouveau jeton conserve les envois en attente.
+
+Pour arrêter la synchronisation dans l’un ou l’autre mode, exécuter `.\.venv\Scripts\python.exe -m backend.foulee desactiver`, puis redémarrer FitnessApp.

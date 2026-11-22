@@ -1,13 +1,20 @@
 """Contrat de synchronisation et reprise après perte de réponse."""
 import asyncio
+import base64
+import json
 import tempfile
 import unittest
 from pathlib import Path
 from unittest.mock import patch
 
 import httpx2 as httpx
+from cryptography.exceptions import InvalidSignature
+from cryptography.hazmat.primitives import hashes
+from cryptography.hazmat.primitives.asymmetric import ed25519, padding, rsa
+from cryptography.hazmat.primitives.ciphers.aead import AESGCM
 
 from backend import foulee
+from backend.foulee_browser import BrowserDelivery, BrowserSettings, TRANSFER_URL
 from backend.recording.service import set_feeling
 from backend.storage import open_database
 from backend.storage.models import RecordedEntry, RecordedSession
@@ -95,6 +102,51 @@ class FouleeTests(unittest.IsolatedAsyncioTestCase):
         foulee.acknowledge(self.database, session_id, revision)
         self.assertEqual(calls, [(foulee.ENDPOINT, "Bearer test-token", calls[0][2])] * 3)
         self.assertIsNone(foulee.next_session(self.database, self.settings, []))
+
+    async def test_browser_transfer_encrypts_the_bilan_and_requires_its_own_receipt(self):
+        signing = ed25519.Ed25519PrivateKey.generate()
+        receiver = rsa.generate_private_key(public_exponent=65537, key_size=3072)
+        browser = BrowserDelivery(BrowserSettings(ENABLED, signing, receiver.public_key()))
+        payload = {"session_id": "b" * 32, "title": "Course sur tapis"}
+        opened, stopping = asyncio.Event(), asyncio.Event()
+        urls = []
+        loop = asyncio.get_running_loop()
+
+        def open_url(url, *, new):
+            self.assertEqual(new, 2)
+            urls.append(url)
+            loop.call_soon_threadsafe(opened.set)
+            return True
+
+        with patch("backend.foulee_browser.webbrowser.open", side_effect=open_url):
+            task = asyncio.create_task(browser.send(payload, stopping))
+            await asyncio.wait_for(opened.wait(), timeout=3)
+            try:
+                self.assertFalse(browser.confirm("f" * 32))
+                self.assertFalse(browser.confirm("é" * 32))
+                self.assertFalse(task.done())
+                address, encrypted = urls[0].split("#", 1)
+                self.assertEqual(address, TRANSFER_URL)
+                self.assertNotIn(payload["session_id"], encrypted)
+                signed, signature = encrypted.rsplit(".", 1)
+                _, wrapped, iv, ciphertext = signed.split(".")
+
+                def decode(value):
+                    return base64.urlsafe_b64decode(value + "=" * (-len(value) % 4))
+
+                with self.assertRaises(InvalidSignature):
+                    signing.public_key().verify(decode(signature), b"altered")
+                signing.public_key().verify(decode(signature), signed.encode("ascii"))
+                key = receiver.decrypt(decode(wrapped), padding.OAEP(
+                    mgf=padding.MGF1(hashes.SHA256()), algorithm=hashes.SHA256(), label=None))
+                decoded = json.loads(AESGCM(key).decrypt(decode(iv), decode(ciphertext), None))
+                self.assertEqual(decoded["session"], payload)
+                self.assertTrue(browser.confirm(decoded["receipt"]))
+                self.assertTrue(await asyncio.wait_for(task, timeout=3))
+                self.assertFalse(browser.confirm(decoded["receipt"]))
+            finally:
+                stopping.set()
+                await task
 
     async def test_server_worker_sends_without_opening_the_report(self):
         session_id = "b" * 32
