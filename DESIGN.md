@@ -46,7 +46,7 @@ Couleurs de rôle, une seule signification chacune :
 | Alerte | `#FF9F0A` | Mesures anciennes, arrêt demandé, coupure de mesure dans les courbes |
 | Confirmé | `#30D158` | Connecté, interrupteurs, Reprendre, arrêt confirmé |
 | Comparaison | `#64D2FF` | Seconde séance dans le bilan |
-| Cible | blanc 55–60 %, tirets 4/4 | Consigne dans toutes les courbes |
+| Cible | Couleur de la mesure en trait fin dans le Direct, blanc en pointillés dans l’historique | Consigne programmée |
 | Cardio (futur) | `#FF6482` | Réservé, inactif tant qu’aucune source valide n’existe |
 
 Les blocs faciles (échauffement, récupération, retour au calme) sont gris `#636366`. Les blocs durs (course, allure continue) utilisent l’accent. La couleur n’est jamais le seul signal : chaque état a un libellé ou une forme (tirets, marqueur, bande).
@@ -79,7 +79,7 @@ Formats : virgule décimale, espace insécable avant `:` `?` `%` et à l’inté
 - Espacement par pas de 4 px. Entre sections : 28 à 36 px ; à l’intérieur d’une carte : 16 à 20 px.
 - Rayons : carte 22 px, liste groupée 16 px, bouton 14 px (52 px de haut), bouton moyen 12 px (44 px), segmenté 14 px, feuille 24 px sur téléphone.
 - Séparateurs de liste : 0,5 px en retrait, commençant après l’icône.
-- Cibles tactiles : au moins 44 × 44 px. Les commandes Pause et Arrêter occupent deux colonnes en portrait. Sur téléphone en paysage de faible hauteur, elles se placent l’une sous l’autre à droite des mesures.
+- Cibles tactiles : au moins 44 × 44 px. Les commandes et l’accès aux outils restent sur la dernière ligne en portrait et en paysage.
 
 ## 5. Navigation
 
@@ -88,7 +88,7 @@ Formats : virgule décimale, espace insécable avant `:` `?` `%` et à l’inté
 | Principale | Capsule flottante translucide centrée en bas, quatre cibles de même largeur et sélection teintée de vert : Aujourd’hui, Séances, Bilans, Coach | Barre latérale de 248 px : les mêmes onglets plus Direct |
 | Profil | Avatar à droite du grand titre, puis feuille de choix | Bas de la barre latérale |
 | Séance en cours | Capsule « activité en direct » au-dessus des onglets : bloc, durée, vitesse, Pause | Carte compacte dans la barre latérale ; point vert animé sur Direct |
-| Direct | Plein écran, sans onglets ; chevron pour réduire | Plein écran ; mesures à gauche, bloc et courbes à droite, commandes sous les mesures |
+| Direct | Plein écran avec chevron pour réduire et commandes en bas | Bloc et allure à gauche, graphique ou données à droite, commandes en bas |
 | En-tête | Grand titre qui se replie en barre floutée au défilement ; date ou version en `label-2` sous le titre ; boutons d’écran (+) à côté de l’avatar, puis dans la barre repliée | Identique, sans avatar |
 
 L’accueil met en avant la prochaine séance avec un visuel WebP local, puis le dernier bilan du profil et les accès au tapis. Sur PC, le bilan et le tapis occupent la colonne de droite. Dans la bibliothèque et les fiches, le sélecteur Graphique / Segments donne accès aux consignes sans traverser tout le graphique. L’éditeur présente les blocs avant l’aperçu sur téléphone.
@@ -121,25 +121,15 @@ L’accueil met en avant la prochaine séance avec un visuel WebP local, puis le
 - **Anneau.** Trait de 11 px, piste à 22 %, extrémités arrondies.
 - **Bandeau d’état.** Fond de la couleur de rôle à 15 %, icône et une phrase.
 
-### Direct · Vue Données
+### Direct pendant la course
 
-Le nom et le numéro du bloc, sa progression puis le temps restant occupent la même place dans les deux vues. En Données, la mesure principale suit la préférence du profil. Toucher son unité alterne vitesse et allure. La pente mesurée et les cibles du bloc ont leurs propres libellés.
+Le tableau tient dans la hauteur visible du navigateur. En portrait, il réunit le bloc en cours, l’allure, le temps restant, le graphique, le bloc suivant et les cumuls. En paysage, les chiffres et le graphique se partagent la largeur. La barre inférieure donne toujours accès à Pause ou Reprendre, Arrêter et aux outils de course.
 
-L’aperçu « À suivre » indique le nom du prochain bloc, sa vitesse, sa pente et sa durée. Au dernier bloc, il annonce l’arrêt automatique. Durée active, distance, calories estimées et vitesse moyenne se lisent ensuite. Réglages, suite du programme, historique et état du tapis se déplient à la demande.
+**Graphique** s’ouvre par défaut. Vitesse et pente se superposent sur le même axe du temps. La vitesse apparaît en vert sur l’axe gauche en km/h, la pente en violet sur l’axe droit en %. Les valeurs reçues restent visibles au-dessus du tracé. Les courbes épaisses représentent les mesures, les paliers fins à droite du repère Direct les cibles prévues. Une minute d’historique et le bloc suivant partagent une échelle de temps proportionnelle. Une interruption laisse un trou dans la courbe. Au toucher ou au clavier, le curseur indique les deux valeurs à l’instant choisi.
 
-Pause et Arrêter restent visibles pendant le défilement. Les boutons mesurent au moins 58 px en portrait et 48 px en paysage court. Une pause stabilisée propose Reprendre avec les deux confirmations de présence. Les incidents de mesure, de commande et d’enregistrement apparaissent près des commandes. Les explications sur les estimations et le pilotage restent dans « État du tapis ».
+**Données** utilise le même emplacement pour deux lignes de lecture. Chacune associe la mesure en grand, la consigne chiffrée et son repère sur une barre commune à la mesure et à la cible. Les deux vues conservent les mêmes positions pour le bloc en cours, le temps restant, le prochain bloc, les quatre cumuls et les commandes. Les outils remplacent temporairement le tableau pour ajuster la séance, parcourir les blocs, consulter les deux courbes historiques ensemble ou lire le diagnostic du tapis. La reprise exige les deux confirmations de présence.
 
-### Direct · Vue graphique de course
-
-« Tester le mode course » ouvre le Direct dans une simulation isolée. Le bouton orange « Simulation » avec sa croix permet de la quitter. L’adresse locale `http://127.0.0.1:4330/test-course/#/test` retrouve la simulation en cours ou en démarre une nouvelle.
-
-Graphique s’ouvre sur l’allure en min/km et le temps restant dans le bloc. La vitesse et la pente mesurées complètent ces deux grands chiffres. L’aperçu du prochain bloc précède les courbes pour rester lisible pendant l’effort.
-
-En portrait, Pause et Arrêter restent en bas. En paysage court, les commandes se placent à droite. Les chiffres s’adaptent à la largeur disponible et gardent leur alignement lors des changements de valeur. La version de la séance se consulte dans « État du tapis ».
-
-Sélecteur du Direct : variante dédiée du composant segmenté, fond presque noir et contour fin, icônes vitesse/courbe, sélection vert accent sur fond teinté. À la demande d’Arnaud, piste visible réduite à 184 × 32 px sur téléphone, tout en conservant une zone de toucher de 44 px ; le fond actif reste centré derrière le texte. Position et dimensions identiques en Données et Graphique, y compris l’en-tête. Animation courte, supprimée si les mouvements sont réduits. Les autres segmentés conservent leur apparence.
-
-Graphique de course : 60 s de mesures passées et une prévision allant jusqu’à la fin du bloc suivant, même si son départ est à plus de 30 s. L’axe temporel reste proportionnel, sans compression ni saut caché. Vitesse verte et pente violette sont superposées dans une seule zone de 132 px sur téléphone (200 px sur PC), avec leurs échelles indépendantes : 0–16 km/h à gauche, étendue si nécessaire ; au moins 0–2 % à droite, étendue selon les valeurs visibles. Les mesures réelles sont des courbes épaisses avec points ronds pleins ; les consignes futures sont des traits fins alignés exactement sur la limite des blocs, sans rectangle ni rond permanent à leur départ. Seule la vitesse mesurée porte une aire dégradée ; les consignes ne remplissent pas la zone sous leur trait. Le libellé « Bloc suivant » est centré au-dessus de sa séparation, dans la marge déjà réservée au graphique ; il remplace le compte à rebours redondant. Il reste dans les bords du graphique. Si la place manque à gauche, la mention secondaire « Mesures » s’efface pour éviter un chevauchement. Les anciennes consignes ne sont plus dessinées derrière les mesures, mais les données historiques reçues restent conservées. Légende « Mesures / Bloc suivant » (ou « Consignes » au dernier bloc), fond futur contrasté et frontière blanche marquée d’un triangle : le temps « Maintenant » est inscrit sur l’axe inférieur. Les horaires extrêmes s’effacent s’ils risquent de recouvrir ce repère. Aucun pointillé ni raccord vertical coloré entre consignes. Le bloc suivant commence sur une unique règle verticale grise continue, coiffée d’un petit angle et accompagnée d’un fond légèrement éclairci à droite. Le repère et les extrémités des consignes partagent exactement la même abscisse ; aucun retrait ni décalage décoratif. Les ronds creux apparaissent uniquement pendant la lecture au curseur. Les coupures de mesure restent visibles, une donnée absente ne devient jamais zéro. Toucher/cliquer ou utiliser les flèches lit les deux valeurs au même instant : point rond et mesure datée dans le passé, rond creux et « Consigne » dans le futur. Aucun point mesuré n’est placé dans le futur. La lecture remplace la légende des unités dans un en-tête fixe de 20 px ; « Direct » efface la sélection, sans agrandir ni déplacer le contenu du graphique. Le grand chiffre d’allure reste toujours la mesure actuelle. Cumuls et réglages restent accessibles par défilement sous le bloc suivant sur téléphone court.
+La perte de contact ou un état de bande inconnu donne la place aux instructions de sécurité. Les commandes suivent l’état transmis par le serveur. Le lien « Tester le mode course » sur Aujourd’hui ouvre le simulateur isolé à `/test-course/#/test`.
 
 Références de lecture : [Technogym Live](https://apps.apple.com/us/app/technogym-live/id918088000) (profils vitesse/pente et guidage par étape) et [Peloton Target Metrics](https://support.onepeloton.com/s/article/Peloton-Workouts-Target-Metrics?language=en_CA) (objectifs de vitesse et d’inclinaison). La distinction entre mesures épaisses et consignes fines est une adaptation propre à ce graphique compact, sans reproduction d’un écran de ces marques.
 

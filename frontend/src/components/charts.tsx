@@ -15,6 +15,19 @@ export function useWidth<T extends HTMLElement>() {
   return [ref, w] as const
 }
 
+/** Le parent réserve la place du tracé entre les mesures et les commandes. */
+export function usePlotHeight() {
+  const ref = useRef<HTMLDivElement>(null)
+  const [height, setHeight] = useState(0)
+  useLayoutEffect(() => {
+    if (!ref.current) return
+    const observer = new ResizeObserver(([entry]) => setHeight(Math.floor(entry.contentRect.height)))
+    observer.observe(ref.current)
+    return () => observer.disconnect()
+  }, [])
+  return [ref, height] as const
+}
+
 /* ---------- Ring ---------- */
 
 export function Ring({ value, size = 64, stroke = 10, color = 'var(--color-accent)', children }: {
@@ -261,8 +274,8 @@ export function TimeChart({
   secondary?: { y0: number; y1: number; unit: string; color: string }
 }) {
   const [ref, w] = useWidth<HTMLDivElement>()
-  const padL = secondary ? 26 : 0
-  const padR = present === undefined ? 34 : 28, padB = 22, padT = present === undefined ? 8 : 24
+  const padL = secondary || present !== undefined ? 29 : 0
+  const padR = present === undefined ? 34 : secondary ? 28 : 7, padB = present === undefined ? 22 : 19, padT = present === undefined ? 8 : height < 115 ? 10 : 20
   const pw = Math.max(1, w - padL - padR)
   const ph = height - padB - padT
   const x = useCallback((t: number) => ((t - x0) / (x1 - x0 || 1)) * pw, [x0, x1, pw])
@@ -271,7 +284,7 @@ export function TimeChart({
   const y = useCallback((v: number) => padT + ph - ((v - y0) / (y1 - y0 || 1)) * ph, [y0, y1, ph, padT])
   const secondaryY = (v: number) => padT + ph - ((v - (secondary?.y0 ?? 0)) / ((secondary?.y1 ?? 1) - (secondary?.y0 ?? 0) || 1)) * ph
   const seriesY = (s: Series) => s.axis === 'secondary' && secondary ? secondaryY : y
-  const yTicks = useMemo(() => present === undefined ? niceTicks(y0, y1, 3) : Array.from({ length: secondary ? 3 : 5 }, (_, i) => y0 + (y1 - y0) * i / (secondary ? 2 : 4)), [y0, y1, present === undefined, !!secondary])
+  const yTicks = useMemo(() => present === undefined ? niceTicks(y0, y1, 3) : [y0, (y0 + y1) / 2, y1], [y0, y1, present === undefined, !!secondary])
   const xTicks = useMemo(() => {
     if (present !== undefined) return [x0, x1]
     const span = x1 - x0
@@ -305,7 +318,7 @@ export function TimeChart({
   const onKey = (e: KeyboardEvent) => {
     if (!onCursor) return
     const stepS = (x1 - x0) / 60
-    const cur = Math.max(x0, Math.min(x1, cursor ?? x0))
+    const cur = Math.max(x0, Math.min(x1, cursor ?? present ?? x0))
     if (e.key === 'ArrowRight') { onCursor(Math.min(x1, cur + stepS)); e.preventDefault() }
     if (e.key === 'ArrowLeft') { onCursor(Math.max(x0, cur - stepS)); e.preventDefault() }
     if (e.key === 'Home') { onCursor(x0); e.preventDefault() }
@@ -321,7 +334,7 @@ export function TimeChart({
         <svg width={w} height={height} role={onCursor ? 'slider' : 'img'} aria-label={`${label} (${unit}${secondary ? ` et ${secondary.unit}` : ''})`} tabIndex={onCursor ? 0 : undefined} onKeyDown={onKey}
           aria-valuemin={onCursor ? x0 : undefined} aria-valuemax={onCursor ? x1 : undefined} aria-valuenow={onCursor ? cursor ?? present ?? x0 : undefined}
           aria-valuetext={onCursor ? cursorDescription ?? `Lecture à ${clock(cursor ?? present ?? x0)}` : undefined}
-          className="touch-pan-y outline-none focus-visible:outline-2 focus-visible:outline-accent">
+          className={`${present === undefined ? 'touch-pan-y' : 'touch-none'} outline-none focus-visible:outline-2 focus-visible:outline-accent`}>
           <g transform={`translate(${padL},0)`}>
           <defs>
             <linearGradient id={gradId} x1="0" x2="0" y1="0" y2="1">
@@ -331,22 +344,15 @@ export function TimeChart({
             <clipPath id={`${gradId}-clip`}><rect x={0} y={0} width={pw} height={height} /></clipPath>
           </defs>
           {present !== undefined && <>
-            <rect x={0} y={padT} width={pw} height={ph} rx={4} fill="#0b0d0b" />
-            <rect x={x(present)} y={padT} width={Math.max(0, pw - x(present))} height={ph} fill="#191c20" />
-            <g fill="var(--color-label-2)" fontSize={10} fontWeight={500}>
-              {(!nextMarker || nextLabelX >= 108) && <>
-                <line x1={0} x2={11} y1={10} y2={10} stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" />
-                <circle cx={6} cy={10} r={2.5} fill="currentColor" />
-                <text x={17} y={13}>Mesures</text>
-              </>}
-              {nextMarker ? <text data-next-block-label x={nextLabelX} y={13} textAnchor="middle" fill="#c7c9ce">Bloc suivant</text>
-                : <text x={pw} y={13} textAnchor="end">Consignes</text>}
-            </g>
+            <rect x={x(present)} y={padT} width={Math.max(0, pw - x(present))} height={ph} fill="rgb(255 255 255 / .035)" />
+            {height >= 115 && pw - x(present) > 56 && (!nextMarker || nextLabelX - x(present) > 96) &&
+              <text x={x(present) + 5} y={13} fontSize={11} fill="var(--color-label-2)">Cibles</text>}
+            {nextMarker && height >= 115 && <text data-next-block-label x={nextLabelX} y={13} textAnchor="middle" fill="var(--color-label-2)" fontSize={11}>Bloc suivant</text>}
           </>}
           {yTicks.map((v) => (
             <g key={v}>
               <line x1={0} x2={pw} y1={y(v)} y2={y(v)} stroke="var(--color-sep)" strokeWidth={0.5} />
-              <text x={secondary ? -6 : pw + 6} textAnchor={secondary ? 'end' : 'start'} y={y(v) + 4} fontSize={secondary ? 10 : 11} fill={secondary ? series[0]?.color : 'var(--color-label-2)'} className="num">{yFormat(v)}</text>
+              <text x={padL ? -6 : pw + 6} textAnchor={padL ? 'end' : 'start'} y={y(v) + 4} fontSize={secondary ? 10 : 11} fill={secondary ? series[0]?.color : 'var(--color-label-2)'} className="num">{yFormat(v)}</text>
             </g>
           ))}
           {secondary && [secondary.y0, (secondary.y0 + secondary.y1) / 2, secondary.y1].map(v =>
@@ -364,7 +370,7 @@ export function TimeChart({
             {markers.map((m, i) => (
               <g key={`${m.t}:${i}`}><title>{m.label}</title>
                 {present !== undefined ? <>
-                  <rect x={x(m.t)} y={padT} width={Math.max(0, pw - x(m.t))} height={ph} fill="rgb(255 255 255 / .045)" />
+                  <rect x={x(m.t)} y={padT} width={Math.max(0, pw - x(m.t))} height={ph} fill="rgb(255 255 255 / .025)" />
                   <line data-block-start={m.t} x1={x(m.t)} x2={x(m.t)} y1={padT} y2={padT + ph}
                     stroke="#8e9097" strokeWidth={1} opacity={.7} />
                   <path d={`M${x(m.t)},${padT + 4}v-4h7`} fill="none" stroke="#b1b3b9" strokeWidth={1.5} strokeLinejoin="round" />
@@ -383,9 +389,9 @@ export function TimeChart({
                   const span = right - left
                   if (span <= 0) return null
                   return <g key={i}>
-                    <line x1={left} x2={right} y1={cy} y2={cy} stroke={s.color} strokeWidth={1.4} strokeLinecap="round" />
-                    {s.axis !== 'secondary' && span >= 40 && cy - padT >= 16 && <text x={left + span / 2} y={cy - 8}
-                      textAnchor="middle" fontSize={10} fontWeight={500} fill={s.color} className="num">{dec1(y1 - (cy - padT) / ph * (y1 - y0))}</text>}
+                    <line x1={left} x2={right} y1={cy} y2={cy} stroke={s.color} strokeWidth={1.8} strokeLinecap="round" />
+                    {s.axis !== 'secondary' && span >= 52 && cy - padT >= 17 && <text x={left + span / 2} y={cy - 8}
+                      textAnchor="middle" fontSize={12} fontWeight={600} fill={s.color} className="num">{dec1(y1 - (cy - padT) / ph * (y1 - y0))}</text>}
                   </g>
                 })}
               </g>
@@ -402,16 +408,18 @@ export function TimeChart({
               return (
                 <g key={main.key}>
                   <circle cx={x(lastS.t)} cy={seriesY(main)(main.value(lastS)!)} r={main.axis === 'secondary' ? 6 : 9} fill={main.color} opacity={0.22} className="animate-pulse-dot" />
-                  <circle cx={x(lastS.t)} cy={seriesY(main)(main.value(lastS)!)} r={main.axis === 'secondary' ? 3 : 4} fill={main.color} stroke="#000" strokeWidth={1.5} />
+                  {main.axis === 'secondary'
+                    ? <path d="M0 -4.5 4.5 0 0 4.5 -4.5 0Z" transform={`translate(${x(lastS.t)} ${seriesY(main)(main.value(lastS)!)})`} fill={main.color} stroke="#151515" strokeWidth={1.2} />
+                    : <circle cx={x(lastS.t)} cy={seriesY(main)(main.value(lastS)!)} r={4.5} fill={main.color} stroke="#151515" strokeWidth={1.5} />}
                 </g>
               )
             })}
           </g>
           {present !== undefined && <g pointerEvents="none">
-            <line x1={x(present)} x2={x(present)} y1={padT - 2} y2={padT + ph + 2} stroke="#e8e9eb" strokeWidth={1.2} />
+            <line x1={x(present)} x2={x(present)} y1={padT - 2} y2={padT + ph + 2} stroke="#b9beb8" strokeWidth={1} />
             <path d={`M${x(present) - 3.5},${padT - 4}h7l-3.5,5Z`} fill="#e8e9eb" />
             <text x={Math.max(30, Math.min(pw - 30, x(present)))} y={height - 5} textAnchor="middle"
-              fontSize={9} fontWeight={600} fill="#e8e9eb">Maintenant</text>
+              fontSize={11} fontWeight={600} fill="#e8e9eb">Direct</text>
           </g>}
           {cursor != null && cursor >= x0 && cursor <= x1 && (
             <g pointerEvents="none">
@@ -424,7 +432,7 @@ export function TimeChart({
                   return v != null ? <circle key={s.key} cx={x(cursor)} cy={seriesY(s)(v)}
                     r={3.5} fill="#191c20" stroke={s.color} strokeWidth={1.8} /> : null
                 }
-                if (s.dash || s.showPoint === false || (present !== undefined && cursor > present)) return null
+                if (s.dash || (present !== undefined && cursor > present)) return null
                 const p = nearest(s.data, cursor)
                 const v = p && s.value(p)
                 return v != null && Math.abs(p!.t - cursor) < (s.maxGap ?? 12) ? (
