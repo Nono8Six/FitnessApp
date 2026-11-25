@@ -578,6 +578,8 @@ Le contexte fournit les cinq bilans récents, la qualité, le ressenti et le vol
 
 **Navigation du planning.** L’onglet dédié ouvre la semaine. La frise donne accès aux séances du jour choisi. La vue Mois utilise les mêmes états et permet de retrouver le détail puis d’ouvrir la semaine correspondante. La lecture est filtrée par profil et par mois, y compris pour une semaine à cheval sur deux mois. La vue utilise les séances enregistrées et leur suivi existant.
 
+**Interface du planning.** La semaine ouvre la prochaine séance ou celle en cours et place les séances passées ensuite. Les périodes partagent les repères de durée, de lieu et d’état. La vue mensuelle charge React DayPicker à l’ouverture et conserve l’accès au détail du jour. L’objectif s’édite depuis le Planning et la feuille de préparation désactive les dates indisponibles.
+
 ### Brique 14 · Graphiques avancés
 
 **Livré :** comparer 2 ou 3 séances, calendrier de pratique, temps par plage de vitesse et de pente, évolution du ressenti, qualité des données.

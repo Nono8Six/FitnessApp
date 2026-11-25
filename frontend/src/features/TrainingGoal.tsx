@@ -11,7 +11,7 @@ const dateLabel = new Intl.DateTimeFormat('fr-FR', { dateStyle: 'long', timeZone
 const fieldClass = 'block min-h-12 w-full min-w-0 rounded-[12px] bg-surface-2 px-3.5 py-3 text-[16px] leading-snug text-label placeholder:text-label-3 disabled:text-label-2'
 const labelClass = 'mb-2 block text-subhead font-semibold text-label'
 
-function GoalEditor({ profile, goal, close, saved, reload }: {
+export function GoalEditor({ profile, goal, close, saved, reload }: {
   profile: string
   goal: TrainingGoal | null
   close: () => void
