@@ -6,7 +6,7 @@
 
 Une seule brique en cours dans le périmètre demandé. Les cases indiquent les fonctions livrées sur `main` ; la suite ne nécessite plus de validation humaine systématique.
 
-**Décision du 25 novembre 2026.** FitnessApp conserve l’objectif, le programme et le suivi de chaque profil. Le coach prépare les séances, puis s’appuie sur les bilans et le ressenti pour proposer la suite. Foulée sort du périmètre.
+**Décision du 25 novembre 2026.** FitnessApp conserve l’objectif, le programme et le suivi de chaque profil. Le coach construit le planning selon l’objectif choisi, l’adapte aux séances réalisées et au ressenti, puis aide à poursuivre ou à reprendre. Foulée sort du périmètre.
 
 - [x] **Brique 0 · Design** : direction visuelle sombre, téléphone et PC, validée le 4 octobre 2026 ([DESIGN.md](DESIGN.md)).
 - [x] **Brique 1 · Socle** : l’app s’ouvre sur le PC et le téléphone, servie par le PC, sans donnée de démonstration.
@@ -527,7 +527,7 @@ Contrôles de ce complément : build et 46 tests ciblés réussis (calculs, API,
 
 ### Brique 11 · Historique et semaine
 
-**À livrer.** Le profil choisit un objectif actif et modifiable, avec une cible et une date si elle est utile. Par exemple, « faire trois séances par semaine » ou « courir 30 minutes en continu ». Le coach dispose de cet objectif dans toute conversation.
+**À livrer.** Le profil décrit son objectif avec ses mots. Le coach propose un repère de progression à valider et demande uniquement les précisions qui changent le programme. « Faire trois séances par semaine » se suit par la fréquence, « courir 30 minutes en continu » par les durées courues, et « retrouver le plaisir de bouger » peut se suivre par le ressenti et la régularité. La date est utile pour un rendez-vous et facultative pour une habitude. L’objectif reste modifiable et disponible dans toute conversation.
 
 Pour un objectif de course, garder la distance, la date et le résultat recherché, par exemple finir un 10 km fin mars 2027 ou viser un chrono. Plusieurs profils peuvent préparer le même événement, chacun avec ses propres repères de départ, disponibilités et objectifs.
 
@@ -557,15 +557,18 @@ Le contexte fournit les cinq bilans récents, la qualité, le ressenti et le vol
 
 ### Brique 13 · Programme et suivi avec le coach
 
-**À livrer.** Le coach construit les étapes jusqu’à l’objectif et détaille la prochaine semaine selon le niveau, les séances récentes et les disponibilités du profil. L’utilisateur relit, ajuste et accepte la proposition. Aujourd’hui affiche la prochaine séance et son rôle dans la préparation.
+**À livrer.** Le coach compose le planning selon l’objectif, le niveau, les séances récentes et les disponibilités du profil. Une échéance donne des étapes jusqu’à la date. Un objectif continu donne un rythme et des points d’étape. L’utilisateur relit, ajuste et accepte la proposition. Aujourd’hui affiche le prochain pas et son rôle dans la progression.
 
-**Cas de référence.** Pour un 10 km fin mars 2027, la préparation peut aller d’une phase d’endurance à des séances adaptées à la course, puis à un allègement avant le départ. Chaque séance détaillée indique son but, sa durée, son effort ou son allure et le lieu prévu, sur tapis ou dehors. Les sorties dehors peuvent être ajoutées à la main avec leur date, leur durée, leur distance et leur ressenti. Bilans et coach indiquent la provenance des mesures. [Repères d’entraînement de la Ligue d’athlétisme](https://lnca.athle.fr/asp.net/espaces.html/html.aspx?id=4559).
+**Exemple avec échéance.** Pour un 10 km fin mars 2027, la préparation peut aller d’une phase d’endurance à des séances adaptées à la course, puis à un allègement avant le départ. Chaque séance détaillée indique son but, sa durée, son effort ou son allure et le lieu prévu, sur tapis ou dehors. Les sorties dehors peuvent être ajoutées à la main avec leur date, leur durée, leur distance et leur ressenti. Bilans et coach indiquent la provenance des mesures. [Repères d’entraînement de la Ligue d’athlétisme](https://lnca.athle.fr/asp.net/espaces.html/html.aspx?id=4559).
 
 **Travail.** Réutiliser les propositions de séance et leur validation côté serveur. Dans le bilan, **Préparer la suite** donne au coach la séance réalisée et le ressenti. Le coach retrouve aussi l’objectif, les séances prévues et les décisions acceptées dans une nouvelle conversation. Il explique pourquoi il conseille de maintenir, alléger, faire progresser ou déplacer une séance, avec les bilans utilisés. L’utilisateur valide les changements du planning.
+
+**Suivi et motivation.** Relier le prévu au réalisé pour distinguer les séances terminées, écourtées ou manquées. Quand le planning convient, le coach souligne un progrès observable ou une habitude tenue. Quand le temps ou le rythme change, il propose avec bienveillance une suite faisable, par exemple déplacer une séance ou reprendre par une version courte. Aujourd’hui montre ce retour et un prochain pas clair.
 
 **Fait quand :**
 - [ ] Une semaine proposée à partir de l’objectif et des disponibilités est acceptée, puis retrouvée jour par jour dans Aujourd’hui.
 - [ ] Après une séance difficile ou manquée, le coach retrouve le programme dans une nouvelle conversation et propose un ajustement cohérent. Le planning affiche le changement une fois accepté.
+- [ ] Une habitude sans échéance, un objectif de capacité et une course datée utilisent le même parcours avec des repères et des plannings adaptés à chacun.
 - [ ] Deux profils préparent le même 10 km avec des séances adaptées à leurs niveaux respectifs. Une sortie extérieure alimente la progression du bon profil et un ajustement du programme conserve la date de course.
 
 ### Brique 14 · Graphiques avancés
