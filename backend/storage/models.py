@@ -40,6 +40,16 @@ class Profile(Base):
     updated_at: Mapped[str] = mapped_column(String(40))
 
 
+class TrainingGoal(Base):
+    __tablename__ = "training_goals"
+
+    profile_id: Mapped[str] = mapped_column(ForeignKey("profiles.id", ondelete="CASCADE"), primary_key=True)
+    description: Mapped[str] = mapped_column(String(240))
+    milestone: Mapped[str] = mapped_column(String(160))
+    target_date: Mapped[str | None] = mapped_column(String(10))
+    revision: Mapped[int]
+
+
 class Workout(Base):
     __tablename__ = "workouts"
     __table_args__ = (UniqueConstraint("profile_id", "id"),)

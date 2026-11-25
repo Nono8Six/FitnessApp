@@ -534,8 +534,11 @@ Pour un objectif de course, garder la distance, la date et le résultat recherch
 **Travail.** Réutiliser l’objectif hebdomadaire existant pour la régularité. Dans Aujourd’hui, montrer la progression vers l’objectif et le volume de la semaine. Dans Bilans, ajouter la vue par mois et accéder aux séances qui expliquent les chiffres. Utiliser les mêmes calculs pour le coach et l’interface.
 
 **Fait quand :**
+- [x] Depuis Aujourd’hui, chaque profil peut définir et modifier son objectif, son repère et son échéance facultative. Le coach peut suggérer le repère et demander une précision. L’objectif devient actif après enregistrement et reste disponible dans une nouvelle conversation.
 - [ ] Les totaux de la semaine et du mois sont exacts sur un jeu de test de plusieurs semaines.
 - [ ] La progression s’appuie sur les bilans réels du profil. Le résultat tient compte de la couverture des mesures et laisse les simulations à part.
+
+**Mon objectif, 25 novembre 2026.** Migration additive 0012, révision pour protéger les modifications concurrentes et saisie du repère disponible sans connexion ChatGPT. Build et 89 tests ciblés réussis. Chrome sur PC et aux formats 390 × 844 et 360 × 640 pour l’édition, l’échéance, la persistance, le changement de profil et le chemin vers Coach. Avec le modèle connecté et une base séparée, des repères différents sont proposés pour une habitude et une course. Une nouvelle conversation reprend l’objectif confirmé et reconnaît le bilan simulé comme tel. Les agrégats de l’historique et le planning restent à livrer.
 
 ### Brique 12 · Coach informé
 

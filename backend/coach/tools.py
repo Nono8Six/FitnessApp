@@ -11,7 +11,7 @@ from sqlalchemy.exc import SQLAlchemyError
 from . import store
 from . import workout_proposals, memory, insights, recommendations, constraints
 from ..storage.models import Workout, WorkoutSelection, WorkoutVersion
-from ..training import catalog, workouts
+from ..training import catalog, goals, workouts
 from ..training.profiles import ProfileNotFound, get_profile
 from ..training.workouts import Input
 
@@ -97,7 +97,7 @@ DEFINITIONS = {
     'get_progress': (Progress, 'Comparer les séances reçues pendant une période. Résultats partiels signalés ; aucun score physiologique inventé.'),
     'compare_sessions': (Comparison, 'Lire deux bilans du profil pour comparer programme, effort, ressenti et couverture.'),
     'recommend_workout': (recommendations.Recommendation, 'Construire une base personnalisée avec les allures déclarées ou réellement tolérées, objectif et temps disponible. Renvoie hypothèses, sources scientifiques et estimations. Valider puis proposer ; ne rien enregistrer.'),
-    "get_profile": (Input, "Lire le profil actif, objectifs, poids, unités, sélection, date locale et données absentes."),
+    "get_profile": (Input, "Lire le profil, son objectif d’entraînement confirmé et son repère, poids, unités, sélection et données absentes."),
     "list_workouts": (Search, "Rechercher les séances existantes (dernière version), avec estimations backend. Pagination explicite."),
     "get_workout": (Detail, "Lire une séance ou une version précise : tous les blocs, origine, dates, estimations officielles."),
     "list_versions": (Versions, "Lister les versions datées d'une séance du profil, avec pagination."),
@@ -121,7 +121,9 @@ def definitions(capture_only=False):
 
 def profile_context(session, profile, simulation):
     selection = session.get(WorkoutSelection, profile)
+    goal = goals.read(session, profile)
     return {"profile": get_profile(session, profile).model_dump(),
+        "active_training_goal": goal.model_dump(exclude={"revision"}) if goal else None,
         "local_date": datetime.now().astimezone().date().isoformat(),
         "timezone": str(datetime.now().astimezone().tzinfo),
         "selected_workout_id": selection.workout_id if selection else None,

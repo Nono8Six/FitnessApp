@@ -21,6 +21,7 @@ from poc.server import local_addresses, phone_addresses
 from . import __version__
 from . import foulee
 from .api import profiles as profiles_api
+from .api import goals as goals_api
 from .api import workouts as workouts_api
 from .api import chatgpt as chatgpt_api
 from .api import coach as coach_api
@@ -225,6 +226,7 @@ def create_app(*, simulation: bool = False, data_root: Path | None = None, dist:
         return JSONResponse({"detail": profiles_api.validation_message(list(exc.errors()))}, status_code=422)
 
     app.include_router(profiles_api.router)
+    app.include_router(goals_api.router)
     app.include_router(workouts_api.router)
     app.include_router(chatgpt_api.router)
     app.include_router(coach_api.router)

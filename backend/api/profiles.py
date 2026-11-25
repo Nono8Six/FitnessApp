@@ -69,6 +69,11 @@ FIELDS = {
     "name": f"Nom : de 1 à {profiles.NAME_MAX} caractères, sans caractère de contrôle",
     "weekly_goal": f"Objectif hebdomadaire : nombre entier de {profiles.WEEKLY_GOAL_MIN} à {profiles.WEEKLY_GOAL_MAX}",
     "speed_unit": "Unité : « kmh » ou « pace »",
+    "description": "Saisissez un objectif de 1 à 240 caractères.",
+    "milestone": "Saisissez un repère de progression de 1 à 160 caractères.",
+    "target_date": "Choisissez une date valide ou laissez ce champ vide.",
+    "clarification": "Limitez votre précision à 400 caractères.",
+    "revision": "Rechargez l’objectif avant de le modifier.",
 }
 
 

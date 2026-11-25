@@ -17,7 +17,7 @@ from backend.storage import DATABASE_FILE, StorageError, open_database
 from backend.storage.database import MIGRATIONS, alembic_config, create_db_engine
 
 URL = "http://127.0.0.1:4330"
-HEAD = "0011"
+HEAD = "0012"
 
 
 class ProfileTests(unittest.TestCase):
@@ -73,6 +73,28 @@ class ProfileTests(unittest.TestCase):
         with self.apps[0].state.database.engine.connect() as conn:
             self.assertEqual(conn.exec_driver_sql("PRAGMA journal_mode").scalar(), "wal")
             self.assertEqual(conn.exec_driver_sql("PRAGMA foreign_keys").scalar(), 1)
+
+    def test_goal_is_confirmed_per_profile_and_rejects_stale_edits(self):
+        client = self.start()
+        url = "/api/profiles/ophelie/goal"
+        draft = {"description": "  Préparer un 10 km  ", "milestone": " Courir 30 minutes en continu ",
+                 "target_date": "2027-03-28", "revision": 0}
+        self.assertIsNone(client.get(url).json())
+        self.assertEqual(client.patch(url, json={**draft, "target_date": "2027-02-30"}).status_code, 422)
+        self.assertEqual(client.patch(url, json={**draft, "milestone": "   "}).status_code, 422)
+        saved = client.patch(url, json=draft)
+        self.assertEqual(saved.status_code, 200)
+        self.assertEqual(saved.json(), {"description": "Préparer un 10 km", "milestone": "Courir 30 minutes en continu",
+                                       "target_date": "2027-03-28", "revision": 1})
+        self.assertEqual(client.patch(url, json=draft).json(), saved.json())
+        self.assertEqual(client.patch(url, json={**draft, "description": "Autre objectif"}).status_code, 409)
+        client = self.restart()
+        self.assertEqual(client.get(url).json(), saved.json())
+        self.assertIsNone(client.get("/api/profiles/arnaud/goal").json())
+        self.assertEqual(client.get("/api/profiles/inconnu/goal").status_code, 404)
+        edited = client.patch(url, json={**draft, "revision": 1, "target_date": None}).json()
+        self.assertIsNone(edited["target_date"])
+        self.assertEqual(edited["revision"], 2)
 
     def test_database_constraints_reject_invalid_values(self):
         self.start()

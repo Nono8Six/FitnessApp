@@ -11,7 +11,7 @@ from fastapi.testclient import TestClient
 from sqlalchemy import insert
 
 from backend.app import create_app
-from backend.coach import store, tools, memory, insights, constraints
+from backend.coach import store, tools, memory, insights, constraints, goal_guidance
 from backend.coach.runtime import Runtime
 from backend.storage.models import RecordedSession, RecordedEntry, ProfileWeight
 from backend.recording.metrics import calculate_version, LEGACY_VERSION, VERSION
@@ -89,6 +89,46 @@ class InformedCoachTests(unittest.TestCase):
         self.app = create_app(data_root=Path(self.temp.name))
         self.db = self.app.state.database
         self.assertEqual(self.tool('search_memories', {})['total'], 1)
+
+    def test_suggested_goal_is_saved_only_after_confirmation_and_is_visible_in_a_new_chat(self):
+        runtime = self.app.state.coach
+        runtime.connection = Connected()
+        advice = {"milestone": "Nombre de séances effectuées chaque semaine",
+                  "question": "Combien de créneaux peux-tu tenir ?"}
+
+        async def events(_token, payload):
+            self.assertFalse(payload["store"])
+            self.assertEqual(json.loads(payload["input"][-1]["content"])["description"], "Bouger plus régulièrement")
+            yield completed([{"type": "function_call", "name": goal_guidance.TOOL, "arguments": json.dumps(advice)}])
+
+        runtime.transport = events
+        url = "/api/profiles/ophelie/goal"
+        draft = {"description": "Bouger plus régulièrement"}
+        self.assertEqual(self.client.post(f"{url}/suggest", json=draft).json(), advice)
+        self.assertIsNone(self.client.get(url).json())
+        saved = self.client.patch(url, json={**draft, "milestone": advice["milestone"], "revision": 0})
+        self.assertEqual(saved.status_code, 200)
+        with self.db.write() as session:
+            self.conv = store.create_conversation(session, "ophelie")["id"]
+        turn = self.turn("Où j’en suis ?")
+        context, _ = runtime.context("ophelie", turn)
+        self.assertEqual(context["active_training_goal"],
+                         {**draft, "milestone": advice["milestone"], "target_date": None})
+        self.assertIsNone(self.tool("get_profile", {}, profile="arnaud")["active_training_goal"])
+
+    def test_invalid_coach_suggestion_never_persists(self):
+        runtime = self.app.state.coach
+        runtime.connection = Connected()
+
+        async def events(_token, _payload):
+            yield completed([{"type": "function_call", "name": goal_guidance.TOOL,
+                              "arguments": '{"milestone":"  ","question":null}'}])
+
+        runtime.transport = events
+        url = "/api/profiles/arnaud/goal"
+        response = self.client.post(f"{url}/suggest", json={"description": "Reprendre la marche"})
+        self.assertEqual(response.status_code, 424)
+        self.assertIsNone(self.client.get(url).json())
 
     def test_correction_old_source_and_forgiving_are_consistent(self):
         old = self.turn('Mon allure confortable est 5 km/h.', '2026-10-01T10:00:00.000+00:00')

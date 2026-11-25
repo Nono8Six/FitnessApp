@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 
 /** Les routes apparaissent avec la brique qui construit leur écran. */
 export type Route = { name: 'today' } | { name: 'settings'; treadmill?: boolean } | { name: 'direct' } | { name: 'test' }
-  | { name: 'coach'; conversationId?: string; target?: { workout_id: string; version: number }; createWorkout?: boolean }
+  | { name: 'coach'; conversationId?: string; target?: { workout_id: string; version: number }; createWorkout?: boolean; progress?: boolean }
   | { name: 'library'; view?: 'discover' | 'mine' } | { name: 'editor'; id?: string; proposalId?: string; fromFoulee?: boolean }
   | { name: 'workout'; id: string; version?: number }
   | { name: 'recordings'; workoutId?: string } | { name: 'report'; id: string }
@@ -22,6 +22,7 @@ export function parse(hash: string): Route {
   if (hash === href.myWorkouts) return { name: 'library', view: 'mine' }
   if (hash === href.coach) return { name: 'coach' }
   if (hash === href.coachCreate) return { name: 'coach', createWorkout: true }
+  if (hash === href.coachProgress) return { name: 'coach', progress: true }
   const coach = /^#\/coach\?conversation=([a-f0-9]{32})$/.exec(hash)
   if (coach) return { name: 'coach', conversationId: coach[1] }
   const adjust = /^#\/coach\?workout=([a-f0-9]{32})&version=([1-9]\d*)$/.exec(hash)
@@ -52,6 +53,7 @@ export const href = {
   library: '#/seances',
   myWorkouts: '#/seances?vue=mes',
   coachCreate: '#/coach?creer=seance',
+  coachProgress: '#/coach?objectif=bilan',
   coachConversation: (id: string) => `#/coach?conversation=${id}`,
   coachAdjust: (id: string, version: number) => `#/coach?workout=${id}&version=${version}`,
   editProposal: (id: string) => `#/propositions/${id}/modifier`,

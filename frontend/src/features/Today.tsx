@@ -10,6 +10,7 @@ import { href } from '../lib/router'
 import { useLibrary } from '../lib/workouts'
 import { StartButton } from './Direct'
 import { RecordingRows } from './Reports'
+import { TodayGoal } from './TrainingGoal'
 
 export function Today({ profile }: { profile: string }) {
   const today = useToday()
@@ -40,6 +41,7 @@ export function Today({ profile }: { profile: string }) {
           </>}
       </section>
       <div className="grid min-w-0 content-start gap-7">
+        <TodayGoal profile={profile} />
         <section aria-label="Dernier bilan">
           <SectionHeader title="Dernier bilan" action="Voir tout" href={href.recordings} />
           <RecordingRows profile={profile} latest />

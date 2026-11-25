@@ -61,9 +61,10 @@ function IconButton({ label, onClick, disabled, children, className }: { label: 
     className={cx('pressable grid size-11 shrink-0 place-items-center rounded-full bg-fill-3 text-label disabled:text-label-3', className)}>{children}</button>
 }
 
-export function Coach({ profile, target, conversationId, createWorkout }: { profile: string; target?: WorkoutTarget; conversationId?: string; createWorkout?: boolean }) {
-  const draftKey = `fitness.coach.draft.${profile}`
-  const [draft, setDraft] = useState(() => target ? 'Ajuste cette séance : ' : createWorkout ? 'Crée une séance : ' : stored(draftKey))
+export function Coach({ profile, target, conversationId, createWorkout, progress }: { profile: string; target?: WorkoutTarget; conversationId?: string; createWorkout?: boolean; progress?: boolean }) {
+  const draftKey = progress ? `fitness.coach.goal-draft.${profile}` : `fitness.coach.draft.${profile}`
+  const [draft, setDraft] = useState(() => target ? 'Ajuste cette séance : ' : createWorkout ? 'Crée une séance : '
+    : stored(draftKey) || (progress ? 'Où j’en suis par rapport à mon objectif ?' : ''))
   const [workoutTarget, setWorkoutTarget] = useState(target)
   const [conversations, setConversations] = useState<PageData<Conversation>>(empty)
   const [conversation, setConversation] = useState<string>('')
@@ -133,7 +134,7 @@ export function Coach({ profile, target, conversationId, createWorkout }: { prof
     readConversations(profile).then(data => {
       if (!current) return
       setConversations(data)
-      if (target || createWorkout) return
+      if (target || createWorkout || progress) return
       if (conversationId) {
         void open({ id: conversationId, title: 'Conversation de la séance', created_at: '', updated_at: '', archived_at: null })
         return
