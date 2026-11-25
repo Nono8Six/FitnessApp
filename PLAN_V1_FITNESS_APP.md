@@ -6,6 +6,8 @@
 
 Une seule brique en cours dans le périmètre demandé. Les cases indiquent les fonctions livrées sur `main` ; la suite ne nécessite plus de validation humaine systématique.
 
+**Décision du 25 novembre 2026.** FitnessApp conserve l’objectif, le programme et le suivi de chaque profil. Le coach prépare les séances, puis s’appuie sur les bilans et le ressenti pour proposer la suite. Foulée sort du périmètre.
+
 - [x] **Brique 0 · Design** : direction visuelle sombre, téléphone et PC, validée le 4 octobre 2026 ([DESIGN.md](DESIGN.md)).
 - [x] **Brique 1 · Socle** : l’app s’ouvre sur le PC et le téléphone, servie par le PC, sans donnée de démonstration.
 - [x] **Brique 2 · Profils** : base SQLite, profils créés, renommés et supprimés, choix du profil.
@@ -17,9 +19,9 @@ Une seule brique en cours dans le périmètre demandé. Les cases indiquent les 
 - [x] **Brique 8 · Exécuter une séance** : moteur réel et simulé, Direct, pause/reprise et arrêt ; simulation vérifiée, réception physique de l’application encore ouverte.
 - [x] **Brique 9 · Enregistrer et revoir** : mesures conservées, bilan réel, ressenti.
 - [ ] **Brique 10 · RUN500 réel** : réception matérielle progressive du parcours et des pertes.
-- [ ] **Brique 11 · Historique et semaine** : historique, objectifs, Aujourd’hui alimenté par les vraies séances.
+- [ ] **Brique 11 · Historique et semaine** : un objectif actif par profil, historique et progression calculée à partir des séances réelles.
 - [x] **Brique 12 · Coach informé** : bilans du profil, mémoire sourcée, personnalisation et sources ouvrables ; limites et vérifications dans la refonte du 13 octobre ci-dessous.
-- [ ] **Brique 13 · Planning avec ChatGPT** : séances datées, semaine proposée par ChatGPT puis acceptée.
+- [ ] **Brique 13 · Programme et suivi avec le coach** : une semaine proposée à partir de l’objectif, puis des ajustements expliqués à partir des bilans et du ressenti.
 - [ ] **Brique 14 · Graphiques avancés** : comparaison, calendrier, distributions, tendances, qualité.
 - [ ] **Brique 15 · Données** : exports, imports FIT/TCX, sauvegarde et restauration.
 - [ ] **Brique 16 · Usage quotidien Windows** : lanceur, démarrage simple, hors ligne, performances.
@@ -525,12 +527,13 @@ Contrôles de ce complément : build et 46 tests ciblés réussis (calculs, API,
 
 ### Brique 11 · Historique et semaine
 
-**Livré :** Historique liste les vraies séances par mois ; Aujourd’hui affiche la semaine (anneau, minutes, distance) et l’objectif du profil.
+**À livrer.** Le profil choisit un objectif actif et modifiable, avec une cible et une date si elle est utile. Par exemple, « faire trois séances par semaine » ou « courir 30 minutes en continu ». Le coach dispose de cet objectif dans toute conversation.
 
-**Travail :** liste, filtres, recherche ; objectifs modifiables par profil ; Aujourd’hui alimenté par les données réelles.
+**Travail.** Réutiliser l’objectif hebdomadaire existant pour la régularité. Dans Aujourd’hui, montrer la progression vers l’objectif et le volume de la semaine. Dans Bilans, ajouter la vue par mois et accéder aux séances qui expliquent les chiffres. Utiliser les mêmes calculs pour le coach et l’interface.
 
 **Fait quand :**
 - [ ] Les totaux de la semaine et du mois sont exacts sur un jeu de test de plusieurs semaines.
+- [ ] La progression s’appuie sur les bilans réels du profil. Le résultat tient compte de la couverture des mesures et laisse les simulations à part.
 
 ### Brique 12 · Coach informé
 
@@ -550,14 +553,15 @@ Le contexte fournit les cinq bilans récents, la qualité, le ressenti et le vol
 
 **Limites :** les règles de construction FitnessApp ne sont pas une validation clinique individuelle ; les kcal restent estimées, sans FATmax, VO2max ou grammes de graisse perdus déduits. Les anciens échanges sont repris par groupes pendant l'utilisation, sans appel autonome au modèle. La brique 11 et le planning daté ne sont pas livrés par cette refonte. Réception RUN500/téléphone physique toujours ouverte.
 
-### Brique 13 · Planning avec ChatGPT
+### Brique 13 · Programme et suivi avec le coach
 
-**Livré :** planifier des séances par date ; demander à ChatGPT une semaine d’entraînement, la relire, l’accepter ; Aujourd’hui affiche la séance du jour.
+**À livrer.** À partir de l’objectif, des séances récentes et des disponibilités, le coach prépare une semaine datée. L’utilisateur relit, ajuste et accepte la proposition. Aujourd’hui affiche la prochaine séance, avec une explication courte de son rôle dans le programme.
 
-**Travail :** séances planifiées ; outils `get_schedule` et `propose_schedule` ; acceptation partielle ou totale ; replanification d’une séance manquée.
+**Travail.** Réutiliser les propositions de séance et leur validation côté serveur. Dans le bilan, **Préparer la suite** donne au coach la séance réalisée et le ressenti. Le coach retrouve aussi l’objectif, les séances prévues et les décisions acceptées dans une nouvelle conversation. Il explique pourquoi il conseille de maintenir, alléger, faire progresser ou déplacer une séance, avec les bilans utilisés. L’utilisateur valide les changements du planning.
 
 **Fait quand :**
-- [ ] Une semaine proposée par ChatGPT est acceptée et apparaît jour par jour dans Aujourd’hui.
+- [ ] Une semaine proposée à partir de l’objectif et des disponibilités est acceptée, puis retrouvée jour par jour dans Aujourd’hui.
+- [ ] Après une séance difficile ou manquée, le coach retrouve le programme dans une nouvelle conversation et propose un ajustement cohérent. Le planning affiche le changement une fois accepté.
 
 ### Brique 14 · Graphiques avancés
 
@@ -572,11 +576,7 @@ Le contexte fournit les cinq bilans récents, la qualité, le ressenti et le vol
 
 **Livré :** exporter une séance ou tout l’historique (CSV, JSON), importer des fichiers FIT/TCX, sauvegarder et restaurer la base.
 
-- [x] Import d’un programme tapis Foulée depuis le menu **+** de Séances. Le JSON `foulee.treadmill.v1` remplit un brouillon dans l’éditeur du profil actif. L’allure saisie complète uniquement les blocs de course sans vitesse. La date de Foulée reste dans son planning et la séance rejoint la bibliothèque après confirmation dans l’éditeur.
-- [x] Réception d’une séance par lien direct dans FitnessApp. Une séance complète ouvre l’éditeur. Si une allure manque, la feuille de saisie la demande. Le profil actif doit correspondre au profil transmis par Foulée.
-- [ ] Bouton **Ouvrir dans FitnessApp** à publier sur Foulée. [Lien à construire côté Foulée](docs/INTEGRATION_FOULEE.md).
-- [x] Envoi des bilans réels d’Arnaud vers le journal Foulée côté FitnessApp. Envoi à la clôture confirmée, reprise après coupure et mise à jour du ressenti par identifiant de séance. [Activation de l’accès privé sur le PC](docs/INTEGRATION_FOULEE.md#activation-sur-le-pc-windows).
-- [x] Envoi automatique via le navigateur du PC connecté à Foulée. Bilan chiffré et signé par FitnessApp, réception confirmée après enregistrement dans le journal privé et reprise sans doublon.
+**Foulée.** L’import de programmes et l’envoi des bilans ont été livrés avant la décision d’abandonner le projet. Le retrait de l’intégration et l’arrêt des synchronisations configurées restent à réaliser. Conserver les séances déjà présentes dans FitnessApp. [Documentation de l’intégration existante](docs/INTEGRATION_FOULEE.md).
 
 **Fait quand :**
 - [ ] Une restauration sur une base vide retrouve toutes les séances à l’identique.
