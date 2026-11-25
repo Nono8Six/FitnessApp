@@ -21,7 +21,7 @@ Une seule brique en cours dans le périmètre demandé. Les cases indiquent les 
 - [ ] **Brique 10 · RUN500 réel** : réception matérielle progressive du parcours et des pertes.
 - [ ] **Brique 11 · Historique et semaine** : un objectif actif par profil, historique et progression calculée à partir des séances réelles.
 - [x] **Brique 12 · Coach informé** : bilans du profil, mémoire sourcée, personnalisation et sources ouvrables ; limites et vérifications dans la refonte du 13 octobre ci-dessous.
-- [ ] **Brique 13 · Programme et suivi avec le coach** : une semaine proposée à partir de l’objectif, puis des ajustements expliqués à partir des bilans et du ressenti.
+- [ ] **Brique 13 · Programme et suivi avec le coach** : préparation jusqu’à l’objectif, détail de la prochaine semaine et ajustements expliqués à partir des bilans et du ressenti.
 - [ ] **Brique 14 · Graphiques avancés** : comparaison, calendrier, distributions, tendances, qualité.
 - [ ] **Brique 15 · Données** : exports, imports FIT/TCX, sauvegarde et restauration.
 - [ ] **Brique 16 · Usage quotidien Windows** : lanceur, démarrage simple, hors ligne, performances.
@@ -529,6 +529,8 @@ Contrôles de ce complément : build et 46 tests ciblés réussis (calculs, API,
 
 **À livrer.** Le profil choisit un objectif actif et modifiable, avec une cible et une date si elle est utile. Par exemple, « faire trois séances par semaine » ou « courir 30 minutes en continu ». Le coach dispose de cet objectif dans toute conversation.
 
+Pour un objectif de course, garder la distance, la date et le résultat recherché, par exemple finir un 10 km fin mars 2027 ou viser un chrono. Plusieurs profils peuvent préparer le même événement, chacun avec ses propres repères de départ, disponibilités et objectifs.
+
 **Travail.** Réutiliser l’objectif hebdomadaire existant pour la régularité. Dans Aujourd’hui, montrer la progression vers l’objectif et le volume de la semaine. Dans Bilans, ajouter la vue par mois et accéder aux séances qui expliquent les chiffres. Utiliser les mêmes calculs pour le coach et l’interface.
 
 **Fait quand :**
@@ -555,13 +557,16 @@ Le contexte fournit les cinq bilans récents, la qualité, le ressenti et le vol
 
 ### Brique 13 · Programme et suivi avec le coach
 
-**À livrer.** À partir de l’objectif, des séances récentes et des disponibilités, le coach prépare une semaine datée. L’utilisateur relit, ajuste et accepte la proposition. Aujourd’hui affiche la prochaine séance, avec une explication courte de son rôle dans le programme.
+**À livrer.** Le coach construit les étapes jusqu’à l’objectif et détaille la prochaine semaine selon le niveau, les séances récentes et les disponibilités du profil. L’utilisateur relit, ajuste et accepte la proposition. Aujourd’hui affiche la prochaine séance et son rôle dans la préparation.
+
+**Cas de référence.** Pour un 10 km fin mars 2027, la préparation peut aller d’une phase d’endurance à des séances adaptées à la course, puis à un allègement avant le départ. Chaque séance détaillée indique son but, sa durée, son effort ou son allure et le lieu prévu, sur tapis ou dehors. Les sorties dehors peuvent être ajoutées à la main avec leur date, leur durée, leur distance et leur ressenti. Bilans et coach indiquent la provenance des mesures. [Repères d’entraînement de la Ligue d’athlétisme](https://lnca.athle.fr/asp.net/espaces.html/html.aspx?id=4559).
 
 **Travail.** Réutiliser les propositions de séance et leur validation côté serveur. Dans le bilan, **Préparer la suite** donne au coach la séance réalisée et le ressenti. Le coach retrouve aussi l’objectif, les séances prévues et les décisions acceptées dans une nouvelle conversation. Il explique pourquoi il conseille de maintenir, alléger, faire progresser ou déplacer une séance, avec les bilans utilisés. L’utilisateur valide les changements du planning.
 
 **Fait quand :**
 - [ ] Une semaine proposée à partir de l’objectif et des disponibilités est acceptée, puis retrouvée jour par jour dans Aujourd’hui.
 - [ ] Après une séance difficile ou manquée, le coach retrouve le programme dans une nouvelle conversation et propose un ajustement cohérent. Le planning affiche le changement une fois accepté.
+- [ ] Deux profils préparent le même 10 km avec des séances adaptées à leurs niveaux respectifs. Une sortie extérieure alimente la progression du bon profil et un ajustement du programme conserve la date de course.
 
 ### Brique 14 · Graphiques avancés
 
