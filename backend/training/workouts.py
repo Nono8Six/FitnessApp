@@ -8,7 +8,7 @@ from typing import Annotated, Literal
 from uuid import uuid4
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
-from sqlalchemy import delete, func, select
+from sqlalchemy import delete, func, or_, select
 from sqlalchemy.orm import Session
 
 from ..storage.models import Workout, WorkoutSelection, WorkoutVersion
@@ -134,13 +134,18 @@ def get_workout(session: Session, profile_id: str, workout_id: str) -> dict:
     return _out(_latest(session, workout_id), get_profile(session, profile_id).weight_kg)
 
 
+def in_library():
+    origin = WorkoutVersion.origin["kind"].as_string()
+    return or_(origin.is_(None), origin != "schedule")
+
+
 def list_workouts(session: Session, profile_id: str) -> dict:
     profile = get_profile(session, profile_id)
     latest = select(WorkoutVersion.workout_id, func.max(WorkoutVersion.version).label("version")).group_by(
         WorkoutVersion.workout_id).subquery()
     rows = session.scalars(select(WorkoutVersion).join(Workout).join(latest,
         (WorkoutVersion.workout_id == latest.c.workout_id) & (WorkoutVersion.version == latest.c.version))
-        .where(Workout.profile_id == profile_id).order_by(WorkoutVersion.created_at.desc(), Workout.id))
+        .where(Workout.profile_id == profile_id, in_library()).order_by(WorkoutVersion.created_at.desc(), Workout.id))
     selected = session.get(WorkoutSelection, profile_id)
     return {"workouts": [_out(row, profile.weight_kg) for row in rows], "selected_id": selected.workout_id if selected else None}
 

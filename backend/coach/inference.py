@@ -1,9 +1,11 @@
 """Transport Responses SIWC, asynchrone, sans répétition automatique d'inférence."""
+import asyncio
 import json
 import logging
 import re
 
 import httpx2 as httpx
+from pydantic import ValidationError
 
 from .protocol import MESSAGES, RESOURCE
 
@@ -41,6 +43,50 @@ class InferenceError(Exception):
     def __init__(self, code):
         self.code = code
         super().__init__(ERRORS.get(code, ERRORS["unavailable"]))
+
+
+async def structured(runtime, *, instructions, data, name, response, effort="low", timeout=45, strict=True):
+    """Un appel structuré avec le compte choisi. Le résultat ne déclenche aucune action."""
+    async with asyncio.timeout(timeout):
+        token, model, identity = await asyncio.to_thread(runtime.connection.inference_credentials)
+        payload = {
+            "model": model,
+            "input": [{"role": "developer", "content": instructions},
+                      {"role": "user", "content": json.dumps(data, ensure_ascii=False)}],
+            "store": False,
+            "stream": True,
+            "tool_choice": "required",
+            "tools": [{"type": "namespace", "name": "fitness", "description": "Proposition à valider dans FitnessApp.",
+                       "tools": [{"type": "function", "name": name, "description": "Rendre une proposition structurée.",
+                                  "parameters": response.model_json_schema(), "strict": strict}]}],
+        }
+        if model.startswith(("gpt-5", "gpt-6", "o3", "o4")):
+            payload["reasoning"] = {"effort": effort}
+        streamed = []
+        completed = None
+        async for event in runtime.transport(token, payload):
+            kind = event.get("type")
+            if kind == "response.output_item.done":
+                streamed.append(event.get("item"))
+            elif kind == "response.completed":
+                completed = event.get("response")
+        if not isinstance(completed, dict) or completed.get("status") != "completed":
+            raise InferenceError("incomplete")
+        output = completed.get("output") or streamed
+        if not isinstance(output, list):
+            raise InferenceError("incomplete")
+        calls = [item for item in output if isinstance(item, dict)
+                 and item.get("type") == "function_call" and item.get("name") == name]
+        if len(calls) != 1:
+            raise InferenceError("incomplete")
+        try:
+            advice = response.model_validate_json(calls[0].get("arguments"))
+        except ValidationError:
+            logger.warning("Coach : proposition structurée mal formée (%s)", name)
+            raise InferenceError("incomplete") from None
+        if runtime.connection_changing or not await asyncio.to_thread(runtime.connection.inference_valid, identity):
+            raise InferenceError("disconnected")
+        return advice
 
 
 def failure(body, status=None, request_id=""):

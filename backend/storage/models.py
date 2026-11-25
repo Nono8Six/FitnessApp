@@ -50,6 +50,16 @@ class TrainingGoal(Base):
     revision: Mapped[int]
 
 
+class TrainingWeek(Base):
+    __tablename__ = "training_weeks"
+
+    profile_id: Mapped[str] = mapped_column(ForeignKey("profiles.id", ondelete="CASCADE"), primary_key=True)
+    week: Mapped[str] = mapped_column(String(10), primary_key=True)
+    revision: Mapped[int]
+    plan: Mapped[dict | None] = mapped_column(JSON)
+    proposal: Mapped[dict | None] = mapped_column(JSON)
+
+
 class Workout(Base):
     __tablename__ = "workouts"
     __table_args__ = (UniqueConstraint("profile_id", "id"),)

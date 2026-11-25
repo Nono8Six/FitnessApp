@@ -1,15 +1,12 @@
 """Proposer un repère sans enregistrer l'objectif ni créer une conversation."""
 import asyncio
-import json
-import logging
 from typing import Annotated
 
-from pydantic import BaseModel, ConfigDict, StringConstraints, ValidationError
+from pydantic import BaseModel, ConfigDict, StringConstraints
 
 from ..training.goals import Draft, Milestone, read
 from . import inference
 
-logger = logging.getLogger(__name__)
 TOOL = "suggest_goal_milestone"
 INSTRUCTIONS = """Tu aides à choisir un repère de progression pour un objectif sportif personnel.
 Garde le sens de l'objectif et respecte les chiffres et l'échéance fournis. L'objectif peut porter
@@ -35,45 +32,4 @@ class Advice(BaseModel):
 
 async def suggest(runtime, profile_id: str, draft: Request) -> Advice:
     await asyncio.to_thread(runtime.db, read, profile_id)
-    async with asyncio.timeout(45):
-        token, model, identity = await asyncio.to_thread(runtime.connection.inference_credentials)
-        payload = {
-            "model": model,
-            "input": [
-                {"role": "developer", "content": INSTRUCTIONS},
-                {"role": "user", "content": json.dumps(draft.model_dump(), ensure_ascii=False)},
-            ],
-            "store": False,
-            "stream": True,
-            "tool_choice": "required",
-            "tools": [{"type": "namespace", "name": "fitness", "description": "Repère proposé pour cet objectif.",
-                       "tools": [{"type": "function", "name": TOOL, "description": "Rendre le repère et la question ou null.",
-                                  "parameters": Advice.model_json_schema(), "strict": True}]}],
-        }
-        if model.startswith(("gpt-5", "gpt-6", "o3", "o4")):
-            payload["reasoning"] = {"effort": "low"}
-        calls = []
-        completed = None
-        async for event in runtime.transport(token, payload):
-            if event.get("type") == "response.output_item.done":
-                item = event.get("item")
-                if isinstance(item, dict) and item.get("type") == "function_call":
-                    calls.append(item)
-            if event.get("type") == "response.completed":
-                completed = event.get("response")
-        if not isinstance(completed, dict) or completed.get("status") != "completed":
-            raise inference.InferenceError("incomplete")
-        output = completed.get("output") or calls
-        if isinstance(output, list):
-            matches = [item for item in output if isinstance(item, dict)
-                       and item.get("type") == "function_call" and item.get("name") == TOOL]
-            if len(matches) == 1:
-                try:
-                    advice = Advice.model_validate_json(matches[0].get("arguments"))
-                except ValidationError:
-                    logger.warning("Coach : repère d’objectif mal formé")
-                else:
-                    if runtime.connection_changing or not await asyncio.to_thread(runtime.connection.inference_valid, identity):
-                        raise inference.InferenceError("disconnected")
-                    return advice
-        raise inference.InferenceError("incomplete")
+    return await inference.structured(runtime, instructions=INSTRUCTIONS, data=draft.model_dump(), name=TOOL, response=Advice)

@@ -22,6 +22,7 @@ from . import __version__
 from . import foulee
 from .api import profiles as profiles_api
 from .api import goals as goals_api
+from .api import schedule as schedule_api
 from .api import workouts as workouts_api
 from .api import chatgpt as chatgpt_api
 from .api import coach as coach_api
@@ -227,6 +228,7 @@ def create_app(*, simulation: bool = False, data_root: Path | None = None, dist:
 
     app.include_router(profiles_api.router)
     app.include_router(goals_api.router)
+    app.include_router(schedule_api.router)
     app.include_router(workouts_api.router)
     app.include_router(chatgpt_api.router)
     app.include_router(coach_api.router)

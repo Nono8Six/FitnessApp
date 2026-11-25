@@ -11,7 +11,7 @@ import { inProgress, useExecution } from '../lib/execution'
 
 /** Destinations réellement construites. Chaque brique ajoute la sienne. */
 const TABS = [
-  { key: 'today', label: 'Aujourd’hui', href: href.today, Icon: TodayIcon, match: ['today'] },
+  { key: 'today', label: 'Aujourd’hui', href: href.today, Icon: TodayIcon, match: ['today', 'planning'] },
   { key: 'library', label: 'Séances', href: href.library, Icon: LibraryIcon, match: ['library', 'workout', 'editor', 'fouleeTransfer'] },
   { key: 'recordings', label: 'Bilans', href: href.recordings, Icon: HistoryIcon, match: ['recordings', 'report'] },
   { key: 'coach', label: 'Coach', href: href.coach, Icon: CoachIcon, match: ['coach'] },

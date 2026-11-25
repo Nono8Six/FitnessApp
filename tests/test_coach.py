@@ -188,7 +188,7 @@ class CoachDataTests(unittest.TestCase):
         self.db.close()
         self.app = create_app(data_root=Path(self.tmp.name))
         self.db = self.app.state.database
-        self.assertEqual(self.db.schema, "0012")
+        self.assertEqual(self.db.schema, "0013")
         with self.db.transaction() as session:
             self.assertEqual(workouts.get_workout(session, "arnaud", self.workout["id"]), self.workout)
             self.assertEqual(store.conversations(session, "arnaud")["total"], 0)

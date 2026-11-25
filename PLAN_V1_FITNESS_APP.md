@@ -21,7 +21,7 @@ Une seule brique en cours dans le périmètre demandé. Les cases indiquent les 
 - [ ] **Brique 10 · RUN500 réel** : réception matérielle progressive du parcours et des pertes.
 - [ ] **Brique 11 · Historique et semaine** : un objectif actif par profil, historique et progression calculée à partir des séances réelles.
 - [x] **Brique 12 · Coach informé** : bilans du profil, mémoire sourcée, personnalisation et sources ouvrables ; limites et vérifications dans la refonte du 13 octobre ci-dessous.
-- [ ] **Brique 13 · Programme et suivi avec le coach** : préparation jusqu’à l’objectif, détail de la prochaine semaine et ajustements expliqués à partir des bilans et du ressenti.
+- [x] **Brique 13 · Programme et suivi avec le coach** : échéances et étapes, semaines datées à confirmer, suivi des séances et ajustements à partir des bilans et du ressenti.
 - [ ] **Brique 14 · Graphiques avancés** : comparaison, calendrier, distributions, tendances, qualité.
 - [ ] **Brique 15 · Données** : exports, imports FIT/TCX, sauvegarde et restauration.
 - [ ] **Brique 16 · Usage quotidien Windows** : lanceur, démarrage simple, hors ligne, performances.
@@ -560,19 +560,21 @@ Le contexte fournit les cinq bilans récents, la qualité, le ressenti et le vol
 
 ### Brique 13 · Programme et suivi avec le coach
 
-**À livrer.** Le coach compose le planning selon l’objectif, le niveau, les séances récentes et les disponibilités du profil. Une échéance donne des étapes jusqu’à la date. Un objectif continu donne un rythme et des points d’étape. L’utilisateur relit, ajuste et accepte la proposition. Aujourd’hui affiche le prochain pas et son rôle dans la progression.
+**Livré.** Le coach compose le planning selon l’objectif, le niveau, les séances récentes et les disponibilités du profil. Une échéance donne des étapes jusqu’à la date. Un objectif continu donne un rythme et des points d’étape. L’utilisateur relit, déplace ou écarte des séances et confirme la semaine. Aujourd’hui affiche la séance du jour et le prochain créneau de la semaine.
 
 **Exemple avec échéance.** Pour un 10 km fin mars 2027, la préparation peut aller d’une phase d’endurance à des séances adaptées à la course, puis à un allègement avant le départ. Chaque séance détaillée indique son but, sa durée, son effort ou son allure et le lieu prévu, sur tapis ou dehors. Les sorties dehors peuvent être ajoutées à la main avec leur date, leur durée, leur distance et leur ressenti. Bilans et coach indiquent la provenance des mesures. [Repères d’entraînement de la Ligue d’athlétisme](https://lnca.athle.fr/asp.net/espaces.html/html.aspx?id=4559).
 
-**Travail.** Réutiliser les propositions de séance et leur validation côté serveur. Dans le bilan, **Préparer la suite** donne au coach la séance réalisée et le ressenti. Le coach retrouve aussi l’objectif, les séances prévues et les décisions acceptées dans une nouvelle conversation. Il explique pourquoi il conseille de maintenir, alléger, faire progresser ou déplacer une séance, avec les bilans utilisés. L’utilisateur valide les changements du planning.
+**Parcours.** Dans le bilan, **Préparer la suite** donne au coach la séance réalisée et le ressenti. Le coach retrouve aussi l’objectif, les semaines confirmées et les états dans une nouvelle conversation. Il explique les adaptations dans la proposition. Les séances sur tapis utilisent la validation et le moteur existants. Le temps maximal réserve la minute de retour au calme automatique.
 
 **Suivi et motivation.** Relier le prévu au réalisé pour distinguer les séances terminées, écourtées ou manquées. Quand le planning convient, le coach souligne un progrès observable ou une habitude tenue. Quand le temps ou le rythme change, il propose avec bienveillance une suite faisable, par exemple déplacer une séance ou reprendre par une version courte. Aujourd’hui montre ce retour et un prochain pas clair.
 
 **Fait quand :**
-- [ ] Une semaine proposée à partir de l’objectif et des disponibilités est acceptée, puis retrouvée jour par jour dans Aujourd’hui.
-- [ ] Après une séance difficile ou manquée, le coach retrouve le programme dans une nouvelle conversation et propose un ajustement cohérent. Le planning affiche le changement une fois accepté.
-- [ ] Une habitude sans échéance, un objectif de capacité et une course datée utilisent le même parcours avec des repères et des plannings adaptés à chacun.
-- [ ] Deux profils préparent le même 10 km avec des séances adaptées à leurs niveaux respectifs. Une sortie extérieure alimente la progression du bon profil et un ajustement du programme conserve la date de course.
+- [x] Une semaine proposée à partir de l’objectif et des disponibilités est acceptée, puis retrouvée dans Aujourd’hui.
+- [x] Une séance difficile, écourtée ou manquée alimente l’ajustement. Les séances passées et en cours sont conservées, et le planning affiche les changements acceptés.
+- [x] Les objectifs avec échéance et les objectifs continus utilisent le même parcours. La préparation et le suivi sont séparés par profil.
+- [x] Une sortie extérieure planifiée et renseignée alimente le suivi du bon profil. La date de course reste fixe pendant les ajustements.
+
+**Vérification du 25 novembre 2026.** Migration additive 0013. Tests ciblés de l’acceptation, des bilans, des contraintes de durée et de la séparation des profils. Chrome sur PC et mobile pour déplacer une séance, confirmer, enregistrer une sortie écourtée et conserver le passé après adaptation. Le modèle connecté a proposé et enregistré des semaines sur tapis et dehors sur une base isolée, avec reprise plus facile après un 8/10 simulé et étapes d’un objectif daté. Les propositions concernent la semaine en cours ou la suivante. Les sorties dehors sont déclarées sur une séance du planning.
 
 ### Brique 14 · Graphiques avancés
 

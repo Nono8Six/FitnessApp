@@ -6,6 +6,7 @@ export type Route = { name: 'today' } | { name: 'settings'; treadmill?: boolean 
   | { name: 'library'; view?: 'discover' | 'mine' } | { name: 'editor'; id?: string; proposalId?: string; fromFoulee?: boolean }
   | { name: 'workout'; id: string; version?: number }
   | { name: 'recordings'; workoutId?: string } | { name: 'report'; id: string }
+  | { name: 'planning'; week?: string; report?: string }
   | { name: 'fouleeTransfer'; query: string }
 
 export function parse(hash: string): Route {
@@ -15,6 +16,11 @@ export function parse(hash: string): Route {
   if (reports) return { name: 'recordings', workoutId: reports[1] }
   const report = /^#\/bilans\/([a-f0-9]{32})$/.exec(hash)
   if (report) return { name: 'report', id: report[1] }
+  if (hash === href.planning) return { name: 'planning' }
+  const week = /^#\/planning\?semaine=(\d{4}-\d{2}-\d{2})$/.exec(hash)
+  if (week) return { name: 'planning', week: week[1] }
+  const follow = /^#\/planning\?bilan=([a-f0-9]{32})$/.exec(hash)
+  if (follow) return { name: 'planning', report: follow[1] }
   if (hash === href.settings) return { name: 'settings' }
   if (hash === href.treadmill) return { name: 'settings', treadmill: true }
   if (hash === href.direct) return { name: 'direct' }
@@ -48,6 +54,9 @@ export const href = {
   courseTest: '#/test',
   recordings: '#/bilans',
   report: (id: string) => `#/bilans/${id}`,
+  planning: '#/planning',
+  planningWeek: (week: string) => `#/planning?semaine=${week}`,
+  planningReport: (id: string) => `#/planning?bilan=${id}`,
   workoutReports: (id: string) => `#/bilans?seance=${id}`,
   coach: '#/coach',
   library: '#/seances',

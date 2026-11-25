@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { ChevronDown, X } from 'lucide-react'
 import { Page } from '../components/Shell'
 import { nearest, TimeChart, type Marker, type Series } from '../components/charts'
-import { Button, cx, Disclosure, Facts, Group, Metric, Segmented, Skeleton, StatGrid, StatusLabel } from '../components/ui'
+import { Button, cx, Disclosure, Facts, Group, Metric, Row, Segmented, Skeleton, StatGrid, StatusLabel } from '../components/ui'
 import { WorkoutError } from '../components/WorkoutSummary'
 import { errorMessage } from '../lib/api'
 import { calories, clock, dec1, dec2 } from '../lib/format'
@@ -213,6 +213,10 @@ export function Report({ profile, id }: { profile: string; id: string }) {
             setData(current => current?.id === data.id && current.profile.id === profile
               ? { ...current, feeling, feeling_updated_at: at } : current)
           }} />
+          {!unresolved && data.closed && m.active_s > 0 && <Group className="mt-4">
+            <Row href={href.planningReport(data.id)} title="Préparer la suite"
+              subtitle="Le coach tient compte de ce bilan et de ton ressenti." />
+          </Group>}
           {data.id === id && data.profile.id === profile && <Disclosure key={`${profile}:${data.id}`} title="Autres méthodes d’export" className="mt-5">
             <FitnessSyncerExport data={data} />
             <AppleHealthExport data={data} />

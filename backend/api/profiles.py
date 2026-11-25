@@ -74,6 +74,11 @@ FIELDS = {
     "target_date": "Choisissez une date valide ou laissez ce champ vide.",
     "clarification": "Limitez votre précision à 400 caractères.",
     "revision": "Rechargez l’objectif avant de le modifier.",
+    "week": "Choisissez un lundi valide pour la semaine.",
+    "weekdays": "Choisissez au moins un jour disponible.",
+    "minutes": "Vérifiez la durée saisie, en minutes.",
+    "venue": "Choisissez le tapis, les sorties dehors ou les deux.",
+    "feeling": "Saisissez un effort de 1 à 10 ou laissez ce champ vide.",
 }
 
 

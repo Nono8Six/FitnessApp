@@ -19,6 +19,7 @@ import type { WorkoutInput } from './lib/workouts'
 import './styles/index.css'
 
 const Coach = lazy(() => import('./features/Coach').then(module => ({ default: module.Coach })))
+const Planning = lazy(() => import('./features/Planning').then(module => ({ default: module.Planning })))
 
 function ProfileLoading() {
   const profiles = useProfiles()
@@ -32,8 +33,10 @@ function App() {
   const editingImport = route.name === 'editor' && route.fromFoulee === true
   const previousProfile = useRef(profile?.id)
   useEffect(() => {
-    if (previousProfile.current && previousProfile.current !== profile?.id && (route.name === 'editor' || route.name === 'workout' || route.name === 'coach')) {
-      navigate(route.name === 'coach' ? href.coach : href.library)
+    if (previousProfile.current && previousProfile.current !== profile?.id) {
+      if (route.name === 'coach') navigate(href.coach)
+      if (route.name === 'editor' || route.name === 'workout') navigate(href.library)
+      if (route.name === 'planning' && route.report) navigate(href.planning)
     }
     previousProfile.current = profile?.id
   }, [profile?.id, route.name])
@@ -59,6 +62,9 @@ function App() {
           : route.name === 'workout' ? <Workout profile={profile.id} id={route.id} requestedVersion={route.version} />
           : route.name === 'report' ? <Report profile={profile.id} id={route.id} />
           : route.name === 'recordings' ? <Reports profile={profile.id} workoutId={route.workoutId} />
+          : route.name === 'planning' ? <Suspense fallback={<Page title="Planning"><Skeleton label="Chargement du planning" /></Page>}>
+            <Planning profile={profile.id} week={route.week} report={route.report} />
+          </Suspense>
           : route.name === 'coach' ? <Suspense fallback={<Page title="Coach"><p role="status" className="text-label-2">Chargement…</p></Page>}><Coach profile={profile.id} target={route.target} conversationId={route.conversationId} createWorkout={route.createWorkout} progress={route.progress} /></Suspense>
           : <Today profile={profile.id} />}
       </div>

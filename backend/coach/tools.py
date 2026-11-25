@@ -11,7 +11,7 @@ from sqlalchemy.exc import SQLAlchemyError
 from . import store
 from . import workout_proposals, memory, insights, recommendations, constraints
 from ..storage.models import Workout, WorkoutSelection, WorkoutVersion
-from ..training import catalog, goals, workouts
+from ..training import catalog, goals, schedule, workouts
 from ..training.profiles import ProfileNotFound, get_profile
 from ..training.workouts import Input
 
@@ -124,6 +124,7 @@ def profile_context(session, profile, simulation):
     goal = goals.read(session, profile)
     return {"profile": get_profile(session, profile).model_dump(),
         "active_training_goal": goal.model_dump(exclude={"revision"}) if goal else None,
+        "training_schedule": schedule.coach_context(session, profile, simulation),
         "local_date": datetime.now().astimezone().date().isoformat(),
         "timezone": str(datetime.now().astimezone().tzinfo),
         "selected_workout_id": selection.workout_id if selection else None,
@@ -236,7 +237,7 @@ def execute(database, profile, name, arguments, *, user_text, simulation=False, 
                     WorkoutVersion.workout_id).subquery()
                 query = select(WorkoutVersion).join(Workout).join(latest,
                     (WorkoutVersion.workout_id == latest.c.workout_id) & (WorkoutVersion.version == latest.c.version))
-                query = query.where(Workout.profile_id == profile,
+                query = query.where(Workout.profile_id == profile, workouts.in_library(),
                     WorkoutVersion.name.contains(payload.query, autoescape=True)).order_by(WorkoutVersion.created_at.desc(), Workout.id)
                 return summaries(session, query, current.weight_kg, payload.offset, payload.limit)
             workouts._workout(session, profile, payload.workout_id)
