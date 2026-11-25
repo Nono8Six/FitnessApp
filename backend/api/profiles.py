@@ -75,6 +75,7 @@ FIELDS = {
     "clarification": "Limitez votre précision à 400 caractères.",
     "revision": "Rechargez l’objectif avant de le modifier.",
     "week": "Choisissez un lundi valide pour la semaine.",
+    "month": "Choisissez un mois valide.",
     "weekdays": "Choisissez au moins un jour disponible.",
     "minutes": "Vérifiez la durée saisie, en minutes.",
     "venue": "Choisissez le tapis, les sorties dehors ou les deux.",

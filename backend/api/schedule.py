@@ -43,6 +43,13 @@ def read(profile_id: str, request: Request, week: str | None = Query(default=Non
         return schedule.view(session, profile_id, week, runtime.simulation, active(request))
 
 
+@router.get("/month")
+def read_month(profile_id: str, request: Request, month: str | None = Query(default=None, pattern=r"^[0-9]{4}-[0-9]{2}$")):
+    runtime = request.app.state.coach
+    with errors(), runtime.database.transaction() as session:
+        return schedule.month_view(session, profile_id, month, runtime.simulation, active(request))
+
+
 @router.post("/suggest")
 async def suggest(profile_id: str, body: schedule.Request, request: Request):
     runtime = request.app.state.coach

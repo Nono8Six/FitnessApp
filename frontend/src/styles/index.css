@@ -251,6 +251,62 @@ dd[data-long-value] small { font-size: 13px; }
 .today-choose, .today-detail-link { display: inline-flex; align-items: center; gap: 10px; min-height: 46px; padding-inline: 16px; border-radius: 12px; font-size: 15px; font-weight: 650; }
 .today-choose { background: var(--color-accent); color: var(--color-on-accent); }
 .today-detail-link { background: rgb(0 0 0 / .74); color: white; }
+.planning-page { display: grid; min-width: 0; gap: 18px; }
+.planning-toolbar { display: grid; gap: 14px; }
+.planning-controls { display: flex; min-width: 0; align-items: center; justify-content: space-between; gap: 6px; }
+.planning-views { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); width: min(230px, 64%); padding: 3px; border-radius: 14px; background: var(--color-surface); }
+.planning-views a { display: flex; min-height: 44px; align-items: center; justify-content: center; gap: 6px; padding-inline: 6px; border-radius: 11px; color: var(--color-label-2); font-size: 14px; font-weight: 630; }
+.planning-views a[aria-current] { background: var(--color-fill-3); color: var(--color-label); }
+.planning-views a[aria-current] svg { color: var(--color-accent); }
+.planning-today { display: inline-flex; min-height: 44px; align-items: center; padding-inline: 7px; color: var(--color-accent); font-size: 14px; font-weight: 650; white-space: nowrap; }
+.planning-period { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.planning-arrow { display: grid; width: 44px; height: 44px; place-items: center; border-radius: 12px; background: var(--color-surface); color: var(--color-label); }
+.planning-week-layout, .planning-month-layout { display: grid; min-width: 0; align-items: start; gap: 20px; }
+.planning-week-top { align-items: end; gap: 12px; }
+.planning-week-actions { display: grid; min-width: 0; gap: 8px; }
+.planning-calendar { min-width: 0; overflow: hidden; padding-block: 6px; border-radius: 16px; background: var(--color-surface); }
+.planning-weekdays, .planning-day-grid { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); }
+.planning-weekdays { min-height: 24px; align-items: center; color: var(--color-label-2); font-size: 12px; font-weight: 600; text-align: center; }
+.planning-day { position: relative; display: flex; min-width: 0; min-height: 48px; flex-direction: column; align-items: center; justify-content: center; gap: 4px; padding: 3px 1px; border-radius: 12px; color: var(--color-label); }
+.planning-day[aria-pressed="true"] { background: color-mix(in srgb, var(--color-accent) 13%, var(--color-surface)); color: var(--color-accent); }
+.planning-day:focus-visible, .planning-views a:focus-visible { outline-offset: -2px; }
+.planning-day-number { display: grid; min-width: 23px; min-height: 23px; place-items: center; border-radius: 7px; font-size: 17px; font-weight: 660; }
+.planning-day[aria-current="date"] .planning-day-number { background: var(--color-accent); color: var(--color-on-accent); }
+.planning-dot { display: inline-block; width: 7px; height: 7px; flex: none; border-radius: 50%; }
+.planning-dot[data-status="planned"] { background: var(--color-blue); }
+.planning-dot[data-status="done"] { background: var(--color-green); }
+.planning-dot[data-status="shortened"] { background: var(--color-orange); }
+.planning-dot[data-status="missed"] { border: 1px solid var(--color-label-2); }
+.planning-dot[data-status="in_progress"] { background: var(--color-accent); box-shadow: 0 0 0 2px color-mix(in srgb, var(--color-accent) 25%, transparent); }
+.planning-calendar.is-month .planning-day { min-height: 50px; }
+.planning-day-name { display: none; }
+.planning-legend { display: flex; flex-wrap: wrap; gap: 8px 14px; padding: 10px 2px 0; color: var(--color-label-2); font-size: 12px; }
+.planning-legend li { display: inline-flex; align-items: center; gap: 5px; }
+.planning-month-detail { display: grid; min-width: 0; gap: 12px; padding: 13px; border-radius: 16px; background: var(--color-surface); scroll-margin-bottom: calc(var(--nav-clearance) + 12px); }
+.planning-detail-head { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; padding-bottom: 10px; border-bottom: 1px solid var(--color-sep); }
+.planning-detail-link { display: inline-flex; min-height: 44px; align-items: center; color: var(--color-accent); font-weight: 650; }
+.planning-open-week { margin-top: 2px; padding-left: 10px; border-radius: 12px; background: var(--color-surface-2); }
+.planning-agenda-head { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 4px 12px; margin-bottom: 10px; }
+.planning-session-anchor { scroll-margin-top: 12px; }
+.planning-session.is-selected { box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--color-accent) 36%, transparent); }
+@media (max-width: 359px) {
+  .mobile-nav { padding-inline: max(7px, env(safe-area-inset-left)) max(7px, env(safe-area-inset-right)); }
+  .mobile-nav-track { grid-template-columns: minmax(0, 1.14fr) repeat(4, minmax(0, 1fr)); }
+  .mobile-nav-track a { gap: 3px; }
+  .mobile-nav-track a span { font-size: 10px; white-space: nowrap; }
+  .planning-calendar { margin-inline: -13px; }
+  .planning-views a { gap: 4px; }
+  .planning-period h2 { font-size: 20px; }
+}
+@media (min-width: 900px) {
+  .planning-page { gap: 21px; }
+  .planning-week-layout { grid-template-columns: minmax(0, 1.55fr) minmax(0, 1fr); gap: 24px; }
+  .planning-month-layout { grid-template-columns: minmax(0, 2fr) minmax(240px, 1fr); gap: 24px; }
+  .planning-calendar.is-month { padding-inline: 6px; }
+  .planning-calendar.is-month .planning-day { min-height: 75px; justify-content: start; padding: 6px 3px; border-radius: 10px; }
+  .planning-day-name { display: -webkit-box; width: 100%; overflow: hidden; -webkit-box-orient: vertical; -webkit-line-clamp: 2; color: var(--color-label-2); font-size: 10px; line-height: 1.2; text-align: center; overflow-wrap: anywhere; }
+  .planning-day:not([aria-pressed="true"]):hover { background-color: var(--color-fill-4); }
+}
 .today-choose:active, .today-detail-link:active { opacity: .85; }
 @media (min-width: 900px) {
   .page-inset { padding-inline: 40px; }

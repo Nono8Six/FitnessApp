@@ -6,7 +6,7 @@ export type Route = { name: 'today' } | { name: 'settings'; treadmill?: boolean 
   | { name: 'library'; view?: 'discover' | 'mine' } | { name: 'editor'; id?: string; proposalId?: string; fromFoulee?: boolean }
   | { name: 'workout'; id: string; version?: number }
   | { name: 'recordings'; workoutId?: string } | { name: 'report'; id: string }
-  | { name: 'planning'; week?: string; report?: string }
+  | { name: 'planning'; week?: string; day?: string; report?: string; view?: 'month'; month?: string }
   | { name: 'fouleeTransfer'; query: string }
 
 export function parse(hash: string): Route {
@@ -17,8 +17,11 @@ export function parse(hash: string): Route {
   const report = /^#\/bilans\/([a-f0-9]{32})$/.exec(hash)
   if (report) return { name: 'report', id: report[1] }
   if (hash === href.planning) return { name: 'planning' }
-  const week = /^#\/planning\?semaine=(\d{4}-\d{2}-\d{2})$/.exec(hash)
-  if (week) return { name: 'planning', week: week[1] }
+  const week = /^#\/planning\?semaine=(\d{4}-\d{2}-\d{2})(?:&jour=(\d{4}-\d{2}-\d{2}))?$/.exec(hash)
+  if (week) return { name: 'planning', week: week[1], day: week[2] }
+  if (hash === href.planningMonth()) return { name: 'planning', view: 'month' }
+  const month = /^#\/planning\?mois=(\d{4}-\d{2})(?:&jour=(\d{4}-\d{2}-\d{2}))?$/.exec(hash)
+  if (month) return { name: 'planning', view: 'month', month: month[1], day: month[2] }
   const follow = /^#\/planning\?bilan=([a-f0-9]{32})$/.exec(hash)
   if (follow) return { name: 'planning', report: follow[1] }
   if (hash === href.settings) return { name: 'settings' }
@@ -55,7 +58,8 @@ export const href = {
   recordings: '#/bilans',
   report: (id: string) => `#/bilans/${id}`,
   planning: '#/planning',
-  planningWeek: (week: string) => `#/planning?semaine=${week}`,
+  planningWeek: (week: string, day?: string) => `#/planning?semaine=${week}${day ? `&jour=${day}` : ''}`,
+  planningMonth: (month?: string, day?: string) => month ? `#/planning?mois=${month}${day ? `&jour=${day}` : ''}` : '#/planning?vue=mois',
   planningReport: (id: string) => `#/planning?bilan=${id}`,
   workoutReports: (id: string) => `#/bilans?seance=${id}`,
   coach: '#/coach',

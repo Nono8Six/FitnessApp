@@ -146,3 +146,22 @@ class ScheduleTests(unittest.TestCase):
         self.assertEqual(reply.status_code, 409)
         self.assertIn("retour au calme automatique", reply.json()["detail"])
         self.assertIsNone(self.client.get(self.url).json()["proposal"])
+
+    def test_month_reads_both_sides_of_a_week_only_in_the_right_month_and_profile(self):
+        self.week = "2026-11-30"
+        self.day = date(2026, 11, 30)
+        draft = self.propose(self.spec("2026-11-30"), self.spec("2026-12-02", "outdoor")).json()
+        sessions = self.accept(draft).json()["plan"]["sessions"]
+        self.record(sessions[0]["workout"], feeling=6)
+        self.week = "2026-12-07"
+        next_draft = self.propose(self.spec("2026-12-07", "outdoor")).json()
+        self.assertEqual(self.accept(next_draft).status_code, 200)
+        november = self.client.get(self.url + "/month?month=2026-11").json()
+        self.assertEqual([(entry["day"], entry["status"]) for entry in november["sessions"]], [("2026-11-30", "done")])
+        self.assertNotIn("workout", november["sessions"][0])
+        self.day = date(2026, 12, 3)
+        december = self.client.get(self.url + "/month").json()
+        self.assertEqual([(entry["day"], entry["status"]) for entry in december["sessions"]],
+                         [("2026-12-02", "missed"), ("2026-12-07", "planned")])
+        self.assertEqual(self.client.get("/api/profiles/ophelie/schedule/month").json()["sessions"], [])
+        self.assertEqual(self.client.get(self.url + "/month?month=2026-13").status_code, 409)

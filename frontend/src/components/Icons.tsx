@@ -1,3 +1,4 @@
+import { CalendarDays } from 'lucide-react'
 import type { SVGProps } from 'react'
 
 type P = SVGProps<SVGSVGElement> & { active?: boolean; size?: number }
@@ -9,6 +10,10 @@ function Svg({ size = 24, children, active: _a, ...rest }: P) {
       {children}
     </svg>
   )
+}
+
+export function PlanningIcon({ active, size = 24, ...props }: P) {
+  return <CalendarDays size={size} strokeWidth={active ? 2.6 : 2} aria-hidden {...props} />
 }
 
 /** Concentric arcs, the "summary" glyph. */

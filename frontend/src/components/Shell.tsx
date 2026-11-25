@@ -4,14 +4,15 @@ import { errorMessage } from '../lib/api'
 import { chooseProfile, createProfile, loadProfiles, NAME_MAX, useCurrentProfile, useProfiles, type Profile } from '../lib/profiles'
 import { checkServer, useServer } from '../lib/server'
 import { href, navigate, type Route } from '../lib/router'
-import { CoachIcon, HistoryIcon, LibraryIcon, TodayIcon } from './Icons'
+import { CoachIcon, HistoryIcon, LibraryIcon, PlanningIcon, TodayIcon } from './Icons'
 import { Avatar, cx, Group, Row, Sheet, Skeleton, Tile } from './ui'
 import { Activity, ReturnToPreparation } from '../features/Direct'
 import { inProgress, useExecution } from '../lib/execution'
 
 /** Destinations réellement construites. Chaque brique ajoute la sienne. */
 const TABS = [
-  { key: 'today', label: 'Aujourd’hui', href: href.today, Icon: TodayIcon, match: ['today', 'planning'] },
+  { key: 'today', label: 'Aujourd’hui', href: href.today, Icon: TodayIcon, match: ['today'] },
+  { key: 'planning', label: 'Planning', href: href.planning, Icon: PlanningIcon, match: ['planning'] },
   { key: 'library', label: 'Séances', href: href.library, Icon: LibraryIcon, match: ['library', 'workout', 'editor', 'fouleeTransfer'] },
   { key: 'recordings', label: 'Bilans', href: href.recordings, Icon: HistoryIcon, match: ['recordings', 'report'] },
   { key: 'coach', label: 'Coach', href: href.coach, Icon: CoachIcon, match: ['coach'] },
@@ -307,7 +308,7 @@ function TabBar({ route }: { route: Route }) {
   return (
     <nav className="mobile-nav pointer-events-none fixed inset-x-0 bottom-0 z-40 flex justify-center desk:hidden"
       aria-label="Navigation principale">
-      <div className="mobile-nav-track material pointer-events-auto grid w-full max-w-[460px] grid-cols-4 rounded-full p-1">
+      <div className="mobile-nav-track material pointer-events-auto grid w-full max-w-[460px] grid-cols-5 rounded-full p-1">
         {TABS.map(({ key, label, href: to, Icon, match }) => {
           const active = (match as readonly string[]).includes(route.name)
           return (

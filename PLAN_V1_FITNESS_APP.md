@@ -576,6 +576,8 @@ Le contexte fournit les cinq bilans récents, la qualité, le ressenti et le vol
 
 **Vérification du 25 novembre 2026.** Migration additive 0013. Tests ciblés de l’acceptation, des bilans, des contraintes de durée et de la séparation des profils. Chrome sur PC et mobile pour déplacer une séance, confirmer, enregistrer une sortie écourtée et conserver le passé après adaptation. Le modèle connecté a proposé et enregistré des semaines sur tapis et dehors sur une base isolée, avec reprise plus facile après un 8/10 simulé et étapes d’un objectif daté. Les propositions concernent la semaine en cours ou la suivante. Les sorties dehors sont déclarées sur une séance du planning.
 
+**Navigation du planning.** L’onglet dédié ouvre la semaine. La frise donne accès aux séances du jour choisi. La vue Mois utilise les mêmes états et permet de retrouver le détail puis d’ouvrir la semaine correspondante. La lecture est filtrée par profil et par mois, y compris pour une semaine à cheval sur deux mois. La vue utilise les séances enregistrées et leur suivi existant.
+
 ### Brique 14 · Graphiques avancés
 
 **Livré :** comparer 2 ou 3 séances, calendrier de pratique, temps par plage de vitesse et de pente, évolution du ressenti, qualité des données.

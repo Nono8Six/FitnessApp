@@ -201,6 +201,26 @@ def view(session, profile, requested=None, simulation=False, active=None):
             "plan": {**plan, "sessions": result} if plan else None, "proposal": row.proposal if row else None}
 
 
+def month_view(session, profile, requested=None, simulation=False, active=None):
+    today = local_day()
+    get_profile(session, profile)
+    try:
+        start = date.fromisoformat(requested + "-01") if requested else today.replace(day=1)
+    except ValueError:
+        raise ProfileConflict("Choisissez un mois valide.") from None
+    if start.year < 1900 or start.year >= 9999:
+        raise ProfileConflict("Choisissez un mois valide.")
+    end = (start + timedelta(days=32)).replace(day=1)
+    first_day, next_month = start.isoformat(), end.isoformat()
+    weeks = session.scalars(select(TrainingWeek).where(
+        TrainingWeek.profile_id == profile, TrainingWeek.revision > 0,
+        TrainingWeek.week >= monday(start).isoformat(), TrainingWeek.week < next_month,
+    ).order_by(TrainingWeek.week))
+    entries = [entry for row in weeks for entry in _sessions(session, profile, row, today, simulation, active)
+               if first_day <= entry["day"] < next_month]
+    return {"today": today.isoformat(), "month": first_day[:7], "sessions": entries}
+
+
 def coach_context(session, profile, simulation=False):
     today = local_day()
     start = monday(today)

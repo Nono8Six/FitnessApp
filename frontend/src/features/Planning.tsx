@@ -1,29 +1,21 @@
-import { CalendarDays, ChevronLeft, ChevronRight, Target } from 'lucide-react'
+import { CalendarDays, Target } from 'lucide-react'
 import { useId, useState, type FormEvent } from 'react'
 import { CoachIcon } from '../components/Icons'
 import { Page } from '../components/Shell'
-import { Button, Chip, Disclosure, Group, Row, SectionHeader, Segmented, Sheet, Skeleton, StatusLabel, Tile } from '../components/ui'
+import { Button, Chip, Disclosure, Group, Row, Segmented, Sheet, Skeleton, StatusLabel, Tile } from '../components/ui'
 import { WorkoutError, WorkoutSummary } from '../components/WorkoutSummary'
 import { errorMessage } from '../lib/api'
 import { clock, dec2 } from '../lib/format'
 import { href } from '../lib/router'
-import { acceptSchedule, dayText, saveOutdoor, shiftDay, suggestSchedule, useSchedule,
-  type Availability, type EntryStatus, type PlanDraft, type PlanEntry, type Schedule, type SchedulePhase } from '../lib/schedule'
+import { acceptSchedule, dayText, saveOutdoor, shiftDay, suggestSchedule, useSchedule, weekdayIndex, weekStart,
+  type Availability, type PlanDraft, type PlanEntry, type Schedule, type SchedulePhase } from '../lib/schedule'
 import { StartButton } from './Direct'
+import { entryStatus, MonthPlanning, PlanningDays, PlanningToolbar, shortDays, venueText } from './PlanningCalendar'
 
-const dayLabels = ['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim']
 const longLabels = ['Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi', 'Dimanche']
 const venues = [{ value: 'treadmill', label: 'Tapis' }, { value: 'outdoor', label: 'Dehors' }, { value: 'both', label: 'Les deux' }] as const
 const field = 'block min-h-12 w-full min-w-0 rounded-[12px] bg-surface-2 px-3.5 py-2.5 text-[16px] leading-snug placeholder:text-label-3 disabled:text-label-2'
 const label = 'mb-2 block text-subhead font-semibold'
-const status: Record<EntryStatus, { label: string; tone: 'gray' | 'green' | 'orange' }> = {
-  planned: { label: 'Prévue', tone: 'gray' },
-  done: { label: 'Réalisée', tone: 'green' },
-  shortened: { label: 'Écourtée', tone: 'orange' },
-  missed: { label: 'Manquée', tone: 'gray' },
-  in_progress: { label: 'En cours', tone: 'green' },
-}
-const venueText = (v: 'treadmill' | 'outdoor') => v === 'treadmill' ? 'Tapis' : 'Dehors'
 
 function Phases({ phases }: { phases: SchedulePhase[] }) {
   if (!phases.length) return null
@@ -73,7 +65,7 @@ function SetupSheet({ data, profile, report, close, receive }: {
         <fieldset className="min-w-0">
           <legend className={label}>Jours disponibles</legend>
           <div className="grid grid-cols-4 gap-1 min-[360px]:grid-cols-7 desk:gap-2">
-            {dayLabels.map((text, i) => <Chip key={text} type="button" aria-label={longLabels[i]}
+            {shortDays.map((text, i) => <Chip key={text} type="button" aria-label={longLabels[i]}
               className="w-full justify-center !px-0"
               selected={availability.weekdays.includes(i)} onClick={() => set(current => ({
                 ...current, weekdays: current.weekdays.includes(i) ? current.weekdays.filter(v => v !== i) : [...current.weekdays, i],
@@ -207,12 +199,15 @@ function OutdoorSheet({ profile, entry, data, close, saved }: {
   </Sheet>
 }
 
-function SessionRow({ entry, today, profile, log }: { entry: PlanEntry; today: string; profile: string; log: () => void }) {
-  const state = status[entry.status]
-  return <Disclosure title={
+function SessionRow({ entry, today, profile, selected, log }: {
+  entry: PlanEntry; today: string; profile: string; selected: boolean; log: () => void
+}) {
+  const state = entryStatus[entry.status]
+  return <div id={`planning-session-${entry.day}`} className="planning-session-anchor">
+    <Disclosure className={selected ? 'planning-session is-selected' : 'planning-session'} defaultOpen={selected} title={
     <span className="flex items-start gap-3">
       <span className="flex w-12 shrink-0 flex-col items-start border-r border-sep pr-2">
-        <span className="text-footnote text-label-2">{dayLabels[(new Date(entry.day).getUTCDay() + 6) % 7]}</span>
+        <span className="text-footnote text-label-2">{shortDays[weekdayIndex(entry.day)]}</span>
         <span className={`num text-title2 ${entry.day === today ? 'text-accent' : ''}`}>{Number(entry.day.slice(-2))}</span>
       </span>
       <span className="min-w-0">
@@ -228,8 +223,10 @@ function SessionRow({ entry, today, profile, log }: { entry: PlanEntry; today: s
       <p className="text-subhead leading-relaxed text-label-2 wrap-anywhere">{entry.purpose}</p>
       <p className="text-footnote text-label-2">Effort prévu {entry.effort}/10</p>
       {entry.workout && <>
-        <WorkoutSummary data={entry.workout} segments={entry.workout} compact />
         {entry.day <= today && <StartButton workout={entry.workout} profile={profile} />}
+        <Disclosure className="bg-surface-2" title="Détails du programme">
+          <div className="px-2 pb-2"><WorkoutSummary data={entry.workout} segments={entry.workout} compact /></div>
+        </Disclosure>
       </>}
       {entry.venue === 'treadmill' && entry.status === 'planned' && !entry.workout && <p className="text-footnote text-orange">Programme indisponible.</p>}
       {entry.status === 'in_progress' ? <Group><Row href={href.direct} title="Revenir au Direct" /></Group>
@@ -242,17 +239,17 @@ function SessionRow({ entry, today, profile, log }: { entry: PlanEntry; today: s
         {entry.manual ? 'Modifier le bilan' : 'Renseigner ma sortie'}
       </Button>}
     </div>
-  </Disclosure>
+    </Disclosure>
+  </div>
 }
 
-const navButton = 'pressable grid size-11 shrink-0 place-items-center rounded-full bg-fill-3 text-label'
-
-export function Planning({ profile, week, report }: { profile: string; week?: string; report?: string }) {
+function WeekPlanning({ profile, week, day, report }: { profile: string; week?: string; day?: string; report?: string }) {
   const { state, reload, update } = useSchedule(profile, week)
   const [sheet, setSheet] = useState<'setup' | 'review'>()
   const [received, setReceived] = useState<PlanDraft>()
   const [entry, setEntry] = useState<PlanEntry>()
   const [notice, setNotice] = useState('')
+  const [picked, setPicked] = useState(day)
   const close = () => { setSheet(undefined); setEntry(undefined) }
   const saved = (data: Schedule, message: string) => { update(data); setReceived(undefined); close(); setNotice(message) }
   const data = state.status === 'ok' ? state.data : undefined
@@ -262,53 +259,76 @@ export function Planning({ profile, week, report }: { profile: string; week?: st
   const canPlan = data && data.week <= shiftDay(data.today, 7) && shiftDay(data.week, 6) >= data.today
   const draft = received ?? data?.proposal
   const sessions = data?.plan?.sessions ?? []
+  const days = data ? Array.from({ length: 7 }, (_, i) => shiftDay(data.week, i)) : []
+  const currentWeek = data && days.includes(data.today)
+  const selected = data && (picked && days.includes(picked) ? picked : currentWeek ? data.today : sessions[0]?.day ?? data.week)
   const closed = sessions.filter(item => item.status === 'done' || item.status === 'shortened').length
   const missed = sessions.filter(item => item.status === 'missed').length
-  return <Page title="Planning" back={{ label: 'Aujourd’hui', href: href.today }}>
-    {state.status === 'loading' && <Skeleton label="Chargement du planning" />}
+  const select = (date: string, reveal: boolean) => {
+    setPicked(date)
+    if (!reveal) return
+    const anchor = document.getElementById(`planning-session-${date}`)
+    const details = anchor?.querySelector('details')
+    if (details) {
+      details.open = true
+      if (details.getBoundingClientRect().top > window.innerHeight * 0.68) anchor?.scrollIntoView({ block: 'start' })
+    }
+  }
+  return <>
+    <PlanningToolbar view="week" title={range} weekHref={data ? href.planningWeek(data.week, selected) : href.planning}
+      monthHref={selected ? href.planningMonth(selected.slice(0, 7), selected) : href.planningMonth()}
+      todayHref={data ? href.planningWeek(weekStart(data.today), data.today) : href.planning}
+      previous={data && href.planningWeek(shiftDay(data.week, -7))}
+      next={data && href.planningWeek(shiftDay(data.week, 7))} />
+    {state.status === 'loading' && <Skeleton label="Chargement de la semaine" />}
     {state.status === 'error' && <WorkoutError message={state.message} retry={reload} />}
-    {data && <>
-      <div className="mb-5 flex max-w-[720px] items-center justify-between gap-3">
-        <a className={navButton} aria-label="Semaine précédente" href={href.planningWeek(shiftDay(data.week, -7))}><ChevronLeft size={21} aria-hidden /></a>
-        <div className="min-w-0 text-center"><h2 className="text-title2">{range}</h2>
-          {data.today >= data.week && data.today <= shiftDay(data.week, 6) &&
-            <p className="mt-0.5 text-footnote text-label-2">Cette semaine</p>}</div>
-        <a className={navButton} aria-label="Semaine suivante" href={href.planningWeek(shiftDay(data.week, 7))}><ChevronRight size={21} aria-hidden /></a>
+    {data && selected && <>
+      <div className="planning-week-layout planning-week-top">
+        <PlanningDays days={days} selected={selected} today={data.today} sessions={sessions} onSelect={select} />
+        <div className="planning-week-actions">
+          {data.goal ? canPlan && <>
+            {report && <p className="px-1 text-footnote text-label-2">Le coach tiendra compte du bilan que tu viens d’ouvrir.</p>}
+            <Button onClick={() => setSheet('setup')}><CoachIcon size={19} aria-hidden />
+              {data.plan ? 'Adapter avec le coach' : 'Préparer avec le coach'}
+            </Button>
+            {draft && <Button variant="gray" size="md" onClick={() => setSheet('review')}>Relire la proposition</Button>}
+          </> : <Group><Row leading={<Tile><Target size={18} aria-hidden /></Tile>} title="Définir mon objectif"
+            subtitle="Choisis ce que le coach doit t’aider à atteindre." href={href.today} /></Group>}
+        </div>
       </div>
       {notice && <p role="status" className="mb-4 text-subhead text-green">{notice}</p>}
-      <div className="grid min-w-0 gap-7 desk:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)]">
-        <section className="grid min-w-0 content-start gap-3 desk:col-start-2 desk:row-start-1" aria-label="Objectif et préparation">
-          {data.goal ? <>
-            <Group><Row leading={<Tile><Target size={18} aria-hidden /></Tile>} title={data.goal.description}
-              subtitle={data.goal.target_date ? `${data.goal.milestone} · ${dayText(data.goal.target_date)}` : data.goal.milestone} /></Group>
-            {data.plan && <>
-              <div className="rounded-[14px] bg-surface px-4 py-3.5">
-                <h2 className="text-headline wrap-anywhere">{data.plan.focus}</h2>
-                <p className="mt-1 text-subhead leading-relaxed text-label-2 wrap-anywhere">{data.plan.explanation}</p>
-              </div>
-              <Phases phases={data.plan.phases} />
-              {data.plan.goal_revision !== data.goal.revision && <p className="text-footnote text-orange">Ton objectif a changé. Le coach peut adapter cette semaine.</p>}
-            </>}
-            {canPlan && <>
-              {report && <p className="text-footnote text-label-2">Le bilan que tu viens d’ouvrir sera pris en compte.</p>}
-              {draft && <Button variant="gray" onClick={() => setSheet('review')}>Relire la proposition</Button>}
-              <Button onClick={() => setSheet('setup')}><CoachIcon size={19} aria-hidden />
-                {data.plan ? 'Adapter avec le coach' : 'Préparer avec le coach'}
-              </Button>
-            </>}
-          </> : <Group><Row leading={<Tile><Target size={18} aria-hidden /></Tile>} title="Définir mon objectif"
-            subtitle="Depuis Aujourd’hui, choisis ce que le coach doit t’aider à atteindre." href={href.today} /></Group>}
-        </section>
-        <section className="desk:col-start-1 desk:row-start-1" aria-label="Séances de la semaine">
-          <SectionHeader title="Séances" />
-          {data.plan && sessions.length > 0 && <p className="mb-3 text-footnote text-label-2">
-            {closed} avec bilan sur {sessions.length}{missed > 0 && ` · ${missed} manquée${missed > 1 ? 's' : ''}`}
-          </p>}
-          {sessions.length ? <div className="grid gap-2.5">
-            {sessions.map(item => <SessionRow key={item.id} entry={item} profile={profile} today={data.today} log={() => setEntry(item)} />)}
+      <div className="planning-week-layout">
+        <section className="min-w-0" aria-label="Séances de la semaine">
+          <div className="planning-agenda-head">
+            <h2 className="text-title2">{currentWeek ? 'Cette semaine' : 'Séances de la semaine'}</h2>
+            {sessions.length > 0 && <p className="text-footnote text-label-2">{closed} avec bilan sur {sessions.length}
+              {missed > 0 && ` · ${missed} manquée${missed > 1 ? 's' : ''}`}</p>}
+          </div>
+          {picked && days.includes(picked) && sessions.length > 0 && !sessions.some(item => item.day === picked) &&
+            <p role="status" className="mb-3 rounded-xl bg-surface px-3.5 py-3 text-subhead text-label-2">
+              Aucune séance prévue le {dayText(picked, true)}.
+            </p>}
+          {sessions.length ? <div className="grid gap-2">
+            {sessions.map(item => <SessionRow key={item.id} entry={item} profile={profile} today={data.today}
+              selected={item.day === selected} log={() => setEntry(item)} />)}
           </div> : <Group><Row leading={<Tile color="var(--color-label-2)"><CalendarDays size={18} aria-hidden /></Tile>}
             title={data.plan ? 'Semaine sans séance prévue' : 'Semaine à préparer'} /></Group>}
         </section>
+        {data.goal && <section className="grid min-w-0 content-start gap-3" aria-label="Objectif et préparation">
+          <h2 className="text-title2">Mon objectif</h2>
+            <Group><Row leading={<Tile><Target size={18} aria-hidden /></Tile>} title={data.goal.description}
+              subtitle={data.goal.target_date ? `${data.goal.milestone} · ${dayText(data.goal.target_date)}` : data.goal.milestone} /></Group>
+            {data.plan && <>
+              <Disclosure title="Le conseil du coach">
+                <div className="px-4 pb-4">
+                  <h3 className="text-headline wrap-anywhere">{data.plan.focus}</h3>
+                  <p className="mt-1 text-subhead leading-relaxed text-label-2 wrap-anywhere">{data.plan.explanation}</p>
+                </div>
+              </Disclosure>
+              <Phases phases={data.plan.phases} />
+              {data.plan.goal_revision !== data.goal.revision && <p className="text-footnote text-orange">Ton objectif a changé. Le coach peut adapter cette semaine.</p>}
+            </>}
+        </section>}
       </div>
       {sheet === 'setup' && <SetupSheet data={{ ...data, proposal: draft ?? null }} profile={profile} report={report}
         close={close} receive={value => { setReceived(value); setSheet(current => current === 'setup' ? 'review' : current) }} />}
@@ -317,5 +337,13 @@ export function Planning({ profile, week, report }: { profile: string; week?: st
       {entry && <OutdoorSheet data={data} entry={entry} profile={profile} close={close}
         saved={value => saved(value, 'Bilan de la sortie enregistré.')} />}
     </>}
+  </>
+}
+
+export function Planning(props: { profile: string; week?: string; day?: string; report?: string; view?: 'month'; month?: string }) {
+  return <Page title="Planning" back={props.report ? { label: 'Bilan', href: href.report(props.report) } : undefined}>
+    <div className="planning-page">
+      {props.view === 'month' ? <MonthPlanning profile={props.profile} month={props.month} day={props.day} /> : <WeekPlanning {...props} />}
+    </div>
   </Page>
 }

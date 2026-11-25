@@ -9,13 +9,14 @@ export interface SchedulePhase { until: string; focus: string }
 export interface SessionSpec { day: string; name: string; minutes: number; purpose: string; effort: number; venue: Venue }
 export interface ManualReport { minutes: number; km: number | null; feeling: number | null }
 export type EntryStatus = 'planned' | 'done' | 'shortened' | 'missed' | 'in_progress'
-export interface PlanEntry extends SessionSpec {
+export interface CalendarEntry extends SessionSpec {
   id: string
   status: EntryStatus
-  workout: Workout | null
   report: { id: string; active_s: number; feeling: number | null } | null
   manual?: ManualReport
 }
+export interface PlanEntry extends CalendarEntry { workout: Workout | null }
+export interface ScheduleMonth { month: string; today: string; sessions: CalendarEntry[] }
 export interface PlanDraft {
   id: string
   allowed: string[]
@@ -43,11 +44,13 @@ const isSession = (v: unknown): v is SessionSpec => isRecord(v) && hasDay(v.day)
 const isPhase = (v: unknown): v is SchedulePhase => isRecord(v) && hasDay(v.until) && typeof v.focus === 'string'
 const isPlan = (v: unknown) => isRecord(v) && typeof v.focus === 'string' && typeof v.explanation === 'string'
   && Array.isArray(v.phases) && v.phases.every(isPhase) && Array.isArray(v.sessions)
-const isEntry = (v: unknown): v is PlanEntry => isRecord(v) && isSession(v) && typeof v.id === 'string'
+const isCalendarEntry = (v: unknown): v is CalendarEntry => isRecord(v) && isSession(v) && typeof v.id === 'string'
   && ['planned', 'done', 'shortened', 'missed', 'in_progress'].includes(String(v.status))
-  && (v.workout === null || isWorkout(v.workout))
   && (v.report === null || isRecord(v.report) && typeof v.report.id === 'string' && typeof v.report.active_s === 'number')
   && (v.manual === undefined || isRecord(v.manual) && typeof v.manual.minutes === 'number')
+const isEntry = (v: unknown): v is PlanEntry => isRecord(v) && isCalendarEntry(v) && (v.workout === null || isWorkout(v.workout))
+const isMonth = (v: unknown): v is ScheduleMonth => isRecord(v) && hasDay(v.today) && typeof v.month === 'string'
+  && /^\d{4}-\d{2}$/.test(v.month) && Array.isArray(v.sessions) && v.sessions.every(isCalendarEntry)
 const isDraft = (v: unknown): v is PlanDraft => isRecord(v) && typeof v.id === 'string' && Array.isArray(v.allowed)
   && v.allowed.every(hasDay) && Array.isArray(v.replaces) && v.replaces.every(isSession)
   && isRecord(v.request) && isAvailability(v.request.availability) && isPlan(v.data) && isRecord(v.data)
@@ -63,6 +66,8 @@ const isSchedule = (v: unknown): v is Schedule => isRecord(v) && hasDay(v.week) 
 const path = (profile: string) => `/api/profiles/${encodeURIComponent(profile)}/schedule`
 export const readSchedule = (profile: string, week?: string) =>
   api(`${path(profile)}${week ? `?week=${encodeURIComponent(week)}` : ''}`, { validate: isSchedule })
+export const readScheduleMonth = (profile: string, month?: string) =>
+  api(`${path(profile)}/month${month ? `?month=${encodeURIComponent(month)}` : ''}`, { validate: isMonth })
 export const suggestSchedule = (profile: string, body: ScheduleRequest) =>
   api(`${path(profile)}/suggest`, { method: 'POST', body, validate: isDraft, timeout: 114_000 })
 export const acceptSchedule = (profile: string, week: string, id: string, placements: { slot: number; day: string }[]) =>
@@ -70,16 +75,16 @@ export const acceptSchedule = (profile: string, week: string, id: string, placem
 export const saveOutdoor = (profile: string, week: string, id: string, revision: number, values: ManualReport) =>
   api(`${path(profile)}/${week}/outdoor/${id}`, { method: 'PATCH', body: { ...values, revision }, validate: isSchedule })
 
-type State = { status: 'loading' } | { status: 'error'; message: string } | { status: 'ok'; data: Schedule }
-export function useSchedule(profile: string, week?: string) {
-  const [state, setState] = useState<State>({ status: 'loading' })
+type State<T> = { status: 'loading' } | { status: 'error'; message: string } | { status: 'ok'; data: T }
+function useScheduleRead<T>(profile: string, period: string | undefined, read: (profile: string, period?: string) => Promise<T>) {
+  const [state, setState] = useState<State<T>>({ status: 'loading' })
   const [attempt, setAttempt] = useState(0)
   const revision = useRef(0)
   useEffect(() => {
     let active = true
     const load = () => {
       const generation = ++revision.current
-      readSchedule(profile, week)
+      read(profile, period)
         .then(data => { if (active && generation === revision.current) setState({ status: 'ok', data }) })
         .catch(err => { if (active && generation === revision.current) setState({ status: 'error', message: errorMessage(err) }) })
     }
@@ -87,19 +92,33 @@ export function useSchedule(profile: string, week?: string) {
     load()
     document.addEventListener('visibilitychange', visibility)
     return () => { active = false; document.removeEventListener('visibilitychange', visibility) }
-  }, [profile, week, attempt])
+  }, [profile, period, attempt, read])
   return {
     state,
     reload: () => { setState({ status: 'loading' }); setAttempt(n => n + 1) },
-    update: (data: Schedule) => { revision.current++; setState({ status: 'ok', data }) },
+    update: (data: T) => { revision.current++; setState({ status: 'ok', data }) },
   }
 }
 
+export const useSchedule = (profile: string, week?: string) => useScheduleRead(profile, week, readSchedule)
+export const useScheduleMonth = (profile: string, month?: string) => useScheduleRead(profile, month, readScheduleMonth)
+
 const dayFormatter = new Intl.DateTimeFormat('fr-FR', { day: 'numeric', month: 'long', timeZone: 'UTC' })
 const weekdayFormatter = new Intl.DateTimeFormat('fr-FR', { weekday: 'long', day: 'numeric', month: 'long', timeZone: 'UTC' })
+const monthFormatter = new Intl.DateTimeFormat('fr-FR', { month: 'long', year: 'numeric', timeZone: 'UTC' })
 export const dayText = (day: string, weekday = false) => (weekday ? weekdayFormatter : dayFormatter).format(new Date(day))
+export const monthText = (month: string) => monthFormatter.format(new Date(`${month}-01`))
 export function shiftDay(day: string, amount: number) {
   const value = new Date(day)
   value.setUTCDate(value.getUTCDate() + amount)
   return value.toISOString().slice(0, 10)
 }
+
+export function shiftMonth(month: string, amount: number) {
+  const value = new Date(`${month}-01`)
+  value.setUTCMonth(value.getUTCMonth() + amount)
+  return value.toISOString().slice(0, 7)
+}
+
+export const weekdayIndex = (day: string) => (new Date(day).getUTCDay() + 6) % 7
+export const weekStart = (day: string) => shiftDay(day, -weekdayIndex(day))

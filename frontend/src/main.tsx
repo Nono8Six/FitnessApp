@@ -63,7 +63,7 @@ function App() {
           : route.name === 'report' ? <Report profile={profile.id} id={route.id} />
           : route.name === 'recordings' ? <Reports profile={profile.id} workoutId={route.workoutId} />
           : route.name === 'planning' ? <Suspense fallback={<Page title="Planning"><Skeleton label="Chargement du planning" /></Page>}>
-            <Planning profile={profile.id} week={route.week} report={route.report} />
+            <Planning profile={profile.id} week={route.week} day={route.day} report={route.report} view={route.view} month={route.month} />
           </Suspense>
           : route.name === 'coach' ? <Suspense fallback={<Page title="Coach"><p role="status" className="text-label-2">Chargement…</p></Page>}><Coach profile={profile.id} target={route.target} conversationId={route.conversationId} createWorkout={route.createWorkout} progress={route.progress} /></Suspense>
           : <Today profile={profile.id} />}
