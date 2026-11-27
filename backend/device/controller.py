@@ -81,6 +81,7 @@ class Controller:
         # Observateurs métier : copie/enfilement uniquement, aucune écriture SQL.
         self.recording_listener = None
         self.target_listener = None
+        self.halt_listener = None
         self.log("info", "Contrôleur prêt", mode="simulation" if simulation else "ble")
 
     def log(self, level: str, message: str, **details):
@@ -365,11 +366,18 @@ class Controller:
             self.control_acquired = False
             self.armed_until = 0
             self.log("error", "Le tapis a retiré l'autorisation de contrôle")
+            if self.halt_listener:
+                self.halt_listener("Le tapis a retiré le contrôle.", pause=False)
         elif data and data[0] in (0x01, 0x02, 0x03):
-            # Console stop, reset or safety key: never let a program restart it.
             self.armed_until = 0
             self.restart_after = time.monotonic() + STOP_SETTLE_SECONDS
-            self.log("warning", "Arrêt, pause ou réinitialisation demandé sur le tapis : contrôle désarmé")
+            # FTMS : seul 02 02 désigne une pause volontaire. Tout autre
+            # motif d'arrêt, y compris un paramètre inconnu, reste définitif.
+            pause = data == b"\x02\x02"
+            reason = "Pause sur le tapis" if pause else "Arrêt signalé par le tapis"
+            self.log("warning", reason)
+            if self.halt_listener:
+                self.halt_listener(reason, pause=pause)
 
     def _ensure_restart_ready(self):
         # RUN500 can report zero speed before its final stop/pause notification.

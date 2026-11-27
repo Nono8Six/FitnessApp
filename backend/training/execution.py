@@ -69,6 +69,7 @@ class Execution:
         self.totals = Totals(None)
         self.controller.recording_listener = self.recorder.device_event
         self.controller.target_listener = self._console_target
+        self.controller.halt_listener = self._console_halt
 
     @property
     def limits(self):
@@ -258,13 +259,26 @@ class Execution:
         self.active_since = None
 
     def request_halt(self, reason="Arrêt demandé", *, pause=False):
+        self._request_halt(reason, "pause" if pause else "stop")
+
+    def _console_halt(self, reason, *, pause):
+        if self.phase not in ACTIVE or self.phase == "unknown":
+            return
+        if pause and not self.controller.command_lock.locked():
+            self._request_halt(reason, "console_pause")
+        else:
+            # Une commande en vol peut encore agir après le signal du tapis.
+            self.request_halt(reason, pause=pause)
+
+    def _request_halt(self, reason, action):
         if self.phase == "idle" or self.phase in TERMINAL:
             return
         if self.phase == "unknown":
             raise ControllerError("État de la bande inconnu. Utilisez le STOP physique, puis reconnectez le tapis.")
+        pause = action != "stop"
         if self.phase == "stopping" or (self.phase in {"pausing", "paused"} and pause):
             return
-        self.recorder.add("request", {"label": "Pause demandée" if pause else reason, "pause": pause})
+        self.recorder.add("request", {"label": "Pause demandée" if action == "pause" else reason, "pause": pause})
         if self.phase == "countdown":
             self.requested = "cancel"
             self.phase = "cancelled"
@@ -272,7 +286,7 @@ class Execution:
             self.reason = "Démarrage annulé · aucune commande de mouvement envoyée"
             return
         self._freeze()
-        self.requested = "pause" if pause else "stop"
+        self.requested = action
         self.reason = reason
         self.phase = "pausing" if pause else "stopping"
         # Bloque immédiatement les étapes moteur suivantes ; l'échange envoyé
@@ -407,14 +421,14 @@ class Execution:
             self.controller._ensure_ready(self.owner)
 
     async def _exchange(self, action, value=None):
-        if self.requested in ("stop", "pause", "cancel"):
+        if self.requested:
             return False
         self._alive()
         await self.controller._exchange(action, value)
         if action in ("speed", "incline"):
             self.controller.targets["speed_kmh" if action == "speed" else "incline_pct"] = value
             self.applied_targets[action] = value
-        return self.requested not in ("stop", "pause", "cancel")
+        return not self.requested
 
     async def _observe(self, since, predicate, timeout=15, revision=None):
         end = time.monotonic() + timeout
@@ -502,11 +516,19 @@ class Execution:
             if c.phase != "connected" or not c.control_acquired or c.desynchronized:
                 raise ControllerError("Arrêt non confirmé. Utilisez le STOP physique, puis reconnectez le tapis.")
             since = time.monotonic()
-            await c.halt(self.reason or "Arrêt demandé", pause=pause)
+            console_paused = pause and self.requested == "console_pause"
+            if console_paused:
+                c.owner = None  # Le tapis a déjà signalé sa pause, observer la bande.
+            else:
+                await c.halt(self.reason or "Arrêt demandé", pause=pause)
             self.applied_targets["speed"] = 0
-            # Réponse positive ET zéro plus récent ET fenêtre sans état tardif.
+            # Après le signal matériel ou l'acquittement, attendre un nouveau
+            # zéro après la fenêtre de stabilisation du dernier signal.
             deadline = time.monotonic() + STOP_CONFIRM_TIMEOUT
             while True:
+                if pause and self.requested == "stop":
+                    await self._halt(False)
+                    return
                 self._fresh()
                 if c.desynchronized:
                     raise ControllerError("Résultat de l'arrêt inconnu. Utilisez le STOP physique.")
@@ -514,17 +536,20 @@ class Execution:
                 if time.monotonic() >= quiet and c.telemetry.get("speed_kmh") == 0 and c.received_at.get("speed_kmh", 0) > quiet:
                     break
                 if time.monotonic() >= deadline:
+                    if console_paused and c.telemetry["speed_kmh"] > 0:
+                        self.request_halt("La bande roule encore après la pause du tapis.")
+                        await self._halt(False)
+                        return
                     raise ControllerError("L'arrêt de la bande n'a pas été confirmé. Utilisez le STOP physique.")
                 await asyncio.sleep(.1)
-            c.last_command["status"] = "observed"
-            if pause and self.requested == "stop":
-                await self._halt(False)
-                return
+            if not console_paused:
+                c.last_command["status"] = "observed"
             self.stop_confirmed = True
             self.markers.append({"t": round(time.monotonic() - self.began, 2), "label": "Pause" if pause else "Arrêt"})
             if pause and self.requested != "stop":
                 self.phase = "paused"
-                self.pause_since = time.monotonic()
+                if self.pause_since is None:
+                    self.pause_since = time.monotonic()
                 self.requested = None
             else:
                 self.paused = self.pause_time()
@@ -560,8 +585,8 @@ class Execution:
                 return
             self.phase = "starting"
             while self.phase not in TERMINAL and self.phase != "unknown":
-                if self.requested in ("stop", "pause"):
-                    await self._halt(self.requested == "pause")
+                if self.requested in ("stop", "pause", "console_pause"):
+                    await self._halt(self.requested != "stop")
                 elif self.phase == "starting":
                     self.requested = None
                     await self._launch()

@@ -344,6 +344,75 @@ class ExecutionTests(unittest.IsolatedAsyncioTestCase):
         self.assertIn("signalé un arrêt", self.e.reason)
         self.assertFalse(self.e.snapshot(OWNER)["can_resume"])
 
+    async def test_run500_console_pause_can_resume_the_same_block(self):
+        await self.real()
+        await self.start_running()
+        self.e.active_since -= 31
+        await self.wait("running", block=1)
+        session_id = self.e.id
+        writes = len(self.client.writes)
+        status = self.client.callbacks[ftms.STATUS]
+        status(None, bytes.fromhex("050000"))
+        status(None, bytes.fromhex("0202"))
+        self.client.speed = 0
+        self.client.measure()
+        await self.wait("paused", timeout=2)
+        frozen = self.e.active_time()
+        status(None, bytes.fromhex("0202"))  # Le RUN500 répète la notification à l'arrêt.
+        with self.assertRaises(ControllerError):
+            await self.e.resume(OWNER)
+        await asyncio.sleep(.12)
+        self.assertEqual(self.client.writes[writes:], [])
+        self.assertEqual(self.e.active_time(), frozen)
+        self.assertTrue(self.e.snapshot(OWNER)["can_resume"])
+        await self.e.resume(OWNER)
+        await self.wait("running")
+        self.assertEqual((self.e.id, self.e.block), (session_id, 1))
+        self.assertGreater(self.e.active_time(), frozen)
+        self.assertEqual((self.client.speed, self.client.incline), (2.5, 1))
+
+    async def test_safety_key_or_stop_overrides_console_pause(self):
+        await self.real()
+        for frame in ("0201", "03", "01", "02"):
+            with self.subTest(status=frame):
+                await self.start_running()
+                status = self.client.callbacks[ftms.STATUS]
+                status(None, bytes.fromhex("0202"))
+                self.client.speed = 0
+                self.client.measure()
+                await self.wait("paused")
+                status(None, bytes.fromhex(frame))
+                status(None, bytes.fromhex("0202"))
+                await self.wait("stopped")
+                await self.e.task
+                self.assertFalse(self.e.snapshot(OWNER)["can_resume"])
+
+    async def test_console_pause_without_measured_zero_blocks_resume(self):
+        await self.real()
+        await self.start_running()
+        self.client.ignore_stop = True
+        writes = len(self.client.writes)
+        with patch("backend.training.execution.STOP_CONFIRM_TIMEOUT", .2):
+            self.client.callbacks[ftms.STATUS](None, bytes.fromhex("0202"))
+            await self.wait("unknown")
+        self.assertFalse(self.e.stop_confirmed)
+        self.assertFalse(self.e.snapshot(OWNER)["can_resume"])
+        self.assertEqual(self.client.writes[writes:], [ftms.encode_command("stop")])
+
+    async def test_console_pause_during_adjustment_finishes_only_the_inflight_command(self):
+        await self.real()
+        await self.start_running()
+        writes = len(self.client.writes)
+        self.client.delay = .2
+        self.e.adjust(OWNER, .5, .5)
+        async with asyncio.timeout(2):
+            while not self.c.command_lock.locked():
+                await asyncio.sleep(.01)
+        self.client.callbacks[ftms.STATUS](None, bytes.fromhex("0202"))
+        await self.wait("paused")
+        self.assertEqual(self.client.writes[writes:], [ftms.encode_command("incline", .5), ftms.encode_command("pause")])
+        self.assertTrue(self.e.stop_confirmed)
+
     async def test_expiry_and_pause_budget_are_not_renewed(self):
         await self.start_running()
         self.e.deadline = time.monotonic() - 1
