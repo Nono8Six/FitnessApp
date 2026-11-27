@@ -1,624 +1,112 @@
-# Fitness App : plan de construction de la V1, brique par brique
-
-4 octobre 2026. Ce plan remplace le précédent découpage en étapes et maquettes. **On construit l’application réelle, une brique après l’autre.** Chaque brique livre une fonction utilisable de bout en bout : interface, API et données. Code professionnel, contrôles ciblés, push direct, puis amélioration à l'usage selon [AGENTS.md](AGENTS.md). Aucune maquette, aucune donnée inventée.
-
-## Suivi
-
-Une seule brique en cours dans le périmètre demandé. Les cases indiquent les fonctions livrées sur `main` ; la suite ne nécessite plus de validation humaine systématique.
-
-**Décision du 25 novembre 2026.** FitnessApp conserve l’objectif, le programme et le suivi de chaque profil. Le coach construit le planning selon l’objectif choisi, l’adapte aux séances réalisées et au ressenti, puis aide à poursuivre ou à reprendre. Foulée sort du périmètre.
-
-- [x] **Brique 0 · Design** : direction visuelle sombre, téléphone et PC, validée le 4 octobre 2026 ([DESIGN.md](DESIGN.md)).
-- [x] **Brique 1 · Socle** : l’app s’ouvre sur le PC et le téléphone, servie par le PC, sans donnée de démonstration.
-- [x] **Brique 2 · Profils** : base SQLite, profils créés, renommés et supprimés, choix du profil.
-- [x] **Brique 3 · Séances manuelles** : créer, modifier, dupliquer, supprimer et retrouver ses séances ; choix pour Aujourd’hui par profil.
-- [x] **Brique 4 · Connexion ChatGPT** : connexion sur le PC, compte et permission du forfait vérifiés, modèles du compte, coffre Windows et reprise de session. Limites des essais détaillées ci-dessous.
-- [x] **Brique 5 · Coach** : conversations persistantes, lecture des données existantes et mémoire contrôlée ; réponses réelles vérifiées, cache automatique préparé sans gain observé lors des essais courts.
-- [x] **Brique 6 · Catalogue et séances personnalisées** : six formats, trois niveaux, copies personnelles ; création et ajustement ChatGPT validés, persistants et acceptés explicitement.
-- [ ] **Brique 7 · Tapis dans l’app** : logiciel livré, connexion en lecture seule et état en direct vérifiés en simulation ; essai RUN500 et téléphone physique restant à faire.
-- [x] **Brique 8 · Exécuter une séance** : moteur réel et simulé, Direct, pause/reprise et arrêt ; simulation vérifiée, réception physique de l’application encore ouverte.
-- [x] **Brique 9 · Enregistrer et revoir** : mesures conservées, bilan réel, ressenti.
-- [ ] **Brique 10 · RUN500 réel** : réception matérielle progressive du parcours et des pertes.
-- [ ] **Brique 11 · Historique et semaine** : un objectif actif par profil, historique et progression calculée à partir des séances réelles.
-- [x] **Brique 12 · Coach informé** : bilans du profil, mémoire sourcée, personnalisation et sources ouvrables ; limites et vérifications dans la refonte du 13 octobre ci-dessous.
-- [x] **Brique 13 · Programme et suivi avec le coach** : échéances et étapes, semaines datées à confirmer, suivi des séances et ajustements à partir des bilans et du ressenti.
-- [ ] **Brique 14 · Graphiques avancés** : comparaison, calendrier, distributions, tendances, qualité.
-- [ ] **Brique 15 · Données** : exports, imports FIT/TCX, sauvegarde et restauration.
-- [ ] **Brique 16 · Usage quotidien Windows** : lanceur, démarrage simple, hors ligne, performances.
-- [ ] **Brique 17 · Réception finale** : parcours complet sur les vrais appareils.
-
-### Retour au calme automatique — 22 novembre 2026
-
-- [x] Après le dernier bloc prévu, le Direct ajoute 1 min de retour au calme à 5 km/h maximum, avec la pente du dernier bloc. Le tapis n’accélère pas pour atteindre 5 km/h. Cette minute démarre quand la consigne est observée, figure au bilan et se termine par l’arrêt automatique confirmé. « Terminer » demande l’arrêt immédiatement, y compris pendant le retour au calme. Le programme enregistré conserve sa durée d’origine.
-- La séance continue sur le PC quand le téléphone passe sur une autre application. Le Direct retrouve la séance au retour. Le PC doit rester allumé et connecté au tapis. La vérification matérielle sur le RUN500 reste ouverte.
-- 54 tests ciblés et build réussis. Dans Chrome au format téléphone, une course simulée de 30 s à 8,5 km/h a continué pendant que sa page était fermée. Retour à 5 km/h, 60 s actives supplémentaires, arrêt confirmé à zéro et bilan enregistré de 1:30. L’arrêt volontaire pendant cette phase est vérifié avec le transport Bluetooth de test.
-
-### Navigation pendant une séance — 22 novembre 2026
-
-- [x] « Accueil » réduit le Direct. « Revenir au Direct » reste visible au-dessus des onglets ou dans la barre latérale pendant la course et la pause. « Terminer » demande l’arrêt et le bilan s’ouvre après confirmation et enregistrement. Le programme garde sa fin prévue et le tapis ses protections.
-- Build et Chrome vérifiés à 360 × 640 et sur PC. Même séance et durée croissante pendant les allers-retours entre Direct, Aujourd’hui, Séances et Bilans. Pause conservée pendant la navigation, reprise après les deux confirmations, puis arrêt confirmé à zéro avec bilan enregistré. Le retour navigateur du test de course retrouve aussi l’accueil de la simulation. Essais sans RUN500 physique.
-
-### Direct sans défilement — 22 novembre 2026
-
-- [x] Bloc, temps restant, prochain bloc, cumuls et commandes réunis sur un écran. Le graphique superpose la vitesse et la pente dès l’ouverture. En mode Données, la durée active et la distance dominent. L’allure, le temps restant, la vitesse et la pente se lisent simultanément et les deux cibles tiennent sur une ligne. Les outils de réglage et de consultation remplacent temporairement le tableau.
-- Vérifié en simulation dans Chrome sur neuf formats, de 320 × 480 à 1280 × 800, dont trois en paysage sur téléphone. La vérification porte sur les deux vues, le défilement, les chevauchements, l’accès aux quatre outils, la lecture au clavier et le parcours pause, double confirmation de reprise, arrêt et bilan. Une interruption du flux simulé a aussi vérifié l’affichage de l’alerte et la désactivation des commandes. Essais sur téléphones physiques et RUN500 réel encore ouverts.
-
-### Interface mobile — 22 novembre 2026
-
-- [x] Aujourd’hui donne accès au choix ou au départ de la séance et au dernier bilan du profil. La barre du bas ouvre Aujourd’hui, Séances, Bilans et Coach. Le catalogue et l’éditeur placent les actions de préparation avant le détail des graphiques.
-- [x] Direct présente le bloc, sa progression, l’allure ou la vitesse et le temps restant, puis le bloc suivant. Les commandes restent visibles en portrait et en paysage. Les diagnostics et explications sont repliés. Les formulaires, feuilles, bilans, Coach et le compagnon Santé Android 1.1 reprennent les mêmes conventions mobiles.
-- Vérifications dans Chrome de 320 à 390 px en portrait, à 740 × 360 en paysage et à 1280 × 800 sur PC. Une course simulée a couvert le départ, la pause, la double confirmation de reprise, l’arrêt et la lecture du bilan. Les deux interfaces web compilent, les 14 tests ciblés des exports passent et le compagnon signé s’ouvre sous Android 15 émulé. Les essais sur téléphone physique et sur le RUN500 restent ouverts.
-
-### Enregistrer la séance sur son téléphone — 20 novembre 2026
-
-- [x] Depuis le bilan réel, **Enregistrer la séance** utilise le profil associé à ce navigateur, l’activité habituelle et la préférence calorique choisie dans Réglages. L’app du PC continue de conserver le bilan.
-- [x] Compagnon Android 14+ signé, installé depuis le serveur local. Écriture de l’exercice, de la distance complète disponible et des kcal actives via Santé Connect. Installation, autorisations et relecture des trois données vérifiées sur Android 15 émulé, y compris après un deuxième envoi.
-- [x] Sur iPhone, préparation des données et ouverture du raccourci Apple pour l’activité choisie. Création initiale du raccourci et réception de la première séance dans Santé à effectuer sur l’iPhone. L’installation et le parcours complet sur les deux téléphones physiques restent à vérifier.
-- Les anciens exports restent disponibles dans **Autres méthodes d’export**. [Configuration du téléphone](docs/ENREGISTREMENT_SANTE.md).
-
-### Apple Santé par FitnessSyncer — 25 octobre 2026
-
-À la demande d’Arnaud, le bilan prépare une séance dans le Notebook gratuit FitnessSyncer depuis PC ou téléphone, avec choix Marche/Course et valeurs à comparer avant sauvegarde. **Préparation web livrée ; compte connecté et carnet observés, mais réception du formulaire et de Santé/Forme sur iPhone non vérifiée.** Cette extension ne clôture pas la brique 15.
-
-- Réutilisation des contrôles d’export Raccourcis : séances réelles clôturées avec arrêt confirmé, durée active, distance complète ; aucun pas inventé ni profil/poids transmis. Dates UTC avec fuseau, unités km/secondes et encodage contrôlés.
-- Calories actives obligatoires et complètes : estimation unique incluse, choix explicite de la borne basse/haute en cas de plage, incertitude conservée en note ; correspondance énergie active Apple encore à vérifier. Vitesses moyenne/maximale mesurées et ressenti ajoutés ; pente moyenne en note. Courbes et chronologie des pauses non transportées.
-- Connexion préalable nécessaire : l’accès déconnecté peut perdre les champs du formulaire. Confirmation du compte et de l’absence de doublon, repère local d’ouverture, jamais de faux statut « synchronisé ». Le parcours Raccourcis reste accessible.
-- **Vérifications :** douze tests ciblés du contrat, build TypeScript/Vite, Chrome PC et 390 × 844 sur le bilan réel, choix des calories, aide, unités/fuseau du lien décodé et repère d'ouverture persistant. Premier onglet ouvert avant l'ajout des calories ; inspection du destinataire refusée par le contrôle automatique du navigateur (adresse signalée invalide). Aucun appel REST authentifié, enregistrement FitnessSyncer ni transfert Santé testé. [Configuration et limites](docs/FITNESS_SYNCER.md).
-
-### Apple Santé par Raccourcis — 24 octobre 2026
-
-À la demande d’Arnaud, extension gratuite du bilan, sans compte Strava ni application mobile FitnessApp. **Bouton et transmission côté web livrés ; configuration du raccourci et réception dans Santé sur iPhone restantes.** Cette extension ne clôture pas la brique 15.
-
-- Le bilan propose « Envoyer vers Apple Santé », un récapitulatif et l’aide de création du raccourci « Fitness vers Santé ». L’ouverture est disponible sur iPhone/iPad, après confirmation du profil et de l’absence de doublon. Aucun envoi automatique.
-- Reprise des calculs du bilan : durée active, distance complète et kcal actives uniquement lorsqu’une valeur unique complète existe. Aucune estimation de pas, aucun poids ni nom de profil transmis. Simulations, séances non clôturées ou arrêt incertain, pertes de données et durée nulle exclus.
-- Pas de faux statut « synchronisé » : Chrome ne reçoit pas de confirmation Santé. Chronologie des pauses non conservée par l’action Apple ; limitation affichée. Le raccourci doit être créé sur l’iPhone, aucun fichier non signé fourni. Contrat et configuration dans [Apple Santé](docs/APPLE_SANTE.md).
-
-**Vérifications :** quatre tests ciblés du contrat d’export et build TypeScript/Vite réussis. Chrome sur le bilan réel, PC et 390 × 844 : récapitulatif, aide, lien local Apple décodé sans le lancer, kcal ambiguës omises et absence de débordement horizontal ; aucune erreur console observée. **Aucune écriture dans Santé ni réception sur iPhone physique effectuée.** Recharger Chrome pour recevoir le bouton.
-
-### Revue et corrections du 13 octobre 2026
-
-Revue des fonctions déjà livrées : calculs ACSM et dénivelé, expansion des répétitions, adaptation du catalogue, temps actif/pause, distances et moyennes, commandes FTMS, sauvegarde, profils, Coach, interface et lanceur. Les briques restantes ci-dessus gardent leur périmètre.
-
-- Distance du Direct alignée sur le calcul du bilan : mêmes intervalles valides, coupures exclues, décélération finale conservée, absence distincte de zéro. Le calcul historique du bilan reste inchangé.
-- Flux WebSocket : une mesure arrivée pendant l'envoi d'un message est livrée au suivant, sans avancer le repère sur des données non envoyées.
-- Suppression du profil refusée pendant sa séance et jusqu'à la sauvegarde finale du bilan.
-- Courbes du Direct : coupures de plus de 2 s visibles, pas de valeur éloignée présentée au curseur comme une mesure disponible.
-- Éditeur vide : erreur explicite. Catalogue : une cible invalide empêche d'enregistrer le programme correspondant à l'ancienne cible.
-- Simulation prolongée : un compteur dépassant sa largeur FTMS devient indisponible sans interrompre la vitesse et la pente. Une rupture réseau pendant la lecture d'une réponse API est distinguée d'un JSON invalide.
-- Texte du Coach actualisé : les bilans existent, mais ses outils ne peuvent pas encore les consulter. Deux attentes de tests obsolètes sur les objectifs caloriques supérieurs à une heure sont corrigées ; les limites actuelles du catalogue sont conservées.
-
-**Vérification :** 182 tests backend et 10 tests du superviseur Windows réussis sur données/ports isolés, quatre contrôles du client API réussis et build frontend avec TypeScript. Dans Chrome, création, validation, connexion simulée, démarrage, ajustements, pause/reprise, arrêt, bilan et ressenti ; contrôle PC et 390 × 844. Sur la séance simulée contrôlée : Direct et bilan donnent 45 m, 3,24 km/h de moyenne et 2,2 kcal actives estimées ; une pause ne modifie pas les cumuls d'effort.
-
-**Limites :** aucun mouvement du RUN500 ni essai sur téléphone physique. Pas de nouvelle connexion ni de requête réelle au Coach ; ses contrats sont contrôlés par les tests. La réception matérielle et les briques 11 à 17 restent ouvertes.
-
-### Corrections après course du 17 octobre 2026
-
-- Anti-veille pendant la séance : Wake Lock quand disponible, repli vidéo NoSleep.js pour Chrome sur l’adresse Wi-Fi HTTP ; état et nouvelle tentative visibles. Libération en fin de séance, nouvelle demande au retour au premier plan. La suspension de Chrome par Android reste possible.
-- Perte du contact propriétaire ou fermeture de la page : pause protectrice reprenable, au lieu de clôturer la séance. Temps, bloc, ajustements et enregistrement conservés ; reprise explicite avec nouvelles confirmations. Un nouvel écran peut reprendre une pause si l’ancien propriétaire est absent depuis plus de 12 s. Les limites de durée, les erreurs Bluetooth et les arrêts incertains restent protecteurs.
-- Calories : les scénarios marche/course déjà calculés sont affichés dans Direct, les fiches et les bilans. Le bilan réel de la course du 17 octobre, auparavant vide pour les kcal, retrouve ainsi ses estimations sans modification des données conservées.
-
-**Vérifications :** 63 tests ciblés moteur/API/enregistrement/calories/Coach/serveur réussis et build frontend avec TypeScript. Chrome au format téléphone : anti-veille actif sur HTTP avec repli vidéo, suspension du JavaScript → pause confirmée sans clôture, reprise au même point ; fermeture du propriétaire et reprise sur un nouvel écran. Wake Lock natif acquis puis libéré à la fin ; kcal Direct/bilan identiques et bilan réel affichant ses scénarios. Aucun mouvement matériel provoqué par ces contrôles. Effet anti-veille sur le Samsung S25 physique et réception complète du RUN500 restant à confirmer ; le serveur lancé avant la correction doit être redémarré depuis le lanceur.
-
-### Course autonome et vue graphique — 17 octobre 2026
-
-À la demande d’Arnaud, le PC poursuit désormais la séance quand le téléphone change d’application, se verrouille ou ferme la page. Cette règle remplace la pause automatique décrite dans la correction précédente. Le moteur conserve les protections Bluetooth/mesures/stockage, la fin automatique et l’échéance absolue ; le POC garde son bail navigateur.
-
-Direct propose Données et Graphique : allure mesurée dominante, fenêtre de vitesse avec consigne pointillée, progression du bloc et uniquement le bloc suivant. Les ajustements restent dans un repli, Pause/Reprendre et Arrêter restent accessibles. Si Android recharge la page, les commandes peuvent être récupérées explicitement après le départ ou l’absence de l’ancien écran, sans interrompre la séance ni envoyer de mouvement.
-
-**Vérifications :** 72 tests ciblés moteur/API/Bluetooth/POC/enregistrement réussis, compilation TypeScript/Vite et quatre contrôles de format des calories. Chrome 390 × 844, 360 × 640 et PC 1366 × 900 : changement de vue, suspension JavaScript pendant le passage de blocs sans pause, rechargement puis récupération des commandes sans mouvement, pause volontaire et commandes fixes visibles. Aucun mouvement du RUN500 réel ; réception sur le S25 physique encore à confirmer. Le serveur existant doit être relancé depuis le lanceur pour charger ce nouveau comportement.
-
-### Bouton temporaire de test du Direct — 18 octobre 2026
-
-Aujourd’hui propose « Tester le mode course ». Le bouton ouvre le vrai Direct avec le contrôleur simulé existant : programme de 4 min en cinq blocs, changements d’allure et de pente, calories avec un poids fictif de 80 kg, commandes habituelles et lien « Quitter le test ». L’espace `/test-course/` utilise le même port réseau, une autre base et un autre runtime ; il ne connecte jamais le RUN500. Ses données jetables sont supprimées à l’arrêt du serveur ; aucun profil, programme ou bilan réel n’est modifié. Une nouvelle ouverture retrouve le test en cours sans le redémarrer. Le bouton reste volontairement visible jusqu’à la fin du travail UI/UX.
-
-**Vérifications :** neuf tests ciblés serveur/isolation réussis (refus du départ de test sur l’API normale, absence d’appels BLE réels, données séparées, WebSocket, origine, ouverture répétée et nettoyage), build TypeScript/Vite et Chrome 390 × 844 : ouverture depuis Aujourd’hui, Direct graphique, calories, pause et retour à l’application. Le serveur déjà lancé doit être redémarré depuis le lanceur pour charger cet accès ; aucun essai sur le S25 physique effectué par l’agent.
-
-### Finition du mode course pour téléphone — 18 octobre 2026
-
-Allure dominante avec unité min/km et chiffres longs stabilisés, vitesse et pente mesurées juste dessous ; temps restant rattaché au bloc actuel. Courbe compacte avec mesure, cible pointillée et point actif ; un seul bloc suivant, puis durée active, distance et calories. En-tête et état resserrés, surfaces et typographie retravaillées, réglages discrets. Commandes fixes en boutons de 56 px, cibles tactiles d’au moins 44 px. La hauteur réelle des messages réserve une zone de défilement séparée : rien ne passe derrière les commandes. Pause volontaire adaptée aux écrans courts ; messages d’incident conservés. Réutilisation des composants et du moteur, aucune nouvelle dépendance ni modification des calculs ou commandes du tapis.
-
-**Vérifications :** build TypeScript/Vite et Chrome avec le simulateur réel de l’application, en 360 × 640, 360 × 660, 390 × 844 et 1366 × 900. Course, changements de blocs, allures à deux chiffres, dernier bloc, pause/reprise confirmée, récupération des commandes après rechargement, bascule Données/Graphique et défilement des réglages vérifiés. Mesures DOM : cumuls visibles sur écran court en course/pause volontaire, limite du défilement exactement au-dessus des commandes, pas de débordement horizontal. Console sans erreur durant le parcours normal ; arrêt du seul serveur de vérification : état hors ligne, mesures indisponibles, commandes désactivées et bandeau d’erreur sans recouvrement. Aucun essai sur le S25 physique par l’agent ; rechargement du navigateur nécessaire pour recevoir le nouveau frontend.
-
-**Finition du sélecteur Direct (18 octobre) :** piste et boutons réalignés à 44 px, icônes discrètes, actif vert, contour fin et focus visible ; sélecteur fixe au même emplacement dans les deux vues. Variante du composant partagé, sans modifier les autres segmentés. Build TypeScript/Vite et Chrome 360 × 640 / PC réussis : deux états et clics, Tab/Entrée, absence de débordement, cumuls visibles sur écran court, géométrie identique entre vues et console sans erreur. Essai simulé uniquement.
-
-**Graphique de course approfondi (18 octobre) :** sélecteur visuel ramené à 184 × 32 px sur téléphone, toucher de 44 px conservé. Graphique récent/prévu séparé, repère Maintenant, échelle stable 0–16 km/h, trois horaires lisibles et passage au bloc suivant. Historique et objectifs passés conservés au changement de bloc ; prévision bornée, coupures non interpolées, lecture d’un point au clic/toucher/clavier et retour au direct. Build TypeScript/Vite, trois contrôles de chronologie (historique/coupure, prévision bornée, fin du programme) et Chrome 360 × 640 / 360 × 660 / 390 × 844 / PC réussis : lecture passée et prévue, retour au direct, pause, dernier bloc, nouveau départ et console sans erreur. Sur les écrans les plus courts, les cumuls restent accessibles par défilement au-dessus des commandes ; aucun recouvrement ni débordement horizontal. Essais simulés uniquement ; rechargement du frontend nécessaire.
-
-**Inclinaison et transitions du graphique (18 octobre) :** bande de pente violette sous la vitesse, échelle en % indépendante, axe temporel et curseur communs. Paliers prévus séparés sans raccord vertical, pointillés retirés et transition de fond discrète ; les mesures conservent leurs variations réelles. Prévision de pente issue des blocs réels, objectifs historiques conservés, pente absente distincte de zéro. Réutilisation du graphique partagé, sans nouvelle dépendance ni changement de commande du tapis. Vérifiés : build TypeScript/Vite, quatre contrôles ciblés (pente historique/absente, prévision, paliers séparés, comportement standard), Chrome 360 × 660 et PC, lecture passée/prévue depuis la pente avec curseurs identiques, retour au direct, changements de vitesse/pente et console sans erreur. Contrôle DOM : aucun pointillé dans les deux bandes, ni débordement horizontal, zone défilante arrêtée au-dessus des commandes. Essais simulés uniquement ; rechargement du navigateur nécessaire.
-
-**Graphique de course combiné (18 octobre) :** remplace les deux bandes par une seule zone de 132 px sur téléphone. Vitesse verte sur l’axe gauche en km/h et pente violette sur l’axe droit en %, sans additionner des unités différentes. Un seul curseur lit les deux mesures ou les deux consignes prévues ; retour au direct accessible. Les paliers sans pointillés et les valeurs absentes sont conservés. Vérifiés : build TypeScript/Vite, Chrome en 360 × 660, une seule zone SVG, deux échelles et positions des points cohérentes (8,5 km/h et 0,5 %), sélection prévue et retour au direct, absence de pointillés et de débordement horizontal, console sans erreur. Simulation isolée uniquement, sans essai sur S25 physique ni commande du tapis réel.
-
-**Lisibilité réel / consignes du graphique de course (18 octobre) :** refonte de la représentation dans la même place : courbes réelles pleines et points ronds, prévisions en paliers creux colorés avec valeurs de vitesse, fond futur contrasté, frontière blanche et triangle, repère Maintenant sur le temps. Les anciennes consignes ne surchargent plus le passé ; vitesse et pente gardent leurs axes distincts dans une seule zone. La sélection remplace la légende dans un en-tête fixe de 20 px, avec mesure datée ou consigne et retour au direct ; rond dans le passé, carré creux dans le futur, jamais de mesure projetée. Références Technogym Live / Peloton consignées dans DESIGN.md. Vérifiés : build TypeScript/Vite ; quatre contrôles ciblés (prévision distincte des mesures, historique/données absentes, coupures, paliers sans raccord) ; Chrome 360 × 660, 393 × 760 et PC 1366 × 900. Hauteur DOM de 152 px sur téléphone, inchangée en lecture passée/prévue ; une seule zone SVG de 132 px, aucun pointillé ni débordement. Lecture passée 8,5 km/h / 0,5 % puis consigne future 6 km/h / 0 %, allure actuelle indépendante, changements de blocs, retour au direct et console sans erreur. Simulation isolée uniquement ; pas de réception sur S25 physique. Recharger le navigateur pour recevoir le frontend.
-
-**Bloc suivant toujours inclus et suppression des rectangles (18 octobre) :** la prévision s’étend jusqu’à la fin du prochain bloc, même s’il commence dans plus de 30 s ; l’échelle de temps reste proportionnelle. Consignes en traits fins avec repères ronds creux, sans rectangles ni aire sous les consignes ; « Suivant dans m:ss » dans la légende existante. Hauteur inchangée à 132 px + en-tête de 20 px. Build TypeScript/Vite et contrôles de chronologie réussis : prochain bloc situé à 600 s, 595 s, 40 s et 1 s, passage au bloc suivant et dernier bloc sans projection de mesures. Chrome 360 × 660 : prochain bloc visible à 49 s du départ, aucune forme rectangulaire dans les séries de consignes, sélection jusqu’à sa fin (10 km/h / 1 %), retour au direct, aucun débordement ni erreur console. Simulation isolée uniquement ; recharger le navigateur pour recevoir le frontend.
-
-**Début du bloc suivant et raccords nettoyés (18 octobre) :** suppression des ronds permanents placés après le départ des paliers et du retrait des traits. Une seule règle verticale grise continue, un petit angle en haut et un changement de fond à droite identifient le prochain bloc, sans pointillés ni raccord vertical coloré. Les traits de vitesse et de pente commencent/finissent sur la même abscisse exacte que cette règle. Build TypeScript/Vite et Chrome 360 × 660 vérifiés : repère à 60 s, coordonnées identiques pour les deux paires de traits, aucun rond permanent dans les consignes, zéro pointillé, hauteur globale maintenue à 152 px, lecture future/retour au direct et console sans erreur. Simulation isolée uniquement ; rechargement du navigateur nécessaire.
-
-**Libellé du bloc suivant et accès au test (18 octobre) :** « Bloc suivant » centré au-dessus de sa séparation, remplaçant le compte à rebours ; « Maintenant » reste en dessous de son propre repère. Position bornée aux bords et mention Mesures masquée si elle risque de chevaucher le libellé. Hauteur inchangée à 152 px sur téléphone. Build TypeScript/Vite et Chrome 360 × 660 : libellé et règle à la même abscisse, aucun pointillé ni débordement, console sans erreur. Test ouvert à la demande dans le navigateur intégré à Codex, sur `http://127.0.0.1:4330/test-course/#/test`, avec son runtime de simulation séparé.
-
-**Rééquilibrage du mode Données (18 octobre) :** vitesse/allure et pente mesurées côte à côte en haut, unités alignées sous les chiffres ; durée, distance, calories et vitesse moyenne regroupées en grille de deux colonnes. Retrait de la ligne de durée isolée et de ses anciens styles. La pente occupe le vide à droite sans ajouter d’information ni de cartes. Build TypeScript/Vite et Chrome en 360 × 660 / 1366 × 900, ainsi que la fenêtre intégrée de 716 px : bascule vitesse/allure, allure longue 12′00″ tenant dans sa colonne, état de pause, commandes visibles et aucun débordement ni erreur console. Vérifications en simulation uniquement ; fenêtre intégrée laissée en mode Données.
-
-**Mode Données approfondi et commandes communes (18 octobre) :** les deux modes partagent les boutons de 56 px Pause/Reprendre/Arrêter. Le bandeau a sa propre ligne dans le flux ; retrait du positionnement superposé, du padding fixe de 156 px et de la mesure JavaScript de hauteur. Un conteneur défilant regroupe les informations sur téléphone ; sur PC, grille à deux colonnes et ligne de commandes distincte. Bloc actuel et cibles clairement identifiés, prochain bloc dominant avec départ/durée/vitesse/pente/allure, puis liste ordonnée de la suite repliable. Aperçu extrait et partagé avec Graphique ; réglages, programme complet et historique passent après l’aperçu. États normaux d’enregistrement/anti-veille dans les détails, alertes toujours dans le bandeau. Vérifiés : build TypeScript/Vite ; Chrome 360 × 660 et PC 1366 × 900, parcours de la suite, réglages, programme et historique, changements de blocs et fin automatique, pause/reprise avec confirmations, deux modes et mêmes boutons (56 px, rayon 18 px). Mesures DOM en course : prochain bloc à 523 px et accès à la suite à 576 px, bandeau débutant à 577 px ; en pause, contenu/bandeau à 551 px ; après arrêt du seul serveur de test, alerte de connexion visible, commandes désactivées, contenu/bandeau à 515 px et dernier bloc accessible entièrement au-dessus. Pas de débordement horizontal ni d’erreur console pendant le parcours normal ; erreurs réseau attendues durant la coupure volontaire. Simulation isolée uniquement, aucun mouvement matériel. Fenêtre intégrée conservée pour le mode Données ; retour en haut vérifié lors de la bascule entre modes après défilement (323 px puis 0 px).
-
-## 1. Méthode
-
-1. **Une brique = une fonction réelle.** À la fin, Arnaud peut l’utiliser lui-même dans l’app. Si ce n’est pas utilisable, ce n’est pas terminé.
-2. **Pas de maquette.** L’interface de `frontend/` est la base visuelle définitive. La brique 1 retire toutes les données de démonstration. La navigation n’affiche que les écrans réellement construits ; chaque brique ajoute le sien en repartant de son écran de référence (commit `b9afbc0`, `frontend/src/features/`, et [captures](docs/preuves/v1/brique-00/2026-10-04/INDEX.md)).
-3. **Petit et complet plutôt que large et partiel.** Une brique ne commence pas le travail de la suivante.
-4. **Commits directs sur `main`**, avec ce qui a changé, le contrôle utile effectué et les limites ([AGENTS.md](AGENTS.md)).
-5. **Livrer puis améliorer.** Cocher les critères implémentés à la livraison, sans essai demandé à Arnaud ni commit de validation séparé. Corriger ensuite les problèmes rencontrés dans l'usage réel.
-6. **Contrôles proportionnés.** Appliquer les règles d'[AGENTS.md](AGENTS.md), sans campagne de tests ou captures systématiques. Les calculs, les données et la sécurité du tapis gardent leurs contrôles ciblés.
-7. **Le POC reste utilisable** pour le diagnostic jusqu'à la réception matérielle de la brique 10.
-8. **Sécurité du tapis.** Aucun mouvement sans présence confirmée. Aucune reprise ni répétition automatique de commande. Un résultat incertain n’est jamais présenté comme une réussite. Le STOP physique et la clé restent la protection de dernier recours.
-9. **Simulation n’est pas maquette.** Le mode simulation du contrôleur existant sert à développer sans tapis. Il est signalé en permanence et ses données restent séparées des vraies séances.
-
-### Gabarit d’une brique
-
-- **Livré** : ce que l’utilisateur peut faire à la fin, en une phrase.
-- **Travail** : la liste courte des tâches.
-- **Fait quand** : critères de livraison, cochés quand la fonction est implémentée et publiée.
-- **Pas dans cette brique** : ce qui est explicitement reporté.
-
-## 2. Point de départ
-
-| Sujet | État au 4 octobre 2026 |
-|---|---|
-| Design | Validé. Jetons, composants iOS, écrans et graphiques SVG dans `frontend/` (Vite, React 19, TypeScript, Tailwind 4) |
-| Contrôleur | `poc/` : Python, FastAPI, Bleak, FTMS. Connexion et commandes de base reçues sur le RUN500 réel, à 1–2,5 km/h et 0–1 % |
-| Limites logicielles | Manuel jusqu’à 16 km/h ; programmes jusqu’à 4 km/h et 3 %, 1 à 3 blocs de 5 à 60 s |
-| Non reçu | Séance longue, clé physique, coupure BLE/PC, vitesses élevées |
-| Cardio | Champ reçu à zéro uniquement : indisponible |
-| Base, profils, IA, historique | Absents |
-
-Sources : [base factuelle RUN500](docs/BASE_FACTUELLE_CAHIER_DES_CHARGES_RUN500.md), [réception du POC](docs/RECEPTION_RUN500.md), [faisabilité](docs/FAISABILITE_RUN500.md), [contrôleur](poc/controller.py), [FTMS](poc/ftms.py).
-
-## 3. Architecture
-
-```mermaid
-flowchart TB
-    UI["PC et téléphones : interface React"]
-    subgraph PC["PC Windows : un seul processus"]
-        API["FastAPI : API, WebSocket, fichiers de l'interface"]
-        SPORT["Profils, séances, validation, calculs"]
-        CTRL["Contrôleur RUN500 (Bleak / FTMS, repris du POC)"]
-        DB[("SQLite")]
-        COACH["Coach : Sign in with ChatGPT, outils fitness"]
-        API <--> SPORT
-        SPORT <--> DB
-        SPORT --> CTRL
-        API <--> COACH
-        COACH --> SPORT
-    end
-    UI <-->|"HTTP et WebSocket, réseau local"| API
-    CTRL <-->|Bluetooth| RUN["RUN500"]
-    COACH <-->|"HTTPS, Responses API"| GPT["OpenAI"]
-```
-
-| Élément | Choix |
-|---|---|
-| Interface | `frontend/` existant, compilé par Vite et servi par FastAPI. Node sert uniquement à construire. |
-| Serveur | FastAPI et Uvicorn, un seul processus propriétaire du Bluetooth. Pas de `--reload` ni de workers multiples. |
-| Métier | Services Python indépendants des routes, partagés par l’interface, le coach et les imports |
-| Stockage | SQLite, SQLAlchemy, migrations Alembic, dans `%LOCALAPPDATA%\FitnessApp` (réel et simulation séparés) |
-| Direct | WebSocket : état complet à la connexion, puis événements numérotés |
-| ChatGPT | Sign in with ChatGPT (OAuth PKCE), Responses API en streaming, outils en fonctions locales |
-| Graphiques | Composants SVG actuels ; ECharts seulement si la brique 14 le justifie (zoom, volume) |
-
-```text
-backend/
-  app.py         démarrage, routes, fichiers statiques
-  api/           routes HTTP et WebSocket
-  storage/       modèles, migrations, sauvegardes
-  training/      profils, séances, validation, exécution
-  device/        contrôleur et FTMS repris du POC, sans réécriture du protocole
-  recording/     mesures, événements, provenance
-  coach/         connexion ChatGPT, conversation, outils
-frontend/        interface (existante)
-poc/             console de diagnostic (inchangée)
-```
-
-## 4. ChatGPT : ce qui est vérifié
-
-Documentation officielle relue le 4 octobre 2026 : [présentation](https://developers.openai.com/siwc/token-sharing-open-source), [éligibilité](https://developers.openai.com/siwc/quickstart), [connexion](https://developers.openai.com/siwc/token-sharing-open-source/sign-in), [comptes et sessions](https://developers.openai.com/siwc/token-sharing-open-source/profiles-and-sessions), [modèles et requêtes](https://developers.openai.com/siwc/token-sharing-open-source/models-and-inference), [erreurs](https://developers.openai.com/siwc/token-sharing-open-source/errors-and-recovery), [interface](https://developers.openai.com/siwc/ui-ux-guidelines), [limitations](https://developers.openai.com/siwc/token-sharing-open-source/preview-limitations).
-
-- **Éligibilité.** Le flux documenté couvre les applications open source et hébergées localement ; FitnessApp est hébergée sur le PC. Les applications payantes ou hébergées à distance passent par un formulaire. La documentation cite les comptes Plus et Pro éligibles, sous réserve du compte, de l’espace et des politiques applicables : un abonnement actif seul ne garantit pas l’accès. Préversion. Le parcours réel FitnessApp a atteint le consentement OpenAI, puis reçu une identité validée, les permissions du forfait et le catalogue du compte. Aucun appel d’inférence n’a été exécuté dans la brique 4.
-- **Connexion.** OAuth avec PKCE S256, dans le navigateur système du PC. Émetteur et endpoints chargés depuis la découverte officielle OpenAI et limités à son domaine HTTPS. Retour FitnessApp sur `http://127.0.0.1:<port>/callback` ; seul le port peut changer entre tentatives, pas le chemin. **La connexion initiale se fait depuis le PC, via l’adresse locale de FitnessApp.** Les téléphones passent par le serveur du PC ; aucun jeton ne leur est envoyé.
-- **Enregistrement.** La première connexion utilise `client_id=dynamic_agent_client` avec `agent_name_hint` et `ext_agent_host_id`, un identifiant opaque et stable du PC, choisi avant la première connexion. L’app conserve ensuite le `client_id` attribué (`oaiapp_…`).
-- **Portées.** `openid profile email offline_access resource.invoke chatgpt.tokens.use.direct`, ressource `https://api.openai.com/v1`. Sans `chatgpt.tokens.use.direct` accordée, le forfait n’est pas utilisable.
-- **Jetons.** PyJWT vérifie la signature RS256/JWKS, l’émetteur, l’audience, les dates, le sujet, le nonce et `azp`/`at_hash` lorsqu’ils sont présents. Le coffre `chatgpt/connection.dpapi`, hors du dépôt et de SQLite, est chiffré par DPAPI pour l’utilisateur Windows, protégé par ACL et remplacé atomiquement. Aucun jeton dans Git, les journaux, les exports ou les réponses au frontend. Seul le `id_token_hint` prévu par OpenAI peut être transmis directement au navigateur système pour une réautorisation ; aucune URL d’autorisation n’est renvoyée à l’interface. Rafraîchissements sérialisés, verrou entre processus, conservation des jetons sur panne temporaire et retrait sur erreur terminale.
-- **Déconnexion.** Révocation du renouvellement via l’endpoint de découverte, puis effacement des trois jetons. Un échec de révocation distante est affiché même après la déconnexion locale. Le client attribué et l’identifiant d’installation restent disponibles ; les inscriptions de comptes/espaces sont séparées même avec le même e-mail. Un refus du partage du forfait conserve l’identité, avec une action explicite pour redemander cette permission (`prompt=consent`, sans paramètre expérimental).
-- **Modèles.** `GET /v1/models` ; afficher `display_name` pour `visibility: "list"`, envoyer le `slug`. Aucun modèle codé en dur.
-- **Requêtes.** `POST /v1/responses` avec `store: false` et `stream: true`. Le contexte utile est reconstruit depuis la base locale ; historique récent borné, échanges anciens accessibles par recherche et pagination. Aucun `previous_response_id` HTTP. Une réponse n’est complète qu’après `response.completed`.
-- **Outils.** Fonctions personnalisées regroupées dans un espace de noms (`fitness`), et recherche web selon le compte. Non disponibles : MCP hébergé, recherche de fichiers, Code Interpreter, génération d’images.
-- **Paramètres interdits.** `temperature`, `top_p`, `max_output_tokens`, `metadata`, `user`, `truncation`, `background`, `conversation` et les autres listés dans les limitations.
-- **Erreurs à afficher.** `subscription_sharing_usage_limit_exceeded`, `subscription_sharing_usage_unavailable`, refus de consentement, expiration et révocation. Aucune bascule silencieuse vers une facturation API.
-
-Règles du coach :
-
-- Le coach voit uniquement le profil actif. Il ne peut pas changer de profil par lui-même.
-- Il passe par les services métier, sans accès SQL libre, aux fichiers Windows ni au Bluetooth.
-- Une séance proposée par ChatGPT passe par **la même validation** que l’éditeur manuel. Elle est enregistrée avec l’auteur « ChatGPT », sa version et la conversation d’origine.
-- Le coach ne démarre jamais le tapis.
-
-## 5. Données : règles permanentes
-
-1. Conserver toutes les mesures reçues, brutes et décodées, avec horodatage UTC, source et âge. Une valeur absente reste absente ; un zéro de cardio invalide n’est jamais un pouls.
-2. Séance réalisée : profil et programme figés au démarrage, événements (pauses, reprises, arrêts, interruptions), commandes avec réponse ou résultat inconnu.
-3. Aucune interpolation à travers une coupure. La couverture est calculée et affichée.
-4. Les calculs (moyennes, distance, allure) sont faits côté Python, versionnés, et identiques dans le bilan, les graphiques, les exports et les outils du coach.
-5. Simulation, essais matériels et entraînements sont des catégories distinctes jusqu’aux exports et au coach.
-6. Une erreur de stockage est visible et enregistrée ; aucune perte silencieuse.
-7. Sauvegarde cohérente avec l’API de sauvegarde SQLite, pas une copie du fichier ouvert ([SQLite backup](https://www.sqlite.org/backup.html)).
-8. Toute donnée propre à un profil (séances, conversations, mesures, ressentis, plannings) référence `profiles.id` avec `ON DELETE CASCADE`. Supprimer un profil, après confirmation, supprime toutes ses données ; aucune donnée ne passe d’un profil à l’autre.
-
-## 6. Les briques
-
-### Brique 1 · Socle
-
-**État :** validée le 4 octobre 2026 par Arnaud ([preuves](docs/preuves/v1/brique-01/2026-10-04/INDEX.md)).
-
-Audit complémentaire sur Windows le 4 octobre 2026 : lancement par double-clic, relance sans reconstruction, accès par l’IP réseau et états de panne vérifiés ; corrections et mesures dans [l’audit Windows](docs/preuves/v1/brique-01/2026-10-04/AUDIT_WINDOWS.md). L’essai sur téléphone physique n’a pas de preuve versionnée.
-
-**Livré :** l’app s’ouvre sur le PC et le téléphone, servie par le PC, avec le vrai design et aucune donnée inventée.
-
-**Travail :**
-1. Créer `backend/` (FastAPI) qui sert le build de `frontend/` et expose `GET /api/health` (version, mode, dossier de données).
-2. Un lanceur `start-app.ps1` : prépare `.venv`, construit l’interface si besoin, démarre sur un port distinct du POC, option `-Reseau` pour le téléphone.
-3. Supprimer `frontend/src/data/demo.ts`, la simulation de séance et les paramètres `?scenario=`.
-4. Navigation limitée aux écrans construits. Aujourd’hui affiche l’état vide réel.
-5. Proxy de développement Vite vers FastAPI.
-
-**Fait quand :**
-- [x] `start-app.ps1` ouvre l’app sur le PC ; `-Reseau` l’ouvre sur le téléphone via l’IP Wi-Fi.
-- [x] Aucune valeur de démonstration n’apparaît dans l’interface.
-- [x] Le POC démarre toujours sur son port, sans modification.
-
-**Pas dans cette brique :** base de données, profils, tapis.
-
-### Brique 2 · Profils
-
-**État :** livrée et poussée le 4 octobre 2026 ([contrôles déjà réalisés](docs/preuves/v1/brique-02/2026-10-04/INDEX.md)). Cases mises à jour selon la nouvelle méthode de livraison ; Windows et téléphone physique ne sont pas couverts par ces contrôles.
-
-**Livré :** choisir son profil (Arnaud et Ophélie au départ) ; créer, renommer et supprimer des profils, chacun avec ses propres données ; le choix est retenu sur chaque appareil.
-
-**Travail :**
-1. SQLite, SQLAlchemy et Alembic dans `%LOCALAPPDATA%\FitnessApp\` (bases réelle et simulation séparées).
-2. Table des profils : nom unique, objectif hebdomadaire, préférence km/h ou min/km. Arnaud et Ophélie sont créés au premier lancement, dans une base sans profil.
-3. API des profils (lire, créer, modifier, supprimer) ; sélecteur réel (feuille Profil, barre latérale), mémorisé par appareil.
-4. Écran Réglages minimal : nom, objectif et unité du profil, suppression confirmée, dossier de données, version.
-5. Complément demandé par Arnaud le 4 octobre 2026 : création, renommage et suppression. Il reste toujours au moins un profil ; l’identifiant d’un profil ne change jamais.
-
-**Fait quand :**
-- [x] Le profil choisi survit au rechargement et au redémarrage du serveur.
-- [x] Une migration Alembic crée la base depuis zéro ; un test le vérifie.
-- [x] Les appareils partagent la liste des profils du serveur ; un profil supprimé disparaît avec ses données (test). Les autres appareils actualisent la liste au rechargement.
-
-
-**Pas dans cette brique :** authentification (le profil n’en est pas une), objectifs détaillés.
-
-### Brique 3 · Séances manuelles
-
-**État :** livrée le 4 octobre 2026. Migration additive `0003`, bibliothèque et éditeur reliés au serveur, anciennes versions consultables. Les modifications concurrentes d’une même version sont refusées pour préserver le travail enregistré.
-
-**Livré :** créer, modifier, dupliquer, supprimer et retrouver ses séances ; en choisir une pour Aujourd’hui.
-
-**Travail :**
-1. Modèle de séance : blocs (durée, vitesse, pente), répétitions, version, auteur (humain ou ChatGPT), profil.
-2. Validation unique côté Python : bornes de vitesse et de pente, blocs de 30 à 3 600 s, 120 segments maximum après expansion. Depuis le 7 octobre, la durée totale peut dépasser une heure pour l’adaptation calorique. L’interface affiche les erreurs renvoyées par le serveur.
-3. Écrans Séances et Éditeur branchés sur l’API. Une modification crée une nouvelle version et conserve les anciennes.
-4. Aujourd’hui : carte « Prochaine séance » choisie par l’utilisateur, sinon état vide.
-
-**Fait quand :**
-- [x] Une séance créée sur le téléphone apparaît sur le PC (bibliothèque commune en base, actualisée à l’ouverture et au retour sur l’application).
-- [x] Une séance invalide ne peut pas être enregistrée, même par appel direct à l’API (test).
-- [x] Les tests couvrent l’expansion des répétitions et les bornes.
-
-**Règles livrées :** vitesse 1–16 km/h, **pente 0–10 %** (précision d’Arnaud), blocs de 30 à 3 600 secondes, 60 minutes et 120 segments maximum répétitions comprises. Expansion, durée et distance prévues calculées exclusivement en Python. Les versions conservent leur auteur et son nom au moment de l’écriture. Aujourd’hui utilise la dernière version de la séance choisie ; supprimer cette séance efface sa sélection et ses versions, supprimer un profil efface ses séances. Les autres profils sont préservés. Le modèle prévoit la provenance ChatGPT, mais seule la création humaine est exposée ici.
-
-**Contrôles :** build frontend, tests ciblés API/calculs/migrations/profils, vérification Chrome sur PC et viewport téléphone avec une base de contrôle isolée. Pas d’essai sur téléphone physique ni sur le tapis. Les bornes de conception ci-dessus ne modifient pas les protections d’exécution du POC.
-
-**Complément calories (4 octobre 2026) :** poids par profil en base (migration 0004), effaçable ; calories actives et totales estimées selon les équations ACSM, calculées en Python après expansion des répétitions. Affichage bibliothèque, détail, aperçu de l'éditeur et Aujourd'hui ; dénivelé équivalent prévu. Choix marche/course automatique selon la vitesse, anciennes versions compatibles. Le détail précise les hypothèses et les vitesses hors des plages usuelles du calcul. Pas de calories sans poids, pas de collecte d'âge/taille inutilisés, ni de promesse de mesure physiologique. Méthode, sources, migration et limites : [estimation des calories](docs/ESTIMATION_CALORIES.md). Les prévisions utilisent le poids actuel, y compris pour les anciennes versions ; aucun bilan de séance réalisée n'est créé.
-
-Contrôles de ce complément : build et 46 tests ciblés réussis (calculs, API, profils, migrations). Chrome sur base isolée : saisie décimale du poids, refus d'une valeur invalide, bibliothèque, détail PC/téléphone, changement de déplacement avec recalcul et enregistrement, changement de profil ; aucune erreur console observée. Le serveur déjà lancé doit être redémarré pour charger le nouveau backend et migrer sa base. Pas de mesure calorimétrique ni d'essai sur tapis.
-
-**Simplification demandée (4 octobre 2026) :** suppression du sélecteur Déplacement et des mentions Auto dans les blocs. Calcul automatique côté Python, y compris pour les anciens choix manuels, sans réécriture des versions. Contrôles : build, tests ciblés énergie/séances et vérification de l’éditeur dans Chrome.
-
-**Amélioration du graphique (4 octobre 2026) :** vitesse en barres vertes/grises (km/h) et inclinaison en escalier violet (%) sur deux zones temporelles alignées, avec échelles distinctes. Dans la bibliothèque, Aujourd’hui et l’éditeur, survol ou toucher d’un segment affiche son type, son intervalle, sa durée et ses deux consignes. Le toucher conserve la sélection ; boutons précédent/suivant et flèches du clavier donnent accès aux segments courts, Échap efface la sélection. Build et vérification Chrome du survol, du clavier et des événements tactiles en viewport téléphone ; pas de réception sur téléphone physique.
-
-**Lisibilité vitesse et pente :** à la demande d’Arnaud, échelles complètes fixes à **0–16 km/h** et **0–10 %**, sans plafond automatique. Deux vraies zones de tracé (176/144 px, 144/128 px en largeur réduite), vitesse graduée tous les 4 km/h, pente violette avec aire plus contrastée et valeurs par segment lorsqu’il y a assez de place. Contrôles : build et rendu Chrome PC/téléphone sur la séance existante, sélection d’un segment sans modification des données.
-
-**Pas dans cette brique :** démarrage sur le tapis, ChatGPT.
-
-### Brique 4 · Connexion ChatGPT
-
-**État :** livrée le 4 octobre 2026. Service `backend/coach`, API `/api/chatgpt`, section ChatGPT des Réglages. Aucun changement de schéma, de profil, de séance, de version, de sélection sportive ou de lanceur Windows.
-
-**Livré :** « Continuer avec ChatGPT » ouvre le navigateur système du PC. Après accord, les Réglages affichent le compte et son catalogue réel, permettent de choisir un modèle, d’actualiser la liste, de retrouver une inscription et de se déconnecter. Aucun modèle imposé. Le téléphone affiche le compte et les modèles ; la gestion de la connexion reste sur le PC.
-
-**Travail :**
-1. Générer et conserver `ext_agent_host_id` avant toute connexion.
-2. Flux PKCE complet (§ 4) : serveur de retour sur `127.0.0.1`, `state` et `nonce`, échange du code, validation du jeton d’identité, vérification de `chatgpt.tokens.use.direct`.
-3. Stockage protégé des jetons, rafraîchissement, déconnexion.
-4. Réglages > ChatGPT : e-mail, état, modèle choisi (liste de `/v1/models`), Se déconnecter. Sur le téléphone : « Connexion depuis le PC ».
-5. États visibles : chargement, connexion en cours et annulable, refus, permission manquante, expiration, révocation, réseau, catalogue vide et coffre indisponible. Une tentative dure cinq minutes ; doublons, mauvais retours et rejeux ne peuvent pas remplacer une connexion valide.
-
-**Fait quand :**
-- [x] Connexion réussie avec le vrai compte d’Arnaud ; identité et permissions vérifiées ; client attribué conservé ; cinq modèles reçus d’OpenAI.
-- [x] Aucune exposition des jetons au frontend ni aux journaux applicatifs ; fichiers locaux chiffrés, indépendants des données exportables et absents de Git (tests et contrôle du diff).
-- [x] Reprise sans sélection de compte après relance de l’application ; rafraîchissement réel réussi avec remplacement du jeton de renouvellement et nouvelle lecture du catalogue. Le redémarrage complet de Windows n’a pas été essayé.
-
-**Contrôles automatiques :** build frontend ; 22 tests ciblés SIWC avec signatures RSA, coffre DPAPI réel et fournisseur de test (PKCE/state/nonce, claims et signature, callback local, refus, expiration, rejeu, client/identité échangés, permissions, plusieurs inscriptions, verrou, rotation après relance, révocation, panne réseau, absence de répétition sur refus durable, catalogue vide, écriture atomique et absence de fuite). Les 46 contrôles existants backend/profils/séances/énergie ont également passé. Aucun faux fournisseur ni modèle de test dans l’application.
-
-**Contrôles réels :** Chrome via MCP, compte connecté, catalogue du compte, format PC et viewport téléphone de 390 px via l’IP réseau ; reprise visible sur le serveur habituel 4330 après relance. Aucune erreur console pendant ces parcours ; l’arrêt volontaire de l’instance de contrôle a produit l’avertissement réseau attendu. Empreinte logique SQLite identique avant/après, intégrité `ok`. La session créée lors du contrôle a été transférée uniquement entre les coffres de cette même installation FitnessApp ; la copie temporaire a été retirée.
-
-**Limites :** pas d’essai sur téléphone physique ni de redémarrage complet de Windows. Déconnexion/révocation, refus et incidents couverts automatiquement ; le compte réel est laissé connecté. Les hints de réautorisation sont vérifiés par tests, sans nouvel essai interactif après déconnexion. Aucun appel Responses, aucune consommation d’inférence, aucune action sur le tapis. L’application habituelle a été relancée et la session retrouvée ; une nouvelle relance depuis le lanceur reste nécessaire pour charger le dernier correctif qui suspend les répétitions sur refus durable d’OpenAI.
-
-**Pas dans cette brique :** conversation.
-
-### Brique 5 · Coach
-
-**Périmètre réconcilié le 5 octobre 2026 :** la lecture de toutes les données utiles déjà présentes et la continuité des échanges font partie de cette brique. La génération/modification structurée des séances reste en brique 6 ; l'exploitation des activités réalisées reste en brique 12.
-
-**Fonctions implémentées :** entrée Coach, création/recherche/reprise de conversations par profil, réponse progressive, interruption explicite, conservation des réponses échouées ou incomplètes, saisie conservée, mémoire consultable/modifiable/supprimable et préférences proposées soumises au bouton Mémoriser. Les séances consultées ouvrent leur version exacte.
-
-**Messages longs, 22 novembre 2026.** Le coach accepte 50 000 caractères dans un message. La saisie s’agrandit à la demande, affiche un compteur et conserve le brouillon si la limite est dépassée. Les messages longs se replient dans le fil. Le texte complet est envoyé au modèle et le dernier échange reste disponible pour la relance immédiate. Les recherches dans les anciens échanges renvoient des extraits avec accès au texte intégral. Parcours Chrome et test serveur vérifiés avec un texte fictif à la limite et un transport de test.
-
-**Données réellement accessibles :** profil actif (nom, objectif hebdomadaire, poids, unité, dates), mode réel/simulation et unités communes, séance choisie pour Aujourd'hui, bibliothèque complète et versions datées avec origine/auteur, blocs et répétitions, estimations du service métier avec le poids actuel, anciennes conversations et mémoire confirmée. La date locale est fournie. Fatigue, résultats, progression et activités réalisées ne sont jamais déduits d'une séance préparée. Aucun historique réel n'existe encore.
-
-**Outils serveur :** `get_profile`, `list_workouts`, `get_workout`, `list_versions`, `search_conversations`, `read_conversation`, `read_message`, `search_memories`. Recherche textuelle, pages bornées, total et suite explicites ; les longs échanges se consultent par extraits. `propose_memory` ne modifie aucune préférence : citation exacte du message actuel et confirmation humaine obligatoire. Le profil choisi dans l'interface est validé et figé côté serveur pour le flux ; aucun argument de profil n'est accepté du modèle. Comme les autres écrans du projet, le choix de profil sur un appareil n'est pas une authentification entre personnes.
-
-**Persistance et erreurs :** migration additive `0005`, conversations et paires message/réponse avec états `running`, `completed`, `interrupted`, `failed`. Clé d'envoi idempotente et une seule réponse en cours par profil, y compris entre écrans. Enregistrement du texte avant affichage ; après redémarrage, les flux restés ouverts sont marqués interrompus. Changement de profil ou fermeture du parcours : abandon du flux propriétaire ; changement de compte/déconnexion ChatGPT : arrêt des flux. Réseau et inférence asynchrones, aucun verrou du coffre pendant le streaming. Aucun modèle de remplacement, API payante de secours, commande sportive ou accès arbitraire. Le HTML et les images du modèle ne sont pas exécutés/chargés ; seuls les liens de séances effectivement lus par le serveur sont activés.
-
-**Quota et cache :** documentation officielle [SIWC modèles/inférence](https://developers.openai.com/siwc/token-sharing-open-source/models-and-inference), [erreurs](https://developers.openai.com/siwc/token-sharing-open-source/errors-and-recovery), [limitations](https://developers.openai.com/siwc/token-sharing-open-source/preview-limitations) et [cache](https://developers.openai.com/api/docs/guides/prompt-caching) relue le 5 octobre. Instructions et outils stables, clé de cache opaque par profil, cache automatique du fournisseur. Dates des messages identiques dès le premier envoi et lors de leur reprise pour préserver le préfixe. Pas de `prompt_cache_retention` (non accepté par SIWC), ni de `prompt_cache_options` ou `prompt_cache_breakpoint` : ces deux options de l’API générale ont été rejetées réellement avec HTTP 400 `invalid_parameter` le 5 octobre. Aucun nouvel essai automatique pour contourner un refus. Au plus six échanges modèle/outils par demande, contexte récent borné à 24 réponses et 40 000 caractères sérialisés, messages utilisateur complets et quatre réponses récentes conservées jusqu’à 6 000 caractères chacune, pages antérieures explicitement accessibles (chaque réponse reprise avec le rappel compact des séances proposées : blocs, objectif, niveau, statut ; correctif du 5 octobre après un suivi « pourquoi ce rythme ? » où le coach, privé de sa carte, avait expliqué une autre séance de la bibliothèque), détails sans doubler les blocs par leur expansion, recherches ciblées et réponses courtes. Aucune inférence de fond ni répétition automatique après ouverture du flux ; seul un rejet d'identité avant le premier événement peut déclencher un unique renouvellement puis nouvel essai. L'interface affiche requêtes, tokens d'entrée/sortie et tokens réellement en cache tels que rapportés par OpenAI. Une mesure manquante reste inconnue. Ces compteurs ne prouvent ni le quota restant ni une économie chiffrée sur le forfait ChatGPT.
-
-**Amélioration du coach du 5 octobre 2026 :** mêmes connexion SIWC et modèle choisi, réflexion `high` pour les arbitrages de séance ; latence et consommation peuvent augmenter. Réponses directes, questions limitées aux informations réellement bloquantes, réponses au questionnaire exploitées dès le tour suivant. `preview_catalog` réutilise les formats et le calcul métier existants sans enregistrer. `validate_workout` et `propose_workout` contrôlent le minimum calorique déclaré dans `min_active_kcal` avec le poids actuel, et imposent 5 min d’échauffement initial et de retour au calme final ; cible impossible ou poids manquant restent explicites. Aucun changement de coffre, de modèle ni de commande tapis. Contrôles : 31 tests ciblés et build réussis ; reproduction avant/après d’une allure oubliée après dix échanges. Chrome, profil de vérification et compte SIWC réels : questions interactives, réponses libres, proposition de 45 min à 8 km/h avec 412,7 kcal actives estimées, puis refus explicite de promettre 350 kcal dans 20 min avec les mêmes plafonds, sans nouvelle carte. Trois réponses terminées sans erreur ; aucune erreur console nouvelle pendant ces échanges (avertissements antérieurs dus aux relances du serveur). Source du coach chargée après redémarrage ; aucune séance de cet essai enregistrée ni exécutée. Les activités réalisées restent indisponibles.
-
-**Fait quand :**
-- [x] Conversations, réponses partielles et mémoire persistent localement par profil ; migration et reprise après interruption couvertes automatiquement.
-- [x] Outils de lecture détaillée, versions, recherche et pagination ; chiffres identiques au service de séances ; aucun outil d'écriture sportive.
-- [x] Isolation profil, envoi concurrent/idempotent, arrêt, déconnexion, erreurs après début de flux, absence de secrets et cache couverts par tests ciblés.
-- [x] Réponse réelle fondée sur les données et détail de séance vérifiés avec le compte connecté, puis reprise dans Chrome.
-- [x] Streaming réel au viewport téléphone vérifié (distinct d'un téléphone physique).
-
-**Contrôles automatiques :** build frontend avec TypeScript ; 83 tests ciblés (19 coach, 22 connexion, 42 backend/profils/séances), sans appel OpenAI dans ces tests. Isolation, mémoire contrôlée, migrations, données conservées, doublons/concurrence, interruptions, déconnexion, erreurs de flux, secrets et préfixe stable couverts. Le flux collecte aussi les éléments `response.output_item.done` : le terminal SIWC peut donner les compteurs sans répéter les appels d’outils.
-
-**Contrôles réels, 5 octobre 2026 :** serveur habituel 4330 relancé par Arnaud, schéma `0005`, code backend chargé et build réellement servi vérifiés. GPT-5.6-Luna choisi par Arnaud, compte existant conservé. Deux réponses réussies dans Chrome via MCP : détail de « Test » (six blocs, 17 min, 1,733 km, 116,2 kcal actives / 142,7 totales au poids actuel), valeurs comparées à l’API ; lien ouvrant exactement la version 1 ; reconnaissance explicite de l’absence d’activités réalisées. Réponse partielle observée en cours puis état terminé. Reprise de la même conversation via l’adresse réseau et réponse courte à un second message, sans nouvelle lecture de bibliothèque. Format PC et viewport 390 × 844, aucun débordement horizontal. Changement de profil : échange et brouillon d’Arnaud absents chez Ophélie puis retrouvés au retour ; mémoire d’Ophélie vide, isolation d’une mémoire remplie couverte automatiquement. Aucune erreur console pendant les parcours réussis ; seuls avertissements réseau lors des arrêts volontaires du serveur. Aucun essai sur téléphone physique.
-
-**Usage réellement mesuré :** sept tentatives HTTP au total, dont deux refus sur les options de cache incompatibles, un premier flux ayant révélé la collecte manquante des outils, puis quatre requêtes pour les deux réponses réussies (trois pour chercher/lire/expliquer la séance, une pour poursuivre). Cinq retours de compteurs : 10 602 tokens d’entrée et 494 de sortie ; compteurs inconnus pour les deux refus. OpenAI a signalé **0 token en cache** sur ces essais : aucun gain effectif de cache ni économie de forfait n’est revendiqué. Préfixe stable, contexte borné, lectures ciblées et absence de répétition restent actifs ; aucun remplissage artificiel du prompt ni inférence de chauffe. Les essais échoués restent clairement marqués dans la conversation locale. La dernière correction backend a été chargée ; aucun redémarrage supplémentaire nécessaire à cette livraison. Le design concurrent publié dans `d9cd073` a été intégré sans écraser ses changements : bouton Mémoire et saisie adaptés à la capsule commune, build puis liens de version et affichage Chrome revérifiés, sans nouvel appel OpenAI.
-
-**Archivage et interface (5 octobre 2026) :** migration additive `0006` (`archived_at` facultatif). Archiver retire une conversation de la liste « Récentes » sans rien supprimer ; elle reste lisible depuis « Archivées » et par les outils du coach ; écrire dedans ou Désarchiver la ramène. Refusé pendant une réponse en cours. Liste façon Messages (recherche iOS avec effacement, segmenté Récentes/Archivées, date relative, bouton d'archivage par ligne, annulation pendant 6 s), saisie qui s'agrandit (Entrée envoie au clavier physique, Maj+Entrée va à la ligne), bulles et sources en capsules. Test `test_archive_hides_without_losing_exchanges` ; vérifié en simulation dans Chromium, téléphone et PC, sans nouvel appel OpenAI.
-
-**Pas dans cette brique :** génération ou modification de séance, enregistrement d'une séance proposée, planning, notifications, tâche autonome, historique d'activités et commandes au tapis.
-
-### Brique 6 · Catalogue et séances personnalisées avec ChatGPT
-
-**Livré :** Séances propose Découvrir et Mes séances. Dans Découvrir, choisir en amont une durée ou des calories actives visées adapte les programmes et leurs prévisions à la saisie et au niveau. Un modèle du catalogue devient une copie personnelle modifiable. Depuis Coach ou Séances, une demande libre produit une carte structurée ; depuis une séance ou son éditeur, Ajuster avec ChatGPT propose une nouvelle version avec comparaison avant acceptation.
-
-**Périmètre livré :**
-1. Catalogue Python sans IA : Dépense calorique, Jambes et fessiers — marche inclinée, Endurance ; deux formats par objectif, trois variantes explicites Facile/Intermédiaire/Soutenu, avec échauffement et retour au calme. Le niveau décrit les consignes, pas les capacités de la personne.
-2. Recherche et filtres objectif/niveau dans Mes séances ; création manuelle, modification, duplication, suppression, versions et sélection distincte pour Aujourd’hui conservées. Les anciennes séances gardent un objectif et un niveau inconnus jusqu’à une saisie explicite.
-3. Outils validate_workout et propose_workout : validation métier Python partagée, bornes de conception inchangées, somme des blocs comparée à la durée totale annoncée ; erreurs précises renvoyées au modèle dans les six échanges existants. Aucun calcul de calories JavaScript.
-4. Carte persistante : explication, objectif/niveau, prévisions backend, aperçu et blocs ; Enregistrer, Modifier, Ignorer. Un texte seul n’enregistre jamais une séance. Les URL des conversations permettent de retrouver les propositions après rechargement.
-5. Acceptation sous verrou SQLite, idempotente même en concurrence ; propriétaire et version de départ contrôlés. Un ajustement crée une nouvelle version de la même séance ou signale le conflit. Une retouche manuelle est attribuée au profil ; une proposition acceptée sans retouche à ChatGPT. La provenance conserve le lien vers la conversation.
-6. Migration additive 0007 : métadonnées facultatives, snapshot de la séance transmise et table des propositions. Profils, séances, versions, sélections, conversations et mémoire conservés. Aucun ajout automatique du catalogue aux profils.
-7. Cible exclusive durée (15–60 min) ou calories actives, difficulté choisie avant le format et réglable dans l’aperçu. Calcul Python partagé, recalcul après 200 ms de saisie ; réponses anciennes écartées et ajout impossible pendant le recalcul. Vitesses, pentes et rapport effort/récupération préservés ; durées centrales réparties à la seconde, blocs de 30 s minimum, échauffement/retour au calme de 5 min chacun. Depuis le 7 octobre, la cible calorique peut allonger la durée au-delà de 60 min pour atteindre le minimum estimé demandé. Poids absent, cible sous le minimum du format ou construction trop longue : explication, sans forcer le résultat. L’ajout recalcule et conserve la cible dans la provenance sans modifier les séances existantes.
-8. Construction revue avec [principes et sources](docs/CONSTRUCTION_PROGRAMMES.md) : but propre à chacun des six formats, début/fin progressifs, récupération et durée par passage bornée. Les variantes plafonnées complètent en marche facile ; les variantes cardio/endurance Soutenu couvrent toute la durée centrale en course ou en alternance prévue, sans supplément de marche. Cardio continu Soutenu court à 9 km/h, Cardio en alternance Soutenu alterne 10 km/h / footing à 8,1 km/h, Allure régulière Soutenu court à 10 km/h jusqu’à 50 min centrales. Course et marche facile limite la course à 8 passages d’au plus 1 min, avec le rapport 1:00/1:30 inspiré du début NHS ; le niveau Soutenu conserve uniquement ses récupérations entre passages. La marche inclinée reste en marche à chaque niveau. La répartition réelle de l’effort apparaît avant les prévisions ; Pourquoi ce programme ? expose construction, adaptation, effort et sources. Les copies gardent une révision du catalogue ; les anciennes versions restent intactes. Le Coach respecte la demande de course, sans promesse de validation scientifique ni prescription pour athlète de haut niveau.
-
-**Fait quand :**
-- [x] Les dix-huit variantes sont valides et l’aperçu change réellement avec le niveau ; une copie ajoutée et modifiée ne change pas le catalogue.
-- [x] Trois demandes réelles différentes donnent des séances valides, enregistrées et modifiables : marche calorique 20 min, endurance 30 min, marche inclinée 25 min, avec le modèle déjà choisi gpt-5.6-luna.
-- [x] Ajustement réel 25 → 20 min : comparaison des segments, durée, vitesses, pentes et prévisions ; version 2 acceptée, version 1 conservée.
-- [x] Les refus de validation et leur correction sont contrôlés par les tests ciblés du flux (transport simulé), ainsi que l’échec restant invalide. Les requêtes répétées, les acceptations concurrentes et les conflits de version ne créent pas de doublons.
-- [x] Origine et auteur réels affichés ; isolation des profils, conservation de la migration et calories inconnues sans poids contrôlées.
-- [x] Build frontend et 74 tests ciblés réussis ; parcours Chrome sur PC et viewport téléphone : découvrir, niveau, ajouter, modifier, Aujourd’hui, filtres, propositions, rechargement, édition et ajustement.
-- [x] Complément durée/calories : durée exacte et structure des dix-huit variantes, objectif calorique/poids/bornes, validation API et copie fidèle contrôlés par trois tests critiques supplémentaires. Build et tests séances/énergie/propositions réussis ; Chrome : 25 min, 150 kcal, changement de niveau, cible impossible, saisie vide, ajout et rechargement, formats PC et viewport téléphone.
-- [x] Révision de construction : alternances de 15 à 60 min gardant leur ordre, consignes, plafond de durée par passage et rapport effort/récupération ; calories et copie contrôlées. Régression 30/60 min facile et conservation des séances enregistrées ; build et tests ciblés réussis. Chrome : méthode et sources, segments 1:00/1:30, adaptation calorique et aperçu de marche inclinée.
-- [x] Catalogue commun Arnaud/Ophélie repensé par objectif : mise en route/fin progressives, plafonds de volume de course et de côte selon le format et le niveau, complément en marche facile après le plafond. Dose réelle exposée avant ajout ; cible calorique construite avec les mêmes règles. Durées exactes, seuils des plafonds et estimation croissante à chaque seconde des dix-huit variantes contrôlés ; 46 tests ciblés et build réussis. Chrome PC/390 px : objectif, 30/60 min, difficulté, 150 kcal, répartition et ajout de Vagues de pente Soutenu 30 min au profil de vérification, persistance et copie conforme après rechargement ; aucune erreur console. Serveur et ressources du build vérifiés ; aucune migration ni réécriture des versions personnelles.
-
-**Vérification locale du 5 octobre 2026 :** serveur 4330 redémarré avec le code de cette brique, schéma 0007 et ressources du build contrôlés. Une sauvegarde SQLite a précédé la migration ; comparaison des sept tables préexistantes, intégrité et clés étrangères conformes. Les essais réels sont dans le seul profil « Vérification brique 6 », conservé séparément des données personnelles. Un premier essai d’endurance annonçait 30 min avec 35 min de blocs : proposition ignorée, ajout du contrôle de durée, puis génération correcte de 30 min. Les trois créations retenues et l’ajustement ont chacun terminé sans erreur.
-
-**Correction du niveau Soutenu :** 38 tests ciblés (propositions, énergie, coach) et build réussis. Régression dédiée : course continue sur tout le temps central à 15/30/60 min, récupération en footing pour le cardio alterné, aucune marche supplémentaire en cardio/endurance Soutenu, copies fidèles par durée/calories, marche inclinée conservée. Le contrôle par seconde des dix-huit variantes protège toujours la recherche calorique. Chrome PC : 20/50 min de course centrale pour 30/60 min d’Allure régulière Soutenu, cardio en alternance à 10/8,1 km/h et recalcul 400 kcal ; console sans erreur. Serveur redémarré, API et ressources réellement servies vérifiées. Aucune migration, aucune modification automatique des copies existantes, aucun nouvel appel ChatGPT réel pour cette correction.
-
-**Adaptation calorique du 7 octobre :** retrait du blocage d’une heure pour les cibles en calories et l’enregistrement des séances correspondantes. Le calcul cherche une durée atteignant la cible estimée avec le poids actuel, sans augmenter le niveau ni changer les consignes. Les récupérations et volumes ciblés des formats restent conservés ; cardio/endurance Soutenu couvre tout le temps central. Blocs longs répartis sans changer leurs consignes ; 120 segments au plus. Interface et contrat Coach alignés ; copies personnelles déjà enregistrées préservées, aucune migration. Compilation de l’interface réussie. Tests existants adaptés aux nouvelles règles mais non exécutés ; aucune recette navigateur relancée à la demande d’Arnaud.
-
-**Accompagnement du Coach (5 octobre) :** instructions réorganisées par sections (rôle, ton, capacités du tapis, accompagnement, construction, suivi, données, règles strictes). Avant une séance, au plus un tour de 1 à 3 questions à choix simples sur ce qui manque vraiment (objectif, temps, niveau réel, gêne), affichées en cases interactives par l’outil `ask_questions` (2 à 5 réponses courtes validées par le serveur, « Autre » libre, envoi groupé en un message ; questions conservées avec la réponse, migration 0008 sans recopie, et rappelées au modèle), puis raisonnement objectif → structure → dose → vitesses/pentes, validation et proposition. Capacités du RUN500 rappelées : 1–16 km/h par pas de 0,1 (0 = arrêt, jamais un bloc), pente 0–10 % par pas de 0,5, changements non instantanés (efforts rapides de préférence de 45 s à 2 min), blocs de 30 s à 60 min, 60 min et 120 segments au total. Repères d’intensité approximatifs (allure 10 km ≈ 85–90 % de VMA, efforts courts 95–110 %). Suivi : demander le ressenti (1 à 10, souffle, gêne) et ajuster une variable principale, proportionnellement à l’écart avec la cible ; ton chaleureux et motivant. Essais réels du 5 octobre (gpt-5.6-luna, code publié, base temporaire, profils fictifs Arnaud et Ophélie) : questions groupées puis séance prudente avec gêne au genou, question de suivi sur la séance proposée, progression après ressenti, demande hors bornes (18 km/h, 20 s) ramenée au faisable, mémoire proposée, marche inclinée « fais au mieux » avec hypothèses annoncées, jour de fatigue sans culpabilisation. Ces essais ont corrigé une progression d’abord trop timide puis trop forte (deux variables à la vitesse maximale) et l’oubli du pas de pente. Limites : sans historique d’activités, le suivi repose sur ce que la personne raconte ; aucun rappel automatique ; réponses du modèle non déterministes.
-
-**Limites :** les essais de refus/correction automatique utilisent un transport simulé, contrairement aux créations et à l’ajustement réellement effectués avec ChatGPT. Le viewport téléphone de Chrome ne prouve pas Safari/iPhone ou Android physique. Le catalogue reste utilisable sans ChatGPT ; ses estimations ne garantissent aucune dépense ni perte de poids. L’adaptation en temps réel concerne la préparation, pas l’effort en cours (brique 8). Les principes sont sourcés, les chiffres exacts sont des choix FitnessApp ; ni prescription personnelle ni progression reçue sur plusieurs semaines. Les consignes sont des programmes de conception, sans autorisation de mouvement du tapis.
-
-**Finition de l’interface (5 octobre 2026) :** Découvrir commence par des capsules de réglage (cible, difficulté) et d’objectif, ce qui fait apparaître les formats dès le premier écran du téléphone. L’aperçu présente les réglages en liste groupée, une répartition de l’effort en barre, des segments groupés et un bouton Ajouter toujours visible. Les menus déroulants iOS remplacent les sélecteurs natifs (filtres, éditeur, versions), le détail de séance place l’action principale en tête, et la proposition ChatGPT surligne les seules valeurs modifiées. Aucune modification d’API ni de données. Contrôles : build, Chrome en simulation isolée sur PC et téléphone 375/390 px (Découvrir, cible, aperçu, ajout, Mes séances et filtres, détail, éditeur et menu au clavier). La carte de proposition n’a pas été revue avec une vraie réponse ChatGPT.
-
-**Pas dans cette brique :** Bluetooth, exécution sur le tapis, historique d’activités, planning.
-
-### Brique 7 · Tapis dans l’app
-
-**Livré :** Réglages > Tapis permet de rechercher, connecter et voir l’état du RUN500 (ou du simulateur), avec capacités et mesures en direct.
-
-**Travail :**
-1. `controller.py` et `ftms.py` déplacés dans `backend/device/`, avec imports de compatibilité du POC : une seule implémentation et protections de diagnostic conservées.
-2. Un contrôleur en lecture seule par serveur, sur sa boucle asynchrone persistante, fermé à l'arrêt. Verrou système partagé avec le POC et les autres instances réelles ; une fermeture Bluetooth non confirmée conserve le verrou.
-3. API `/api/device/scan`, `/connect`, `/disconnect`, `/state` et WebSocket `/events` : état complet initial, identifiant du serveur et événements numérotés, capacités et mesures avec âge individuel. Opérations concurrentes refusées ; pertes et lectures partielles explicites. Reconnexion de l'observation uniquement, jamais du tapis.
-4. Réglages > Tapis réutilise la feuille, les listes et les mesures existantes. Recherche, connexion, déconnexion, indisponibilité et ancienneté visibles ; cardio 0/255 ou absent affiché `--`. Simulation dans le titre fixe de la feuille, données et journaux séparés du réel.
-5. Aucune écriture de commande FTMS ni abonnement au Control Point en lecture seule ; activation, commandes et programmes bloqués dans le contrôleur. Aucune route du POC exposée dans l'application, aucun outil tapis ajouté au Coach. `websockets` déclaré pour le transport d'Uvicorn ; aucune dépendance frontend ajoutée.
-
-**Fait quand :**
-- [x] En simulation : recherche, connexion, capacités, événements WebSocket renouvelés et déconnexion vérifiés dans Chrome sur PC et viewport téléphone 390 × 844 ; absence de débordement horizontal.
-- [x] Rechargement de l'écran connecté : état courant retrouvé sans nouvelle connexion au tapis. Arrêt/redémarrage propre du serveur de simulation : mesures indisponibles, puis état retrouvé sans reconnexion automatique du simulateur.
-- [ ] Sur le vrai RUN500, en lecture seule : connexion et capacités lues, aucun mouvement.
-- [ ] Parcours sur téléphone physique : non essayé pendant cette brique.
-- [x] Inventaire actuel : 20 tests critiques du POC réussis sur le contrôleur partagé ; 9 tests brique 7 (zéro commande, fermeture/annulation, fermeture incertaine après échec de connexion, capacités partielles, concurrence, fraîcheur/cardio, exclusion interprocessus, état WebSocket et refus d'entrées/origines/routes), plus 7 tests du serveur réussis.
-- [x] Build frontend réussi, API et fichiers JS/CSS réellement servis conformes au build ; console Chrome sans erreur pendant le parcours normal. Messages d'indisponibilité et erreurs réseau attendus lors de l'arrêt volontaire du serveur de vérification.
-
-**Livraison logicielle du 5 octobre 2026 :** vérification de simulation sur le port isolé 4331, avec dossier de données extérieur distinct. Serveur habituel 4330 relancé proprement, API et ressources du build vérifiées ; les neuf tables SQLite et le coffre ChatGPT sont identiques avant/après, intégrité et clés étrangères conformes. Aucun accès au Bluetooth réel ni mouvement, aucun script de réception lancé. Profils, séances, versions, conversations, mémoire, coffre ChatGPT et sources du lanceur préservés ; aucune migration. La case globale reste ouverte pour les deux essais physiques ci-dessus. Les capacités simulées restent celles du simulateur du POC (minimum 0,5 km/h), sans les présenter comme une lecture du RUN500.
-
-**Finition de l’interface (5 octobre 2026) :** ligne Réglages avec état coloré, feuille ouverte sur l’appareil (nom, état, lecture seule), capacités avec plages et pas, Déconnecter en ligne de liste. Vérifiée en simulation isolée (recherche, connexion, mesures, déconnexion) ; le contrôleur et l’API ne changent pas.
-
-**Pas dans cette brique :** démarrage de séance.
-
-### Brique 8 · Exécuter une séance
-
-**Livré :** depuis Aujourd’hui ou la fiche d’une séance, Commencer, confirmer la clé et la bande, compte à rebours annulable, puis Direct, Pause, Reprendre au même point et Arrêter. Le même moteur utilise le RUN500 réel ou le simulateur, selon le mode du serveur. Le chemin réel est implémenté dès cette brique ; la brique 10 reçoit le parcours sur le matériel.
-
-**Travail :**
-1. Horloge et transitions sur le PC ; profil, version et blocs figés. Programmes de l’application jusqu’à 120 segments, avec durée totale éventuellement supérieure à une heure pour une cible calorique, sans reprendre les limites de durée du diagnostic.
-2. Passage explicite au contrôle : abonnement aux réponses du Control Point, acquisition du contrôle, vitesse minimale, Start, mouvement observé, puis consignes. Commandes sérialisées, sans répétition ; Pause/STOP attendent l’échange déjà envoyé. Arrêt confirmé seulement après réponse acceptée, stabilisation et nouvelle mesure de zéro.
-3. Autorisation absolue : durée prévue avec retour au calme + 30 s par bloc exécuté + 15 min de pause cumulée + 15 s. Aucun renouvellement par heartbeat. Le PC pilote la séance indépendamment du téléphone, même après fermeture/suspension de sa page. Le contact écran toutes les 3 s ne sert qu’à réserver les réglages à son propriétaire ; un nouvel écran peut les récupérer après son départ ou 12 s sans contact, sans modifier la course. Aucun renouvellement de l’échéance absolue.
-4. Une pause depuis le Direct ou la console du RUN500 fige le temps actif et conserve le bloc et ses réglages. Après stabilisation de la bande à zéro, le propriétaire peut reprendre avec les deux confirmations et les contrôles de départ. Le temps actif repart quand le tapis atteint la consigne et inclut les transitions entre blocs pendant l’effort. Un STOP, le retrait de la clé ou une perte de contrôle bloquent la reprise. Le signal de pause du RUN500 a été rejoué en simulation et la reprise vérifiée dans Chrome. L’essai du correctif sur le tapis reste à faire.
-5. Direct plein écran : vitesse dominante et durée jaune ; commandes de 68 px ancrées sur téléphone, deux colonnes sur PC. Capsule mobile et activité latérale, graphiques SVG synchronisés (1 min / 5 min / séance), curseur daté souris/toucher/clavier, trous pour mesures indisponibles, buffers bornés. Valeur absente distincte de zéro ; aucun panneau cardio vide.
-6. Réel et simulation : **1–16 km/h et 0–10 %**, restreints aux plages/pas effectivement lus. Plafonds initiaux de 2,5 km/h / 1 % retirés le 7 octobre sur demande d’Arnaud. Programme incompatible refusé avec le bloc et la plage, sans correction silencieuse ; une plage inconnue bloque le démarrage. Les plafonds 4 km/h/3 % et l’autorisation de 10 min du POC restent distincts.
-7. Ajustement en direct demandé le 5 octobre : boutons − / + de vitesse et de pente ; décalage commun au bloc actuel et aux suivants, conservé après pause/reprise. Séance enregistrée et durées intactes. Propriétaire seul ; tous les blocs restants validés avant application, sans écrêtage ni file de commandes. Pause/STOP prioritaires pendant l’ajustement.
-
-**Vérifications du complément :** 29 tests ciblés réussis (20 moteur/API, 9 tapis) et build TypeScript/Vite. Chrome en simulation : +0,5 km/h et +1 % appliqués au bloc actuel, conservés après Pause/Reprendre et observés au passage suivant (3 km/h / 2 %), puis STOP confirmé. Nouveau démarrage sans ancien décalage. Typographie corrigée : la virgule de 2,5 ne recouvre plus le libellé ; 16,0 km/h et 60′00″ tiennent à 360 × 640, 390 × 844, 900 × 768 et 1366 × 768. Boutons de réglage de 44 px ; les deux lignes restent accessibles sur le petit écran. Données d’essai séparées ; aucune commande matérielle réelle. Serveur 4330 et JS/CSS du build vérifiés ; tables existantes et coffre ChatGPT conservés lors de la relance.
-
-**Fait quand :**
-- [x] Une séance de 30 min complète en simulation, avec 2 pauses, sur deux clients Chrome distincts : PC 1366 × 768 et téléphone 390 × 844. 1 800 s actives, 322,44 s de pauses, 2 140,58 s d’observation réelle sans accélération, 2 133 trames ; même état final sur les deux écrans, STOP confirmé avec vitesse nulle.
-- [x] 52 tests ciblés réussis (16 moteur/API, 9 tapis, 20 POC, 7 serveur) ; le transport BLE de test exerce le chemin réel, y compris abonnement, refus, STOP en cours d’échange, timeout, réponse STOP sans effet, récupération passive, limites, opérations concurrentes et autorisation.
-- [x] Recette initiale, avant le pilotage autonome : fermeture du propriétaire en mouvement, observateur encore ouvert → STOP confirmé à zéro ; aucune reprise automatique après redémarrage du serveur. Annulation du compte à rebours → aucune commande, connexion restée en lecture seule, aucun mouvement.
-- [x] `npm run build` réussi (TypeScript inclus).
-- [x] Chrome : 360 × 640, 390 × 844, PC 1366 × 768 et seuil 899/900 px, sans débordement ; Direct actif, pause, capsule/sidebar, allure, confirmations et Échap/focus, curseur commun clavier/toucher. Coupure ciblée d’un observateur : mesures `--`, durée dernière reçue et commandes désactivées aux mêmes positions ; les deux clients de l’essai long restent connectés. Consoles du parcours normal sans erreur/alerte.
-
-**Limites :** la séance continue si le téléphone est verrouillé, suspendu ou déconnecté. Le PC doit rester allumé et relié au tapis ; une perte du PC/BLE laisse l’arrêt matériel non garanti. Résultat incertain : STOP physique, déconnexion/reconnexion passive, mesures fraîches à zéro, puis clôture de la séance interrompue, sans réarmement. Réglages > Tapis affiche honnêtement le contrôle actif et refuse la déconnexion pendant une séance. Détails et API dans [Exécution d’une séance](docs/EXECUTION_SEANCE.md).
-
-**Correction du 7 octobre 2026 après usage sur téléphone :** « Revérifier » conserve les deux confirmations ; une nouvelle préparation ou reprise les remet à zéro. Le témoin vert du tapis exige un état PC récent ; une perte de contact annonce la reconnexion. Défaut reproduit puis correction vérifiée dans Chrome à 390 × 844, console sans erreur, build réussi. Le serveur est en mode réel ; le plafond initial qui bloquait Cardio continu à 3–4,5 km/h est retiré sur instruction d’Arnaud. Contrôles ciblés moteur/tapis : préparation et exécution 3 → 4,5 km/h / 2 %, arrêt confirmé, validation 16 km/h / 10 %, respect de capacités plus basses et refus de plage inconnue, avec transport BLE de test. Aucune commande matérielle envoyée. La coupure d’observation du téléphone n’a pas été reproduite ; les journaux indiquent une coupure Bluetooth le 6 octobre vers 19 h 29, sans établir sa cause. Les plages complètes sont autorisées mais la réception physique de l’application reste ouverte.
-
-**Livraison logicielle du 5 octobre 2026 :** serveur habituel 4330 relancé, API d’exécution disponible, JS/CSS servis identiques au build ; neuf tables SQLite et coffre ChatGPT identiques avant/après, intégrité et clés étrangères conformes. Sources du lanceur, manifests et lockfiles inchangés, aucune migration ni recherche Bluetooth réelle. Vérification isolée sur 4331, données extérieures distinctes. La relance par script a rencontré un fichier npm verrouillé : dépendances restaurées par `npm ci` sans changement du lockfile, préparation et build ensuite réussis ; serveur lancé directement et toujours arrêtable par le canal local existant du lanceur.
-
-**Amélioration du 7 octobre 2026 après essai réel :** le journal recevait les vitesses et pentes modifiées sur la console, mais les cibles du Direct n’en tenaient pas compte. Les changements de consigne FTMS synchronisent maintenant les cibles et les blocs restants compatibles, sans les confondre avec les mesures ni modifier le programme enregistré. Vitesse ±0,5 km/h et pente ±0,5 % ; appuis cumulés avec affichage immédiat, dernière cible conservée pendant l’échange Bluetooth, sans bloquer les boutons. Pause/STOP annulent les demandes en attente ; résultat inconnu toujours sans répétition. 34 tests moteur/API/tapis et build réussis ; Chrome en simulation : six appuis de 3 à 6 km/h, changement côté tapis à 7,2 km/h / 2,5 %, puis boutons à 6,7 km/h / 3 %, console sans erreur. Les corrections restent à confirmer sur le RUN500 physique ; aucun mouvement matériel demandé pour cette livraison.
-
-**Pas dans cette brique :** conservation durable, bilan, historique, réception physique du nouveau parcours. Les commandes réelles sont disponibles ; aucun essai moteur RUN500 n’a été réalisé pour cette livraison.
-
-### Brique 9 · Enregistrer et revoir
-
-**Livré le 7 octobre 2026 :** après une fin ou un arrêt confirmé et la dernière transaction réussie, Direct ouvre le bilan à son URL stable `#/bilans/{id}`. Aujourd’hui → Bilans retrouve tous les bilans du profil ; la fiche de séance ouvre ceux de ce programme. Liste paginée de consultation, sans totaux ni comparaisons. Un arrêt incertain conserve le Direct et ses actions protectrices ; le bilan consulté expose explicitement l’absence de confirmation.
-
-**Conservation :** migration additive `0009`, deux tables avec suppression en cascade du profil. Profil, poids, version du programme et paramètres de calcul figés ; suppression ou modification du programme sans effet sur le bilan. Mesures brutes/décodées UTC, source/qualité, échantillons à la seconde, transitions, pauses, reprises, ajustements, commandes et résultats. File bornée indépendante du Direct, transactions par lots sur un thread ; aucune écriture disque dans le callback FTMS. Repère durable avancé uniquement après commit, erreurs et pertes explicites, arrêt demandé en cas de stockage indisponible. Un processus interrompu laisse les données des derniers lots et une séance interrompue, sans reprise moteur. Réel et simulation restent dans leurs bases séparées.
-
-**Calculs partagés :** Python versionné `recording-v1-acsm-v1`. Durées active/pause/murale distinctes ; distance exclusivement issue du compteur, partielle en cas de coupure ou remise à zéro. Moyennes pondérées par les secondes actives valides, valeur de gauche et deux extrémités fraîches espacées d’au plus 2 s ; aucune interpolation de coupure. Couverture calculée, absence distincte de zéro. Calories actives ≈ : méthode ACSM partagée, poids figé, seules secondes conjointement valides ; limites et couverture accessibles dans Données et calculs.
-
-**Bilan :** durée dominante, mesures secondaires, état/date/nom, ressenti facultatif 1–10 sans sélection initiale, saisie et modification avec confirmation serveur et reprise explicite après échec. Téléphone compact ; PC à deux colonnes dès 900 px. Courbes SVG vitesse mesurée/consigne effectivement acceptée et pente liée, même curseur tactile/souris/clavier, pauses et événements, trous réels. Vue complète ou fenêtres de 5 min, tous les points conservés même au-delà du buffer Direct. Blocs initialement prévus, consignes appliquées et moyennes mesurées ; événements et qualité en détails développables.
-
-**Fait quand :**
-- [x] Un arrêt forcé du serveur en pleine séance laisse une séance interrompue et lisible ; intégrité et ressenti conservés après une seconde relance, sans connexion ni armement automatique.
-- [x] Calculs pondérés, pauses, zéros, mesures manquantes, coupures/remises à zéro et séance de 3 h / 10 801 points contrôlés ; isolation API, ressentis stricts, suppression en cascade, programme figé et panne/saturation du stockage vérifiés.
-- [x] Build TypeScript/Vite et 104 tests ciblés réussis ; les 30 contrôles enregistrement/exécution ont repassé après les derniers correctifs.
-- [x] Chrome via MCP : parcours moteur simulé réel, pause/reprise/ajustement, arrivée au bilan, curseur souris/toucher/clavier, ressenti ajouté/modifié, panne réseau avec saisie conservée et réessai, rechargement et changement de profil. Deuxième séance complète et blocs vérifiés ; troisième séance coupée par arrêt brutal du processus, bilan interrompu retrouvé avec arrêt non confirmé visible et bloc non réalisé sans valeurs inventées. Formats 360 × 640, 390 × 844, 1366 × 768 et seuil 899/900 px inspectés et corrigés.
-
-**Installation habituelle :** sauvegarde SQLite préalable, migration installée, huit tables existantes identiques, intégrité SQLite `ok`. Coffre identique au premier contrôle après migration ; son fichier chiffré a ensuite évolué pendant la maintenance normale de la connexion existante. Après publication, compte ChatGPT retrouvé connecté, coffre disponible, permissions actives et catalogue chargé sans erreur. Aucune modification du code du coffre, aucun jeton ni contenu privé publié. Relance au repos par le mécanisme du lanceur ; HTML, JS et CSS servis identiques au build final. Répertoire réel des bilans vide, aucune donnée simulée importée ; instance isolée arrêtée après contrôle. Aucun mouvement ni scan du RUN500 réel.
-
-**Complément demandé :** Direct affiche aussi les calories actives ≈ estimées et la vitesse moyenne toujours en km/h. Même réduction Python que le bilan, cumulative et indépendante du buffer graphique ; poids figé, pauses exclues, couverture et limites accessibles dans les détails. Les données absentes restent `--` ; observation perdue : valeurs actuelles indisponibles. Aucun calcul calorique dans le navigateur.
-
-**Contrôles du complément :** 13 tests ciblés enregistrement/énergie réussis, puis 9 contrôles calculs/conservation/énergie après finition. Égalité Direct/bilan sur 3 h et sur le moteur simulé ; pause de plus d’une minute sans modification des calories ni de la moyenne, reprise et fin automatique. Chrome 360 × 640, 390 × 844 et 1366 × 768 ; composition PC resserrée après observation de commandes coupées. Build final et ressources servies vérifiés, serveur réel relancé au repos.
-
-**Limites :** les lots non encore commités lors d’un arrêt brutal ne sont pas garantis (repère durable visible). Pas d’essai sur téléphone physique ni de réception matérielle RUN500. Les avertissements réseau des arrêts volontaires et le 404 d’un bilan d’un autre profil sont attendus ; aucun succès de sauvegarde n’est annoncé sur ces refus. Historique complet, totaux hebdomadaires, comparaisons et lectures d’activités par le Coach restent dans les briques suivantes.
-
-### Brique 10 · RUN500 réel
-
-**Livré :** les séances fonctionnent sur le vrai tapis, dans un périmètre reçu et documenté.
-
-**Travail :** réception du moteur déjà implémenté en brique 8, avec présence humaine. Les plages complètes annoncées sont autorisées depuis le 7 octobre ; les essais documentent leur fonctionnement physique sans servir de verrou logiciel.
-1. Séance courte à 1–2,5 km/h : démarrage, transitions, pause, reprise, arrêt.
-2. Séance de 30 min à basse vitesse.
-3. Pertes : clé retirée, Bluetooth coupé, téléphone verrouillé, veille du PC, arrêt du processus.
-4. Vérification progressive des vitesses et pentes dans les plages annoncées par le tapis.
-
-**Fait quand :**
-- [ ] Chaque palier a sa preuve (commande, réponse, mesure, observation humaine).
-- [ ] Le fonctionnement physique est documenté dans les plages annoncées et autorisées ; les cas encore non essayés restent explicites.
-
-**Pas dans cette brique :** nouvelles fonctions.
+# FitnessApp — Plan V1
+
+État partagé au 27 novembre 2026. Les cases **Livrée** correspondent aux fonctions publiées sur `main`. Les essais sur appareils physiques sont suivis dans les briques de réception.
+
+## Objectif de la V1
+
+Chaque profil définit son objectif et ses disponibilités. Le coach prépare une semaine, explique les ajustements et s’appuie sur les séances réalisées, manquées ou écourtées et sur le ressenti. Le suivi se fait dans FitnessApp. Un 10 km fin mars 2027 est un exemple d’objectif daté. Une habitude régulière suit le même parcours sans échéance obligatoire.
+
+## Ce qui reste à faire
+
+- **Brique 11 — Progression.** Livrer l’affichage des bilans hors programme dans le calendrier, puis calculer les totaux semaine et mois et afficher la progression vers l’objectif. Les mêmes bilans et calculs alimentent Aujourd’hui, Bilans et Coach.
+- **Briques 7 et 10 — Réception matérielle.** Vérifier la lecture seule, puis l’exécution et les protections sur le vrai RUN500. Vérifier le parcours sur téléphone physique.
+- **Briques 14 à 17 — Suite de la V1.** Livrer les graphiques avancés, les imports et sauvegardes, compléter l’installation Windows et recevoir le parcours complet.
+
+## Avancement
+
+| Brique | État | Résultat ou critère restant |
+|---|---|---|
+| 0 · Design | Livrée | Direction visuelle sombre pour mobile et PC. [Référence de conception](DESIGN.md) |
+| 1 · Socle | Livrée | Application réelle servie par le PC, accessible sur le réseau local. |
+| 2 · Profils | Livrée | Création, choix, modification et suppression des profils. Données isolées par profil. |
+| 3 · Séances manuelles | Livrée | Création, modification, duplication, suppression et choix de la séance pour Aujourd’hui. |
+| 4 · Connexion ChatGPT | Livrée | Connexion sur le PC, permissions du forfait et modèles du compte, session conservée dans le coffre Windows. |
+| 5 · Coach | Livrée | Conversations persistantes et recherchables, lectures du profil et de la bibliothèque, historique repris au fil des échanges. |
+| 6 · Catalogue et séances personnalisées | Livrée | Six formats, trois niveaux, création et ajustement avec le coach, validation avant enregistrement. [Construction des programmes](docs/CONSTRUCTION_PROGRAMMES.md) |
+| 7 · Tapis dans l’app | Logiciel livré | Vérifier la lecture seule sur le vrai RUN500 et sur téléphone physique. |
+| 8 · Exécuter une séance | Livrée | Direct, pause, reprise, arrêt, retour au calme et poursuite côté PC pendant la navigation. Réception physique en brique 10. |
+| 9 · Enregistrer et revoir | Livrée | Bilans du profil, historique paginé, mesures, qualité et ressenti. |
+| 10 · RUN500 réel | Ouverte | Recevoir les séances courtes et longues, les interruptions et les plages du tapis. |
+| 11 · Historique et semaine | Partielle | Objectif par profil et calendrier disponibles. Affichage de tout l’historique et calculs de progression à livrer. |
+| 12 · Coach informé | Livrée | Analyse des bilans du profil, mémoire sourcée, personnalisation et liens vers les bilans utilisés. [Refonte Coach IA](docs/REFONTE_COACH_IA.md) |
+| 13 · Programme et suivi avec le coach | Livrée | Programme selon l’objectif et le niveau, semaine à confirmer, suivi et adaptations après les bilans. |
+| 14 · Graphiques avancés | Ouverte | Comparaisons, tendances, plages de vitesse et de pente, calendrier de pratique et qualité des données. |
+| 15 · Données | Partielle | Des exports vers Santé sont disponibles. Imports FIT/TCX, exports CSV/JSON, sauvegarde, restauration et retrait de Foulée à terminer. |
+| 16 · Usage quotidien Windows | Partielle | Lanceur livré. Python embarqué, installateur autonome, mise à jour et fonctionnement hors ligne à valider. |
+| 17 · Réception finale | Ouverte | Parcours complet sur PC, iPhone et Android avec le vrai tapis. |
+
+## Historique et Coach
 
 ### Brique 11 · Historique et semaine
 
-**À livrer.** Le profil décrit son objectif avec ses mots. Le coach propose un repère de progression à valider et demande uniquement les précisions qui changent le programme. « Faire trois séances par semaine » se suit par la fréquence, « courir 30 minutes en continu » par les durées courues, et « retrouver le plaisir de bouger » peut se suivre par le ressenti et la régularité. La date est utile pour un rendez-vous et facultative pour une habitude. L’objectif reste modifiable et disponible dans toute conversation.
+Chaque profil peut définir et modifier son objectif, son repère de progression et une échéance facultative. Le coach peut suggérer un repère. Pour une habitude, le repère peut être le nombre de séances par semaine. Pour une course, il peut être la durée courue en continu. Plusieurs profils peuvent préparer la même course avec des points de départ différents.
 
-Pour un objectif de course, garder la distance, la date et le résultat recherché, par exemple finir un 10 km fin mars 2027 ou viser un chrono. Plusieurs profils peuvent préparer le même événement, chacun avec ses propres repères de départ, disponibilités et objectifs.
-
-**Travail.** Réutiliser l’objectif hebdomadaire existant pour la régularité. Dans Aujourd’hui, montrer la progression vers l’objectif et le volume de la semaine. Dans Bilans, ajouter la vue par mois et accéder aux séances qui expliquent les chiffres. Utiliser les mêmes calculs pour le coach et l’interface.
-
-**Fait quand :**
-- [x] Depuis Aujourd’hui, chaque profil peut définir et modifier son objectif, son repère et son échéance facultative. Le coach peut suggérer le repère et demander une précision. L’objectif devient actif après enregistrement et reste disponible dans une nouvelle conversation.
-- [ ] Les totaux de la semaine et du mois sont exacts sur un jeu de test de plusieurs semaines.
-- [ ] La progression s’appuie sur les bilans réels du profil. Le résultat tient compte de la couverture des mesures et laisse les simulations à part.
-
-**Mon objectif, 25 novembre 2026.** Migration additive 0012, révision pour protéger les modifications concurrentes et saisie du repère disponible sans connexion ChatGPT. Build et 89 tests ciblés réussis. Chrome sur PC et aux formats 390 × 844 et 360 × 640 pour l’édition, l’échéance, la persistance, le changement de profil et le chemin vers Coach. Avec le modèle connecté et une base séparée, des repères différents sont proposés pour une habitude et une course. Une nouvelle conversation reprend l’objectif confirmé et reconnaît le bilan simulé comme tel. Les agrégats de l’historique et le planning restent à livrer.
+- [ ] Afficher dans Semaine et Mois les bilans des séances hors programme, à leur date, et ouvrir le bilan correspondant.
+- [ ] Calculer les totaux de la semaine et du mois sur plusieurs semaines de bilans. Les séances qui expliquent les totaux restent accessibles.
+- [ ] Afficher dans Aujourd’hui la progression vers le repère du profil. Partager les calculs avec le Coach et tenir compte des mesures absentes ou partielles. Les simulations restent séparées.
 
 ### Brique 12 · Coach informé
 
-**Livré :** ChatGPT analyse l’historique du profil (« Est-ce que je progresse sur ce programme ? ») et cite les séances utilisées, ouvrables d’un toucher.
-
-**Travail :** compléter les lectures déjà livrées en brique 5 par les activités réellement enregistrées : outils `list_sessions`, `get_session`, `get_session_samples` (par tranches), `get_feedback`, `get_progress`, `compare_sessions`, avec pagination, couverture et troncature signalée ; mêmes calculs que le bilan. Ne pas reconstruire les conversations, la mémoire et les lectures de bibliothèque.
-
-**Fait quand :**
-- [x] Le coach retrouve une séance ancienne et cite des valeurs identiques au bilan.
-- [x] Aucun outil ne renvoie de données de l’autre profil (test).
-
-**Refonte du 13 octobre 2026 :** migration additive 0010, mémoire automatique avec citations/dates, corrections et retrait ; état temporaire distinct des préférences, restrictions sensibles à confirmer. Les allures confortables explicitement chiffrées sont conservées dès le message, même si l'inférence échoue. L'extraction préalable par le modèle traite les autres faits et les anciennes archives progressivement ; les échanges complets restent recherchables. Les faits importants sont prioritaires dans un contexte borné, avec accès aux autres par outils.
-
-Le contexte fournit les cinq bilans récents, la qualité, le ressenti et le volume reçu sur sept jours. Les outils donnent accès à toutes les séances, aux tranches de mesures et aux comparaisons ; une simulation ne devient pas une capacité réelle. `recommend_workout` construit une base depuis l'allure déclarée ou des blocs réellement reçus et tolérés ; l'IA peut l'adapter puis la faire valider. Temps maximal, plafonds personnels et minimum calorique sont contrôlés indépendamment des blocs fournis. La méthode énergétique v2 traite l'ambiguïté marche/course, préserve v1 pour les anciens bilans et date les nouvelles saisies du poids. Détail : [refonte Coach IA](docs/REFONTE_COACH_IA.md), [calories](docs/ESTIMATION_CALORIES.md).
-
-**Ajustement du 17 octobre 2026 :** consignes du Coach corrigées après lecture d'une création réelle : appliquer les corrections et les réponses au questionnaire dans le même échange, distinguer allure facile et plafond personnel, adapter les récupérations au déplacement déclaré et limiter les avertissements répétitifs. Les plages d'allure sont mémorisées avec leurs bornes et leur citation ; le moteur conserve la course déclarée aux vitesses ambiguës. Un retour sur une récupération réussie ne transforme plus l'objectif en récupération. Vérification : 43 tests ciblés du Coach réussis ; conversation originale relue dans Chrome. Pas de nouvel essai du modèle connecté ni de modification des données réelles ; redémarrage du serveur nécessaire pour charger ces corrections.
-
-**Limites :** les règles de construction FitnessApp ne sont pas une validation clinique individuelle ; les kcal restent estimées, sans FATmax, VO2max ou grammes de graisse perdus déduits. Les anciens échanges sont repris par groupes pendant l'utilisation, sans appel autonome au modèle. La brique 11 et le planning daté ne sont pas livrés par cette refonte. Réception RUN500/téléphone physique toujours ouverte.
+Le Coach retrouve les bilans récents et anciens, leur qualité et le ressenti. Il cite les bilans utilisés et les chiffres reprennent les calculs de FitnessApp. La mémoire conserve la source et la date des faits utiles. L’utilisateur peut les corriger ou les retirer. Le contexte est limité et le Coach peut demander le détail des mesures si nécessaire. [Refonte Coach IA](docs/REFONTE_COACH_IA.md) · [Estimation des calories](docs/ESTIMATION_CALORIES.md)
 
 ### Brique 13 · Programme et suivi avec le coach
 
-**Livré.** Le coach compose le planning selon l’objectif, le niveau, les séances récentes et les disponibilités du profil. Une échéance donne des étapes jusqu’à la date. Un objectif continu donne un rythme et des points d’étape. L’utilisateur relit, déplace ou écarte des séances et confirme la semaine. Aujourd’hui affiche la séance du jour et le prochain créneau de la semaine.
+- L’utilisateur choisit ses créneaux, relit la proposition, déplace ou écarte des séances et confirme la semaine. Le coach fabrique une proposition pour la semaine en cours ou la suivante. Avec une échéance, il donne également les étapes jusqu’à la date.
+- Aujourd’hui affiche la séance du jour et la suivante. Le Planning propose les vues Semaine et Mois, avec accès au détail par date. La semaine affiche les séances à faire avant les séances passées.
+- **Préparer la suite** depuis un bilan donne au coach la séance et le ressenti. Il explique les adaptations, préserve les séances passées et en cours et propose une reprise faisable quand la semaine a été difficile. La date de l’événement reste fixe.
+- Les programmes sur tapis suivent la validation de l’éditeur et leur durée réserve le retour au calme. Pour une sortie extérieure planifiée, l’utilisateur peut saisir la durée réelle, la distance et le ressenti.
 
-**Exemple avec échéance.** Pour un 10 km fin mars 2027, la préparation peut aller d’une phase d’endurance à des séances adaptées à la course, puis à un allègement avant le départ. Chaque séance détaillée indique son but, sa durée, son effort ou son allure et le lieu prévu, sur tapis ou dehors. Les sorties dehors peuvent être ajoutées à la main avec leur date, leur durée, leur distance et leur ressenti. Bilans et coach indiquent la provenance des mesures. [Repères d’entraînement de la Ligue d’athlétisme](https://lnca.athle.fr/asp.net/espaces.html/html.aspx?id=4559).
+Le 25 novembre, le modèle connecté a proposé et enregistré des semaines sur tapis et dehors dans une base isolée. Chrome a servi à vérifier le déplacement et la confirmation des séances, la saisie d’une sortie écourtée et la conservation du passé après adaptation.
 
-**Parcours.** Dans le bilan, **Préparer la suite** donne au coach la séance réalisée et le ressenti. Le coach retrouve aussi l’objectif, les semaines confirmées et les états dans une nouvelle conversation. Il explique les adaptations dans la proposition. Les séances sur tapis utilisent la validation et le moteur existants. Le temps maximal réserve la minute de retour au calme automatique.
+## Réception du RUN500
 
-**Suivi et motivation.** Relier le prévu au réalisé pour distinguer les séances terminées, écourtées ou manquées. Quand le planning convient, le coach souligne un progrès observable ou une habitude tenue. Quand le temps ou le rythme change, il propose avec bienveillance une suite faisable, par exemple déplacer une séance ou reprendre par une version courte. Aujourd’hui montre ce retour et un prochain pas clair.
+### Brique 7 · Lecture seule
 
-**Fait quand :**
-- [x] Une semaine proposée à partir de l’objectif et des disponibilités est acceptée, puis retrouvée dans Aujourd’hui.
-- [x] Une séance difficile, écourtée ou manquée alimente l’ajustement. Les séances passées et en cours sont conservées, et le planning affiche les changements acceptés.
-- [x] Les objectifs avec échéance et les objectifs continus utilisent le même parcours. La préparation et le suivi sont séparés par profil.
-- [x] Une sortie extérieure planifiée et renseignée alimente le suivi du bon profil. La date de course reste fixe pendant les ajustements.
+La recherche, la connexion, les capacités et les mesures ont été vérifiées en simulation. La lecture seule ne commande aucun mouvement. Restent la connexion au vrai RUN500 et l’affichage de ses capacités et mesures sur le téléphone. [Réception RUN500](docs/RECEPTION_RUN500.md)
 
-**Vérification du 25 novembre 2026.** Migration additive 0013. Tests ciblés de l’acceptation, des bilans, des contraintes de durée et de la séparation des profils. Chrome sur PC et mobile pour déplacer une séance, confirmer, enregistrer une sortie écourtée et conserver le passé après adaptation. Le modèle connecté a proposé et enregistré des semaines sur tapis et dehors sur une base isolée, avec reprise plus facile après un 8/10 simulé et étapes d’un objectif daté. Les propositions concernent la semaine en cours ou la suivante. Les sorties dehors sont déclarées sur une séance du planning.
+### Briques 8 et 10 · Exécution et réception physique
 
-**Navigation du planning.** L’onglet dédié ouvre la semaine. La frise donne accès aux séances du jour choisi. La vue Mois utilise les mêmes états et permet de retrouver le détail puis d’ouvrir la semaine correspondante. La lecture est filtrée par profil et par mois, y compris pour une semaine à cheval sur deux mois. La vue utilise les séances enregistrées et leur suivi existant.
+Le PC conserve l’exécution quand le téléphone quitte ou suspend le Direct. À la fin du programme, l’application ajoute une minute de retour au calme à 5 km/h maximum, avec la pente du dernier bloc. **Terminer** demande l’arrêt immédiatement. La pause sur la console conserve le bloc et les réglages. Le signal a été rejoué en simulation et la reprise vérifiée dans Chrome le 27 novembre. La confirmation physique reste ouverte. [Règles d’exécution](docs/EXECUTION_SEANCE.md)
 
-**Interface du planning.** La semaine ouvre la prochaine séance ou celle en cours et place les séances passées ensuite. Les périodes partagent les repères de durée, de lieu et d’état. La vue mensuelle charge React DayPicker à l’ouverture et conserve l’accès au détail du jour. L’objectif s’édite depuis le Planning et la feuille de préparation désactive les dates indisponibles.
+- [ ] Séance courte à basse vitesse avec transitions, pause sur la console, reprise après confirmation et arrêt.
+- [ ] Séance de 30 minutes à basse vitesse.
+- [ ] Vérifier les réactions au retrait de la clé, à la coupure Bluetooth, au verrouillage du téléphone, à la veille du PC et à l’arrêt du serveur.
+- [ ] Recevoir progressivement les vitesses et pentes annoncées par le tapis. Pour chaque palier, conserver commande, réponse, mesure et observation humaine.
+
+Le STOP physique et la clé restent les protections de dernier recours. Une commande incertaine exige une vérification. Un incident ou une reconnexion n’autorise aucun redémarrage automatique. Le POC reste disponible pour le diagnostic. [Faisabilité et limites](docs/FAISABILITE_RUN500.md) · [Réception et preuves](docs/RECEPTION_RUN500.md)
+
+## Autres travaux V1
 
 ### Brique 14 · Graphiques avancés
 
-**Livré :** comparer 2 ou 3 séances, calendrier de pratique, temps par plage de vitesse et de pente, évolution du ressenti, qualité des données.
-
-**Travail :** G04 à G10 de [DESIGN.md](DESIGN.md) § 7, calculs côté Python, choix SVG ou ECharts selon le volume mesuré.
-
-**Fait quand :**
-- [ ] Un jeu de 200 séances d’une heure reste fluide (détail chargé en moins d’une seconde).
+- [ ] Comparer deux ou trois séances et lire les tendances, le ressenti, les plages de vitesse ou de pente et la qualité des mesures.
+- [ ] Valider la fluidité sur 200 séances d’une heure, avec un détail chargé en moins d’une seconde. Les calculs restent côté Python et les SVG sont la base de l’interface. [Design des graphiques](DESIGN.md)
 
 ### Brique 15 · Données
 
-**Livré :** exporter une séance ou tout l’historique (CSV, JSON), importer des fichiers FIT/TCX, sauvegarder et restaurer la base.
-
-**Foulée.** L’import de programmes et l’envoi des bilans ont été livrés avant la décision d’abandonner le projet. Le retrait de l’intégration et l’arrêt des synchronisations configurées restent à réaliser. Conserver les séances déjà présentes dans FitnessApp. [Documentation de l’intégration existante](docs/INTEGRATION_FOULEE.md).
-
-**Fait quand :**
-- [ ] Une restauration sur une base vide retrouve toutes les séances à l’identique.
-- [ ] Un fichier importé deux fois ne crée pas de doublon.
+- [ ] Exporter une séance ou l’historique en CSV et JSON. Importer des fichiers FIT et TCX sans doublon.
+- [ ] Sauvegarder et restaurer la base. Vérifier qu’une restauration sur une base vide restitue les séances à l’identique.
+- [ ] Retirer l’intégration Foulée et arrêter les synchronisations configurées. Les séances déjà dans FitnessApp sont conservées. [Intégration existante](docs/INTEGRATION_FOULEE.md)
+- [ ] Vérifier l’enregistrement Santé sur les téléphones physiques. La relecture Santé Connect a été vérifiée sur Android 15 émulé. La réception dans Santé sur iPhone reste ouverte. [Configuration du téléphone](docs/ENREGISTREMENT_SANTE.md)
 
 ### Brique 16 · Usage quotidien Windows
 
-**Livré :** un double-clic lance l’app ; elle fonctionne sans Internet, sauf le coach.
-
-**Travail :** runtime Python embarqué, interface compilée, raccourci, mise à jour qui préserve les données, mesures de performance.
-
-**Complément demandé le 4 octobre 2026 :** [lanceur Windows Rust/Tauri](launcher/README.md) livré séparément : démarrer, arrêter, ouvrir l'application, état réel et journal. Le double-clic utilise l'exécutable local et conserve le mode console. L'arrêt propre, les processus enfants et les données ont des vérifications ciblées. Le lanceur peut aussi arrêter un serveur Fitness lancé en console, après vérification du projet et de l'instance par un canal local authentifié ; il conserve ce serveur à la fermeture de la fenêtre. Une ancienne version demande une relance initiale. Le runtime Python embarqué et l'installateur autonome restent à faire ; la brique 16 complète reste donc ouverte. Ce complément ne modifie pas le périmètre des séances développé en parallèle.
-
-**Correction du 7 octobre 2026 :** erreurs du canal d'arrêt précisées et consignées une fois dans le journal ; application disponible distinguée de l'arrêt indisponible. Empreintes de construction identiques entre Windows PowerShell et PowerShell 7, avec régression reproduite puis testée. Cause du refus établie : Windows stockait le canal du serveur dans le cache MSIX de Codex, invisible au chemin habituel depuis l'Explorateur. Le lanceur retrouve désormais ce canal avec les mêmes contrôles d'identité, sans déplacer les données. Régression reproduite puis corrigée ; huit tests ciblés réussis et builds React/Windows réussis. Double-clic réel dans l'Explorateur : processus enfant d'explorer.exe, bouton Arrêter actif et erreur disparue. Serveur habituel et instance conservés, aucun mouvement réel.
+Le lanceur Windows permet de démarrer, arrêter et ouvrir l’application et de consulter le journal. Restent Python embarqué, l’installateur autonome, une mise à jour qui préserve les données et la vérification des performances et de l’usage hors ligne. [Lanceur Windows](launcher/README.md)
 
 ### Brique 17 · Réception finale
 
-**Livré :** le parcours complet (préparer avec ChatGPT, courir, revoir, ajuster) est reçu sur le PC, un iPhone et un Android, sur le vrai tapis.
+- [ ] Préparer avec le Coach, courir, revoir le bilan et ajuster depuis le PC, un iPhone et un Android, sur le vrai RUN500.
+- [ ] Vérifier que les chiffres du bilan, des graphiques, des exports et du Coach concordent.
+- [ ] Vérifier la sécurité après incident ou reconnexion et la consultation et l’exécution d’une séance enregistrée lors d’une panne Internet.
 
-**Fait quand :**
-- [ ] Toutes les briques sont livrées et les limites restantes sont documentées.
-- [ ] Le tapis ne redémarre jamais après un incident ou une reconnexion.
-- [ ] Bilan, graphiques, exports et coach donnent les mêmes chiffres.
-- [ ] Une panne Internet n’empêche ni la consultation ni l’exécution d’une séance enregistrée.
+## Règles permanentes
 
-## 7. Hors V1
+- Le PC héberge l’interface React et l’API FastAPI sur le réseau local. Un seul processus pilote le Bluetooth. Le Coach se connecte depuis le PC via Sign in with ChatGPT. Le coffre Windows conserve les jetons et les téléphones reçoivent uniquement les données de l’application.
+- Le Coach accède aux données du profil actif par les services de FitnessApp. Ses propositions suivent la même validation que l’éditeur manuel. Seul l’utilisateur peut démarrer le tapis.
+- SQLite conserve les données par profil, avec suppression en cascade après confirmation. Les modes réel et simulation restent séparés. Les sauvegardes utilisent l’API SQLite.
+- Les mesures sont horodatées avec leur source et leur qualité. Le profil et le programme sont figés pour un bilan. Les calculs sont versionnés et partagés. Les données manquantes restent absentes, les coupures ne sont pas interpolées et les erreurs de stockage sont visibles. [Exécution et enregistrement](docs/EXECUTION_SEANCE.md)
+- La méthode de travail, les contrôles et la publication sont dans [AGENTS.md](AGENTS.md).
 
-Accès depuis Internet, séances pilotées par le cardio, synchronisation Garmin Connect, VO₂max ou scores physiologiques, application native.
+**Hors V1.** Accès depuis Internet, pilotage par le cardio, synchronisation Garmin Connect, VO₂max et scores physiologiques, application native FitnessApp.
+
+**Historique.** Les vérifications et décisions détaillées des livraisons précédentes restent consultables dans la [version détaillée du plan avant ce rangement](https://github.com/Nono8Six/FitnessApp/blob/dafa3676df5b4131f61d609ff2d88892a8431cf0/PLAN_V1_FITNESS_APP.md).
