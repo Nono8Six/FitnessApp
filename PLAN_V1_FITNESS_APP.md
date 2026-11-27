@@ -27,7 +27,7 @@ Deux profils peuvent préparer le même 10 km avec des semaines différentes. Le
 
 **À terminer.** L’objectif et le repère sont enregistrés. Le suivi chiffré dans Aujourd’hui et les totaux par période restent à construire.
 
-1. **Rendre les bilans visibles dans le Planning.** Publier l’affichage des séances faites hors programme au jour où elles ont eu lieu. Une séance déjà liée au planning le même jour apparaît une fois. Si plusieurs séances ont eu lieu le même jour, chaque bilan reste accessible.
+1. **Bilans visibles dans le Planning — livré sur `main`.** En Semaine et en Mois, les séances réalisées apparaissent à leur date locale, même sans programme accepté. Un bilan rattaché à une séance programmée le même jour apparaît une seule fois. Chaque bilan du jour peut être ouvert séparément. Le calendrier suit le profil affiché et le mode réel ou simulé.
 2. **Calculer le repère confirmé.** Partir du repère existant. Quand il peut être mesuré, faire confirmer ce qui compte, la cible et la période. Calculer les totaux semaine et mois à partir des bilans du profil. Pour un repère qualitatif, montrer les observations utiles et leur période.
 3. **Afficher le résultat et ses sources.** Dans Aujourd’hui, montrer l’objectif, le repère, le résultat et la prochaine action. Les séances qui expliquent le résultat sont ouvrables depuis le Planning ou Bilans. Le coach utilise les mêmes calculs et peut citer les bilans qui justifient son retour.
 4. **Vérifier le parcours sur téléphone et PC.** Garder les actions et les informations essentielles lisibles dans les composants existants. Prévoir une première utilisation sans bilan, des mesures partielles et un chargement en échec avec possibilité de réessayer. [Référence d’interface](DESIGN.md)

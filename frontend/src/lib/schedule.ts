@@ -16,7 +16,14 @@ export interface CalendarEntry extends SessionSpec {
   manual?: ManualReport
 }
 export interface PlanEntry extends CalendarEntry { workout: Workout | null }
-export interface ScheduleMonth { month: string; today: string; sessions: CalendarEntry[] }
+export type CalendarItem = Pick<CalendarEntry, 'id' | 'day' | 'name' | 'status'>
+export interface CalendarActivity extends CalendarItem {
+  status: 'done' | 'shortened'
+  time: string
+  active_s: number
+  feeling: number | null
+}
+export interface ScheduleMonth { month: string; today: string; sessions: CalendarEntry[]; history: CalendarActivity[] }
 export interface PlanDraft {
   id: string
   allowed: string[]
@@ -32,6 +39,7 @@ export interface Schedule {
   available: Availability | null
   plan: { focus: string; explanation: string; phases: SchedulePhase[]; sessions: PlanEntry[]; goal_revision: number } | null
   proposal: PlanDraft | null
+  history: CalendarActivity[]
 }
 
 const hasDay = (value: unknown): value is string => typeof value === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(value)
@@ -49,8 +57,12 @@ const isCalendarEntry = (v: unknown): v is CalendarEntry => isRecord(v) && isSes
   && (v.report === null || isRecord(v.report) && typeof v.report.id === 'string' && typeof v.report.active_s === 'number')
   && (v.manual === undefined || isRecord(v.manual) && typeof v.manual.minutes === 'number')
 const isEntry = (v: unknown): v is PlanEntry => isRecord(v) && isCalendarEntry(v) && (v.workout === null || isWorkout(v.workout))
+const hasHistory = (v: Record<string, unknown>) => Array.isArray(v.history)
+  && v.history.every(item => isRecord(item) && hasDay(item.day) && typeof item.id === 'string' && typeof item.name === 'string'
+    && (item.status === 'done' || item.status === 'shortened') && typeof item.active_s === 'number'
+    && typeof item.time === 'string' && (item.feeling === null || typeof item.feeling === 'number'))
 const isMonth = (v: unknown): v is ScheduleMonth => isRecord(v) && hasDay(v.today) && typeof v.month === 'string'
-  && /^\d{4}-\d{2}$/.test(v.month) && Array.isArray(v.sessions) && v.sessions.every(isCalendarEntry)
+  && /^\d{4}-\d{2}$/.test(v.month) && Array.isArray(v.sessions) && v.sessions.every(isCalendarEntry) && hasHistory(v)
 const isDraft = (v: unknown): v is PlanDraft => isRecord(v) && typeof v.id === 'string' && Array.isArray(v.allowed)
   && v.allowed.every(hasDay) && Array.isArray(v.replaces) && v.replaces.every(isSession)
   && isRecord(v.request) && isAvailability(v.request.availability) && isPlan(v.data) && isRecord(v.data)
@@ -61,7 +73,7 @@ const isSchedule = (v: unknown): v is Schedule => isRecord(v) && hasDay(v.week) 
   && (v.available === null || isAvailability(v.available))
   && (v.plan === null || isPlan(v.plan) && isRecord(v.plan) && Array.isArray(v.plan.sessions)
     && v.plan.sessions.every(isEntry) && Number.isInteger(v.plan.goal_revision))
-  && (v.proposal === null || isDraft(v.proposal))
+  && (v.proposal === null || isDraft(v.proposal)) && hasHistory(v)
 
 const path = (profile: string) => `/api/profiles/${encodeURIComponent(profile)}/schedule`
 export const readSchedule = (profile: string, week?: string) =>
@@ -122,3 +134,16 @@ export function shiftMonth(month: string, amount: number) {
 
 export const weekdayIndex = (day: string) => (new Date(day).getUTCDay() + 6) % 7
 export const weekStart = (day: string) => shiftDay(day, -weekdayIndex(day))
+
+export function calendarByDay(items: CalendarItem[]) {
+  const groups = new Map<string, CalendarItem[]>()
+  for (const item of items) {
+    const day = groups.get(item.day)
+    if (day) day.push(item)
+    else groups.set(item.day, [item])
+  }
+  // Le repère du jour montre en priorité une séance effectivement réalisée.
+  const trained = (item: CalendarItem) => Number(item.status === 'done' || item.status === 'shortened')
+  for (const day of groups.values()) day.sort((a, b) => trained(b) - trained(a))
+  return groups
+}

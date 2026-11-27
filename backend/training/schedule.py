@@ -2,7 +2,7 @@
 import hashlib
 import json
 from dataclasses import dataclass
-from datetime import date, timedelta
+from datetime import date, datetime, timedelta
 from typing import Annotated, Literal
 from uuid import uuid4
 
@@ -133,36 +133,72 @@ def _row(session, profile, week):
     return session.get(TrainingWeek, (profile, week.isoformat()))
 
 
-def _reports(session, profile, ids, simulation):
-    if not ids:
+def _record_status(row):
+    if row.closed_at is None:
+        return "in_progress", 3
+    if row.checkpoint["active_s"] <= 0 or row.checkpoint.get("phase") == "cancelled":
+        return None
+    if row.checkpoint.get("phase") == "completed":
+        return "done", 2
+    return "shortened", 1
+
+
+def _reports(session, profile, scheduled_days, simulation):
+    if not scheduled_days:
         return {}
     mode = "simulation" if simulation else "reel"
     rows = session.scalars(select(RecordedSession).where(
         RecordedSession.profile_id == profile, RecordedSession.mode == mode,
-        RecordedSession.workout_snapshot["id"].as_string().in_(ids),
+        RecordedSession.workout_snapshot["id"].as_string().in_(scheduled_days.keys()),
         RecordedSession.workout_snapshot["version"].as_integer() == 1,
     ).order_by(RecordedSession.started_at.desc(), RecordedSession.id.desc()))
     best = {}
     for row in rows:
         key = row.workout_snapshot["id"]
-        if not row.closed_at:
-            status, rank = "in_progress", 3
-        elif row.checkpoint.get("phase") == "completed" and row.checkpoint["active_s"] > 0:
-            status, rank = "done", 2
-        elif row.checkpoint.get("phase") != "cancelled" and row.checkpoint["active_s"] > 0:
-            status, rank = "shortened", 1
-        else:
+        outcome = _record_status(row)
+        if outcome is None:
             continue
-        if key not in best or best[key][0] < rank:
-            best[key] = (rank, status, {**service.brief(row), "source": insights.link(row)})
+        status, rank = outcome
+        local_day = datetime.fromisoformat(row.started_at).astimezone().date().isoformat()
+        priority = (status == "in_progress", local_day == scheduled_days[key], rank)
+        if key not in best or best[key][0] < priority:
+            best[key] = (priority, status, {**service.brief(row), "source": insights.link(row)})
     return best
+
+
+def _calendar_history(session, profile, start, end, simulation, entries):
+    # Les jours UTC voisins couvrent tout décalage local. Convertir uniquement les heures enregistrées
+    # évite les limites de conversion de Windows pour un calendrier ancien ou lointain.
+    lower = (start - timedelta(days=1)).isoformat()
+    upper = (end + timedelta(days=1)).isoformat()
+    linked = {(entry["day"], entry["report"]["id"]) for entry in entries
+              if entry["report"] and entry["status"] != "in_progress"}
+    rows = session.scalars(select(RecordedSession).where(
+        RecordedSession.profile_id == profile, RecordedSession.mode == ("simulation" if simulation else "reel"),
+        RecordedSession.started_at >= lower, RecordedSession.started_at < upper, RecordedSession.closed_at.is_not(None),
+    ).order_by(RecordedSession.started_at, RecordedSession.id))
+    history = []
+    for row in rows:
+        outcome = _record_status(row)
+        if outcome is None:
+            continue
+        local = datetime.fromisoformat(row.started_at).astimezone()
+        if not start <= local.date() < end:
+            continue
+        day = local.date().isoformat()
+        if (day, row.id) not in linked:
+            history.append({"id": row.id, "day": day, "time": local.strftime("%H:%M"),
+                            "name": row.workout_snapshot["name"], "status": outcome[0],
+                            "active_s": row.checkpoint["active_s"], "feeling": row.feeling})
+    return history
 
 
 def _sessions(session, profile, row, today, simulation, active=None, *, detailed=False):
     if row is None or row.plan is None:
         return []
     entries = row.plan["sessions"]
-    reports = _reports(session, profile, [item["workout_id"] for item in entries if item["workout_id"]], simulation)
+    scheduled_days = {item["workout_id"]: item["day"] for item in entries if item["workout_id"]}
+    reports = _reports(session, profile, scheduled_days, simulation)
     results = []
     for item in entries:
         workout_id, recorded = item["workout_id"], reports.get(item["workout_id"])
@@ -198,7 +234,8 @@ def view(session, profile, requested=None, simulation=False, active=None):
     result = _sessions(session, profile, row, today, simulation, active, detailed=True)
     return {"today": today.isoformat(), "week": week.isoformat(), "revision": row.revision if row else 0,
             "goal": goal.model_dump() if goal else None, "available": prior.plan["availability"] if prior else None,
-            "plan": {**plan, "sessions": result} if plan else None, "proposal": row.proposal if row else None}
+            "plan": {**plan, "sessions": result} if plan else None, "proposal": row.proposal if row else None,
+            "history": _calendar_history(session, profile, week, week + timedelta(days=7), simulation, result)}
 
 
 def month_view(session, profile, requested=None, simulation=False, active=None):
@@ -218,7 +255,8 @@ def month_view(session, profile, requested=None, simulation=False, active=None):
     ).order_by(TrainingWeek.week))
     entries = [entry for row in weeks for entry in _sessions(session, profile, row, today, simulation, active)
                if first_day <= entry["day"] < next_month]
-    return {"today": today.isoformat(), "month": first_day[:7], "sessions": entries}
+    return {"today": today.isoformat(), "month": first_day[:7], "sessions": entries,
+            "history": _calendar_history(session, profile, start, end, simulation, entries)}
 
 
 def coach_context(session, profile, simulation=False):

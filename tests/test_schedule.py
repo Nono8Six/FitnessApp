@@ -2,7 +2,7 @@
 import json
 import tempfile
 import unittest
-from datetime import date
+from datetime import date, datetime, timezone
 from pathlib import Path
 from unittest.mock import patch
 from uuid import uuid4
@@ -69,12 +69,13 @@ class ScheduleTests(unittest.TestCase):
         return self.client.post(f"/api/profiles/{profile}/schedule/{self.week}/accept",
                                 json={"id": draft["id"], "placements": placements})
 
-    def record(self, workout, mode="reel", phase="completed", feeling=4):
+    def record(self, workout, mode="reel", phase="completed", feeling=4, *,
+               local_start=datetime(2026, 11, 23, 14), profile="arnaud"):
         identifier = uuid4().hex
-        at = "2026-11-23T14:00:00.000+00:00"
+        at = local_start.astimezone(timezone.utc).isoformat(timespec="milliseconds")
         with self.db.write() as session:
-            session.add(RecordedSession(id=identifier, profile_id="arnaud", mode=mode, started_at=at, closed_at=at,
-                profile_snapshot={"id": "arnaud", "weight_kg": None}, workout_snapshot=workout,
+            session.add(RecordedSession(id=identifier, profile_id=profile, mode=mode, started_at=at, closed_at=at,
+                profile_snapshot={"id": profile, "weight_kg": None}, workout_snapshot=workout,
                 calculation_version=VERSION, checkpoint={"phase": phase, "active_s": 1200, "wall_s": 1200, "pause_s": 0},
                 persisted_at=at, persisted_seq=0, lost_entries=0, feeling=feeling))
         return identifier
@@ -165,3 +166,35 @@ class ScheduleTests(unittest.TestCase):
                          [("2026-12-02", "missed"), ("2026-12-07", "planned")])
         self.assertEqual(self.client.get("/api/profiles/ophelie/schedule/month").json()["sessions"], [])
         self.assertEqual(self.client.get(self.url + "/month?month=2026-13").status_code, 409)
+
+    def test_calendar_includes_standalone_reports_and_deduplicates_planned_reports(self):
+        workout = {**self.spec("2026-11-23"), "id": uuid4().hex, "version": 1, "name": "Séance libre"}
+        first = self.record(workout, local_start=datetime(2026, 11, 23, 0, 15))
+        second = self.record(workout, phase="stopped", local_start=datetime(2026, 11, 23, 17))
+        self.record(workout, phase="cancelled")
+        simulated = self.record(workout, mode="simulation")
+        other = self.record(workout, profile="ophelie")
+        december = self.record(workout, local_start=datetime(2026, 12, 1, 0, 15))
+
+        month = self.url + "/month?month=2026-11"
+        for url in (self.url, month):
+            data = self.client.get(url).json()
+            self.assertFalse(data["plan"] if url == self.url else data["sessions"])
+            self.assertEqual([(item["day"], item["time"], item["id"], item["status"]) for item in data["history"]],
+                             [("2026-11-23", "00:15", first, "done"), ("2026-11-23", "17:00", second, "shortened")])
+            peer = self.client.get(url.replace("/arnaud/", "/ophelie/")).json()
+            self.assertEqual([item["id"] for item in peer["history"]], [other])
+            with patch.object(self.runtime, "simulation", True):
+                self.assertEqual([item["id"] for item in self.client.get(url).json()["history"]], [simulated])
+
+        planned = self.accept(self.propose(self.spec("2026-11-23")).json()).json()["plan"]["sessions"][0]
+        linked = self.record(planned["workout"], phase="stopped")
+        repeated = self.record(planned["workout"], local_start=datetime(2026, 11, 24, 9))
+        for url, sessions in ((self.url, lambda data: data["plan"]["sessions"]),
+                              (month, lambda data: data["sessions"])):
+            body = self.client.get(url).json()
+            self.assertEqual([item["id"] for item in body["history"]], [first, second, repeated])
+            self.assertEqual(sessions(body)[0]["report"]["id"], linked)
+        self.assertEqual([item["id"] for item in self.client.get(self.url + "/month?month=2026-12").json()["history"]],
+                         [december])
+        self.assertEqual(self.client.get(self.url + "/month?month=1900-01").json()["history"], [])

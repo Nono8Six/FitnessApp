@@ -278,6 +278,8 @@ dd[data-long-value] small { font-size: 13px; }
 .planning-week-day:focus-visible, .planning-month-button:focus-visible { outline-offset: -2px; border-radius: 12px; }
 .planning-status { display: inline-flex; align-items: center; gap: 4px; color: var(--planning-state, var(--color-label-2)); }
 .planning-mark { display: inline-grid; width: 13px; height: 12px; flex: none; place-items: center; color: var(--planning-state, var(--color-label-2)); }
+.planning-calendar-marks { display: inline-flex; height: 12px; max-width: 100%; align-items: center; justify-content: center; }
+.planning-calendar-count { color: var(--color-label-2); font-size: 10px; font-weight: 660; line-height: 1; }
 .planning-mark[data-status="planned"], .planning-status[data-status="planned"] { --planning-state: color-mix(in srgb, var(--color-blue) 78%, var(--color-label)); }
 .planning-mark[data-status="done"], .planning-status[data-status="done"] { --planning-state: var(--color-green); }
 .planning-mark[data-status="shortened"], .planning-status[data-status="shortened"] { --planning-state: var(--color-orange); }
@@ -289,6 +291,10 @@ dd[data-long-value] small { font-size: 13px; }
 .planning-month-button { display: flex; width: 100%; min-height: 47px; flex-direction: column; align-items: center; justify-content: center; gap: 1px; }
 .planning-month-button .planning-date { display: grid; width: 31px; height: 29px; place-items: center; border-radius: 9px; font-size: 16px; }
 .planning-month-name { display: none; }
+.planning-week-day[data-status="done"], .planning-month-button[data-status="done"] { --training-day-color: var(--color-green); }
+.planning-week-day[data-status="shortened"], .planning-month-button[data-status="shortened"] { --training-day-color: var(--color-orange); }
+.planning-week-day:not([aria-pressed="true"], [aria-current]) .planning-date,
+.planning-month-cell:not([data-selected], [data-today]) .planning-date { color: var(--training-day-color, var(--color-label)); }
 .planning-month-cell[data-selected] .planning-date { background: var(--color-accent); color: var(--color-on-accent); }
 .planning-legend { display: flex; flex-wrap: wrap; gap: 6px 12px; padding: 10px 14px 12px; border-top: 1px solid var(--color-sep); font-size: 13px; line-height: 1.4; }
 .planning-agenda { display: grid; gap: 10px; scroll-margin-top: 56px; }
@@ -328,7 +334,7 @@ dd[data-long-value] small { font-size: 13px; }
 .planning-goal-head > span > svg { color: var(--color-accent); }
 .planning-goal-date { margin-top: 4px; }
 .planning-icon-button { background: transparent; color: var(--color-accent); }
-.planning-month-detail { scroll-margin-bottom: calc(var(--nav-clearance) + 12px); }
+.planning-month-detail { scroll-margin-top: 56px; scroll-margin-bottom: calc(var(--nav-clearance) + 12px); }
 .planning-month-readout { display: grid; gap: 8px; }
 .planning-month-readout .planning-workout-name { font-size: 21px; }
 .planning-month-readout .planning-meta { margin: 0; }
@@ -336,6 +342,9 @@ dd[data-long-value] small { font-size: 13px; }
 .planning-detail-date time::first-letter { text-transform: uppercase; }
 .planning-detail-date span { color: var(--color-accent); font-size: 13px; }
 .planning-month-actions { display: grid; margin-top: 12px; border-top: 1px solid var(--color-sep); }
+.planning-month-activities { display: grid; margin-top: 8px; }
+.planning-month-activity { display: flex; min-height: 56px; align-items: center; justify-content: space-between; gap: 8px; padding-block: 8px; border-top: 1px solid var(--color-sep); }
+.planning-month-activity > svg { flex: none; color: var(--color-accent); }
 .planning-action { display: flex; min-height: 44px; align-items: center; justify-content: space-between; gap: 8px; color: var(--color-accent); font-size: 15px; font-weight: 650; }
 .planning-availability { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 4px; }
 .planning-availability button { min-height: 56px; flex-direction: column; gap: 0; border-radius: 12px; }

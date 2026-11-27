@@ -8,9 +8,9 @@ import { errorMessage } from '../lib/api'
 import { clock, dec2 } from '../lib/format'
 import { href } from '../lib/router'
 import { acceptSchedule, dayText, saveOutdoor, shiftDay, suggestSchedule, useSchedule, weekdayIndex, weekStart,
-  type Availability, type PlanDraft, type PlanEntry, type Schedule, type SchedulePhase } from '../lib/schedule'
+  type Availability, type CalendarActivity, type PlanDraft, type PlanEntry, type Schedule, type SchedulePhase } from '../lib/schedule'
 import { StartButton } from './Direct'
-import { PlanningPeriod, PlanningStatus, PlanningViews, revealPlanningItem, shortDays, VenueIcon, venueText, WeekDays } from './PlanningCalendar'
+import { ActivityMeta, PlanningPeriod, PlanningStatus, PlanningViews, revealPlanningItem, shortDays, VenueIcon, venueText, WeekDays } from './PlanningCalendar'
 import { GoalEditor } from './TrainingGoal'
 
 const MonthPlanning = lazy(() => import('./PlanningMonth'))
@@ -207,7 +207,7 @@ function SessionRow({ entry, today, profile, open, toggle, log }: {
 }) {
   const headerId = useId()
   const contentId = useId()
-  return <li id={`planning-session-${entry.day}`} className="planning-session" data-open={open}>
+  return <li data-planning-day={entry.day} className="planning-session" data-open={open}>
     <h3>
       <button id={headerId} type="button" className="planning-session-trigger pressable"
         aria-expanded={open} aria-controls={contentId} onClick={toggle}>
@@ -252,6 +252,24 @@ function SessionRow({ entry, today, profile, open, toggle, log }: {
   </li>
 }
 
+function HistoryRow({ activity }: { activity: CalendarActivity }) {
+  return <li data-planning-day={activity.day} className="planning-session">
+    <a className="planning-session-trigger pressable" href={href.report(activity.id)}>
+      <span className="planning-session-date" aria-hidden>
+        {shortDays[weekdayIndex(activity.day)]}<span className="num">{Number(activity.day.slice(-2))}</span>
+      </span>
+      <span className="min-w-0">
+        <span className="sr-only">Bilan du {dayText(activity.day, true)}. </span>
+        <span className="planning-workout-name">{activity.name}</span>
+        <ActivityMeta activity={activity} />
+      </span>
+      <ChevronRight className="planning-session-chevron" size={18} aria-hidden />
+    </a>
+  </li>
+}
+
+const firstSessionOn = (day: string) => document.querySelector<HTMLElement>(`[data-planning-day="${day}"]`)
+
 function WeekPlanning({ profile, week, day, report }: { profile: string; week?: string; day?: string; report?: string }) {
   const { state, reload, update } = useSchedule(profile, week)
   const [sheet, setSheet] = useState<'setup' | 'review' | 'goal'>()
@@ -265,27 +283,30 @@ function WeekPlanning({ profile, week, day, report }: { profile: string; week?: 
   const data = state.status === 'ok' ? state.data : undefined
   const loadedWeek = data?.week
   useLayoutEffect(() => {
-    if (day && loadedWeek) revealPlanningItem(document.getElementById(`planning-session-${day}`), 'start')
+    if (day && loadedWeek) revealPlanningItem(firstSessionOn(day), 'start')
   }, [day, loadedWeek])
   const weekEnd = data && shiftDay(data.week, 6)
   const range = data && weekEnd && `${data.week.slice(0, 7) === weekEnd.slice(0, 7)
     ? Number(data.week.slice(-2)) : dayText(data.week)} – ${dayText(weekEnd)}`
   const draft = received ?? data?.proposal
   const sessions = data?.plan?.sessions ?? []
+  const history = data?.history ?? []
+  const calendar = [...sessions, ...history]
   const days = data ? Array.from({ length: 7 }, (_, i) => shiftDay(data.week, i)) : []
   const currentWeek = data && days.includes(data.today)
   const canPlan = data && weekEnd && data.week <= shiftDay(data.today, 7) && weekEnd >= data.today
     && (!data.goal?.target_date || data.goal.target_date >= data.today && data.goal.target_date >= data.week)
   const upcoming = sessions.filter(item => item.status === 'planned' || item.status === 'in_progress')
-  const past = sessions.filter(item => item.status !== 'planned' && item.status !== 'in_progress')
+  const past = [...sessions.filter(item => item.status !== 'planned' && item.status !== 'in_progress'), ...history]
+    .sort((a, b) => a.day.localeCompare(b.day))
   const selected = data && (picked && days.includes(picked) ? picked
     : (upcoming.find(item => item.status === 'in_progress') ?? upcoming[0])?.day
-      ?? (currentWeek ? data.today : sessions[0]?.day ?? data.week))
+      ?? (currentWeek ? data.today : past[0]?.day ?? data.week))
   const active = opened === undefined ? selected : opened
   const completed = sessions.filter(item => item.status === 'done' || item.status === 'shortened').length
   const missed = sessions.filter(item => item.status === 'missed').length
   const progress = sessions.length ? `${completed} / ${sessions.length} avec bilan${missed ? ` · ${missed} manquée${missed > 1 ? 's' : ''}` : ''}`
-    : 'Aucune séance prévue'
+    : history.length > 0 ? `${history.length} séance${history.length > 1 ? 's enregistrées' : ' enregistrée'}` : 'Aucune séance prévue'
   const renderSession = (item: PlanEntry) => data && <SessionRow key={item.id} entry={item} profile={profile} today={data.today}
     open={item.day === active} toggle={() => {
       setPicked(item.day)
@@ -296,7 +317,7 @@ function WeekPlanning({ profile, week, day, report }: { profile: string; week?: 
     setOpened(date)
     if (!reveal) return
     requestAnimationFrame(() => {
-      const anchor = document.getElementById(`planning-session-${date}`) ?? document.getElementById('planning-day-off')
+      const anchor = firstSessionOn(date) ?? document.getElementById('planning-day-off')
       revealPlanningItem(anchor, 'start')
     })
   }
@@ -311,7 +332,7 @@ function WeekPlanning({ profile, week, day, report }: { profile: string; week?: 
         <div className="planning-main-column">
           <PlanningPeriod period="semaine" title={range} subtitle={progress}
             previous={href.planningWeek(shiftDay(data.week, -7))} next={href.planningWeek(shiftDay(data.week, 7))}>
-            <WeekDays days={days} selected={selected} today={data.today} sessions={sessions} onSelect={select} />
+            <WeekDays days={days} selected={selected} today={data.today} sessions={calendar} onSelect={select} />
           </PlanningPeriod>
           <section id="planning-agenda" aria-labelledby="planning-sessions-heading" className="planning-agenda">
             {notice && <p role="status" className="planning-notice">{notice}</p>}
@@ -320,17 +341,20 @@ function WeekPlanning({ profile, week, day, report }: { profile: string; week?: 
               <span><strong>Une proposition est prête</strong><span>Relire les séances et les créneaux</span></span>
               <ChevronRight size={18} aria-hidden />
             </button>}
-            {sessions.length > 0 ? <>
+            {calendar.length > 0 ? <>
               <div className="planning-agenda-head">
-                <h2 id="planning-sessions-heading" className="text-title2">{upcoming.length ? 'À faire' : 'Séances de la semaine'}</h2>
-                {canPlan && data.goal && <Button size="md" variant="plain" className="planning-compact-button"
-                  onClick={() => setSheet('setup')}><CoachIcon size={17} aria-hidden />Adapter</Button>}
+                <h2 id="planning-sessions-heading" className="text-title2">{upcoming.length ? 'À faire' : 'Séances passées'}</h2>
+                {canPlan && (data.goal ? <Button size="md" variant="plain" className="planning-compact-button"
+                  onClick={() => setSheet('setup')}><CoachIcon size={17} aria-hidden />{data.plan ? 'Adapter' : 'Préparer'}</Button>
+                  : <Button size="md" variant="plain" className="planning-compact-button" aria-label="Définir mon objectif"
+                    onClick={() => setSheet('goal')}><Target size={17} aria-hidden />Mon objectif</Button>)}
               </div>
-              {picked && days.includes(picked) && !sessions.some(item => item.day === picked) &&
-                <p id="planning-day-off" role="status" className="planning-day-off">Pas de séance prévue le {dayText(picked, true)}.</p>}
+              {picked && days.includes(picked) && !calendar.some(item => item.day === picked) &&
+                <p id="planning-day-off" role="status" className="planning-day-off">Aucune séance le {dayText(picked, true)}.</p>}
               {upcoming.length > 0 && <ol className="planning-session-list">{upcoming.map(renderSession)}</ol>}
               {upcoming.length > 0 && past.length > 0 && <h2 className="planning-history-title">Séances passées</h2>}
-              {past.length > 0 && <ol className="planning-session-list">{past.map(renderSession)}</ol>}
+              {past.length > 0 && <ol className="planning-session-list">{past.map(item => 'active_s' in item
+                ? <HistoryRow key={item.id} activity={item} /> : renderSession(item))}</ol>}
             </> : <div className="planning-empty">
               <span className="planning-empty-icon">{!data.goal && canPlan ? <Target size={24} aria-hidden /> : <CalendarDays size={24} aria-hidden />}</span>
               <h2 id="planning-sessions-heading" className="text-title2">
@@ -348,7 +372,7 @@ function WeekPlanning({ profile, week, day, report }: { profile: string; week?: 
                 </Button>
               </>}
             </div>}
-            {report && sessions.length > 0 && canPlan && <p className="planning-description">
+            {report && calendar.length > 0 && canPlan && <p className="planning-description">
               Le coach tiendra compte du bilan que tu viens d’ouvrir.
             </p>}
           </section>
